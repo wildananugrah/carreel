@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: carreel-driver-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: carreel_driver
+      POSTGRES_USER: carreel
+      POSTGRES_PASSWORD: carreel_secret
+    volumes:
+      - driver-db-data:/var/lib/postgresql/data
+
+volumes:
+  driver-db-data:

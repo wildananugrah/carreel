@@ -1,0 +1,332 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../backend/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ========================
+// USERS & AUTH
+// ========================
+
+enum UserRole {
+  DRIVER
+  PLANNER
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         UserRole
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  inspections Inspection[] @relation("DriverInspections")
+  reviews     InspectionReview[] @relation("ReviewerReviews")
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+// ========================
+// UNITS (VEHICLES)
+// ========================
+
+enum UnitStatus {
+  ACTIVE
+  MAINTENANCE
+  DECOMMISSIONED
+}
+
+model Unit {
+  id           String     @id @default(uuid())
+  licensePlate String     @unique
+  make         String?
+  model        String?
+  type         String?
+  color        String?
+  vin          String?    @unique
+  lastKnownKm  Int?
+  status       UnitStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  inspections Inspection[]
+
+  @@map("units")
+}
+
+// ========================
+// INSPECTIONS
+// ========================
+
+enum TripType {
+  PRE_TRIP
+  POST_TRIP
+}
+
+enum InspectionStatus {
+  DRAFT
+  PENDING_AI
+  AI_COMPLETE
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+model Inspection {
+  id          String           @id @default(uuid())
+  driverId    String
+  unitId      String?
+  tripType    TripType
+  status      InspectionStatus @default(DRAFT)
+  startedAt   DateTime         @default(now())
+  completedAt DateTime?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  driver    User              @relation("DriverInspections", fields: [driverId], references: [id])
+  unit      Unit?             @relation(fields: [unitId], references: [id])
+  steps     InspectionStep[]
+  reviews   InspectionReview[]
+  auditLogs AuditLog[]
+
+  @@map("inspections")
+}
+
+// ========================
+// INSPECTION STEPS
+// ========================
+
+enum StepType {
+  UNIT_IDENTIFICATION
+  SPEEDOMETER
+  BODY_INSPECTION
+}
+
+enum StepStatus {
+  PENDING
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model InspectionStep {
+  id           String     @id @default(uuid())
+  inspectionId String
+  stepType     StepType
+  status       StepStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  inspection Inspection  @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  mediaFiles MediaFile[]
+  aiAnalysis AIAnalysis?
+
+  @@unique([inspectionId, stepType])
+  @@map("inspection_steps")
+}
+
+// ========================
+// MEDIA FILES
+// ========================
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model MediaFile {
+  id              String    @id @default(uuid())
+  stepId          String
+  fileName        String
+  mimeType        String
+  fileSize        Int
+  minioKey        String
+  minioBucket     String
+  mediaType       MediaType
+  latitude        Float?
+  longitude       Float?
+  capturedAt      DateTime
+  durationSeconds Float?
+  createdAt       DateTime  @default(now())
+
+  step          InspectionStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  damageMarkers DamageMarker[]
+
+  @@map("media_files")
+}
+
+// ========================
+// AI ANALYSIS RESULTS
+// ========================
+
+enum AIAnalysisStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+model AIAnalysis {
+  id               String           @id @default(uuid())
+  stepId           String           @unique
+  aiModel          String
+  promptUsed       String
+  rawResponse      String
+  structuredData   Json?
+  confidenceScore  Float?
+  processingTimeMs Int
+  status           AIAnalysisStatus @default(SUCCESS)
+  errorMessage     String?
+  createdAt        DateTime         @default(now())
+
+  step InspectionStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@map("ai_analyses")
+}
+
+// ========================
+// DAMAGE MARKERS
+// ========================
+
+enum DamageSeverity {
+  MINOR
+  MODERATE
+  MAJOR
+}
+
+model DamageMarker {
+  id             String         @id @default(uuid())
+  mediaFileId    String
+  damageType     String
+  severity       DamageSeverity
+  description    String
+  videoTimestamp  Float?
+  boundingBox    Json?
+  isNewDamage    Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  mediaFile MediaFile @relation(fields: [mediaFileId], references: [id], onDelete: Cascade)
+
+  @@map("damage_markers")
+}
+
+// ========================
+// TELEMETRY DATA
+// ========================
+
+model TelemetryData {
+  id             String   @id @default(uuid())
+  inspectionId   String
+  odometerKm     Int?
+  fuelLevelPct   Float?
+  dashboardMatch Boolean?
+  kmReasonable   Boolean?
+  previousKm     Int?
+  kmDelta        Int?
+  createdAt      DateTime @default(now())
+
+  @@map("telemetry_data")
+}
+
+// ========================
+// PLANNER REVIEWS
+// ========================
+
+enum ReviewDecision {
+  APPROVED
+  REJECTED
+  NEEDS_MORE_INFO
+}
+
+model InspectionReview {
+  id           String         @id @default(uuid())
+  inspectionId String
+  reviewerId   String
+  decision     ReviewDecision
+  notes        String?
+  createdAt    DateTime       @default(now())
+
+  inspection Inspection @relation(fields: [inspectionId], references: [id])
+  reviewer   User       @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+
+  @@map("inspection_reviews")
+}
+
+// ========================
+// ALERTS
+// ========================
+
+enum AlertType {
+  NEW_DAMAGE_DETECTED
+  KM_ANOMALY
+  LOW_FUEL
+  AI_FAILURE
+  HIGH_SEVERITY_DAMAGE
+}
+
+model Alert {
+  id           String    @id @default(uuid())
+  inspectionId String
+  alertType    AlertType
+  message      String
+  isRead       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  @@index([isRead, createdAt])
+  @@map("alerts")
+}
+
+// ========================
+// AUDIT LOG
+// ========================
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  inspectionId String?
+  action       String
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user       User?       @relation(fields: [userId], references: [id])
+  inspection Inspection? @relation(fields: [inspectionId], references: [id])
+
+  @@index([action])
+  @@index([userId])
+  @@index([inspectionId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ========================
+// OUTBOX EVENTS (for event-driven sync to planner-app)
+// ========================
+
+enum OutboxEventStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model OutboxEvent {
+  id        String             @id @default(uuid())
+  eventType String
+  payload   Json
+  status    OutboxEventStatus  @default(PENDING)
+  createdAt DateTime           @default(now())
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
+}

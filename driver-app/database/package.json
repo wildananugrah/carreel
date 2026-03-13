@@ -1,0 +1,16 @@
+{
+  "name": "carreel-driver-database",
+  "private": true,
+  "scripts": {
+    "migrate:dev": "bunx prisma migrate dev",
+    "migrate:deploy": "bunx prisma migrate deploy",
+    "generate": "bunx prisma generate",
+    "studio": "bunx prisma studio",
+    "seed": "bunx prisma db seed"
+  },
+  "dependencies": {
+    "prisma": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "@prisma/adapter-pg": "^7.0.0"
+  }
+}

@@ -1,0 +1,175 @@
+import { beforeEach, describe, expect, test } from "bun:test";
+import type { InspectionStep } from "../../src/generated/prisma";
+import type { ILogger } from "../../src/interfaces/providers/logger.provider.interface";
+import type { IStorageProvider } from "../../src/interfaces/providers/storage.provider.interface";
+import type {
+  IInspectionRepository,
+  InspectionWithRelations,
+} from "../../src/interfaces/repositories/inspection.repository.interface";
+import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
+import { UploadService } from "../../src/services/upload.service";
+
+const mockLogger: ILogger = {
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  debug: () => {},
+  child: () => mockLogger,
+};
+
+describe("UploadService", () => {
+  let service: UploadService;
+  let uploadedFiles: {
+    bucket: string;
+    key: string;
+    data: Buffer;
+    mimeType: string;
+  }[];
+
+  beforeEach(() => {
+    uploadedFiles = [];
+
+    const mockStorage: IStorageProvider = {
+      upload: async (bucket, key, data, mimeType) => {
+        uploadedFiles.push({ bucket, key, data, mimeType });
+        return key;
+      },
+      getPresignedUrl: async (bucket, key) =>
+        `https://minio.local/${bucket}/${key}?presigned=true`,
+      delete: async () => {},
+    };
+
+    const mockMediaFileRepo: IMediaFileRepository = {
+      create: async (stepId, data) => ({
+        id: "media-1",
+        stepId,
+        fileName: data.fileName,
+        mimeType: data.mimeType,
+        fileSize: data.fileSize,
+        minioKey: data.minioKey,
+        minioBucket: data.minioBucket,
+        mediaType: data.mediaType,
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
+        capturedAt: new Date(data.capturedAt),
+        durationSeconds: data.durationSeconds ?? null,
+        createdAt: new Date(),
+      }),
+      findById: async () => null,
+      findByStepId: async () => [],
+    };
+
+    const mockStep: InspectionStep = {
+      id: "step-1",
+      inspectionId: "insp-1",
+      stepType: "BODY_INSPECTION",
+      status: "PENDING",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const mockInspectionRepo: Partial<IInspectionRepository> = {
+      findById: async (id: string) => {
+        if (id === "insp-1") {
+          return {
+            id: "insp-1",
+            driverId: "driver-1",
+            unitId: null,
+            tripType: "PRE_TRIP",
+            status: "DRAFT",
+            startedAt: new Date(),
+            completedAt: null,
+            latitude: null,
+            longitude: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            unit: null,
+            steps: [],
+          } as InspectionWithRelations;
+        }
+        return null;
+      },
+      findStepById: async (stepId: string) => {
+        if (stepId === "step-1") return mockStep;
+        return null;
+      },
+      updateStepStatus: async (_stepId, status) => ({ ...mockStep, status }),
+    };
+
+    service = new UploadService(
+      mockStorage,
+      mockMediaFileRepo,
+      mockInspectionRepo as IInspectionRepository,
+      mockLogger,
+    );
+  });
+
+  test("uploadMedia stores file and creates record", async () => {
+    const result = await service.uploadMedia(
+      "insp-1",
+      "step-1",
+      "driver-1",
+      Buffer.from("fake-image-data"),
+      {
+        fileName: "photo.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 1024,
+        mediaType: "IMAGE",
+        capturedAt: "2026-03-13T10:00:00.000Z",
+      },
+    );
+
+    expect(result.id).toBe("media-1");
+    expect(result.fileName).toBe("photo.jpg");
+    expect(result.presignedUrl).toContain("presigned=true");
+    expect(uploadedFiles.length).toBe(1);
+    expect(uploadedFiles[0].bucket).toBe("carreel-images");
+  });
+
+  test("uploadMedia throws for wrong driver", async () => {
+    expect(
+      service.uploadMedia("insp-1", "step-1", "driver-2", Buffer.from("data"), {
+        fileName: "photo.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 1024,
+        mediaType: "IMAGE",
+        capturedAt: "2026-03-13T10:00:00.000Z",
+      }),
+    ).rejects.toThrow("Unauthorized");
+  });
+
+  test("uploadMedia throws for non-existent inspection", async () => {
+    expect(
+      service.uploadMedia(
+        "non-existent",
+        "step-1",
+        "driver-1",
+        Buffer.from("data"),
+        {
+          fileName: "photo.jpg",
+          mimeType: "image/jpeg",
+          fileSize: 1024,
+          mediaType: "IMAGE",
+          capturedAt: "2026-03-13T10:00:00.000Z",
+        },
+      ),
+    ).rejects.toThrow("Inspection not found");
+  });
+
+  test("getPresignedUrl returns URL", async () => {
+    const url = await service.getPresignedUrl(
+      "inspections/insp-1/BODY_INSPECTION/file.jpg",
+      "driver-1",
+    );
+    expect(url).toContain("presigned=true");
+    expect(url).toContain("carreel-images");
+  });
+
+  test("getPresignedUrl uses video bucket for video keys", async () => {
+    const url = await service.getPresignedUrl(
+      "inspections/insp-1/video/file.mp4",
+      "driver-1",
+    );
+    expect(url).toContain("carreel-videos");
+  });
+});

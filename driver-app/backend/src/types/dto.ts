@@ -1,0 +1,112 @@
+import type {
+  InspectionStatus,
+  StepStatus,
+  StepType,
+  TripType,
+} from "../generated/prisma";
+
+// ========================
+// HONO APP ENV
+// ========================
+
+export type AppEnv = {
+  Variables: {
+    userId: string;
+    userRole: string;
+  };
+};
+
+// ========================
+// AUTH
+// ========================
+
+export interface RegisterDTO {
+  email: string;
+  password: string;
+  fullName: string;
+}
+
+export interface LoginDTO {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: UserResponse;
+}
+
+export interface UserResponse {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  createdAt: Date;
+}
+
+// ========================
+// INSPECTION
+// ========================
+
+export interface CreateInspectionDTO {
+  tripType: TripType;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface UpdateInspectionDTO {
+  unitId?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface InspectionListQuery {
+  status?: InspectionStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// ========================
+// STEPS
+// ========================
+
+export interface CreateStepDTO {
+  stepType: StepType;
+}
+
+export interface UpdateStepDTO {
+  status?: StepStatus;
+}
+
+// ========================
+// MEDIA / UPLOAD
+// ========================
+
+export interface UploadMediaDTO {
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  mediaType: "IMAGE" | "VIDEO";
+  latitude?: number;
+  longitude?: number;
+  capturedAt: string;
+  durationSeconds?: number;
+}
+
+export interface MediaFileResponse {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  mediaType: string;
+  presignedUrl: string;
+  capturedAt: Date;
+  createdAt: Date;
+}
