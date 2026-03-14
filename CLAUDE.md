@@ -661,9 +661,17 @@ app.use("*", createRequestLoggerMiddleware(logger));
 - Format: date, what happened, why it happened, and how to prevent it next time.
 - This file is a living document — review it before starting work on similar features to avoid repeating mistakes.
 
-### Frontend — Mobile-First Design
+### Frontend Architecture
 
-Both driver-app and planner-app are primarily used on **mobile browsers**. All frontend development MUST follow mobile-first design.
+**Driver-App Frontend** — Mobile-first PWA (port 5173). Bottom tab navigation. Teal color theme. Token: `carreel_token`. Proxy to backend port 3001.
+
+**Planner-App Frontend** — Desktop-first corporate dashboard (port 5174). Top header navigation with `max-w-7xl` container. Corporate gray theme (gray-900 primary, white bg, gray-50 cards). Token: `carreel_planner_token`. Proxy to backend port 3002. Polls `/api/alerts/unread-count` every 30s for nav badge.
+
+Both share the same stack: React 19 + Vite 8 + TypeScript 5.9 + Tailwind CSS 4 (`@tailwindcss/vite`) + React Router v7 + Biome 2.4. Auth via React Context (AuthProvider/useAuth). API client is a thin fetch wrapper with JWT auth and auto-redirect on 401.
+
+#### Mobile-First Design (Driver-App)
+
+The driver-app is primarily used on **mobile browsers**. All driver-app frontend development MUST follow mobile-first design.
 
 - **Design for mobile viewport first** (375px), then scale up for tablet/desktop. Use `min-width` media queries, never `max-width`.
 - **Touch-friendly targets** — all interactive elements (buttons, links, inputs) must be at least 44x44px.

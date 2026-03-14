@@ -3,6 +3,11 @@ generator client {
   output   = "../../backend/src/generated/prisma"
 }
 
+generator plannerClient {
+  provider = "prisma-client"
+  output   = "../../../planner-app/backend/src/generated/prisma"
+}
+
 datasource db {
   provider = "postgresql"
 }

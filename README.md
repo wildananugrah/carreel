@@ -219,7 +219,7 @@ See [docs/todo.md](docs/todo.md) for detailed progress.
 - Phase 0: Infrastructure — **Complete**
 - Phase 1: Driver-App Backend — **Complete**
 - Phase 2: AI Integration — **Complete**
-- Phase 3: Planner-App Backend — Upcoming
+- Phase 3: Planner-App Backend — **Complete**
 - Phase 4: Driver-App Frontend — Upcoming
 - Phase 5: Planner-App Frontend — Upcoming
 

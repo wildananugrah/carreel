@@ -1,16 +1,19 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import type {
   AIAnalysis,
+  Alert,
   DamageMarker,
   InspectionStep,
   MediaFile,
   TelemetryData,
+  Unit,
 } from "../../src/generated/prisma";
 import type { IAIProvider } from "../../src/interfaces/providers/ai.provider.interface";
 import type { ILogger } from "../../src/interfaces/providers/logger.provider.interface";
 import type { INotificationProvider } from "../../src/interfaces/providers/notification.provider.interface";
 import type { IStorageProvider } from "../../src/interfaces/providers/storage.provider.interface";
 import type { IAIAnalysisRepository } from "../../src/interfaces/repositories/ai-analysis.repository.interface";
+import type { IAlertRepository } from "../../src/interfaces/repositories/alert.repository.interface";
 import type {
   IInspectionRepository,
   InspectionWithRelations,
@@ -64,6 +67,7 @@ describe("StepAnalysisJob", () => {
   let mockMediaRepo: IMediaFileRepository;
   let mockAIAnalysisRepo: IAIAnalysisRepository;
   let mockNotification: INotificationProvider;
+  let mockAlertRepo: IAlertRepository;
   let stepStatuses: Map<string, string>;
   let inspectionStatuses: Map<string, string>;
   let savedAnalyses: Array<{ stepId: string; status: string }>;
@@ -71,6 +75,12 @@ describe("StepAnalysisJob", () => {
   let savedTelemetry: Array<unknown>;
   let notifications: Array<{ userId: string; notification: unknown }>;
   let uploadedFiles: string[];
+  let savedAlerts: Array<{
+    inspectionId: string;
+    alertType: string;
+    message: string;
+  }>;
+  let mockUnit: Unit | null;
 
   beforeEach(() => {
     stepStatuses = new Map();
@@ -80,6 +90,8 @@ describe("StepAnalysisJob", () => {
     savedTelemetry = [];
     notifications = [];
     uploadedFiles = [];
+    savedAlerts = [];
+    mockUnit = null;
 
     mockAI = {
       analyzeImage: async () =>
@@ -148,7 +160,12 @@ describe("StepAnalysisJob", () => {
             aiAnalysis: null,
           })),
         }) as InspectionWithRelations,
-      findByDriverId: async () => ({ data: [], total: 0, page: 1, limit: 20 }),
+      findByDriverId: async () => ({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+      }),
       update: async () => ({}) as any,
       updateStatus: async (id: string, status: string) => {
         inspectionStatuses.set(id, status);
@@ -161,6 +178,8 @@ describe("StepAnalysisJob", () => {
         const step = steps.get(stepId)!;
         return { ...step, status } as any;
       },
+      findUnitByInspectionId: async () => mockUnit,
+      updateUnitKm: async () => {},
     };
 
     mockMediaRepo = {
@@ -197,6 +216,18 @@ describe("StepAnalysisJob", () => {
       },
     };
 
+    mockAlertRepo = {
+      create: async (data) => {
+        savedAlerts.push(data);
+        return {
+          id: `alert-${savedAlerts.length}`,
+          ...data,
+          isRead: false,
+          createdAt: new Date(),
+        } as any as Alert;
+      },
+    };
+
     job = new StepAnalysisJob(
       mockAI,
       mockStorage,
@@ -205,6 +236,7 @@ describe("StepAnalysisJob", () => {
       mockAIAnalysisRepo,
       mockNotification,
       mockLogger,
+      mockAlertRepo,
     );
   });
 
@@ -370,6 +402,193 @@ describe("StepAnalysisJob", () => {
 
     expect(stepStatuses.get("step-1")).toBe("COMPLETED");
     expect(savedAnalyses[0].status).toBe("SUCCESS");
-    expect(savedDamageMarkers.length).toBe(0); // No damage markers for empty array
+    expect(savedDamageMarkers.length).toBe(0);
+  });
+
+  // --- Alert generation tests ---
+
+  test("new damage detected → generates NEW_DAMAGE_DETECTED alert", async () => {
+    stepStatuses.set("step-2", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-1",
+      stepType: "UNIT_IDENTIFICATION",
+      driverId: "driver-1",
+    });
+
+    const alert = savedAlerts.find(
+      (a) => a.alertType === "NEW_DAMAGE_DETECTED",
+    );
+    expect(alert).toBeDefined();
+    expect(alert!.inspectionId).toBe("insp-1");
+  });
+
+  test("major damage → generates HIGH_SEVERITY_DAMAGE alert", async () => {
+    mockAI.analyzeImage = async () =>
+      JSON.stringify({
+        licensePlate: "ABC-123",
+        confidence: 0.9,
+        damages: [
+          {
+            damageType: "dent",
+            severity: "MAJOR",
+            description: "Large dent on door",
+            isNewDamage: false,
+          },
+        ],
+      });
+
+    stepStatuses.set("step-2", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-1",
+      stepType: "UNIT_IDENTIFICATION",
+      driverId: "driver-1",
+    });
+
+    const alert = savedAlerts.find(
+      (a) => a.alertType === "HIGH_SEVERITY_DAMAGE",
+    );
+    expect(alert).toBeDefined();
+  });
+
+  test("low fuel → generates LOW_FUEL alert", async () => {
+    mockAI.analyzeImage = async () =>
+      JSON.stringify({
+        odometerKm: 45230,
+        fuelLevelPct: 8,
+        dashboardMatch: true,
+        confidence: 0.95,
+      });
+
+    stepStatuses.set("step-1", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-2",
+      stepType: "SPEEDOMETER",
+      driverId: "driver-1",
+    });
+
+    const alert = savedAlerts.find((a) => a.alertType === "LOW_FUEL");
+    expect(alert).toBeDefined();
+    expect(alert!.message).toContain("8%");
+  });
+
+  test("AI failure → generates AI_FAILURE alert", async () => {
+    mockAI.analyzeImage = async () => {
+      throw new Error("Gemini API error");
+    };
+    stepStatuses.set("step-2", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-1",
+      stepType: "UNIT_IDENTIFICATION",
+      driverId: "driver-1",
+    });
+
+    const alert = savedAlerts.find((a) => a.alertType === "AI_FAILURE");
+    expect(alert).toBeDefined();
+    expect(alert!.message).toContain("Gemini API error");
+  });
+
+  // --- KM validation tests ---
+
+  test("speedometer with unit: validates KM as reasonable", async () => {
+    mockUnit = {
+      id: "unit-1",
+      licensePlate: "ABC-123",
+      lastKnownKm: 40000,
+    } as Unit;
+
+    mockAI.analyzeImage = async () =>
+      JSON.stringify({
+        odometerKm: 40500,
+        fuelLevelPct: 60,
+        dashboardMatch: true,
+        confidence: 0.95,
+      });
+
+    stepStatuses.set("step-1", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-2",
+      stepType: "SPEEDOMETER",
+      driverId: "driver-1",
+    });
+
+    expect(savedTelemetry.length).toBe(1);
+    const telemetry = savedTelemetry[0] as any;
+    expect(telemetry.previousKm).toBe(40000);
+    expect(telemetry.kmDelta).toBe(500);
+    expect(telemetry.kmReasonable).toBe(true);
+    expect(
+      savedAlerts.find((a) => a.alertType === "KM_ANOMALY"),
+    ).toBeUndefined();
+  });
+
+  test("speedometer with unreasonable KM → generates KM_ANOMALY alert", async () => {
+    mockUnit = {
+      id: "unit-1",
+      licensePlate: "ABC-123",
+      lastKnownKm: 40000,
+    } as Unit;
+
+    mockAI.analyzeImage = async () =>
+      JSON.stringify({
+        odometerKm: 10000,
+        fuelLevelPct: 60,
+        dashboardMatch: true,
+        confidence: 0.95,
+      });
+
+    stepStatuses.set("step-1", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-2",
+      stepType: "SPEEDOMETER",
+      driverId: "driver-1",
+    });
+
+    const telemetry = savedTelemetry[0] as any;
+    expect(telemetry.kmReasonable).toBe(false);
+    expect(telemetry.kmDelta).toBe(-30000);
+
+    const alert = savedAlerts.find((a) => a.alertType === "KM_ANOMALY");
+    expect(alert).toBeDefined();
+  });
+
+  test("speedometer without unit: no KM validation", async () => {
+    mockUnit = null;
+
+    mockAI.analyzeImage = async () =>
+      JSON.stringify({
+        odometerKm: 45230,
+        fuelLevelPct: 60,
+        dashboardMatch: true,
+        confidence: 0.95,
+      });
+
+    stepStatuses.set("step-1", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-2",
+      stepType: "SPEEDOMETER",
+      driverId: "driver-1",
+    });
+
+    const telemetry = savedTelemetry[0] as any;
+    expect(telemetry.kmReasonable).toBeUndefined();
+    expect(telemetry.previousKm).toBeUndefined();
+    expect(telemetry.kmDelta).toBeUndefined();
+    expect(
+      savedAlerts.find((a) => a.alertType === "KM_ANOMALY"),
+    ).toBeUndefined();
   });
 });

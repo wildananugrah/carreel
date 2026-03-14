@@ -10,6 +10,7 @@ import type {
   CreateDamageMarkerDTO,
   IAIAnalysisRepository,
 } from "../interfaces/repositories/ai-analysis.repository.interface";
+import type { IAlertRepository } from "../interfaces/repositories/alert.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import {
@@ -26,6 +27,8 @@ export interface StepAnalysisJobData {
   driverId: string;
 }
 
+const MAX_REASONABLE_KM_DELTA = 50000;
+
 export class StepAnalysisJob {
   constructor(
     private aiProvider: IAIProvider,
@@ -35,6 +38,7 @@ export class StepAnalysisJob {
     private aiAnalysisRepository: IAIAnalysisRepository,
     private notificationProvider: INotificationProvider,
     private logger: ILogger,
+    private alertRepository: IAlertRepository,
   ) {}
 
   async handle(data: StepAnalysisJobData): Promise<void> {
@@ -121,21 +125,30 @@ export class StepAnalysisJob {
         status: "SUCCESS",
       });
 
-      // 6. Save step-type-specific data
+      // 6. Save step-type-specific data + generate alerts
       if (stepType === "UNIT_IDENTIFICATION") {
         const result = parsed as UnitIdentificationResult;
         await this.saveDamageMarkers(primaryMedia.id, result.damages ?? []);
+        await this.generateDamageAlerts(
+          inspectionId,
+          result.damages ?? [],
+          "Unit Identification",
+        );
       } else if (stepType === "SPEEDOMETER") {
         const result = parsed as SpeedometerResult;
-        await this.aiAnalysisRepository.createTelemetryData({
+        const telemetry = await this.validateAndSaveTelemetry(
           inspectionId,
-          odometerKm: result.odometerKm ?? undefined,
-          fuelLevelPct: result.fuelLevelPct ?? undefined,
-          dashboardMatch: result.dashboardMatch,
-        });
+          result,
+        );
+        await this.generateSpeedometerAlerts(inspectionId, result, telemetry);
       } else if (stepType === "BODY_INSPECTION") {
         const result = parsed as BodyInspectionResult;
         await this.saveDamageMarkers(primaryMedia.id, result.damages ?? []);
+        await this.generateDamageAlerts(
+          inspectionId,
+          result.damages ?? [],
+          "Body Inspection",
+        );
       }
 
       // 7. Set step → COMPLETED
@@ -172,10 +185,133 @@ export class StepAnalysisJob {
 
       // Set step → FAILED
       await this.inspectionRepository.updateStepStatus(stepId, "FAILED");
+
+      // Generate AI_FAILURE alert
+      await this.createAlert(
+        inspectionId,
+        "AI_FAILURE",
+        `AI analysis failed for ${stepType}: ${errorMessage}`,
+      );
     }
 
     // 8. Check if ALL steps are terminal → transition inspection
     await this.checkInspectionCompletion(inspectionId, driverId);
+  }
+
+  private async validateAndSaveTelemetry(
+    inspectionId: string,
+    result: SpeedometerResult,
+  ) {
+    const odometerKm = result.odometerKm ?? undefined;
+    let kmReasonable: boolean | undefined;
+    let previousKm: number | undefined;
+    let kmDelta: number | undefined;
+
+    // Validate KM against historical data
+    if (odometerKm != null) {
+      const unit =
+        await this.inspectionRepository.findUnitByInspectionId(inspectionId);
+      if (unit?.lastKnownKm != null) {
+        previousKm = unit.lastKnownKm;
+        kmDelta = odometerKm - unit.lastKnownKm;
+        kmReasonable = kmDelta >= 0 && kmDelta <= MAX_REASONABLE_KM_DELTA;
+      }
+
+      // Update unit's lastKnownKm
+      if (unit) {
+        await this.inspectionRepository
+          .updateUnitKm(unit.id, odometerKm)
+          .catch((e) => {
+            this.logger.warn("Failed to update unit KM", {
+              error: String(e),
+            });
+          });
+      }
+    }
+
+    const telemetryData = {
+      inspectionId,
+      odometerKm,
+      fuelLevelPct: result.fuelLevelPct ?? undefined,
+      dashboardMatch: result.dashboardMatch,
+      kmReasonable,
+      previousKm,
+      kmDelta,
+    };
+
+    await this.aiAnalysisRepository.createTelemetryData(telemetryData);
+    return telemetryData;
+  }
+
+  private async generateDamageAlerts(
+    inspectionId: string,
+    damages: Array<{
+      damageType: string;
+      severity: string;
+      description: string;
+      isNewDamage: boolean;
+    }>,
+    source: string,
+  ): Promise<void> {
+    const newDamages = damages.filter((d) => d.isNewDamage);
+    if (newDamages.length > 0) {
+      await this.createAlert(
+        inspectionId,
+        "NEW_DAMAGE_DETECTED",
+        `${source}: ${newDamages.length} new damage(s) detected`,
+      );
+    }
+
+    const majorDamages = damages.filter((d) => d.severity === "MAJOR");
+    if (majorDamages.length > 0) {
+      await this.createAlert(
+        inspectionId,
+        "HIGH_SEVERITY_DAMAGE",
+        `${source}: ${majorDamages.length} major damage(s) found`,
+      );
+    }
+  }
+
+  private async generateSpeedometerAlerts(
+    inspectionId: string,
+    result: SpeedometerResult,
+    telemetry: { kmReasonable?: boolean; fuelLevelPct?: number },
+  ): Promise<void> {
+    if (telemetry.kmReasonable === false) {
+      await this.createAlert(
+        inspectionId,
+        "KM_ANOMALY",
+        "Odometer reading is unreasonable compared to previous record",
+      );
+    }
+
+    if (result.fuelLevelPct != null && result.fuelLevelPct < 15) {
+      await this.createAlert(
+        inspectionId,
+        "LOW_FUEL",
+        `Low fuel level: ${result.fuelLevelPct}%`,
+      );
+    }
+  }
+
+  private async createAlert(
+    inspectionId: string,
+    alertType:
+      | "NEW_DAMAGE_DETECTED"
+      | "HIGH_SEVERITY_DAMAGE"
+      | "LOW_FUEL"
+      | "KM_ANOMALY"
+      | "AI_FAILURE",
+    message: string,
+  ): Promise<void> {
+    await this.alertRepository
+      .create({ inspectionId, alertType, message })
+      .catch((e) => {
+        this.logger.warn("Failed to create alert", {
+          alertType,
+          error: String(e),
+        });
+      });
   }
 
   private async saveDamageMarkers(

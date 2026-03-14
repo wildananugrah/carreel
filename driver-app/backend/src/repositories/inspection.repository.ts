@@ -4,6 +4,7 @@ import type {
   InspectionStep,
   PrismaClient,
   StepStatus,
+  Unit,
 } from "../generated/prisma";
 import type {
   IInspectionRepository,
@@ -50,6 +51,9 @@ export class InspectionRepository implements IInspectionRepository {
                 fileName: true,
                 mimeType: true,
                 mediaType: true,
+                latitude: true,
+                longitude: true,
+                capturedAt: true,
                 createdAt: true,
               },
             },
@@ -148,6 +152,21 @@ export class InspectionRepository implements IInspectionRepository {
     return this.prisma.inspectionStep.update({
       where: { id: stepId },
       data: { status },
+    });
+  }
+
+  async findUnitByInspectionId(inspectionId: string): Promise<Unit | null> {
+    const inspection = await this.prisma.inspection.findUnique({
+      where: { id: inspectionId },
+      select: { unit: true },
+    });
+    return inspection?.unit ?? null;
+  }
+
+  async updateUnitKm(unitId: string, km: number): Promise<void> {
+    await this.prisma.unit.update({
+      where: { id: unitId },
+      data: { lastKnownKm: km },
     });
   }
 }

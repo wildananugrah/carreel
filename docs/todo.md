@@ -37,8 +37,63 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
 - [x] 2.8 Unit tests (31 tests, all passing)
 - [x] 2.9 WebSocket /api/notify endpoint
 
+## Phase 3: Planner-App Backend
+
+- [x] 3.1 Project setup (package.json, tsconfig, biome, pm2, .env)
+- [x] 3.2 Prisma client generation (shared schema, second generator)
+- [x] 3.3 Shared infrastructure (providers, middlewares, utils — copied from driver-app)
+- [x] 3.4 DTOs & types (planner-specific: InspectionListQuery, CreateReviewDTO, AlertListQuery, DashboardKPIs)
+- [x] 3.5 Interfaces & repositories (user, inspection, review, alert, audit-log)
+- [x] 3.6 Services (auth, inspection review, alert, dashboard KPIs)
+- [x] 3.7 Routes (auth, inspections, alerts, dashboard, drivers, upload, health)
+- [x] 3.8 Composition root (index.ts + tracing.ts, port 3002)
+- [x] 3.9 Unit tests (22 tests, all passing)
+- [x] 3.10 Validation (0 TS errors, 0 lint issues, 22/22 tests)
+
+## Phase 4: Driver-App Frontend
+
+- [x] 4.1 Project setup (Vite + React + TypeScript + Tailwind CSS 4)
+- [x] 4.2 Core infrastructure (api.ts HTTP client, auth.tsx context/provider, types.ts)
+- [x] 4.3 Layout & navigation (TopBar, BottomNav, AppLayout with bottom tabs)
+- [x] 4.4 Shared UI components (Button, Input, Card, Spinner, StatusBadge, EmptyState, FilterChips)
+- [x] 4.5 Auth screens (Login, Register, ProtectedRoute)
+- [x] 4.6 Inspection List page (filter chips by status, card-based list)
+- [x] 4.7 Create Inspection page (trip type selection, GPS auto-capture)
+- [x] 4.8 Inspection Detail page (StepCard, AIResultView, add step, submit)
+- [x] 4.9 Media Upload page (camera capture, file picker, upload progress)
+- [x] 4.10 Profile page (user info, logout)
+- [x] 4.11 Routing (React Router v7, 7 routes)
+- [x] 4.12 Validation (0 TS errors, 0 lint issues, 28 source files, 258KB bundle)
+
+## Phase 5: Planner-App Frontend (Corporate Dashboard)
+
+- [x] 5.1 Project setup (Vite + React + TypeScript + Tailwind CSS 4 + Biome)
+- [x] 5.2 Core infrastructure (api.ts with carreel_planner_token, auth.tsx, types.ts)
+- [x] 5.3 Shared UI components (Button, Input, Card, Select, Pagination, Badge, Spinner, StatusBadge, EmptyState)
+- [x] 5.4 Layout (Header with top nav + alert badge polling, AppLayout max-w-7xl)
+- [x] 5.5 Auth (Login page, ProtectedRoute)
+- [x] 5.6 Dashboard page (4 KPI cards, status distribution, quick actions)
+- [x] 5.7 Inspection List page (table + status/date filters + pagination)
+- [x] 5.8 Inspection Detail page (steps, media thumbnails, AI results, review form, review history)
+- [x] 5.9 Alerts page (all/unread toggle, mark read per-alert and bulk)
+- [x] 5.10 Drivers page (table + debounced search + pagination)
+- [x] 5.11 Profile page (user info, logout)
+- [x] 5.12 Routing (React Router v7, 7 routes)
+- [x] 5.13 Validation (0 TS errors, 0 lint issues, 29 source files, 263KB bundle)
+
+## Phase 6: Gap Fixes, Local Run & E2E Tests
+
+- [x] 6.1 Gap Fix: KM historical validation in step-analysis job (delta check, Unit.lastKnownKm update)
+- [x] 6.2 Gap Fix: Alert generation (NEW_DAMAGE_DETECTED, HIGH_SEVERITY_DAMAGE, LOW_FUEL, KM_ANOMALY, AI_FAILURE)
+- [x] 6.3 Gap Fix: GPS capture on media upload (driver frontend geolocation)
+- [x] 6.4 Gap Fix: Media metadata display in planner frontend (capturedAt, GPS, fileSize)
+- [x] 6.5 Gap Fix: Pre-trip vs post-trip comparison (backend endpoint + frontend ComparisonView)
+- [x] 6.6 Unit tests for comparison (planner backend: 26 tests, driver backend: 38 tests)
+- [x] 6.7 Validation (all 4 codebases: lint clean, tests pass, frontends build)
+- [x] 6.8 Local run scripts (scripts/start-all.sh, scripts/seed.ts, scripts/stop-all.sh)
+- [x] 6.9 E2E test scripts (driver-flow, planner-flow, comparison-flow)
+- [x] 6.10 Root package.json with test:e2e scripts
+
 ## Upcoming
 
-- [ ] Phase 3: Planner-App Backend
-- [ ] Phase 4: Driver-App Frontend (React + PWA)
-- [ ] Phase 5: Planner-App Frontend (React + PWA)
+- [ ] Phase 7: Deployment (Docker images, CI/CD, cloud hosting)

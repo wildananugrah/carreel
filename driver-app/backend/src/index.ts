@@ -22,6 +22,7 @@ import { WebSocketNotificationProvider } from "./providers/websocket-notificatio
 // Providers
 import { WinstonLogger } from "./providers/winston-logger.provider";
 import { AIAnalysisRepository } from "./repositories/ai-analysis.repository";
+import { AlertRepository } from "./repositories/alert.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
 import { MediaFileRepository } from "./repositories/media-file.repository";
 // Repositories
@@ -76,6 +77,7 @@ const userRepository = new UserRepository(prisma);
 const inspectionRepository = new InspectionRepository(prisma);
 const mediaFileRepository = new MediaFileRepository(prisma);
 const aiAnalysisRepository = new AIAnalysisRepository(prisma);
+const alertRepository = new AlertRepository(prisma);
 
 // pgboss
 const boss = new PgBoss(databaseUrl);
@@ -112,6 +114,7 @@ const stepAnalysisJob = new StepAnalysisJob(
   aiAnalysisRepository,
   notificationProvider,
   logger,
+  alertRepository,
 );
 
 // Middlewares

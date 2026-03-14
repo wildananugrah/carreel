@@ -3,6 +3,7 @@ import type {
   InspectionStatus,
   InspectionStep,
   StepStatus,
+  Unit,
 } from "../../generated/prisma";
 import type {
   CreateInspectionDTO,
@@ -25,6 +26,9 @@ export interface InspectionWithRelations extends Inspection {
       fileName: string;
       mimeType: string;
       mediaType: string;
+      latitude: number | null;
+      longitude: number | null;
+      capturedAt: Date;
       createdAt: Date;
     }[];
     aiAnalysis: {
@@ -52,4 +56,7 @@ export interface IInspectionRepository {
   ): Promise<InspectionStep>;
   findStepById(stepId: string): Promise<InspectionStep | null>;
   updateStepStatus(stepId: string, status: StepStatus): Promise<InspectionStep>;
+
+  findUnitByInspectionId(inspectionId: string): Promise<Unit | null>;
+  updateUnitKm(unitId: string, km: number): Promise<void>;
 }

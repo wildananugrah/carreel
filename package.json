@@ -1,0 +1,15 @@
+{
+  "name": "carreel-ai",
+  "private": true,
+  "scripts": {
+    "start": "bash scripts/start-all.sh",
+    "seed": "bun run scripts/seed.ts",
+    "test:e2e": "bun test tests/e2e/",
+    "test:e2e:driver": "bun test tests/e2e/driver-flow.test.ts",
+    "test:e2e:planner": "bun test tests/e2e/planner-flow.test.ts",
+    "test:e2e:comparison": "bun test tests/e2e/comparison-flow.test.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.10"
+  }
+}
