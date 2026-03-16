@@ -152,7 +152,14 @@ const authMiddleware = createAuthMiddleware(
 const app = new Hono<AppEnv>();
 
 // Global middlewares
-app.use("*", cors());
+app.use(
+  "*",
+  cors({
+    origin: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(",")
+      : "*",
+  }),
+);
 app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
 
