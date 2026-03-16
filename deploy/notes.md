@@ -5,37 +5,34 @@
 2. create certification using 
 
 ```bash
-certbot certonly --nginx -d market.mhamzah.id
-certbot certonly --nginx -d market-api.mhamzah.id
-certbot certonly --nginx -d market-ws.mhamzah.id
-
-certbot certonly --nginx -d carreel.id
-certbot certonly --nginx -d api.carreel.id
-certbot certonly --nginx -d ws.carreel.id
+certbot certonly --nginx -d driver.mhamzah.id
+certbot certonly --nginx -d driver-api.mhamzah.id
+certbot certonly --nginx -d planner.mhamzah.id
+certbot certonly --nginx -d planner-api.mhamzah.id
+certbot certonly --nginx -d ws.mhamzah.id
+certbot certonly --nginx -d minio.mhamzah.id
 ```
 
 3. copy nginx config
 
 ```bash
-cp nginx/market.mhamzah.id /etc/nginx/sites-available/market.mhamzah.id
-cp nginx/market-api.mhamzah.id /etc/nginx/sites-available/market-api.mhamzah.id
-cp nginx/market-ws.mhamzah.id /etc/nginx/sites-available/market-ws.mhamzah.id
-
-cp nginx/carreel.id /etc/nginx/sites-available/carreel.id
-cp nginx/api.carreel.id /etc/nginx/sites-available/api.carreel.id
-cp nginx/ws.carreel.id /etc/nginx/sites-available/ws.carreel.id
+cp nginx/driver.mhamzah.id /etc/nginx/sites-available/driver.mhamzah.id
+cp nginx/driver-api.mhamzah.id /etc/nginx/sites-available/driver-api.mhamzah.id
+cp nginx/planner.mhamzah.id /etc/nginx/sites-available/planner.mhamzah.id
+cp nginx/planner-api.mhamzah.id /etc/nginx/sites-available/planner-api.mhamzah.id
+cp nginx/ws.mhamzah.id /etc/nginx/sites-available/ws.mhamzah.id
+cp nginx/minio.mhamzah.id /etc/nginx/sites-available/minio.mhamzah.id
 ```
 
 4. link it
 
 ```bash
-ln -s /etc/nginx/sites-available/market.mhamzah.id /etc/nginx/sites-enabled/market.mhamzah.id
-ln -s /etc/nginx/sites-available/market-api.mhamzah.id /etc/nginx/sites-enabled/market-api.mhamzah.id
-ln -s /etc/nginx/sites-available/market-ws.mhamzah.id /etc/nginx/sites-enabled/market-ws.mhamzah.id
-
-ln -s /etc/nginx/sites-available/carreel.id /etc/nginx/sites-enabled/carreel.id
-ln -s /etc/nginx/sites-available/api.carreel.id /etc/nginx/sites-enabled/api.carreel.id
-ln -s /etc/nginx/sites-available/ws.carreel.id /etc/nginx/sites-enabled/ws.carreel.id
+ln -s /etc/nginx/sites-available/driver.mhamzah.id /etc/nginx/sites-enabled/driver.mhamzah.id
+ln -s /etc/nginx/sites-available/driver.mhamzah.id /etc/nginx/sites-enabled/driver.mhamzah.id
+ln -s /etc/nginx/sites-available/planner-api.mhamzah.id /etc/nginx/sites-enabled/planner-api.mhamzah.id
+ln -s /etc/nginx/sites-available/planner-api.mhamzah.id /etc/nginx/sites-enabled/planner-api.mhamzah.id
+ln -s /etc/nginx/sites-available/ws.mhamzah.id /etc/nginx/sites-enabled/ws.mhamzah.id
+ln -s /etc/nginx/sites-available/minio.mhamzah.id /etc/nginx/sites-enabled/minio.mhamzah.id
 ```
 
 5. check the nginx config

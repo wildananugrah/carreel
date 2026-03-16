@@ -73,6 +73,16 @@ export type Alert = Prisma.AlertModel
  */
 export type AuditLog = Prisma.AuditLogModel
 /**
+ * Model UploadSession
+ * 
+ */
+export type UploadSession = Prisma.UploadSessionModel
+/**
+ * Model UploadedPart
+ * 
+ */
+export type UploadedPart = Prisma.UploadedPartModel
+/**
  * Model OutboxEvent
  * 
  */

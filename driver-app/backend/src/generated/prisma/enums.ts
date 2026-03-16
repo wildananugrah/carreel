@@ -114,6 +114,16 @@ export const AlertType = {
 export type AlertType = (typeof AlertType)[keyof typeof AlertType]
 
 
+export const UploadSessionStatus = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  FAILED: 'FAILED'
+} as const
+
+export type UploadSessionStatus = (typeof UploadSessionStatus)[keyof typeof UploadSessionStatus]
+
+
 export const OutboxEventStatus = {
   PENDING: 'PENDING',
   SENT: 'SENT',

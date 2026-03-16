@@ -5,4 +5,14 @@ export interface IStorageProvider {
     expiresIn?: number,
   ): Promise<string>;
   ping(): Promise<boolean>;
+  statObject(
+    bucket: string,
+    key: string,
+  ): Promise<{ size: number; mimeType: string }>;
+  getObjectStream(
+    bucket: string,
+    key: string,
+    offset: number,
+    length: number,
+  ): Promise<ReadableStream>;
 }

@@ -319,6 +319,58 @@ model AuditLog {
 }
 
 // ========================
+// UPLOAD SESSIONS (chunked video upload)
+// ========================
+
+enum UploadSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+model UploadSession {
+  id              String              @id @default(uuid())
+  driverId        String
+  inspectionId    String
+  stepId          String
+  minioUploadId   String
+  minioKey        String
+  minioBucket     String
+  fileName        String
+  mimeType        String
+  fileSize        Int
+  chunkSize       Int
+  totalChunks     Int
+  status          UploadSessionStatus @default(IN_PROGRESS)
+  latitude        Float?
+  longitude       Float?
+  capturedAt      DateTime
+  durationSeconds Float?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  parts UploadedPart[]
+
+  @@index([driverId, status])
+  @@map("upload_sessions")
+}
+
+model UploadedPart {
+  id         String   @id @default(uuid())
+  sessionId  String
+  partNumber Int
+  etag       String
+  size       Int
+  createdAt  DateTime @default(now())
+
+  session UploadSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, partNumber])
+  @@map("uploaded_parts")
+}
+
+// ========================
 // OUTBOX EVENTS (for event-driven sync to planner-app)
 // ========================
 

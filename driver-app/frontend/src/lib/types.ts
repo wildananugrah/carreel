@@ -105,3 +105,31 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
 }
+
+export interface ChunkedUploadInitResponse {
+  sessionId: string;
+  chunkSize: number;
+  totalChunks: number;
+  uploadedParts: number[];
+}
+
+export interface UploadStatusResponse {
+  sessionId: string;
+  status: string;
+  totalChunks: number;
+  uploadedChunks: number;
+  uploadedParts: number[];
+  chunkSize: number;
+  fileName: string;
+}
+
+export interface UploadSession {
+  id: string;
+  inspectionId: string;
+  stepId: string;
+  fileName: string;
+  fileSize: number;
+  totalChunks: number;
+  status: string;
+  createdAt: string;
+}

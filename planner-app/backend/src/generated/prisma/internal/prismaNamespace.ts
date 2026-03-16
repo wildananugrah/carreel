@@ -395,6 +395,8 @@ export const ModelName = {
   InspectionReview: 'InspectionReview',
   Alert: 'Alert',
   AuditLog: 'AuditLog',
+  UploadSession: 'UploadSession',
+  UploadedPart: 'UploadedPart',
   OutboxEvent: 'OutboxEvent'
 } as const
 
@@ -411,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "unit" | "inspection" | "inspectionStep" | "mediaFile" | "aIAnalysis" | "damageMarker" | "telemetryData" | "inspectionReview" | "alert" | "auditLog" | "outboxEvent"
+    modelProps: "user" | "unit" | "inspection" | "inspectionStep" | "mediaFile" | "aIAnalysis" | "damageMarker" | "telemetryData" | "inspectionReview" | "alert" | "auditLog" | "uploadSession" | "uploadedPart" | "outboxEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1229,6 +1231,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UploadSession: {
+      payload: Prisma.$UploadSessionPayload<ExtArgs>
+      fields: Prisma.UploadSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UploadSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UploadSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.UploadSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UploadSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        findMany: {
+          args: Prisma.UploadSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>[]
+        }
+        create: {
+          args: Prisma.UploadSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        createMany: {
+          args: Prisma.UploadSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UploadSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.UploadSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        update: {
+          args: Prisma.UploadSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.UploadSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UploadSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UploadSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.UploadSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.UploadSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUploadSession>
+        }
+        groupBy: {
+          args: Prisma.UploadSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UploadSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UploadSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UploadSessionCountAggregateOutputType> | number
+        }
+      }
+    }
+    UploadedPart: {
+      payload: Prisma.$UploadedPartPayload<ExtArgs>
+      fields: Prisma.UploadedPartFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UploadedPartFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UploadedPartFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>
+        }
+        findFirst: {
+          args: Prisma.UploadedPartFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UploadedPartFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>
+        }
+        findMany: {
+          args: Prisma.UploadedPartFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>[]
+        }
+        create: {
+          args: Prisma.UploadedPartCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>
+        }
+        createMany: {
+          args: Prisma.UploadedPartCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UploadedPartCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>[]
+        }
+        delete: {
+          args: Prisma.UploadedPartDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>
+        }
+        update: {
+          args: Prisma.UploadedPartUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>
+        }
+        deleteMany: {
+          args: Prisma.UploadedPartDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UploadedPartUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UploadedPartUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>[]
+        }
+        upsert: {
+          args: Prisma.UploadedPartUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadedPartPayload>
+        }
+        aggregate: {
+          args: Prisma.UploadedPartAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUploadedPart>
+        }
+        groupBy: {
+          args: Prisma.UploadedPartGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UploadedPartGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UploadedPartCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UploadedPartCountAggregateOutputType> | number
+        }
+      }
+    }
     OutboxEvent: {
       payload: Prisma.$OutboxEventPayload<ExtArgs>
       fields: Prisma.OutboxEventFieldRefs
@@ -1504,6 +1654,43 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const UploadSessionScalarFieldEnum = {
+  id: 'id',
+  driverId: 'driverId',
+  inspectionId: 'inspectionId',
+  stepId: 'stepId',
+  minioUploadId: 'minioUploadId',
+  minioKey: 'minioKey',
+  minioBucket: 'minioBucket',
+  fileName: 'fileName',
+  mimeType: 'mimeType',
+  fileSize: 'fileSize',
+  chunkSize: 'chunkSize',
+  totalChunks: 'totalChunks',
+  status: 'status',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  capturedAt: 'capturedAt',
+  durationSeconds: 'durationSeconds',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UploadSessionScalarFieldEnum = (typeof UploadSessionScalarFieldEnum)[keyof typeof UploadSessionScalarFieldEnum]
+
+
+export const UploadedPartScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  partNumber: 'partNumber',
+  etag: 'etag',
+  size: 'size',
+  createdAt: 'createdAt'
+} as const
+
+export type UploadedPartScalarFieldEnum = (typeof UploadedPartScalarFieldEnum)[keyof typeof UploadedPartScalarFieldEnum]
 
 
 export const OutboxEventScalarFieldEnum = {
@@ -1803,6 +1990,20 @@ export type ListEnumAlertTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
+ * Reference to a field of type 'UploadSessionStatus'
+ */
+export type EnumUploadSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UploadSessionStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'UploadSessionStatus[]'
+ */
+export type ListEnumUploadSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UploadSessionStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'OutboxEventStatus'
  */
 export type EnumOutboxEventStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OutboxEventStatus'>
@@ -1921,6 +2122,8 @@ export type GlobalOmitConfig = {
   inspectionReview?: Prisma.InspectionReviewOmit
   alert?: Prisma.AlertOmit
   auditLog?: Prisma.AuditLogOmit
+  uploadSession?: Prisma.UploadSessionOmit
+  uploadedPart?: Prisma.UploadedPartOmit
   outboxEvent?: Prisma.OutboxEventOmit
 }
 

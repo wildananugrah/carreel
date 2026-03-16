@@ -25,17 +25,21 @@ import { AIAnalysisRepository } from "./repositories/ai-analysis.repository";
 import { AlertRepository } from "./repositories/alert.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
 import { MediaFileRepository } from "./repositories/media-file.repository";
+import { UploadSessionRepository } from "./repositories/upload-session.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
 // Routes
 import { createAuthRoutes } from "./routes/auth.route";
+import { createChunkedUploadRoutes } from "./routes/chunked-upload.route";
 import { createHealthRoutes } from "./routes/health.route";
 import { createInspectionRoutes } from "./routes/inspection.route";
 import { createMediaRoutes } from "./routes/media.route";
 import { createUploadRoutes } from "./routes/upload.route";
 // Services
 import { AuthService } from "./services/auth.service";
+import { ChunkedUploadService } from "./services/chunked-upload.service";
 import { InspectionService } from "./services/inspection.service";
+import { MediaStreamService } from "./services/media-stream.service";
 import { UploadService } from "./services/upload.service";
 import type { AppEnv } from "./types/dto";
 
@@ -81,6 +85,7 @@ const notificationProvider = new WebSocketNotificationProvider(
 const userRepository = new UserRepository(prisma);
 const inspectionRepository = new InspectionRepository(prisma);
 const mediaFileRepository = new MediaFileRepository(prisma);
+const uploadSessionRepository = new UploadSessionRepository(prisma);
 const aiAnalysisRepository = new AIAnalysisRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
 
@@ -108,6 +113,19 @@ const uploadService = new UploadService(
   mediaFileRepository,
   inspectionRepository,
   logger,
+);
+
+const chunkedUploadService = new ChunkedUploadService(
+  storageProvider,
+  uploadSessionRepository,
+  mediaFileRepository,
+  inspectionRepository,
+  logger,
+);
+
+const mediaStreamService = new MediaStreamService(
+  storageProvider,
+  mediaFileRepository,
 );
 
 // Jobs
@@ -146,7 +164,11 @@ app.route(
   createInspectionRoutes(inspectionService, uploadService, authMiddleware),
 );
 app.route("/api/upload", createUploadRoutes(uploadService, authMiddleware));
-app.route("/api/media", createMediaRoutes(uploadService));
+app.route("/api/media", createMediaRoutes(uploadService, mediaStreamService));
+app.route(
+  "/api/chunked-upload",
+  createChunkedUploadRoutes(chunkedUploadService, authMiddleware),
+);
 
 // ========================
 // Startup Connectivity Checks

@@ -1,5 +1,9 @@
+import { Readable } from "node:stream";
 import { Client as MinioClient } from "minio";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type {
+  IStorageProvider,
+  MultipartUploadPart,
+} from "../interfaces/providers/storage.provider.interface";
 
 export class MinIOProvider implements IStorageProvider {
   private client: MinioClient;
@@ -54,5 +58,78 @@ export class MinIOProvider implements IStorageProvider {
     } catch {
       return false;
     }
+  }
+
+  async initiateMultipartUpload(
+    bucket: string,
+    key: string,
+    mimeType: string,
+  ): Promise<string> {
+    return this.client.initiateNewMultipartUpload(bucket, key, {
+      "Content-Type": mimeType,
+    });
+  }
+
+  async uploadPart(
+    bucket: string,
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    data: Buffer,
+  ): Promise<MultipartUploadPart> {
+    const result = await this.client.uploadPart(
+      {
+        bucketName: bucket,
+        objectName: key,
+        uploadID: uploadId,
+        partNumber,
+        headers: {},
+      },
+      data,
+    );
+    return { part: result.part, etag: result.etag };
+  }
+
+  async completeMultipartUpload(
+    bucket: string,
+    key: string,
+    uploadId: string,
+    parts: MultipartUploadPart[],
+  ): Promise<void> {
+    await this.client.completeMultipartUpload(bucket, key, uploadId, parts);
+  }
+
+  async abortMultipartUpload(
+    bucket: string,
+    key: string,
+    uploadId: string,
+  ): Promise<void> {
+    await this.client.abortMultipartUpload(bucket, key, uploadId);
+  }
+
+  async statObject(
+    bucket: string,
+    key: string,
+  ): Promise<{ size: number; mimeType: string }> {
+    const stat = await this.client.statObject(bucket, key);
+    return {
+      size: stat.size,
+      mimeType: stat.metaData["content-type"] ?? "application/octet-stream",
+    };
+  }
+
+  async getObjectStream(
+    bucket: string,
+    key: string,
+    offset: number,
+    length: number,
+  ): Promise<ReadableStream> {
+    const nodeStream = await this.client.getPartialObject(
+      bucket,
+      key,
+      offset,
+      length,
+    );
+    return Readable.toWeb(nodeStream) as unknown as ReadableStream;
   }
 }

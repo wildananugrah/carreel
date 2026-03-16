@@ -25,12 +25,14 @@ import { createDashboardRoutes } from "./routes/dashboard.route";
 import { createDriverRoutes } from "./routes/driver.route";
 import { createHealthRoutes } from "./routes/health.route";
 import { createInspectionRoutes } from "./routes/inspection.route";
+import { createMediaRoutes } from "./routes/media.route";
 import { createUploadRoutes } from "./routes/upload.route";
 // Services
 import { AlertService } from "./services/alert.service";
 import { AuthService } from "./services/auth.service";
 import { DashboardService } from "./services/dashboard.service";
 import { InspectionService } from "./services/inspection.service";
+import { MediaStreamService } from "./services/media-stream.service";
 import type { AppEnv } from "./types/dto";
 
 // ========================
@@ -87,6 +89,8 @@ const alertService = new AlertService(alertRepository);
 
 const dashboardService = new DashboardService(prisma);
 
+const mediaStreamService = new MediaStreamService(prisma, storageProvider);
+
 // Middlewares
 const authMiddleware = createAuthMiddleware(
   process.env.JWT_SECRET ?? "dev-jwt-secret",
@@ -117,6 +121,7 @@ app.route(
 );
 app.route("/api/drivers", createDriverRoutes(userRepository, authMiddleware));
 app.route("/api/upload", createUploadRoutes(storageProvider, authMiddleware));
+app.route("/api/media", createMediaRoutes(mediaStreamService));
 
 // ========================
 // Start Server

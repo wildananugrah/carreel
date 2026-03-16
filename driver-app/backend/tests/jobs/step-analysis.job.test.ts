@@ -133,6 +133,12 @@ describe("StepAnalysisJob", () => {
       download: async () => Buffer.from("fake-image-data"),
       delete: async () => {},
       ping: async () => true,
+      initiateMultipartUpload: async () => "upload-id",
+      uploadPart: async () => ({ part: 1, etag: "etag" }),
+      completeMultipartUpload: async () => {},
+      abortMultipartUpload: async () => {},
+      statObject: async () => ({ size: 0, mimeType: "video/mp4" }),
+      getObjectStream: async () => new ReadableStream(),
     };
 
     const steps = new Map<string, InspectionStep>();

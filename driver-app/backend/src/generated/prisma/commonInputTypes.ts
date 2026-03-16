@@ -480,6 +480,23 @@ export type EnumAlertTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumAlertTypeFilter<$PrismaModel>
 }
 
+export type EnumUploadSessionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.UploadSessionStatus | Prisma.EnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUploadSessionStatusFilter<$PrismaModel> | $Enums.UploadSessionStatus
+}
+
+export type EnumUploadSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.UploadSessionStatus | Prisma.EnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUploadSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.UploadSessionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumUploadSessionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumUploadSessionStatusFilter<$PrismaModel>
+}
+
 export type JsonFilter<$PrismaModel = never> =
 | Prisma.PatchUndefined<
     Prisma.Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -987,6 +1004,23 @@ export type NestedEnumAlertTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumAlertTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumAlertTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumUploadSessionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.UploadSessionStatus | Prisma.EnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUploadSessionStatusFilter<$PrismaModel> | $Enums.UploadSessionStatus
+}
+
+export type NestedEnumUploadSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.UploadSessionStatus | Prisma.EnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.UploadSessionStatus[] | Prisma.ListEnumUploadSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUploadSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.UploadSessionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumUploadSessionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumUploadSessionStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumOutboxEventStatusFilter<$PrismaModel = never> = {

@@ -39,6 +39,12 @@ describe("UploadService", () => {
       download: async () => Buffer.alloc(0),
       delete: async () => {},
       ping: async () => true,
+      initiateMultipartUpload: async () => "upload-id",
+      uploadPart: async () => ({ part: 1, etag: "etag" }),
+      completeMultipartUpload: async () => {},
+      abortMultipartUpload: async () => {},
+      statObject: async () => ({ size: 0, mimeType: "video/mp4" }),
+      getObjectStream: async () => new ReadableStream(),
     };
 
     const mockMediaFileRepo: IMediaFileRepository = {

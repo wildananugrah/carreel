@@ -111,3 +111,43 @@ export interface MediaFileResponse {
   capturedAt: Date;
   createdAt: Date;
 }
+
+// ========================
+// CHUNKED UPLOAD
+// ========================
+
+export interface ChunkedUploadInitDTO {
+  inspectionId: string;
+  stepId: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  latitude?: number;
+  longitude?: number;
+  capturedAt: string;
+  durationSeconds?: number;
+}
+
+export interface ChunkedUploadInitResponse {
+  sessionId: string;
+  chunkSize: number;
+  totalChunks: number;
+  uploadedParts: number[];
+}
+
+export interface ChunkUploadResult {
+  partNumber: number;
+  etag: string;
+  uploadedChunks: number;
+  totalChunks: number;
+}
+
+export interface UploadStatusResponse {
+  sessionId: string;
+  status: string;
+  totalChunks: number;
+  uploadedChunks: number;
+  uploadedParts: number[];
+  chunkSize: number;
+  fileName: string;
+}

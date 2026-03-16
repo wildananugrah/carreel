@@ -9,6 +9,7 @@ export function MediaUpload() {
   const { id, stepId } = useParams<{ id: string; stepId: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -41,39 +42,88 @@ export function MediaUpload() {
     }
   }
 
+  async function handleCancel() {
+    if (!abortRef.current) return;
+    abortRef.current.abort();
+    abortRef.current = null;
+
+    // Try to cancel the server-side session
+    if (id && stepId) {
+      const sessionKey = `upload_session_${id}_${stepId}`;
+      const sessionId = localStorage.getItem(sessionKey);
+      if (sessionId) {
+        try {
+          await api.cancelUpload(sessionId);
+        } catch {
+          // Best effort
+        }
+        localStorage.removeItem(sessionKey);
+      }
+    }
+
+    setUploading(false);
+    setProgress(0);
+  }
+
   async function handleUpload() {
     if (!file || !id || !stepId) return;
     setUploading(true);
     setError("");
     setProgress(0);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("stepId", stepId);
-      formData.append("mediaType", file.type.startsWith("video/") ? "VIDEO" : "IMAGE");
-      formData.append("capturedAt", new Date().toISOString());
+    const isVideo = file.type.startsWith("video/");
 
-      if (location) {
-        formData.append("latitude", String(location.latitude));
-        formData.append("longitude", String(location.longitude));
+    try {
+      if (isVideo) {
+        // Chunked upload for videos
+        const controller = new AbortController();
+        abortRef.current = controller;
+
+        await api.uploadChunked(
+          id,
+          stepId,
+          file,
+          {
+            capturedAt: new Date().toISOString(),
+            latitude: location?.latitude,
+            longitude: location?.longitude,
+          },
+          setProgress,
+          controller.signal,
+        );
+
+        abortRef.current = null;
+      } else {
+        // Single-shot upload for images
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("stepId", stepId);
+        formData.append("mediaType", "IMAGE");
+        formData.append("capturedAt", new Date().toISOString());
+
+        if (location) {
+          formData.append("latitude", String(location.latitude));
+          formData.append("longitude", String(location.longitude));
+        }
+
+        const progressInterval = setInterval(() => {
+          setProgress((prev) => Math.min(prev + 10, 90));
+        }, 200);
+
+        await api.upload(`/api/inspections/${id}/steps/${stepId}/media`, formData);
+
+        clearInterval(progressInterval);
       }
 
-      // Simulate progress since fetch doesn't support progress natively
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
-
-      await api.upload(`/api/inspections/${id}/steps/${stepId}/media`, formData);
-
-      clearInterval(progressInterval);
       setProgress(100);
 
-      // Navigate back to inspection detail
       setTimeout(() => {
         navigate(`/inspections/${id}`, { replace: true });
       }, 300);
     } catch (err) {
+      if (err instanceof Error && err.message === "Upload cancelled") {
+        return;
+      }
       setError(err instanceof Error ? err.message : "Upload failed");
       setUploading(false);
       setProgress(0);
@@ -140,6 +190,11 @@ export function MediaUpload() {
               <Button className="w-full" loading={uploading} onClick={handleUpload}>
                 {uploading ? `Uploading ${progress}%` : "Upload"}
               </Button>
+              {uploading && (
+                <Button variant="secondary" className="w-full" onClick={handleCancel}>
+                  Cancel Upload
+                </Button>
+              )}
               {!uploading && (
                 <Button
                   variant="secondary"

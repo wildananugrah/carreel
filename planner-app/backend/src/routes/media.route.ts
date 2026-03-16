@@ -1,23 +1,11 @@
 import { Hono } from "hono";
-import type { IMediaStreamService } from "../interfaces/services/media-stream.service.interface";
-import type { IUploadService } from "../interfaces/services/upload.service.interface";
+import type { MediaStreamService } from "../services/media-stream.service";
 
-export function createMediaRoutes(
-  uploadService: IUploadService,
-  mediaStreamService: IMediaStreamService,
-) {
+export function createMediaRoutes(mediaStreamService: MediaStreamService) {
   const app = new Hono();
 
-  // GET /api/media/:id/url — redirects to presigned MinIO URL
-  // No auth required: presigned URLs are time-limited and act as their own authorization.
-  // This allows <img src="/api/media/:id/url"> to work without JWT headers.
-  app.get("/:id/url", async (c) => {
-    const url = await uploadService.getMediaUrl(c.req.param("id"));
-    return c.redirect(url);
-  });
-
   // GET /api/media/:id/stream — proxy video stream with Range support
-  // No auth required: same pattern as /:id/url.
+  // No auth required: same as driver-app pattern.
   app.get("/:id/stream", async (c) => {
     const rangeHeader = c.req.header("range");
     const info = await mediaStreamService.getVideoStream(

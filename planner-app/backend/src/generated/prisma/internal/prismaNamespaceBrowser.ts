@@ -62,6 +62,8 @@ export const ModelName = {
   InspectionReview: 'InspectionReview',
   Alert: 'Alert',
   AuditLog: 'AuditLog',
+  UploadSession: 'UploadSession',
+  UploadedPart: 'UploadedPart',
   OutboxEvent: 'OutboxEvent'
 } as const
 
@@ -243,6 +245,43 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const UploadSessionScalarFieldEnum = {
+  id: 'id',
+  driverId: 'driverId',
+  inspectionId: 'inspectionId',
+  stepId: 'stepId',
+  minioUploadId: 'minioUploadId',
+  minioKey: 'minioKey',
+  minioBucket: 'minioBucket',
+  fileName: 'fileName',
+  mimeType: 'mimeType',
+  fileSize: 'fileSize',
+  chunkSize: 'chunkSize',
+  totalChunks: 'totalChunks',
+  status: 'status',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  capturedAt: 'capturedAt',
+  durationSeconds: 'durationSeconds',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UploadSessionScalarFieldEnum = (typeof UploadSessionScalarFieldEnum)[keyof typeof UploadSessionScalarFieldEnum]
+
+
+export const UploadedPartScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  partNumber: 'partNumber',
+  etag: 'etag',
+  size: 'size',
+  createdAt: 'createdAt'
+} as const
+
+export type UploadedPartScalarFieldEnum = (typeof UploadedPartScalarFieldEnum)[keyof typeof UploadedPartScalarFieldEnum]
 
 
 export const OutboxEventScalarFieldEnum = {

@@ -47,7 +47,11 @@ export function MediaThumbnail({ file }: MediaThumbnailProps) {
           />
         ) : (
           // biome-ignore lint/a11y/useMediaCaption: User-uploaded video, captions unavailable
-          <video src={url} className="w-20 h-20 object-cover rounded" />
+          <video
+            src={`/api/media/${file.id}/stream`}
+            className="w-20 h-20 object-cover rounded"
+            preload="metadata"
+          />
         )}
       </button>
 

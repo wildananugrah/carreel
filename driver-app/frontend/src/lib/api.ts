@@ -55,6 +55,10 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   return response.json() as Promise<T>;
 }
 
+function getUploadSessionKey(inspectionId: string, stepId: string): string {
+  return `upload_session_${inspectionId}_${stepId}`;
+}
+
 export const api = {
   get: <T>(path: string) => apiFetch<T>(path),
 
@@ -77,4 +81,151 @@ export const api = {
       method: "POST",
       body: formData,
     }),
+
+  uploadChunked: async (
+    inspectionId: string,
+    stepId: string,
+    file: File,
+    meta: {
+      capturedAt: string;
+      latitude?: number;
+      longitude?: number;
+      durationSeconds?: number;
+    },
+    onProgress: (progress: number) => void,
+    signal?: AbortSignal,
+  ) => {
+    // Step 1: Init
+    const initRes = await apiFetch<{
+      sessionId: string;
+      chunkSize: number;
+      totalChunks: number;
+      uploadedParts: number[];
+    }>("/api/chunked-upload/init", {
+      method: "POST",
+      body: JSON.stringify({
+        inspectionId,
+        stepId,
+        fileName: file.name,
+        mimeType: file.type,
+        fileSize: file.size,
+        ...meta,
+      }),
+    });
+
+    const { sessionId, chunkSize, totalChunks, uploadedParts } = initRes;
+
+    // Store session in localStorage for resume
+    localStorage.setItem(getUploadSessionKey(inspectionId, stepId), sessionId);
+
+    const uploaded = new Set(uploadedParts);
+
+    // Step 2: Upload chunks
+    for (let i = 0; i < totalChunks; i++) {
+      if (signal?.aborted) throw new Error("Upload cancelled");
+
+      const partNumber = i + 1;
+      if (uploaded.has(partNumber)) {
+        onProgress(Math.round((partNumber / totalChunks) * 100));
+        continue;
+      }
+
+      const start = i * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
+      const buffer = await chunk.arrayBuffer();
+
+      const token = getToken();
+      const res = await fetch(`/api/chunked-upload/${sessionId}/chunk?partNumber=${partNumber}`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: buffer,
+        signal,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new ApiError(res.status, (body as { error?: string }).error ?? "Chunk upload failed");
+      }
+
+      onProgress(Math.round((partNumber / totalChunks) * 100));
+    }
+
+    // Step 3: Complete
+    const result = await apiFetch<{
+      id: string;
+      fileName: string;
+      mimeType: string;
+      fileSize: number;
+      mediaType: string;
+      presignedUrl: string;
+    }>(`/api/chunked-upload/${sessionId}/complete`, { method: "POST" });
+
+    // Clear localStorage
+    localStorage.removeItem(getUploadSessionKey(inspectionId, stepId));
+
+    return result;
+  },
+
+  resumeUpload: async (
+    sessionId: string,
+    inspectionId: string,
+    stepId: string,
+    file: File,
+    onProgress: (progress: number) => void,
+    signal?: AbortSignal,
+  ) => {
+    // Get status to know which chunks are done
+    const status = await apiFetch<{
+      totalChunks: number;
+      uploadedParts: number[];
+      chunkSize: number;
+    }>(`/api/chunked-upload/${sessionId}/status`);
+
+    const { totalChunks, uploadedParts, chunkSize } = status;
+    const uploaded = new Set(uploadedParts);
+
+    for (let i = 0; i < totalChunks; i++) {
+      if (signal?.aborted) throw new Error("Upload cancelled");
+
+      const partNumber = i + 1;
+      if (uploaded.has(partNumber)) {
+        onProgress(Math.round((partNumber / totalChunks) * 100));
+        continue;
+      }
+
+      const start = i * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
+      const buffer = await chunk.arrayBuffer();
+
+      const token = getToken();
+      const res = await fetch(`/api/chunked-upload/${sessionId}/chunk?partNumber=${partNumber}`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: buffer,
+        signal,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new ApiError(res.status, (body as { error?: string }).error ?? "Chunk upload failed");
+      }
+
+      onProgress(Math.round((partNumber / totalChunks) * 100));
+    }
+
+    const result = await apiFetch<{
+      id: string;
+      fileName: string;
+    }>(`/api/chunked-upload/${sessionId}/complete`, { method: "POST" });
+
+    localStorage.removeItem(getUploadSessionKey(inspectionId, stepId));
+
+    return result;
+  },
+
+  cancelUpload: async (sessionId: string) => {
+    await apiFetch(`/api/chunked-upload/${sessionId}`, { method: "DELETE" });
+  },
 };
