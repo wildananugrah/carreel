@@ -1,5 +1,5 @@
 module.exports = {
-  name: "market-websocket-app",
+  name: "websocket-app",
   script: "index.ts",
   instances: 1, // Bun doesn't support PM2 cluster mode - use 1 instance only
   exec_mode: "fork", // Use fork mode with Bun (not cluster)
