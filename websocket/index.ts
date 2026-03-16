@@ -136,7 +136,7 @@ function getOnlineUsers(roomId: string): string[] {
 
 const server = Bun.serve<WebSocketData>({
   port: process.env.PORT || 3001,
-  fetch(req, server) {
+  async fetch(req, server) {
     const url = new URL(req.url);
 
     // Handle CORS preflight

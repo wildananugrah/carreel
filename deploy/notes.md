@@ -28,8 +28,8 @@ cp nginx/minio.carreel.id /etc/nginx/sites-available/minio.carreel.id
 
 ```bash
 ln -s /etc/nginx/sites-available/driver.carreel.id /etc/nginx/sites-enabled/driver.carreel.id
-ln -s /etc/nginx/sites-available/driver.carreel.id /etc/nginx/sites-enabled/driver.carreel.id
-ln -s /etc/nginx/sites-available/planner-api.carreel.id /etc/nginx/sites-enabled/planner-api.carreel.id
+ln -s /etc/nginx/sites-available/planner.carreel.id /etc/nginx/sites-enabled/planner.carreel.id
+ln -s /etc/nginx/sites-available/driver-api.carreel.id /etc/nginx/sites-enabled/driver-api.carreel.id
 ln -s /etc/nginx/sites-available/planner-api.carreel.id /etc/nginx/sites-enabled/planner-api.carreel.id
 ln -s /etc/nginx/sites-available/ws.carreel.id /etc/nginx/sites-enabled/ws.carreel.id
 ln -s /etc/nginx/sites-available/minio.carreel.id /etc/nginx/sites-enabled/minio.carreel.id
