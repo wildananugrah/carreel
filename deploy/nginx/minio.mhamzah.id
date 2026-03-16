@@ -1,0 +1,28 @@
+server {
+  listen 443 ssl;
+  listen [::]:443 ssl;
+  ssl_certificate /etc/letsencrypt/live/minio.mhamzah.id/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/minio.mhamzah.id/privkey.pem;
+  # server_name 154.56.61.109;
+  client_max_body_size 1024M;
+  server_name minio.mhamzah.id;
+  
+  location / {
+      proxy_pass http://localhost:9000/;
+      proxy_set_header Host $host;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection upgrade;
+      proxy_set_header Accept-Encoding gzip;
+  }
+}
+
+server {
+    if ($host = minio.mhamzah.id) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80 ;
+    listen [::]:80 ;
+    server_name minio.mhamzah.id;
+    return 404; # managed by Certbot
+}

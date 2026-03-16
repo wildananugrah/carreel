@@ -1,0 +1,44 @@
+server {
+  listen 443 ssl;
+  listen [::]:443 ssl;
+  ssl_certificate /etc/letsencrypt/live/planner.mhamzah.id/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/planner.mhamzah.id/privkey.pem;
+  client_max_body_size 1024M;
+  server_name planner.mhamzah.id;
+  
+  # Social media bot detection for OG meta tags on listing pages
+  location ~ ^/reels/([a-zA-Z0-9-]+)$ {
+      set $og_backend 0;
+      if ($http_user_agent ~* "(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|Googlebot|bingbot)") {
+          set $og_backend 1;
+      }
+      if ($og_backend = 1) {
+          rewrite ^/reels/(.+)$ /og/reels/$1 break;
+          proxy_pass http://localhost:5174;
+      }
+      proxy_pass http://localhost:5174;
+      proxy_set_header Host $host;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection upgrade;
+      proxy_set_header Accept-Encoding gzip;
+  }
+
+  location / {
+      proxy_pass http://localhost:5174/;
+      proxy_set_header Host $host;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection upgrade;
+      proxy_set_header Accept-Encoding gzip;
+  }
+}
+
+server {
+    if ($host = planner.mhamzah.id) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80 ;
+    listen [::]:80 ;
+    server_name planner.mhamzah.id;
+    return 404; # managed by Certbot
+}
