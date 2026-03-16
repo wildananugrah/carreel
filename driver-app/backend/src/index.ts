@@ -236,7 +236,7 @@ checkConnectivity().then(() => {
   logger.info(`Started development server: http://localhost:${port}`);
 });
 
-export default {
+Bun.serve({
   port,
   fetch: app.fetch,
-};
+});

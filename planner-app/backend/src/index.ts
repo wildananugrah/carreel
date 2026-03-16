@@ -168,7 +168,7 @@ checkConnectivity().then(() => {
   logger.info(`Planner backend started on port ${port}`);
 });
 
-export default {
+Bun.serve({
   port,
   fetch: app.fetch,
-};
+});
