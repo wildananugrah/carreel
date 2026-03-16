@@ -69,16 +69,23 @@ export function createInspectionRoutes(
     return c.json(inspection);
   });
 
-  // POST /api/inspections/:id/steps
-  app.post("/:id/steps", async (c) => {
+  // DELETE /api/inspections/:id
+  app.delete("/:id", async (c) => {
     const userId = c.get("userId") as string;
-    const body = await c.req.json();
-    const step = await inspectionService.createStep(
-      c.req.param("id"),
+    await inspectionService.delete(c.req.param("id"), userId);
+    return c.json({ success: true });
+  });
+
+  // POST /api/inspections/:id/end-trip
+  app.post("/:id/end-trip", async (c) => {
+    const userId = c.get("userId") as string;
+    const body = await c.req.json().catch(() => ({}));
+    const postTrip = await inspectionService.createPostTrip(
       userId,
-      body,
+      c.req.param("id"),
+      { latitude: body.latitude, longitude: body.longitude },
     );
-    return c.json(step, 201);
+    return c.json(postTrip, 201);
   });
 
   // PATCH /api/inspections/:id/steps/:stepId

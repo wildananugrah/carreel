@@ -104,7 +104,7 @@ app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
 
 // Routes
-app.route("/health", createHealthRoutes());
+app.route("/health", createHealthRoutes(prisma, storageProvider));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
@@ -124,7 +124,37 @@ app.route("/api/upload", createUploadRoutes(storageProvider, authMiddleware));
 
 const port = Number(process.env.PORT) || 3002;
 
-logger.info(`Planner backend starting on port ${port}`);
+// ========================
+// Startup Checks
+// ========================
+
+async function checkConnectivity() {
+  logger.info("Running startup connectivity checks...");
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    logger.info("Database: connected");
+  } catch (err) {
+    logger.error("Database: unavailable", { error: String(err) });
+    logger.error(
+      "Ensure PostgreSQL is running: docker compose -f planner-app/database/docker-compose.yml up -d",
+    );
+    process.exit(1);
+  }
+
+  const minioOk = await storageProvider.ping();
+  if (minioOk) {
+    logger.info("MinIO: connected");
+  } else {
+    logger.warn(
+      "MinIO: unavailable — file access will fail. Start it with: docker compose -f minio/docker-compose.yml up -d",
+    );
+  }
+}
+
+checkConnectivity().then(() => {
+  logger.info(`Planner backend started on port ${port}`);
+});
 
 export default {
   port,

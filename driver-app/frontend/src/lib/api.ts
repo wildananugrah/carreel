@@ -70,6 +70,8 @@ export const api = {
       body: body ? JSON.stringify(body) : undefined,
     }),
 
+  del: <T>(path: string) => apiFetch<T>(path, { method: "DELETE" }),
+
   upload: <T>(path: string, formData: FormData) =>
     apiFetch<T>(path, {
       method: "POST",

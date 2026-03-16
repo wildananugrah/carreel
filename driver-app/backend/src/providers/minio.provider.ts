@@ -46,4 +46,13 @@ export class MinIOProvider implements IStorageProvider {
   async delete(bucket: string, key: string): Promise<void> {
     await this.client.removeObject(bucket, key);
   }
+
+  async ping(): Promise<boolean> {
+    try {
+      await this.client.listBuckets();
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

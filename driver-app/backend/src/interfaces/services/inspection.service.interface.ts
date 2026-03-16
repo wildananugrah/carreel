@@ -1,7 +1,6 @@
 import type { Inspection, InspectionStep } from "../../generated/prisma";
 import type {
   CreateInspectionDTO,
-  CreateStepDTO,
   InspectionListQuery,
   PaginatedResponse,
   UpdateInspectionDTO,
@@ -10,6 +9,11 @@ import type { InspectionWithRelations } from "../repositories/inspection.reposit
 
 export interface IInspectionService {
   create(driverId: string, data: CreateInspectionDTO): Promise<Inspection>;
+  createPostTrip(
+    driverId: string,
+    preTripId: string,
+    data: { latitude?: number; longitude?: number },
+  ): Promise<Inspection>;
   getById(id: string, driverId: string): Promise<InspectionWithRelations>;
   list(
     driverId: string,
@@ -21,12 +25,8 @@ export interface IInspectionService {
     data: UpdateInspectionDTO,
   ): Promise<Inspection>;
   submit(id: string, driverId: string): Promise<Inspection>;
+  delete(id: string, driverId: string): Promise<void>;
 
-  createStep(
-    inspectionId: string,
-    driverId: string,
-    data: CreateStepDTO,
-  ): Promise<InspectionStep>;
   updateStepStatus(
     inspectionId: string,
     stepId: string,

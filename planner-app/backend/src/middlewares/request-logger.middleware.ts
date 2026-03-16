@@ -30,7 +30,6 @@ export function createRequestLoggerMiddleware(logger: ILogger) {
       transactionId,
       traceId: spanContext?.traceId,
       spanId: spanContext?.spanId,
-      userId: c.get("userId") ?? "anonymous",
       method: c.req.method,
       uri: c.req.path,
     });
@@ -55,6 +54,7 @@ export function createRequestLoggerMiddleware(logger: ILogger) {
     const processingTime = Date.now() - startTime;
 
     const logData: Record<string, unknown> = {
+      userId: c.get("userId") ?? "anonymous",
       statusCode: c.res.status,
       processingTime,
     };

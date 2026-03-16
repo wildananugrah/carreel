@@ -12,7 +12,6 @@ import type {
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
 import type {
   CreateInspectionDTO,
-  CreateStepDTO,
   InspectionListQuery,
   PaginatedResponse,
   UpdateInspectionDTO,
@@ -29,12 +28,58 @@ export class InspectionService implements IInspectionService {
     driverId: string,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
-    const inspection = await this.inspectionRepository.create(driverId, data);
-    this.logger.info("Inspection created", {
+    const inspection = await this.inspectionRepository.createWithSteps(
+      driverId,
+      data,
+    );
+    this.logger.info("Inspection created with steps", {
       inspectionId: inspection.id,
       driverId,
+      tripType: data.tripType,
     });
     return inspection;
+  }
+
+  async createPostTrip(
+    driverId: string,
+    preTripId: string,
+    data: { latitude?: number; longitude?: number },
+  ): Promise<Inspection> {
+    const preTrip = await this.inspectionRepository.findById(preTripId);
+    if (!preTrip) {
+      throw new Error("Pre-trip inspection not found");
+    }
+    if (preTrip.driverId !== driverId) {
+      throw new Error("Unauthorized access to inspection");
+    }
+    if (preTrip.tripType !== "PRE_TRIP") {
+      throw new Error("Can only create post-trip from a pre-trip inspection");
+    }
+    if (preTrip.status === "DRAFT") {
+      throw new Error(
+        "Pre-trip inspection must be submitted before creating post-trip",
+      );
+    }
+    if (preTrip.linkedFrom) {
+      throw new Error(
+        "A post-trip inspection already exists for this pre-trip",
+      );
+    }
+
+    const postTrip = await this.inspectionRepository.createWithSteps(driverId, {
+      tripType: "POST_TRIP",
+      linkedInspectionId: preTripId,
+      latitude: data.latitude,
+      longitude: data.longitude,
+    });
+
+    this.logger.info("Post-trip inspection created", {
+      postTripId: postTrip.id,
+      preTripId,
+      driverId,
+    });
+
+    return postTrip;
   }
 
   async getById(
@@ -91,6 +136,15 @@ export class InspectionService implements IInspectionService {
       throw new Error("Only DRAFT inspections can be submitted");
     }
 
+    // All steps must have media uploaded
+    const pendingSteps = inspection.steps.filter((s) => s.status === "PENDING");
+    if (pendingSteps.length > 0) {
+      const pendingTypes = pendingSteps.map((s) => s.stepType).join(", ");
+      throw new Error(
+        `All steps must have media uploaded before submitting. Pending: ${pendingTypes}`,
+      );
+    }
+
     const submitted = await this.inspectionRepository.updateStatus(
       id,
       "PENDING_AI",
@@ -122,26 +176,20 @@ export class InspectionService implements IInspectionService {
     return submitted;
   }
 
-  async createStep(
-    inspectionId: string,
-    driverId: string,
-    data: CreateStepDTO,
-  ): Promise<InspectionStep> {
-    const inspection = await this.inspectionRepository.findById(inspectionId);
+  async delete(id: string, driverId: string): Promise<void> {
+    const inspection = await this.inspectionRepository.findById(id);
     if (!inspection) {
       throw new Error("Inspection not found");
     }
     if (inspection.driverId !== driverId) {
       throw new Error("Unauthorized access to inspection");
     }
+    if (inspection.status !== "DRAFT") {
+      throw new Error("Only DRAFT inspections can be deleted");
+    }
 
-    const step = await this.inspectionRepository.createStep(inspectionId, data);
-    this.logger.info("Inspection step created", {
-      inspectionId,
-      stepId: step.id,
-      stepType: data.stepType,
-    });
-    return step;
+    await this.inspectionRepository.delete(id);
+    this.logger.info("Inspection deleted", { inspectionId: id, driverId });
   }
 
   async updateStepStatus(

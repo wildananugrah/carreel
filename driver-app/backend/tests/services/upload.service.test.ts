@@ -36,7 +36,9 @@ describe("UploadService", () => {
       },
       getPresignedUrl: async (bucket, key) =>
         `https://minio.local/${bucket}/${key}?presigned=true`,
+      download: async () => Buffer.alloc(0),
       delete: async () => {},
+      ping: async () => true,
     };
 
     const mockMediaFileRepo: IMediaFileRepository = {
@@ -77,6 +79,7 @@ describe("UploadService", () => {
             unitId: null,
             tripType: "PRE_TRIP",
             status: "DRAFT",
+            linkedInspectionId: null,
             startedAt: new Date(),
             completedAt: null,
             latitude: null,
@@ -84,6 +87,8 @@ describe("UploadService", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             unit: null,
+            linkedInspection: null,
+            linkedFrom: null,
             steps: [],
           } as InspectionWithRelations;
         }

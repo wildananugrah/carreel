@@ -42,6 +42,7 @@ export type InspectionMinAggregateOutputType = {
   unitId: string | null
   tripType: $Enums.TripType | null
   status: $Enums.InspectionStatus | null
+  linkedInspectionId: string | null
   startedAt: Date | null
   completedAt: Date | null
   latitude: number | null
@@ -56,6 +57,7 @@ export type InspectionMaxAggregateOutputType = {
   unitId: string | null
   tripType: $Enums.TripType | null
   status: $Enums.InspectionStatus | null
+  linkedInspectionId: string | null
   startedAt: Date | null
   completedAt: Date | null
   latitude: number | null
@@ -70,6 +72,7 @@ export type InspectionCountAggregateOutputType = {
   unitId: number
   tripType: number
   status: number
+  linkedInspectionId: number
   startedAt: number
   completedAt: number
   latitude: number
@@ -96,6 +99,7 @@ export type InspectionMinAggregateInputType = {
   unitId?: true
   tripType?: true
   status?: true
+  linkedInspectionId?: true
   startedAt?: true
   completedAt?: true
   latitude?: true
@@ -110,6 +114,7 @@ export type InspectionMaxAggregateInputType = {
   unitId?: true
   tripType?: true
   status?: true
+  linkedInspectionId?: true
   startedAt?: true
   completedAt?: true
   latitude?: true
@@ -124,6 +129,7 @@ export type InspectionCountAggregateInputType = {
   unitId?: true
   tripType?: true
   status?: true
+  linkedInspectionId?: true
   startedAt?: true
   completedAt?: true
   latitude?: true
@@ -225,6 +231,7 @@ export type InspectionGroupByOutputType = {
   unitId: string | null
   tripType: $Enums.TripType
   status: $Enums.InspectionStatus
+  linkedInspectionId: string | null
   startedAt: Date
   completedAt: Date | null
   latitude: number | null
@@ -262,6 +269,7 @@ export type InspectionWhereInput = {
   unitId?: Prisma.StringNullableFilter<"Inspection"> | string | null
   tripType?: Prisma.EnumTripTypeFilter<"Inspection"> | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFilter<"Inspection"> | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.StringNullableFilter<"Inspection"> | string | null
   startedAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"Inspection"> | Date | string | null
   latitude?: Prisma.FloatNullableFilter<"Inspection"> | number | null
@@ -270,6 +278,8 @@ export type InspectionWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
   driver?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   unit?: Prisma.XOR<Prisma.UnitNullableScalarRelationFilter, Prisma.UnitWhereInput> | null
+  linkedInspection?: Prisma.XOR<Prisma.InspectionNullableScalarRelationFilter, Prisma.InspectionWhereInput> | null
+  linkedFrom?: Prisma.XOR<Prisma.InspectionNullableScalarRelationFilter, Prisma.InspectionWhereInput> | null
   steps?: Prisma.InspectionStepListRelationFilter
   reviews?: Prisma.InspectionReviewListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
@@ -281,6 +291,7 @@ export type InspectionOrderByWithRelationInput = {
   unitId?: Prisma.SortOrderInput | Prisma.SortOrder
   tripType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  linkedInspectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -289,6 +300,8 @@ export type InspectionOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   driver?: Prisma.UserOrderByWithRelationInput
   unit?: Prisma.UnitOrderByWithRelationInput
+  linkedInspection?: Prisma.InspectionOrderByWithRelationInput
+  linkedFrom?: Prisma.InspectionOrderByWithRelationInput
   steps?: Prisma.InspectionStepOrderByRelationAggregateInput
   reviews?: Prisma.InspectionReviewOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
@@ -296,6 +309,7 @@ export type InspectionOrderByWithRelationInput = {
 
 export type InspectionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  linkedInspectionId?: string
   AND?: Prisma.InspectionWhereInput | Prisma.InspectionWhereInput[]
   OR?: Prisma.InspectionWhereInput[]
   NOT?: Prisma.InspectionWhereInput | Prisma.InspectionWhereInput[]
@@ -311,10 +325,12 @@ export type InspectionWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
   driver?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   unit?: Prisma.XOR<Prisma.UnitNullableScalarRelationFilter, Prisma.UnitWhereInput> | null
+  linkedInspection?: Prisma.XOR<Prisma.InspectionNullableScalarRelationFilter, Prisma.InspectionWhereInput> | null
+  linkedFrom?: Prisma.XOR<Prisma.InspectionNullableScalarRelationFilter, Prisma.InspectionWhereInput> | null
   steps?: Prisma.InspectionStepListRelationFilter
   reviews?: Prisma.InspectionReviewListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
-}, "id">
+}, "id" | "linkedInspectionId">
 
 export type InspectionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -322,6 +338,7 @@ export type InspectionOrderByWithAggregationInput = {
   unitId?: Prisma.SortOrderInput | Prisma.SortOrder
   tripType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  linkedInspectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -344,6 +361,7 @@ export type InspectionScalarWhereWithAggregatesInput = {
   unitId?: Prisma.StringNullableWithAggregatesFilter<"Inspection"> | string | null
   tripType?: Prisma.EnumTripTypeWithAggregatesFilter<"Inspection"> | $Enums.TripType
   status?: Prisma.EnumInspectionStatusWithAggregatesFilter<"Inspection"> | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.StringNullableWithAggregatesFilter<"Inspection"> | string | null
   startedAt?: Prisma.DateTimeWithAggregatesFilter<"Inspection"> | Date | string
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Inspection"> | Date | string | null
   latitude?: Prisma.FloatNullableWithAggregatesFilter<"Inspection"> | number | null
@@ -364,6 +382,8 @@ export type InspectionCreateInput = {
   updatedAt?: Date | string
   driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
   unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
@@ -375,12 +395,14 @@ export type InspectionUncheckedCreateInput = {
   unitId?: string | null
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
   longitude?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
@@ -398,6 +420,8 @@ export type InspectionUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
   unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
@@ -409,12 +433,14 @@ export type InspectionUncheckedUpdateInput = {
   unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
@@ -426,6 +452,7 @@ export type InspectionCreateManyInput = {
   unitId?: string | null
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
@@ -452,6 +479,7 @@ export type InspectionUncheckedUpdateManyInput = {
   unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -470,12 +498,18 @@ export type InspectionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type InspectionNullableScalarRelationFilter = {
+  is?: Prisma.InspectionWhereInput | null
+  isNot?: Prisma.InspectionWhereInput | null
+}
+
 export type InspectionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   driverId?: Prisma.SortOrder
   unitId?: Prisma.SortOrder
   tripType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  linkedInspectionId?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -495,6 +529,7 @@ export type InspectionMaxOrderByAggregateInput = {
   unitId?: Prisma.SortOrder
   tripType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  linkedInspectionId?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -509,6 +544,7 @@ export type InspectionMinOrderByAggregateInput = {
   unitId?: Prisma.SortOrder
   tripType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  linkedInspectionId?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -525,11 +561,6 @@ export type InspectionSumOrderByAggregateInput = {
 export type InspectionScalarRelationFilter = {
   is?: Prisma.InspectionWhereInput
   isNot?: Prisma.InspectionWhereInput
-}
-
-export type InspectionNullableScalarRelationFilter = {
-  is?: Prisma.InspectionWhereInput | null
-  isNot?: Prisma.InspectionWhereInput | null
 }
 
 export type InspectionCreateNestedManyWithoutDriverInput = {
@@ -616,6 +647,24 @@ export type InspectionUncheckedUpdateManyWithoutUnitNestedInput = {
   deleteMany?: Prisma.InspectionScalarWhereInput | Prisma.InspectionScalarWhereInput[]
 }
 
+export type InspectionCreateNestedOneWithoutLinkedFromInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedFromInput, Prisma.InspectionUncheckedCreateWithoutLinkedFromInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutLinkedFromInput
+  connect?: Prisma.InspectionWhereUniqueInput
+}
+
+export type InspectionCreateNestedOneWithoutLinkedInspectionInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedCreateWithoutLinkedInspectionInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutLinkedInspectionInput
+  connect?: Prisma.InspectionWhereUniqueInput
+}
+
+export type InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedCreateWithoutLinkedInspectionInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutLinkedInspectionInput
+  connect?: Prisma.InspectionWhereUniqueInput
+}
+
 export type EnumTripTypeFieldUpdateOperationsInput = {
   set?: $Enums.TripType
 }
@@ -634,6 +683,36 @@ export type NullableFloatFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type InspectionUpdateOneWithoutLinkedFromNestedInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedFromInput, Prisma.InspectionUncheckedCreateWithoutLinkedFromInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutLinkedFromInput
+  upsert?: Prisma.InspectionUpsertWithoutLinkedFromInput
+  disconnect?: Prisma.InspectionWhereInput | boolean
+  delete?: Prisma.InspectionWhereInput | boolean
+  connect?: Prisma.InspectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InspectionUpdateToOneWithWhereWithoutLinkedFromInput, Prisma.InspectionUpdateWithoutLinkedFromInput>, Prisma.InspectionUncheckedUpdateWithoutLinkedFromInput>
+}
+
+export type InspectionUpdateOneWithoutLinkedInspectionNestedInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedCreateWithoutLinkedInspectionInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutLinkedInspectionInput
+  upsert?: Prisma.InspectionUpsertWithoutLinkedInspectionInput
+  disconnect?: Prisma.InspectionWhereInput | boolean
+  delete?: Prisma.InspectionWhereInput | boolean
+  connect?: Prisma.InspectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InspectionUpdateToOneWithWhereWithoutLinkedInspectionInput, Prisma.InspectionUpdateWithoutLinkedInspectionInput>, Prisma.InspectionUncheckedUpdateWithoutLinkedInspectionInput>
+}
+
+export type InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedCreateWithoutLinkedInspectionInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutLinkedInspectionInput
+  upsert?: Prisma.InspectionUpsertWithoutLinkedInspectionInput
+  disconnect?: Prisma.InspectionWhereInput | boolean
+  delete?: Prisma.InspectionWhereInput | boolean
+  connect?: Prisma.InspectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InspectionUpdateToOneWithWhereWithoutLinkedInspectionInput, Prisma.InspectionUpdateWithoutLinkedInspectionInput>, Prisma.InspectionUncheckedUpdateWithoutLinkedInspectionInput>
 }
 
 export type InspectionCreateNestedOneWithoutStepsInput = {
@@ -691,6 +770,8 @@ export type InspectionCreateWithoutDriverInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
@@ -701,12 +782,14 @@ export type InspectionUncheckedCreateWithoutDriverInput = {
   unitId?: string | null
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
   longitude?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
@@ -747,6 +830,7 @@ export type InspectionScalarWhereInput = {
   unitId?: Prisma.StringNullableFilter<"Inspection"> | string | null
   tripType?: Prisma.EnumTripTypeFilter<"Inspection"> | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFilter<"Inspection"> | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.StringNullableFilter<"Inspection"> | string | null
   startedAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"Inspection"> | Date | string | null
   latitude?: Prisma.FloatNullableFilter<"Inspection"> | number | null
@@ -766,6 +850,8 @@ export type InspectionCreateWithoutUnitInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
@@ -776,12 +862,14 @@ export type InspectionUncheckedCreateWithoutUnitInput = {
   driverId: string
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
   longitude?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
@@ -813,6 +901,182 @@ export type InspectionUpdateManyWithWhereWithoutUnitInput = {
   data: Prisma.XOR<Prisma.InspectionUpdateManyMutationInput, Prisma.InspectionUncheckedUpdateManyWithoutUnitInput>
 }
 
+export type InspectionCreateWithoutLinkedFromInput = {
+  id?: string
+  tripType: $Enums.TripType
+  status?: $Enums.InspectionStatus
+  startedAt?: Date | string
+  completedAt?: Date | string | null
+  latitude?: number | null
+  longitude?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
+  unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+}
+
+export type InspectionUncheckedCreateWithoutLinkedFromInput = {
+  id?: string
+  driverId: string
+  unitId?: string | null
+  tripType: $Enums.TripType
+  status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
+  startedAt?: Date | string
+  completedAt?: Date | string | null
+  latitude?: number | null
+  longitude?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+}
+
+export type InspectionCreateOrConnectWithoutLinkedFromInput = {
+  where: Prisma.InspectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedFromInput, Prisma.InspectionUncheckedCreateWithoutLinkedFromInput>
+}
+
+export type InspectionCreateWithoutLinkedInspectionInput = {
+  id?: string
+  tripType: $Enums.TripType
+  status?: $Enums.InspectionStatus
+  startedAt?: Date | string
+  completedAt?: Date | string | null
+  latitude?: number | null
+  longitude?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
+  unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
+  steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+}
+
+export type InspectionUncheckedCreateWithoutLinkedInspectionInput = {
+  id?: string
+  driverId: string
+  unitId?: string | null
+  tripType: $Enums.TripType
+  status?: $Enums.InspectionStatus
+  startedAt?: Date | string
+  completedAt?: Date | string | null
+  latitude?: number | null
+  longitude?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
+  steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+}
+
+export type InspectionCreateOrConnectWithoutLinkedInspectionInput = {
+  where: Prisma.InspectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedCreateWithoutLinkedInspectionInput>
+}
+
+export type InspectionUpsertWithoutLinkedFromInput = {
+  update: Prisma.XOR<Prisma.InspectionUpdateWithoutLinkedFromInput, Prisma.InspectionUncheckedUpdateWithoutLinkedFromInput>
+  create: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedFromInput, Prisma.InspectionUncheckedCreateWithoutLinkedFromInput>
+  where?: Prisma.InspectionWhereInput
+}
+
+export type InspectionUpdateToOneWithWhereWithoutLinkedFromInput = {
+  where?: Prisma.InspectionWhereInput
+  data: Prisma.XOR<Prisma.InspectionUpdateWithoutLinkedFromInput, Prisma.InspectionUncheckedUpdateWithoutLinkedFromInput>
+}
+
+export type InspectionUpdateWithoutLinkedFromInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
+  status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
+  unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+}
+
+export type InspectionUncheckedUpdateWithoutLinkedFromInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
+  status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+}
+
+export type InspectionUpsertWithoutLinkedInspectionInput = {
+  update: Prisma.XOR<Prisma.InspectionUpdateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedUpdateWithoutLinkedInspectionInput>
+  create: Prisma.XOR<Prisma.InspectionCreateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedCreateWithoutLinkedInspectionInput>
+  where?: Prisma.InspectionWhereInput
+}
+
+export type InspectionUpdateToOneWithWhereWithoutLinkedInspectionInput = {
+  where?: Prisma.InspectionWhereInput
+  data: Prisma.XOR<Prisma.InspectionUpdateWithoutLinkedInspectionInput, Prisma.InspectionUncheckedUpdateWithoutLinkedInspectionInput>
+}
+
+export type InspectionUpdateWithoutLinkedInspectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
+  status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
+  unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
+  steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+}
+
+export type InspectionUncheckedUpdateWithoutLinkedInspectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
+  status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
+  steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+}
+
 export type InspectionCreateWithoutStepsInput = {
   id?: string
   tripType: $Enums.TripType
@@ -825,6 +1089,8 @@ export type InspectionCreateWithoutStepsInput = {
   updatedAt?: Date | string
   driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
   unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
 }
@@ -835,12 +1101,14 @@ export type InspectionUncheckedCreateWithoutStepsInput = {
   unitId?: string | null
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
   longitude?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
@@ -873,6 +1141,8 @@ export type InspectionUpdateWithoutStepsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
   unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
 }
@@ -883,12 +1153,14 @@ export type InspectionUncheckedUpdateWithoutStepsInput = {
   unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
@@ -905,6 +1177,8 @@ export type InspectionCreateWithoutReviewsInput = {
   updatedAt?: Date | string
   driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
   unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
 }
@@ -915,12 +1189,14 @@ export type InspectionUncheckedCreateWithoutReviewsInput = {
   unitId?: string | null
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
   longitude?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
@@ -953,6 +1229,8 @@ export type InspectionUpdateWithoutReviewsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
   unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
 }
@@ -963,12 +1241,14 @@ export type InspectionUncheckedUpdateWithoutReviewsInput = {
   unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
@@ -985,6 +1265,8 @@ export type InspectionCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
   unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
 }
@@ -995,12 +1277,14 @@ export type InspectionUncheckedCreateWithoutAuditLogsInput = {
   unitId?: string | null
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
   longitude?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
 }
@@ -1033,6 +1317,8 @@ export type InspectionUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
   unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
 }
@@ -1043,12 +1329,14 @@ export type InspectionUncheckedUpdateWithoutAuditLogsInput = {
   unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
 }
@@ -1058,6 +1346,7 @@ export type InspectionCreateManyDriverInput = {
   unitId?: string | null
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
@@ -1077,6 +1366,8 @@ export type InspectionUpdateWithoutDriverInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
@@ -1087,12 +1378,14 @@ export type InspectionUncheckedUpdateWithoutDriverInput = {
   unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
@@ -1103,6 +1396,7 @@ export type InspectionUncheckedUpdateManyWithoutDriverInput = {
   unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1116,6 +1410,7 @@ export type InspectionCreateManyUnitInput = {
   driverId: string
   tripType: $Enums.TripType
   status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
   startedAt?: Date | string
   completedAt?: Date | string | null
   latitude?: number | null
@@ -1135,6 +1430,8 @@ export type InspectionUpdateWithoutUnitInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
@@ -1145,12 +1442,14 @@ export type InspectionUncheckedUpdateWithoutUnitInput = {
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
@@ -1161,6 +1460,7 @@ export type InspectionUncheckedUpdateManyWithoutUnitInput = {
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
   tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
   status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1224,6 +1524,7 @@ export type InspectionSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   unitId?: boolean
   tripType?: boolean
   status?: boolean
+  linkedInspectionId?: boolean
   startedAt?: boolean
   completedAt?: boolean
   latitude?: boolean
@@ -1232,6 +1533,8 @@ export type InspectionSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   updatedAt?: boolean
   driver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   unit?: boolean | Prisma.Inspection$unitArgs<ExtArgs>
+  linkedInspection?: boolean | Prisma.Inspection$linkedInspectionArgs<ExtArgs>
+  linkedFrom?: boolean | Prisma.Inspection$linkedFromArgs<ExtArgs>
   steps?: boolean | Prisma.Inspection$stepsArgs<ExtArgs>
   reviews?: boolean | Prisma.Inspection$reviewsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Inspection$auditLogsArgs<ExtArgs>
@@ -1244,6 +1547,7 @@ export type InspectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   unitId?: boolean
   tripType?: boolean
   status?: boolean
+  linkedInspectionId?: boolean
   startedAt?: boolean
   completedAt?: boolean
   latitude?: boolean
@@ -1252,6 +1556,7 @@ export type InspectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   updatedAt?: boolean
   driver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   unit?: boolean | Prisma.Inspection$unitArgs<ExtArgs>
+  linkedInspection?: boolean | Prisma.Inspection$linkedInspectionArgs<ExtArgs>
 }, ExtArgs["result"]["inspection"]>
 
 export type InspectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1260,6 +1565,7 @@ export type InspectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   unitId?: boolean
   tripType?: boolean
   status?: boolean
+  linkedInspectionId?: boolean
   startedAt?: boolean
   completedAt?: boolean
   latitude?: boolean
@@ -1268,6 +1574,7 @@ export type InspectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   updatedAt?: boolean
   driver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   unit?: boolean | Prisma.Inspection$unitArgs<ExtArgs>
+  linkedInspection?: boolean | Prisma.Inspection$linkedInspectionArgs<ExtArgs>
 }, ExtArgs["result"]["inspection"]>
 
 export type InspectionSelectScalar = {
@@ -1276,6 +1583,7 @@ export type InspectionSelectScalar = {
   unitId?: boolean
   tripType?: boolean
   status?: boolean
+  linkedInspectionId?: boolean
   startedAt?: boolean
   completedAt?: boolean
   latitude?: boolean
@@ -1284,10 +1592,12 @@ export type InspectionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type InspectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "driverId" | "unitId" | "tripType" | "status" | "startedAt" | "completedAt" | "latitude" | "longitude" | "createdAt" | "updatedAt", ExtArgs["result"]["inspection"]>
+export type InspectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "driverId" | "unitId" | "tripType" | "status" | "linkedInspectionId" | "startedAt" | "completedAt" | "latitude" | "longitude" | "createdAt" | "updatedAt", ExtArgs["result"]["inspection"]>
 export type InspectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   driver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   unit?: boolean | Prisma.Inspection$unitArgs<ExtArgs>
+  linkedInspection?: boolean | Prisma.Inspection$linkedInspectionArgs<ExtArgs>
+  linkedFrom?: boolean | Prisma.Inspection$linkedFromArgs<ExtArgs>
   steps?: boolean | Prisma.Inspection$stepsArgs<ExtArgs>
   reviews?: boolean | Prisma.Inspection$reviewsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Inspection$auditLogsArgs<ExtArgs>
@@ -1296,10 +1606,12 @@ export type InspectionInclude<ExtArgs extends runtime.Types.Extensions.InternalA
 export type InspectionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   driver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   unit?: boolean | Prisma.Inspection$unitArgs<ExtArgs>
+  linkedInspection?: boolean | Prisma.Inspection$linkedInspectionArgs<ExtArgs>
 }
 export type InspectionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   driver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   unit?: boolean | Prisma.Inspection$unitArgs<ExtArgs>
+  linkedInspection?: boolean | Prisma.Inspection$linkedInspectionArgs<ExtArgs>
 }
 
 export type $InspectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1307,6 +1619,8 @@ export type $InspectionPayload<ExtArgs extends runtime.Types.Extensions.Internal
   objects: {
     driver: Prisma.$UserPayload<ExtArgs>
     unit: Prisma.$UnitPayload<ExtArgs> | null
+    linkedInspection: Prisma.$InspectionPayload<ExtArgs> | null
+    linkedFrom: Prisma.$InspectionPayload<ExtArgs> | null
     steps: Prisma.$InspectionStepPayload<ExtArgs>[]
     reviews: Prisma.$InspectionReviewPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
@@ -1317,6 +1631,7 @@ export type $InspectionPayload<ExtArgs extends runtime.Types.Extensions.Internal
     unitId: string | null
     tripType: $Enums.TripType
     status: $Enums.InspectionStatus
+    linkedInspectionId: string | null
     startedAt: Date
     completedAt: Date | null
     latitude: number | null
@@ -1719,6 +2034,8 @@ export interface Prisma__InspectionClient<T, Null = never, ExtArgs extends runti
   readonly [Symbol.toStringTag]: "PrismaPromise"
   driver<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   unit<T extends Prisma.Inspection$unitArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$unitArgs<ExtArgs>>): Prisma.Prisma__UnitClient<runtime.Types.Result.GetResult<Prisma.$UnitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  linkedInspection<T extends Prisma.Inspection$linkedInspectionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$linkedInspectionArgs<ExtArgs>>): Prisma.Prisma__InspectionClient<runtime.Types.Result.GetResult<Prisma.$InspectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  linkedFrom<T extends Prisma.Inspection$linkedFromArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$linkedFromArgs<ExtArgs>>): Prisma.Prisma__InspectionClient<runtime.Types.Result.GetResult<Prisma.$InspectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   steps<T extends Prisma.Inspection$stepsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$stepsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InspectionStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.Inspection$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InspectionReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.Inspection$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1756,6 +2073,7 @@ export interface InspectionFieldRefs {
   readonly unitId: Prisma.FieldRef<"Inspection", 'String'>
   readonly tripType: Prisma.FieldRef<"Inspection", 'TripType'>
   readonly status: Prisma.FieldRef<"Inspection", 'InspectionStatus'>
+  readonly linkedInspectionId: Prisma.FieldRef<"Inspection", 'String'>
   readonly startedAt: Prisma.FieldRef<"Inspection", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"Inspection", 'DateTime'>
   readonly latitude: Prisma.FieldRef<"Inspection", 'Float'>
@@ -2179,6 +2497,44 @@ export type Inspection$unitArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.UnitInclude<ExtArgs> | null
   where?: Prisma.UnitWhereInput
+}
+
+/**
+ * Inspection.linkedInspection
+ */
+export type Inspection$linkedInspectionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Inspection
+   */
+  select?: Prisma.InspectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Inspection
+   */
+  omit?: Prisma.InspectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InspectionInclude<ExtArgs> | null
+  where?: Prisma.InspectionWhereInput
+}
+
+/**
+ * Inspection.linkedFrom
+ */
+export type Inspection$linkedFromArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Inspection
+   */
+  select?: Prisma.InspectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Inspection
+   */
+  omit?: Prisma.InspectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InspectionInclude<ExtArgs> | null
+  where?: Prisma.InspectionWhereInput
 }
 
 /**

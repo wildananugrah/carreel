@@ -26,6 +26,12 @@ export class InspectionRepository implements IInspectionRepository {
         unit: {
           select: { id: true, licensePlate: true, make: true, model: true },
         },
+        linkedInspection: {
+          select: { id: true, tripType: true, status: true },
+        },
+        linkedFrom: {
+          select: { id: true, tripType: true, status: true },
+        },
         steps: {
           include: {
             mediaFiles: {

@@ -23,6 +23,7 @@ function createMockInspection(overrides: Partial<Inspection> = {}): Inspection {
     unitId: null,
     tripType: "PRE_TRIP",
     status: "DRAFT",
+    linkedInspectionId: null,
     startedAt: new Date(),
     completedAt: null,
     latitude: null,
@@ -33,12 +34,52 @@ function createMockInspection(overrides: Partial<Inspection> = {}): Inspection {
   };
 }
 
+function createMockSteps(
+  inspectionId: string,
+  statusOverride?: string,
+): InspectionWithRelations["steps"] {
+  return [
+    {
+      id: `${inspectionId}-step-1`,
+      inspectionId,
+      stepType: "UNIT_IDENTIFICATION",
+      status: statusOverride ?? "PENDING",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      mediaFiles: [],
+      aiAnalysis: null,
+    } as any,
+    {
+      id: `${inspectionId}-step-2`,
+      inspectionId,
+      stepType: "SPEEDOMETER",
+      status: statusOverride ?? "PENDING",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      mediaFiles: [],
+      aiAnalysis: null,
+    } as any,
+    {
+      id: `${inspectionId}-step-3`,
+      inspectionId,
+      stepType: "BODY_INSPECTION",
+      status: statusOverride ?? "PENDING",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      mediaFiles: [],
+      aiAnalysis: null,
+    } as any,
+  ];
+}
+
 function createMockInspectionWithRelations(
   overrides: Partial<InspectionWithRelations> = {},
 ): InspectionWithRelations {
   return {
     ...createMockInspection(overrides),
     unit: null,
+    linkedInspection: null,
+    linkedFrom: null,
     steps: [],
     ...overrides,
   } as InspectionWithRelations;
@@ -59,10 +100,36 @@ describe("InspectionService", () => {
           id: `insp-${inspections.size + 1}`,
           driverId,
           tripType: data.tripType,
+          linkedInspectionId: data.linkedInspectionId ?? null,
           latitude: data.latitude ?? null,
           longitude: data.longitude ?? null,
         });
         inspections.set(insp.id, insp);
+        return insp;
+      },
+      createWithSteps: async (driverId, data) => {
+        const id = `insp-${inspections.size + 1}`;
+        const insp = createMockInspectionWithRelations({
+          id,
+          driverId,
+          tripType: data.tripType,
+          linkedInspectionId: data.linkedInspectionId ?? null,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          steps: createMockSteps(id),
+        });
+        inspections.set(insp.id, insp);
+        // If linked, update the pre-trip's linkedFrom
+        if (data.linkedInspectionId) {
+          const preTrip = inspections.get(data.linkedInspectionId);
+          if (preTrip) {
+            (preTrip as any).linkedFrom = {
+              id,
+              tripType: data.tripType,
+              status: "DRAFT",
+            };
+          }
+        }
         return insp;
       },
       findById: async (id) => inspections.get(id) ?? null,
@@ -105,16 +172,28 @@ describe("InspectionService", () => {
         (step as any).status = status;
         return step;
       },
+      delete: async (id) => {
+        inspections.delete(id);
+      },
+      findUnitByInspectionId: async () => null,
+      updateUnitKm: async () => {},
     };
 
     service = new InspectionService(mockRepo, mockLogger);
   });
 
-  test("create inspection", async () => {
+  test("create inspection auto-creates 3 steps", async () => {
     const result = await service.create("driver-1", { tripType: "PRE_TRIP" });
     expect(result.id).toBe("insp-1");
     expect(result.driverId).toBe("driver-1");
     expect(result.status).toBe("DRAFT");
+    const detail = await service.getById(result.id, "driver-1");
+    expect(detail.steps.length).toBe(3);
+    expect(detail.steps.map((s) => s.stepType)).toEqual([
+      "UNIT_IDENTIFICATION",
+      "SPEEDOMETER",
+      "BODY_INSPECTION",
+    ]);
   });
 
   test("getById returns inspection for correct driver", async () => {
@@ -138,7 +217,7 @@ describe("InspectionService", () => {
 
   test("list returns paginated results", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
-    await service.create("driver-1", { tripType: "POST_TRIP" });
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
     const result = await service.list("driver-1", { page: 1, limit: 10 });
     expect(result.total).toBe(2);
     expect(result.data.length).toBe(2);
@@ -154,31 +233,43 @@ describe("InspectionService", () => {
 
   test("update throws for non-DRAFT inspection", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
+    // Mark steps as UPLOADED so submit passes
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
     await service.submit("insp-1", "driver-1");
     expect(
       service.update("insp-1", "driver-1", { unitId: "unit-1" }),
     ).rejects.toThrow("Only DRAFT");
   });
 
-  test("submit changes status to PENDING_AI", async () => {
+  test("submit changes status to PENDING_AI when all steps uploaded", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
+    // Mark all steps as UPLOADED
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
     const result = await service.submit("insp-1", "driver-1");
     expect(result.status).toBe("PENDING_AI");
   });
 
-  test("submit throws for already submitted inspection", async () => {
+  test("submit throws when steps are still PENDING", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
-    await service.submit("insp-1", "driver-1");
-    expect(service.submit("insp-1", "driver-1")).rejects.toThrow("Only DRAFT");
+    expect(service.submit("insp-1", "driver-1")).rejects.toThrow(
+      "All steps must have media uploaded",
+    );
   });
 
-  test("createStep adds step to inspection", async () => {
+  test("submit throws for already submitted inspection", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
-    const step = await service.createStep("insp-1", "driver-1", {
-      stepType: "UNIT_IDENTIFICATION",
-    });
-    expect(step.stepType).toBe("UNIT_IDENTIFICATION");
-    expect(step.status).toBe("PENDING");
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    await service.submit("insp-1", "driver-1");
+    expect(service.submit("insp-1", "driver-1")).rejects.toThrow("Only DRAFT");
   });
 
   test("submit enqueues jobs for UPLOADED steps when jobQueue provided", async () => {
@@ -190,7 +281,6 @@ describe("InspectionService", () => {
       },
     };
 
-    // Rebuild service with job queue, using same repo reference
     const inspWithSteps = createMockInspectionWithRelations({
       id: "insp-jobs",
       driverId: "driver-1",
@@ -219,7 +309,7 @@ describe("InspectionService", () => {
           id: "s3",
           inspectionId: "insp-jobs",
           stepType: "BODY_INSPECTION",
-          status: "PENDING",
+          status: "UPLOADED",
           createdAt: new Date(),
           updatedAt: new Date(),
           mediaFiles: [],
@@ -230,16 +320,25 @@ describe("InspectionService", () => {
 
     const mockRepo: IInspectionRepository = {
       create: async () => inspWithSteps,
+      createWithSteps: async () => inspWithSteps,
       findById: async () => inspWithSteps,
-      findByDriverId: async () => ({ data: [], total: 0, page: 1, limit: 20 }),
+      findByDriverId: async () => ({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+      }),
       update: async () => inspWithSteps,
       updateStatus: async (_id, status) => {
         (inspWithSteps as any).status = status;
         return inspWithSteps;
       },
+      delete: async () => {},
       createStep: async () => ({}) as any,
       findStepById: async () => null,
       updateStepStatus: async () => ({}) as any,
+      findUnitByInspectionId: async () => null,
+      updateUnitKm: async () => {},
     };
 
     const svcWithQueue = new InspectionService(
@@ -249,10 +348,97 @@ describe("InspectionService", () => {
     );
     await svcWithQueue.submit("insp-jobs", "driver-1");
 
-    // Only UPLOADED steps get enqueued (s1 and s2, not s3 which is PENDING)
-    expect(enqueuedJobs.length).toBe(2);
+    expect(enqueuedJobs.length).toBe(3);
     expect(enqueuedJobs[0].queue).toBe("step-analysis");
     expect((enqueuedJobs[0].data as any).stepType).toBe("UNIT_IDENTIFICATION");
     expect((enqueuedJobs[1].data as any).stepType).toBe("SPEEDOMETER");
+    expect((enqueuedJobs[2].data as any).stepType).toBe("BODY_INSPECTION");
+  });
+
+  test("createPostTrip creates linked POST_TRIP", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    // Mark steps as UPLOADED and submit
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    await service.submit("insp-1", "driver-1");
+
+    const postTrip = await service.createPostTrip("driver-1", "insp-1", {});
+    expect(postTrip.tripType).toBe("POST_TRIP");
+    expect(postTrip.linkedInspectionId).toBe("insp-1");
+  });
+
+  test("createPostTrip throws if pre-trip not submitted", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    expect(service.createPostTrip("driver-1", "insp-1", {})).rejects.toThrow(
+      "must be submitted",
+    );
+  });
+
+  test("createPostTrip throws if already has post-trip", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    await service.submit("insp-1", "driver-1");
+    await service.createPostTrip("driver-1", "insp-1", {});
+    expect(service.createPostTrip("driver-1", "insp-1", {})).rejects.toThrow(
+      "already exists",
+    );
+  });
+
+  test("createPostTrip throws for wrong driver", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    await service.submit("insp-1", "driver-1");
+    expect(service.createPostTrip("driver-2", "insp-1", {})).rejects.toThrow(
+      "Unauthorized",
+    );
+  });
+
+  test("createPostTrip throws for non-PRE_TRIP", async () => {
+    await service.create("driver-1", { tripType: "POST_TRIP" });
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    await service.submit("insp-1", "driver-1");
+    expect(service.createPostTrip("driver-1", "insp-1", {})).rejects.toThrow(
+      "only create post-trip from a pre-trip",
+    );
+  });
+
+  test("delete DRAFT inspection succeeds", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.delete("insp-1", "driver-1");
+    expect(service.getById("insp-1", "driver-1")).rejects.toThrow("not found");
+  });
+
+  test("delete non-DRAFT inspection throws", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    await service.submit("insp-1", "driver-1");
+    expect(service.delete("insp-1", "driver-1")).rejects.toThrow("Only DRAFT");
+  });
+
+  test("delete inspection by wrong driver throws", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    expect(service.delete("insp-1", "driver-2")).rejects.toThrow(
+      "Unauthorized",
+    );
+  });
+
+  test("delete non-existent inspection throws", async () => {
+    expect(service.delete("non-existent", "driver-1")).rejects.toThrow(
+      "not found",
+    );
   });
 });

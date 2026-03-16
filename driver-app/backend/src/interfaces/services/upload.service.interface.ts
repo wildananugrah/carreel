@@ -9,4 +9,5 @@ export interface IUploadService {
     meta: UploadMediaDTO,
   ): Promise<MediaFileResponse>;
   getPresignedUrl(key: string, driverId: string): Promise<string>;
+  getMediaUrl(mediaId: string): Promise<string>;
 }

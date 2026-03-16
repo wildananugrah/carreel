@@ -26,12 +26,19 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface LinkedInspectionSummary {
+  id: string;
+  tripType: TripType;
+  status: InspectionStatus;
+}
+
 export interface Inspection {
   id: string;
   driverId: string;
   unitId: string | null;
   tripType: TripType;
   status: InspectionStatus;
+  linkedInspectionId: string | null;
   startedAt: string;
   completedAt: string | null;
   latitude: number | null;
@@ -44,6 +51,8 @@ export interface Inspection {
     make: string | null;
     model: string | null;
   } | null;
+  linkedInspection?: LinkedInspectionSummary | null;
+  linkedFrom?: LinkedInspectionSummary | null;
   _count?: {
     steps: number;
   };

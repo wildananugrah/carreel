@@ -37,9 +37,13 @@ function createMockMediaFile(overrides: Partial<MediaFile> = {}): MediaFile {
     fileName: "photo.jpg",
     mimeType: "image/jpeg",
     mediaType: "IMAGE",
-    fileSizeBytes: 1024,
+    fileSize: 1024,
     minioKey: "inspections/photo.jpg",
     minioBucket: "carreel-images",
+    latitude: null,
+    longitude: null,
+    capturedAt: new Date(),
+    durationSeconds: null,
     createdAt: new Date(),
     ...overrides,
   };
@@ -128,6 +132,7 @@ describe("StepAnalysisJob", () => {
       getPresignedUrl: async () => "https://presigned-url",
       download: async () => Buffer.from("fake-image-data"),
       delete: async () => {},
+      ping: async () => true,
     };
 
     const steps = new Map<string, InspectionStep>();
@@ -139,6 +144,7 @@ describe("StepAnalysisJob", () => {
 
     mockInspectionRepo = {
       create: async () => ({}) as any,
+      createWithSteps: async () => ({}) as any,
       findById: async (id: string) =>
         ({
           id,
@@ -146,6 +152,7 @@ describe("StepAnalysisJob", () => {
           unitId: null,
           tripType: "PRE_TRIP",
           status: inspectionStatuses.get(id) ?? "PENDING_AI",
+          linkedInspectionId: null,
           startedAt: new Date(),
           completedAt: null,
           latitude: null,
@@ -153,6 +160,8 @@ describe("StepAnalysisJob", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           unit: null,
+          linkedInspection: null,
+          linkedFrom: null,
           steps: [...steps.values()].map((s) => ({
             ...s,
             status: stepStatuses.get(s.id) ?? s.status,
@@ -178,6 +187,7 @@ describe("StepAnalysisJob", () => {
         const step = steps.get(stepId)!;
         return { ...step, status } as any;
       },
+      delete: async () => {},
       findUnitByInspectionId: async () => mockUnit,
       updateUnitKm: async () => {},
     };

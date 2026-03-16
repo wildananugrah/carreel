@@ -29,9 +29,33 @@ export class InspectionRepository implements IInspectionRepository {
       data: {
         driverId,
         tripType: data.tripType,
+        linkedInspectionId: data.linkedInspectionId,
         latitude: data.latitude,
         longitude: data.longitude,
         status: "DRAFT",
+      },
+    });
+  }
+
+  async createWithSteps(
+    driverId: string,
+    data: CreateInspectionDTO,
+  ): Promise<Inspection> {
+    return this.prisma.inspection.create({
+      data: {
+        driverId,
+        tripType: data.tripType,
+        linkedInspectionId: data.linkedInspectionId,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        status: "DRAFT",
+        steps: {
+          create: [
+            { stepType: "UNIT_IDENTIFICATION", status: "PENDING" },
+            { stepType: "SPEEDOMETER", status: "PENDING" },
+            { stepType: "BODY_INSPECTION", status: "PENDING" },
+          ],
+        },
       },
     });
   }
@@ -42,6 +66,12 @@ export class InspectionRepository implements IInspectionRepository {
       include: {
         unit: {
           select: { id: true, licensePlate: true, make: true, model: true },
+        },
+        linkedInspection: {
+          select: { id: true, tripType: true, status: true },
+        },
+        linkedFrom: {
+          select: { id: true, tripType: true, status: true },
         },
         steps: {
           include: {
@@ -95,6 +125,12 @@ export class InspectionRepository implements IInspectionRepository {
         include: {
           unit: {
             select: { id: true, licensePlate: true, make: true, model: true },
+          },
+          linkedInspection: {
+            select: { id: true, tripType: true, status: true },
+          },
+          linkedFrom: {
+            select: { id: true, tripType: true, status: true },
           },
         },
       }),
@@ -153,6 +189,10 @@ export class InspectionRepository implements IInspectionRepository {
       where: { id: stepId },
       data: { status },
     });
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.inspection.delete({ where: { id } });
   }
 
   async findUnitByInspectionId(inspectionId: string): Promise<Unit | null> {

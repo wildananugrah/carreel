@@ -1378,6 +1378,7 @@ export const InspectionScalarFieldEnum = {
   unitId: 'unitId',
   tripType: 'tripType',
   status: 'status',
+  linkedInspectionId: 'linkedInspectionId',
   startedAt: 'startedAt',
   completedAt: 'completedAt',
   latitude: 'latitude',

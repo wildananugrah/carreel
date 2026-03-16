@@ -21,4 +21,13 @@ export class MinIOProvider implements IStorageProvider {
   ): Promise<string> {
     return this.client.presignedGetObject(bucket, key, expiresIn);
   }
+
+  async ping(): Promise<boolean> {
+    try {
+      await this.client.listBuckets();
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

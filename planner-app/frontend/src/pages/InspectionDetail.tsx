@@ -137,6 +137,54 @@ export function InspectionDetail() {
             </p>
           )}
 
+          {/* Linked Inspection */}
+          {inspection.linkedInspection && (
+            <Card
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => navigate(`/inspections/${inspection.linkedInspection?.id}`)}
+            >
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Linked Pre-Trip</p>
+                <StatusBadge status={inspection.linkedInspection.status} />
+              </div>
+              <svg
+                aria-hidden="true"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-gray-400"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Card>
+          )}
+          {inspection.linkedFrom && (
+            <Card
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => navigate(`/inspections/${inspection.linkedFrom?.id}`)}
+            >
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Linked Post-Trip</p>
+                <StatusBadge status={inspection.linkedFrom.status} />
+              </div>
+              <svg
+                aria-hidden="true"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-gray-400"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Card>
+          )}
+
           {/* Steps */}
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">

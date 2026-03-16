@@ -13,6 +13,12 @@ import type {
   UpdateInspectionDTO,
 } from "../../types/dto";
 
+export interface LinkedInspectionSummary {
+  id: string;
+  tripType: string;
+  status: string;
+}
+
 export interface InspectionWithRelations extends Inspection {
   unit?: {
     id: string;
@@ -20,6 +26,8 @@ export interface InspectionWithRelations extends Inspection {
     make: string | null;
     model: string | null;
   } | null;
+  linkedInspection?: LinkedInspectionSummary | null;
+  linkedFrom?: LinkedInspectionSummary | null;
   steps: (InspectionStep & {
     mediaFiles: {
       id: string;
@@ -42,6 +50,10 @@ export interface InspectionWithRelations extends Inspection {
 
 export interface IInspectionRepository {
   create(driverId: string, data: CreateInspectionDTO): Promise<Inspection>;
+  createWithSteps(
+    driverId: string,
+    data: CreateInspectionDTO,
+  ): Promise<Inspection>;
   findById(id: string): Promise<InspectionWithRelations | null>;
   findByDriverId(
     driverId: string,
@@ -56,6 +68,8 @@ export interface IInspectionRepository {
   ): Promise<InspectionStep>;
   findStepById(stepId: string): Promise<InspectionStep | null>;
   updateStepStatus(stepId: string, status: StepStatus): Promise<InspectionStep>;
+
+  delete(id: string): Promise<void>;
 
   findUnitByInspectionId(inspectionId: string): Promise<Unit | null>;
   updateUnitKm(unitId: string, km: number): Promise<void>;

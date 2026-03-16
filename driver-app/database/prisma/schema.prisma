@@ -86,23 +86,26 @@ enum InspectionStatus {
 }
 
 model Inspection {
-  id          String           @id @default(uuid())
-  driverId    String
-  unitId      String?
-  tripType    TripType
-  status      InspectionStatus @default(DRAFT)
-  startedAt   DateTime         @default(now())
-  completedAt DateTime?
-  latitude    Float?
-  longitude   Float?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id                 String           @id @default(uuid())
+  driverId           String
+  unitId             String?
+  tripType           TripType
+  status             InspectionStatus @default(DRAFT)
+  linkedInspectionId String?          @unique
+  startedAt          DateTime         @default(now())
+  completedAt        DateTime?
+  latitude           Float?
+  longitude          Float?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  driver    User              @relation("DriverInspections", fields: [driverId], references: [id])
-  unit      Unit?             @relation(fields: [unitId], references: [id])
-  steps     InspectionStep[]
-  reviews   InspectionReview[]
-  auditLogs AuditLog[]
+  driver             User              @relation("DriverInspections", fields: [driverId], references: [id])
+  unit               Unit?             @relation(fields: [unitId], references: [id])
+  linkedInspection   Inspection?       @relation("LinkedInspection", fields: [linkedInspectionId], references: [id])
+  linkedFrom         Inspection?       @relation("LinkedInspection")
+  steps              InspectionStep[]
+  reviews            InspectionReview[]
+  auditLogs          AuditLog[]
 
   @@map("inspections")
 }

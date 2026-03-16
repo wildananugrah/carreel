@@ -9,8 +9,16 @@ import type {
   PaginatedResponse,
 } from "../../types/dto";
 
+export interface LinkedInspectionSummary {
+  id: string;
+  tripType: string;
+  status: string;
+}
+
 export interface InspectionDetailWithRelations extends Inspection {
   driver: { id: string; fullName: string; email: string };
+  linkedInspection?: LinkedInspectionSummary | null;
+  linkedFrom?: LinkedInspectionSummary | null;
   unit: {
     id: string;
     licensePlate: string;

@@ -33,6 +33,11 @@ export function InspectionCard({ inspection }: InspectionCardProps) {
           <p className="text-sm text-gray-900 font-medium truncate">
             Inspection #{inspection.id.slice(0, 8)}
           </p>
+          {inspection.unit && (
+            <p className="text-xs text-gray-600 mt-0.5 font-medium">
+              {inspection.unit.licensePlate}
+            </p>
+          )}
           <p className="text-xs text-gray-500 mt-0.5">{date}</p>
         </div>
         <div className="flex items-center text-gray-400 ml-2">

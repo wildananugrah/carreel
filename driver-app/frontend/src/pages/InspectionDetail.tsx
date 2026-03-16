@@ -1,27 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { StepCard } from "../components/inspection/StepCard";
 import { TopBar } from "../components/layout/TopBar";
 import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
 import { Spinner } from "../components/ui/Spinner";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { api } from "../lib/api";
-import type { InspectionDetail as InspectionDetailType, StepType } from "../lib/types";
-
-const stepTypes: { value: StepType; label: string }[] = [
-  { value: "UNIT_IDENTIFICATION", label: "Unit Identification" },
-  { value: "SPEEDOMETER", label: "Speedometer" },
-  { value: "BODY_INSPECTION", label: "Body Inspection" },
-];
+import type { InspectionDetail as InspectionDetailType } from "../lib/types";
 
 export function InspectionDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [inspection, setInspection] = useState<InspectionDetailType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [addingStep, setAddingStep] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [showStepPicker, setShowStepPicker] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [endingTrip, setEndingTrip] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -39,17 +35,15 @@ export function InspectionDetail() {
     fetchDetail();
   }, [fetchDetail]);
 
-  async function handleAddStep(stepType: StepType) {
-    if (!id) return;
-    setAddingStep(true);
+  async function handleDelete() {
+    if (!id || !confirm("Delete this draft inspection?")) return;
+    setDeleting(true);
     try {
-      await api.post(`/api/inspections/${id}/steps`, { stepType });
-      setShowStepPicker(false);
-      await fetchDetail();
+      await api.del(`/api/inspections/${id}`);
+      navigate("/", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add step");
-    } finally {
-      setAddingStep(false);
+      setError(err instanceof Error ? err.message : "Failed to delete");
+      setDeleting(false);
     }
   }
 
@@ -57,12 +51,43 @@ export function InspectionDetail() {
     if (!id) return;
     setSubmitting(true);
     try {
-      await api.patch(`/api/inspections/${id}/submit`);
+      await api.post(`/api/inspections/${id}/submit`);
       await fetchDetail();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleEndTrip() {
+    if (!id) return;
+    setEndingTrip(true);
+    setError("");
+
+    let latitude: number | undefined;
+    let longitude: number | undefined;
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 5000,
+        }),
+      );
+      latitude = pos.coords.latitude;
+      longitude = pos.coords.longitude;
+    } catch {
+      // GPS is optional
+    }
+
+    try {
+      const postTrip = await api.post<{ id: string }>(`/api/inspections/${id}/end-trip`, {
+        latitude,
+        longitude,
+      });
+      navigate(`/inspections/${postTrip.id}`, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create post-trip");
+      setEndingTrip(false);
     }
   }
 
@@ -79,9 +104,11 @@ export function InspectionDetail() {
   }
 
   const isDraft = inspection.status === "DRAFT";
-  const hasUploadedSteps = inspection.steps.some(
-    (s) => s.status === "UPLOADED" || s.status === "COMPLETED",
-  );
+  const allStepsUploaded =
+    inspection.steps.length > 0 && inspection.steps.every((s) => s.status !== "PENDING");
+  const isPreTrip = inspection.tripType === "PRE_TRIP";
+  const isSubmitted = inspection.status !== "DRAFT";
+  const showEndTrip = isPreTrip && isSubmitted && !inspection.linkedFrom;
 
   const date = new Date(inspection.createdAt).toLocaleDateString("en-US", {
     weekday: "short",
@@ -119,73 +146,96 @@ export function InspectionDetail() {
           )}
         </div>
 
+        {/* Linked Inspection */}
+        {inspection.linkedInspection && (
+          <div className="px-4 pt-4">
+            <Card
+              className="p-3 flex items-center justify-between cursor-pointer active:bg-gray-50"
+              onClick={() => navigate(`/inspections/${inspection.linkedInspection?.id}`)}
+            >
+              <div>
+                <p className="text-sm font-medium text-gray-700">Pre-Trip Inspection</p>
+                <StatusBadge status={inspection.linkedInspection.status} />
+              </div>
+              <svg
+                aria-hidden="true"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-gray-400"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Card>
+          </div>
+        )}
+        {inspection.linkedFrom && (
+          <div className="px-4 pt-4">
+            <Card
+              className="p-3 flex items-center justify-between cursor-pointer active:bg-gray-50"
+              onClick={() => navigate(`/inspections/${inspection.linkedFrom?.id}`)}
+            >
+              <div>
+                <p className="text-sm font-medium text-gray-700">Post-Trip Inspection</p>
+                <StatusBadge status={inspection.linkedFrom.status} />
+              </div>
+              <svg
+                aria-hidden="true"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-gray-400"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Card>
+          </div>
+        )}
+
         {/* Steps */}
         <div className="px-4 py-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">
             Steps ({inspection.steps.length})
           </h3>
 
-          {inspection.steps.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">
-              No steps yet. Add a step to begin the inspection.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {inspection.steps.map((step) => (
-                <StepCard key={step.id} step={step} inspectionStatus={inspection.status} />
-              ))}
-            </div>
-          )}
+          <div className="space-y-3">
+            {inspection.steps.map((step) => (
+              <StepCard key={step.id} step={step} inspectionStatus={inspection.status} />
+            ))}
+          </div>
         </div>
 
-        {/* Step Type Picker */}
-        {showStepPicker && (
-          <div className="px-4 pb-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm font-medium text-gray-900 mb-3">Select step type</p>
-              <div className="space-y-2">
-                {stepTypes.map((st) => (
-                  <button
-                    key={st.value}
-                    type="button"
-                    disabled={addingStep}
-                    onClick={() => handleAddStep(st.value)}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 active:bg-gray-50 transition-colors disabled:opacity-50"
-                  >
-                    {st.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowStepPicker(false)}
-                className="w-full text-center text-sm text-gray-400 mt-3 py-2"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Actions */}
-        {isDraft && (
-          <div className="px-4 pb-6 space-y-3">
-            {!showStepPicker && (
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={() => setShowStepPicker(true)}
-              >
-                Add Step
-              </Button>
-            )}
-            {hasUploadedSteps && (
-              <Button className="w-full" loading={submitting} onClick={handleSubmit}>
-                Submit Inspection
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="px-4 pb-6 space-y-3">
+          {isDraft && allStepsUploaded && (
+            <Button className="w-full" loading={submitting} onClick={handleSubmit}>
+              Submit Inspection
+            </Button>
+          )}
+
+          {showEndTrip && (
+            <Button className="w-full" loading={endingTrip} onClick={handleEndTrip}>
+              End Trip
+            </Button>
+          )}
+
+          {isDraft && (
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={handleDelete}
+              className="w-full py-3 text-sm font-medium text-red-500 active:text-red-700 transition-colors disabled:opacity-50"
+            >
+              {deleting ? "Deleting..." : "Delete Draft"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

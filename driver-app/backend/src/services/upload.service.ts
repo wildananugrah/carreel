@@ -89,4 +89,15 @@ export class UploadService implements IUploadService {
     const bucket = key.includes("video") ? "carreel-videos" : "carreel-images";
     return this.storageProvider.getPresignedUrl(bucket, key);
   }
+
+  async getMediaUrl(mediaId: string): Promise<string> {
+    const media = await this.mediaFileRepository.findById(mediaId);
+    if (!media) {
+      throw new Error("Media file not found");
+    }
+    return this.storageProvider.getPresignedUrl(
+      media.minioBucket,
+      media.minioKey,
+    );
+  }
 }

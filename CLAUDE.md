@@ -683,6 +683,35 @@ The driver-app is primarily used on **mobile browsers**. All driver-app frontend
 - **Test on real mobile viewports** — use Chrome DevTools device emulation during development, but verify on actual devices before shipping.
 - **PWA support** — frontends are CSR (Client-Side Rendered) and must support Progressive Web App features (manifest.json, service worker, offline capability).
 
+### Database Architecture
+
+Both backends share a **single PostgreSQL instance** and a **single database** (`carreel_driver`). The Prisma schema lives in `driver-app/database/prisma/schema.prisma` with two generators that output clients to both backends. pgboss creates its own `pgboss` schema for job queues within the same database.
+
+#### Table Ownership
+
+| Table | Driver-App | Planner-App | Notes |
+|-------|-----------|-------------|-------|
+| `users` | Read & Write | Read & Write | Both apps register/login users; planner also lists drivers |
+| `units` | Read & Write | Read only | Driver updates `lastKnownKm`; planner reads unit info via inspection |
+| `inspections` | Read & Write | Read & Write (status only) | Driver creates/updates; planner reads and updates status on review |
+| `inspection_steps` | Read & Write | Read only | Driver creates steps and updates status; planner reads via inspection |
+| `media_files` | Write | Read only | Driver uploads media; planner views via inspection steps |
+| `ai_analyses` | Write | Read only | Driver's job handler saves AI results; planner reads for display & KPIs |
+| `damage_markers` | Write | Read only | Driver's job handler creates; planner reads via steps |
+| `telemetry_data` | Write | Read only | Driver's job handler (speedometer analysis) |
+| `alerts` | Write | Read & Write | Driver creates alerts during AI analysis; planner reads & marks as read |
+| `inspection_reviews` | — | Read & Write | Planner-only; planners create reviews for inspections |
+| `audit_logs` | — | Write | Planner-only; audit trail for review actions |
+| `outbox_events` | — | — | Reserved for future event-driven sync (not yet implemented) |
+| `pgboss.*` | Read & Write | — | Driver-only; pgboss auto-manages its schema for job queues |
+
+#### Key Patterns
+
+- **Driver-App is write-heavy**: Creates inspections, uploads media, runs AI jobs, generates alerts and telemetry.
+- **Planner-App is read-heavy**: Reads all driver-generated data; only writes reviews, audit logs, and alert read-status.
+- **No cross-app write conflicts**: Driver never writes to reviews/audit logs; planner never writes to inspections/media/AI data.
+- **Isolated tables**: `audit_logs` and `inspection_reviews` are planner-only. `telemetry_data` and `damage_markers` are driver-only (write).
+
 ### Deployment & Runtime
 
 #### Docker Compose (infrastructure)
@@ -691,7 +720,7 @@ Database, MinIO, and monitoring are run via docker-compose. Each has its own com
 
 - `monitoring/docker-compose.yml` — Grafana, Loki, Jaeger, OTel Collector
 - `minio/docker-compose.yml` — MinIO server
-- Each app's `database/docker-compose.yml` — PostgreSQL instance
+- `driver-app/database/docker-compose.yml` — Single shared PostgreSQL instance
 
 #### PM2 (backend services)
 

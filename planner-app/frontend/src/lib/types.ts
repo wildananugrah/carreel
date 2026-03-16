@@ -93,12 +93,19 @@ export interface InspectionReview {
   createdAt: string;
 }
 
+export interface LinkedInspectionSummary {
+  id: string;
+  tripType: TripType;
+  status: InspectionStatus;
+}
+
 export interface InspectionDetail {
   id: string;
   driverId: string;
   unitId: string | null;
   tripType: TripType;
   status: InspectionStatus;
+  linkedInspectionId: string | null;
   startedAt: string;
   completedAt: string | null;
   latitude: number | null;
@@ -112,6 +119,8 @@ export interface InspectionDetail {
     make: string | null;
     model: string | null;
   } | null;
+  linkedInspection?: LinkedInspectionSummary | null;
+  linkedFrom?: LinkedInspectionSummary | null;
   steps: InspectionStep[];
   reviews: InspectionReview[];
 }

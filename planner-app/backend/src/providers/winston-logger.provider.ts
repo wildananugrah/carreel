@@ -13,8 +13,10 @@ const simpleLineFormat = winston.format.printf(
     const time =
       meta.processingTime !== undefined ? ` ${meta.processingTime}ms` : "";
 
+    const httpPart = method || uri ? ` ${method} ${uri} ${status}${time}` : "";
+    const messagePart = !httpPart && message ? ` ${message}` : "";
     const mainLine =
-      `${timestamp} [${level.toUpperCase()}]${txn}${trace}${user} ${method} ${uri} ${status}${time}`.trim();
+      `${timestamp} [${level.toUpperCase()}]${txn}${trace}${user}${httpPart}${messagePart}`.trim();
 
     const extras: Record<string, unknown> = {};
     if (meta.requestBody) extras.requestBody = meta.requestBody;
@@ -37,7 +39,15 @@ export class WinstonLogger implements ILogger {
 
     if (lokiUrl) {
       transports.push(
-        new LokiTransport({ host: lokiUrl, labels: { app: serviceName } }),
+        new LokiTransport({
+          host: lokiUrl,
+          labels: { app: serviceName },
+          json: false,
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            simpleLineFormat,
+          ),
+        }),
       );
     }
 

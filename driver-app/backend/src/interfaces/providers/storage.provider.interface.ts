@@ -12,4 +12,5 @@ export interface IStorageProvider {
   ): Promise<string>;
   download(bucket: string, key: string): Promise<Buffer>;
   delete(bucket: string, key: string): Promise<void>;
+  ping(): Promise<boolean>;
 }

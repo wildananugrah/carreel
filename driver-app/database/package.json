@@ -4,13 +4,14 @@
   "scripts": {
     "migrate:dev": "bunx prisma migrate dev",
     "migrate:deploy": "bunx prisma migrate deploy",
-    "generate": "bunx prisma generate",
+    "generate": "bunx prisma generate && bun run scripts/post-generate.ts",
     "studio": "bunx prisma studio",
     "seed": "bunx prisma db seed"
   },
   "dependencies": {
-    "prisma": "^7.0.0",
+    "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
-    "@prisma/adapter-pg": "^7.0.0"
+    "dotenv": "^17.3.1",
+    "prisma": "^7.0.0"
   }
 }

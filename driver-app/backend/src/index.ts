@@ -31,6 +31,7 @@ import { UserRepository } from "./repositories/user.repository";
 import { createAuthRoutes } from "./routes/auth.route";
 import { createHealthRoutes } from "./routes/health.route";
 import { createInspectionRoutes } from "./routes/inspection.route";
+import { createMediaRoutes } from "./routes/media.route";
 import { createUploadRoutes } from "./routes/upload.route";
 // Services
 import { AuthService } from "./services/auth.service";
@@ -43,7 +44,11 @@ import type { AppEnv } from "./types/dto";
 // ========================
 
 const databaseUrl = process.env.DATABASE_URL!;
-const adapter = new PrismaPg({ connectionString: databaseUrl });
+const adapter = new PrismaPg({
+  connectionString: databaseUrl,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
 const prisma = new PrismaClient({ adapter });
 
 // Providers
@@ -134,24 +139,53 @@ app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
 
 // Routes
-app.route("/health", createHealthRoutes());
+app.route("/health", createHealthRoutes(prisma, storageProvider));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
   createInspectionRoutes(inspectionService, uploadService, authMiddleware),
 );
 app.route("/api/upload", createUploadRoutes(uploadService, authMiddleware));
+app.route("/api/media", createMediaRoutes(uploadService));
 
 // ========================
-// Start pgboss & Server
+// Startup Connectivity Checks
 // ========================
 
 const port = Number(process.env.PORT) || 3001;
 
-boss
-  .start()
-  .then(async () => {
+async function checkConnectivity() {
+  logger.info("Running startup connectivity checks...");
+
+  // Database
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    logger.info("Database: connected");
+  } catch (err) {
+    logger.error("Database: unavailable", { error: String(err) });
+    logger.error(
+      "Ensure PostgreSQL is running: docker compose -f driver-app/database/docker-compose.yml up -d",
+    );
+    process.exit(1);
+  }
+
+  // MinIO
+  const minioOk = await storageProvider.ping();
+  if (minioOk) {
+    logger.info("MinIO: connected");
+  } else {
+    logger.warn(
+      "MinIO: unavailable — file uploads will fail. Start it with: docker compose -f minio/docker-compose.yml up -d",
+    );
+  }
+}
+
+async function startWorkers() {
+  try {
+    await boss.start();
     logger.info("pgboss started");
+
+    await boss.createQueue("step-analysis");
 
     await boss.work<StepAnalysisJobData>(
       "step-analysis",
@@ -162,12 +196,16 @@ boss
     );
 
     logger.info("Step analysis worker registered");
-  })
-  .catch((err: unknown) => {
+  } catch (err) {
     logger.error("Failed to start pgboss", { error: String(err) });
-  });
+  }
+}
 
-logger.info(`Driver backend starting on port ${port}`);
+// Run checks then start
+checkConnectivity().then(() => {
+  startWorkers();
+  logger.info(`Started development server: http://localhost:${port}`);
+});
 
 export default {
   port,

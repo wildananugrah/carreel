@@ -4,4 +4,5 @@ export interface IStorageProvider {
     key: string,
     expiresIn?: number,
   ): Promise<string>;
+  ping(): Promise<boolean>;
 }
