@@ -11,6 +11,7 @@ certbot certonly --nginx -d planner.carreel.id
 certbot certonly --nginx -d planner-api.carreel.id
 certbot certonly --nginx -d ws.carreel.id
 certbot certonly --nginx -d minio.carreel.id
+certbot certonly --nginx -d monit.carreel.id
 ```
 
 3. copy nginx config
@@ -22,6 +23,7 @@ cp nginx/planner.carreel.id /etc/nginx/sites-available/planner.carreel.id
 cp nginx/planner-api.carreel.id /etc/nginx/sites-available/planner-api.carreel.id
 cp nginx/ws.carreel.id /etc/nginx/sites-available/ws.carreel.id
 cp nginx/minio.carreel.id /etc/nginx/sites-available/minio.carreel.id
+cp nginx/monit.carreel.id /etc/nginx/sites-available/monit.carreel.id
 ```
 
 4. link it
@@ -33,6 +35,7 @@ ln -s /etc/nginx/sites-available/driver-api.carreel.id /etc/nginx/sites-enabled/
 ln -s /etc/nginx/sites-available/planner-api.carreel.id /etc/nginx/sites-enabled/planner-api.carreel.id
 ln -s /etc/nginx/sites-available/ws.carreel.id /etc/nginx/sites-enabled/ws.carreel.id
 ln -s /etc/nginx/sites-available/minio.carreel.id /etc/nginx/sites-enabled/minio.carreel.id
+ln -s /etc/nginx/sites-available/monit.carreel.id /etc/nginx/sites-enabled/monit.carreel.id
 ```
 
 5. check the nginx config
