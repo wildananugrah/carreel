@@ -51,6 +51,11 @@ server {
       proxy_set_header Connection upgrade;
       proxy_set_header Accept-Encoding gzip;
   }
+
+  location /api/ {
+      proxy_pass http://localhost:3001;
+  }
+
 }
 
 server {

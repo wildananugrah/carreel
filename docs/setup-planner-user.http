@@ -1,3 +1,9 @@
 curl -X POST http://localhost:3002/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@carreel.id", "password": "p@ssw0rd", "fullName": "Admin Planner"}'
+
+
+###
+curl -X POST https://planner-api.carreel.id/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@carreel.id", "password": "p@ssw0rd", "fullName": "Admin Planner"}'
