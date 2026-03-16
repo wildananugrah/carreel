@@ -8,7 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const barrel = '// Re-export everything from the generated Prisma client\nexport * from "./client";\n';
+const barrel = 'export * from "./client";\nexport * from "./models";\n';
 
 const targets = [
   path.resolve(import.meta.dirname, "../../backend/src/generated/prisma/index.ts"),
