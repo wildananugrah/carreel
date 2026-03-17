@@ -336,13 +336,236 @@ await boss.onFail("validation", async (job) => {
 });
 ```
 
-### Observability (Winston + OpenTelemetry)
+### Observability (Winston + Loki + Grafana + OpenTelemetry + Jaeger)
 
-Two systems work together: **Winston** for structured logging (→ Loki → Grafana), **OpenTelemetry** for distributed tracing (→ Jaeger). They are correlated via `traceId`/`spanId` injected into every log line.
+The observability stack has two pipelines working together:
+
+1. **Logging**: App (Winston) → Loki → Grafana dashboards
+2. **Tracing**: App (OpenTelemetry) → OTel Collector → Jaeger → Grafana (linked via `traceId`)
+
+Both pipelines are correlated — every log line contains a `traceId` that links to the corresponding distributed trace in Jaeger.
+
+#### Architecture Overview
+
+```
+┌─────────────────────┐     ┌─────────────────────┐
+│   Backend App        │     │   Backend App        │
+│  (driver-backend)    │     │  (planner-backend)   │
+│                      │     │                      │
+│  Winston logger      │     │  Winston logger      │
+│    ├─ Console        │     │    ├─ Console        │
+│    └─ LokiTransport ─┼─┐   │    └─ LokiTransport ─┼─┐
+│                      │ │   │                      │ │
+│  OpenTelemetry SDK ──┼─┼─┐ │  OpenTelemetry SDK ──┼─┼─┐
+└─────────────────────┘ │ │ └─────────────────────┘ │ │
+                        │ │                         │ │
+          ┌─────────────┘ │           ┌─────────────┘ │
+          ▼               ▼           ▼               ▼
+   ┌────────────┐  ┌──────────────┐
+   │    Loki    │  │ OTel Collector│
+   │  :3100     │  │  :4317 gRPC  │
+   │            │  │              │
+   │  Log store │  │  Batch proc  │
+   └─────┬──────┘  └──────┬───────┘
+         │                │
+         │                ▼
+         │         ┌────────────┐
+         │         │   Jaeger   │
+         │         │  :16686 UI │
+         │         │  :4318 OTLP│
+         │         │            │
+         │         │ Trace store│
+         │         └──────┬─────┘
+         │                │
+         ▼                ▼
+   ┌──────────────────────────────┐
+   │          Grafana             │
+   │          :3000               │
+   │                              │
+   │  Datasources:                │
+   │    - Loki (logs, default)    │
+   │    - Jaeger (traces)         │
+   │                              │
+   │  Dashboard:                  │
+   │    "Carreel Backend"         │
+   │    (auto-provisioned JSON)   │
+   └──────────────────────────────┘
+```
+
+#### Infrastructure (docker-compose)
+
+All monitoring services run via `monitoring/docker-compose.yml`:
+
+```yaml
+services:
+  loki:
+    image: grafana/loki:3.0.0
+    ports: ["3100:3100"]
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports: ["16686:16686", "4318:4318"]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    ports: ["4317:4317"]
+    volumes:
+      - ./otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on: [jaeger]
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-carreel_grafana_secret}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on: [loki, jaeger]
+```
+
+**Start/stop:** `cd monitoring && make up` / `make down` (or `docker compose up -d` / `docker compose down`)
+
+**Service URLs:**
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Grafana | http://localhost:3000 | Dashboards, log exploration, trace links |
+| Jaeger UI | http://localhost:16686 | Distributed trace viewer |
+| Loki | http://localhost:3100 | Log aggregation API (no UI) |
+| OTel Collector | localhost:4317 (gRPC) | Trace receiver, forwards to Jaeger |
+
+#### Loki Configuration
+
+File: `monitoring/loki/loki-config.yml`
+
+```yaml
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h   # 7 days
+  max_query_length: 721h             # 30 days
+
+analytics:
+  reporting_enabled: false
+```
+
+Key settings:
+- **TSDB** schema with filesystem storage (suitable for single-node/dev)
+- **7-day retention** (`reject_old_samples_max_age: 168h`)
+- **30-day query window** (`max_query_length: 721h`)
+- **No auth** (internal network only)
+
+#### OpenTelemetry Collector Configuration
+
+File: `monitoring/otel-collector/otel-collector-config.yml`
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4318
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger]
+```
+
+Pipeline: `App (OTLP gRPC :4317) → Batch processor (1s / 1024 spans) → Jaeger (OTLP HTTP :4318)`
+
+#### Grafana Provisioning
+
+Grafana auto-loads datasources and dashboards on startup via provisioning files.
+
+**Datasources** (`monitoring/grafana/provisioning/datasources/datasources.yml`):
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+    editable: false
+
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    editable: false
+```
+
+**Dashboard provider** (`monitoring/grafana/provisioning/dashboards/dashboards.yml`):
+
+```yaml
+apiVersion: 1
+
+providers:
+  - name: Carreel
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false
+```
+
+Grafana loads all `.json` files from the dashboards directory. To add a new dashboard, drop a JSON file in `monitoring/grafana/provisioning/dashboards/` and restart Grafana.
 
 #### Log Structure
 
-Log format is **simple line** (not JSON). Key fields are inline, extras (bodies, errors) appear as JSON on the next line only when present.
+Log format is **simple line** (not JSON). Key fields are inline, extras (bodies, errors) appear as JSON on the next line only when present. This format is designed so that Loki can parse it via `pattern` and `regexp` in LogQL queries.
 
 **Format:**
 ```
@@ -363,20 +586,22 @@ Log format is **simple line** (not JSON). Key fields are inline, extras (bodies,
 
 **Fields:**
 
-| Field | Source | Description |
-|-------|--------|-------------|
-| `timestamp` | Winston | ISO 8601 format |
-| `level` | Winston | INFO, WARN, ERROR, DEBUG |
-| `transactionId` | Middleware | UUID per request, generated in request middleware |
-| `traceId` | OpenTelemetry | Auto-injected from active OTel span |
-| `userId` | Auth middleware | Extracted from auth token, "anonymous" if unauthenticated |
-| `method` | Middleware | HTTP method (GET, POST, etc.) |
-| `uri` | Middleware | Request path |
-| `statusCode` | Middleware | HTTP response status |
-| `processingTime` | Middleware | Duration in ms |
-| `requestBody` | Middleware | Only if enabled for this route (next line as JSON) |
-| `responseBody` | Middleware | Only if enabled for this route (next line as JSON) |
-| `error` | Error handler | Error message + stack trace (next line as JSON) |
+| Field | Source | Description | LogQL Extraction |
+|-------|--------|-------------|-----------------|
+| `timestamp` | Winston | ISO 8601 format | Built-in Loki timestamp |
+| `level` | Winston | INFO, WARN, ERROR, DEBUG | `\|~ \`\\[ERROR\\]\`` or `\|~ \`\\[WARN\\]\`` |
+| `transactionId` | Middleware | UUID per request | `\|~ \`\\[txn:\`` — presence means it's an HTTP request log |
+| `traceId` | OpenTelemetry | Auto-injected from active OTel span | Links to Jaeger trace |
+| `userId` | Auth middleware | Extracted from auth token, "anonymous" if unauthenticated | `\| pattern \`<_> [user:<user>] <_>\`` |
+| `method` | Middleware | HTTP method (GET, POST, etc.) | `\| regexp \`(?P<method>GET\|POST\|PUT\|PATCH\|DELETE) ...\`` |
+| `uri` | Middleware | Request path | `\| regexp \`... (?P<uri>\\S+) ...\`` |
+| `statusCode` | Middleware | HTTP response status | `\| regexp \`... (?P<status>\\d+) \`` |
+| `processingTime` | Middleware | Duration in ms | `\| regexp \`(?P<time>\\d+)ms$\` \| unwrap time` |
+| `requestBody` | Middleware | Only if enabled for this route (next line as JSON) | Visible in log details |
+| `responseBody` | Middleware | Only if enabled for this route (next line as JSON) | Visible in log details |
+| `error` | Error handler | Error message + stack trace (next line as JSON) | Visible in log details |
+
+**Why this format?** The bracketed fields (`[txn:...]`, `[user:...]`, `[trace:...]`) are designed for efficient LogQL pattern matching. Loki's `pattern` parser can extract them without regex overhead. The trailing `{time}ms` format enables `unwrap` for numeric aggregations (percentiles, averages).
 
 #### Logger Setup (behind interface)
 
@@ -423,35 +648,26 @@ const simpleLineFormat = winston.format.printf(({ timestamp, level, message, ...
 export class WinstonLogger implements ILogger {
   private logger: winston.Logger;
 
-  constructor(serviceName: string, lokiUrl: string) {
+  constructor(serviceName: string, lokiUrl?: string) {
+    const transports: winston.transport[] = [new winston.transports.Console()];
+    if (lokiUrl) {
+      transports.push(new LokiTransport({ host: lokiUrl, labels: { app: serviceName } }));
+    }
+
     this.logger = winston.createLogger({
       format: winston.format.combine(
         winston.format.timestamp(),
         simpleLineFormat,
       ),
       defaultMeta: { service: serviceName },
-      transports: [
-        new winston.transports.Console(),
-        new LokiTransport({ host: lokiUrl, labels: { app: serviceName } }),
-      ],
+      transports,
     });
   }
 
-  info(message: string, meta?: Record<string, unknown>) {
-    this.logger.info(message, meta);
-  }
-
-  warn(message: string, meta?: Record<string, unknown>) {
-    this.logger.warn(message, meta);
-  }
-
-  error(message: string, meta?: Record<string, unknown>) {
-    this.logger.error(message, meta);
-  }
-
-  debug(message: string, meta?: Record<string, unknown>) {
-    this.logger.debug(message, meta);
-  }
+  info(message: string, meta?: Record<string, unknown>) { this.logger.info(message, meta); }
+  warn(message: string, meta?: Record<string, unknown>) { this.logger.warn(message, meta); }
+  error(message: string, meta?: Record<string, unknown>) { this.logger.error(message, meta); }
+  debug(message: string, meta?: Record<string, unknown>) { this.logger.debug(message, meta); }
 
   child(meta: Record<string, unknown>): ILogger {
     const childLogger = this.logger.child(meta);
@@ -461,6 +677,8 @@ export class WinstonLogger implements ILogger {
   }
 }
 ```
+
+**Key detail — Loki labels:** The `LokiTransport` sends logs with `{ app: serviceName }` as the Loki label. This is the label used in all dashboard queries to filter by service: `{app=~"$app"}`. The label value comes from the `SERVICE_NAME` env var (e.g., `"driver-backend"`, `"planner-backend"`).
 
 #### Request Logging Middleware
 
@@ -586,7 +804,7 @@ import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentation
 const sdk = new NodeSDK({
   serviceName: process.env.SERVICE_NAME!,
   traceExporter: new OTLPTraceExporter({
-    url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4318/v1/traces",
+    url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4317",
   }),
   instrumentations: [getNodeAutoInstrumentations()],
 });
@@ -614,6 +832,156 @@ app.use("*", createRequestLoggerMiddleware(logger));
 // ... routes
 ```
 
+#### Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SERVICE_NAME` | `"driver-backend"` / `"planner-backend"` | Loki `app` label + OTel service name |
+| `LOKI_URL` | `http://localhost:3100` | Winston-loki transport endpoint |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | OTel Collector gRPC endpoint |
+
+#### Grafana Dashboard (`carreel-backend.json`)
+
+The dashboard is auto-provisioned from `monitoring/grafana/provisioning/dashboards/carreel-backend.json`. It uses a single **template variable** `$app` (Loki label selector) to filter by service.
+
+**Dashboard layout (13 panels):**
+
+```
+Row 1 — KPI Stats (y=0)
+┌──────────┬──────────────────┬────────────────┬──────────┬──────────┐
+│ Unique   │ Authenticated    │                │  Total   │  Error   │
+│ Users    │ Requests         │  Users Table   │ Requests │  Count   │
+│ (stat)   │ (stat)           │  (table)       │ (stat)   │ (stat)   │
+│ 4×4      │ 4×4              │  8×8           │ 4×4      │ 4×4      │
+└──────────┴──────────────────┤                ├──────────┴──────────┘
+                              │                │
+Row 2 — User Analytics (y=4) │                │
+┌──────────────────┐          │                ├────────────────────┐
+│ Unique Users     │          │                │ Top Active Users   │
+│ Over Time        │          │                │ (bargauge)         │
+│ (timeseries)     │          └────────────────┤ 8×8                │
+│ 8×8              │                           │                    │
+└──────────────────┘                           └────────────────────┘
+
+Row 3 — Log Volume (y=12)
+┌───────────────────────────────────────────────────────────────────┐
+│ Log Volume (per minute)                                           │
+│ Stacked bars: INFO (green) / WARN (yellow) / ERROR (red)          │
+│ 24×8 (full width)                                                 │
+└───────────────────────────────────────────────────────────────────┘
+
+Row 4 — HTTP & Endpoints (y=20)
+┌─────────────────────────────────┬─────────────────────────────────┐
+│ HTTP Requests by Status         │ Top Endpoints                   │
+│ Stacked bars by status code     │ Table: Method | Endpoint | Count│
+│ Color: 200=green, 400=yellow,   │ Sorted by request count desc    │
+│        401=orange, 500=red      │ 12×8                            │
+│ 12×8                            │                                 │
+└─────────────────────────────────┴─────────────────────────────────┘
+
+Row 5 — Response Time (y=28)
+┌───────────────────────────────────────────────────────────────────┐
+│ Response Time (p50, p95, p99)                                     │
+│ Smooth line chart, unit: ms                                       │
+│ 24×8 (full width)                                                 │
+└───────────────────────────────────────────────────────────────────┘
+
+Row 6 — Error Logs (y=36)
+┌───────────────────────────────────────────────────────────────────┐
+│ Error Logs                                                        │
+│ Filtered: ERROR + WARN only                                       │
+│ Shows time, labels, details | 24×10                               │
+└───────────────────────────────────────────────────────────────────┘
+
+Row 7 — All Logs (y=46)
+┌───────────────────────────────────────────────────────────────────┐
+│ All Logs                                                          │
+│ Complete log stream, descending order                              │
+│ 24×12 (full width)                                                │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+#### LogQL Query Reference
+
+All dashboard panels query Loki using LogQL. Below are the actual queries used, organized by what they extract from the log format.
+
+**Filtering by service:**
+```logql
+{app=~"$app"}
+```
+The `app` label is set by the Winston LokiTransport (`labels: { app: serviceName }`).
+
+**Filtering by log level:**
+```logql
+{app=~"$app"} |~ `\[ERROR\]`
+{app=~"$app"} |~ `\[WARN\]`
+{app=~"$app"} |~ `\[(ERROR|WARN)\]`
+```
+
+**Extracting user ID** (from `[user:xxx]` bracket):
+```logql
+{app=~"$app"} |~ `\[user:` | pattern `<_> [user:<user>] <_>` | user != `anonymous`
+```
+
+**Extracting HTTP method and status** (from `GET /path 200`):
+```logql
+{app=~"$app"} |~ `\[txn:` | regexp `(?P<method>GET|POST|PUT|PATCH|DELETE) \S+ (?P<status>\d+) `
+```
+
+**Extracting response time** (from trailing `45ms`):
+```logql
+{app=~"$app"} |~ `\[txn:` | regexp `(?P<time>\d+)ms$` | unwrap time
+```
+
+**Extracting endpoint** (method + URI):
+```logql
+{app=~"$app"} |~ `\[txn:` | regexp `(?P<method>GET|POST|PUT|PATCH|DELETE) (?P<uri>\S+) \d+ `
+```
+
+**Panel-specific queries:**
+
+| Panel | Query | Type |
+|-------|-------|------|
+| Unique Users | `count(count by (user) (count_over_time({app=~"$app"} \|~ \`\\[user:\` \| pattern \`<_> [user:<user>] <_>\` \| user != \`anonymous\` [$__range])))` | instant/stat |
+| Authenticated Requests | `count_over_time({app=~"$app"} \|~ \`\\[user:\` \| pattern \`<_> [user:<user>] <_>\` \| user != \`anonymous\` [$__range])` | instant/stat (sum) |
+| Users Table | `sum by (user) (count_over_time(...))` | instant/table |
+| Total Requests | `count_over_time({app=~"$app"} \|~ \`\\[txn:\` [$__range])` | instant/stat (sum) |
+| Error Count | `count_over_time({app=~"$app"} \|~ \`\\[ERROR\\]\` [$__range])` | instant/stat (sum) |
+| Users Over Time | `count by (user) (count_over_time(... [5m]))` | range/timeseries (stacked bars) |
+| Top Users | `topk(10, sum by (user) (count_over_time(...)))` | instant/bargauge |
+| Log Volume | 3 queries: INFO/WARN/ERROR `count_over_time(... [1m])` | range/timeseries (stacked bars) |
+| HTTP by Status | `sum by (status) (count_over_time(... \| regexp ... [1m]))` | range/timeseries (stacked bars) |
+| Top Endpoints | `topk(100, sum by (method, uri) (count_over_time(... \| regexp ...)))` | instant/table |
+| Response Time | `quantile_over_time(0.5/0.95/0.99, ... \| unwrap time [1m]) by ()` | range/timeseries (line) |
+| Error Logs | `{app=~"$app"} \|~ \`\\[(ERROR\|WARN)\\]\`` | log panel |
+| All Logs | `{app=~"$app"}` | log panel |
+
+#### How to Add a New Dashboard Panel
+
+1. Open Grafana (http://localhost:3000) → "Carreel Backend" dashboard
+2. Click "Add" → "Visualization"
+3. Select "Loki" datasource, write a LogQL query
+4. Configure visualization type and options
+5. Save the dashboard
+6. Export dashboard JSON: Dashboard settings → JSON Model → Copy
+7. Replace `monitoring/grafana/provisioning/dashboards/carreel-backend.json` with the exported JSON
+8. Restart Grafana to verify provisioning: `docker compose -f monitoring/docker-compose.yml restart grafana`
+
+#### How to Reuse This Stack in a New Project
+
+1. **Copy `monitoring/` directory** — contains all infra configs
+2. **Install backend deps**: `bun add winston winston-loki @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/auto-instrumentations-node`
+3. **Create `tracing.ts`** — import first in `index.ts`
+4. **Create `WinstonLogger` provider** — implements `ILogger` interface
+5. **Create request logger middleware** — generates `transactionId`, injects trace context, logs with structured format
+6. **Create error handler middleware** — catches exceptions, logs with stack trace
+7. **Wire in composition root** — error handler first, then request logger
+8. **Set env vars**: `SERVICE_NAME`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT`
+9. **Update dashboard JSON** — change `app` label values to match your service names
+10. **Start stack**: `cd monitoring && docker compose up -d`
+
+The key design decision is the **log format** — it must be parseable by LogQL's `pattern` and `regexp` parsers. The bracketed `[key:value]` format and trailing `{N}ms` suffix are chosen specifically for efficient extraction in Grafana queries.
+
 #### Observability Rules
 
 - **Every service/job receives `ILogger` via constructor** — never import Winston directly.
@@ -621,6 +989,8 @@ app.use("*", createRequestLoggerMiddleware(logger));
 - **Never log sensitive data** — passwords, tokens, API keys must be excluded.
 - **Body logging is per-route** — configure in `routeBodyConfig` map. Default is off.
 - **Always use the request-scoped logger** (`c.get("logger")`) inside route handlers, not the root logger — this ensures `transactionId`, `traceId`, and `userId` are attached.
+- **Loki label cardinality** — only use low-cardinality labels (`app`, `level`). Never use `userId`, `traceId`, or `uri` as Loki labels — extract them from log content via LogQL parsers instead.
+- **Dashboard changes must be exported** — edit in Grafana UI, then export JSON to `monitoring/grafana/provisioning/dashboards/` for persistence across `docker compose down`.
 
 ### Core Principles
 

@@ -51,9 +51,8 @@ export class InspectionRepository implements IInspectionRepository {
         status: "DRAFT",
         steps: {
           create: [
-            { stepType: "UNIT_IDENTIFICATION", status: "PENDING" },
-            { stepType: "SPEEDOMETER", status: "PENDING" },
             { stepType: "BODY_INSPECTION", status: "PENDING" },
+            { stepType: "SPEEDOMETER", status: "PENDING" },
           ],
         },
       },

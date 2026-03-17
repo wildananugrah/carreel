@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { TopBar } from "../components/layout/TopBar";
 import { MediaPreview } from "../components/media/MediaPreview";
 import { Button } from "../components/ui/Button";
@@ -8,9 +8,16 @@ import { api } from "../lib/api";
 
 const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
+// Steps that only accept images (camera opens in photo mode)
+const IMAGE_ONLY_STEPS = ["SPEEDOMETER"];
+
 export function MediaUpload() {
   const { id, stepId } = useParams<{ id: string; stepId: string }>();
   const navigate = useNavigate();
+  const { state } = useLocation() as { state: { stepType?: string; action?: string } | null };
+  const stepType = state?.stepType ?? "";
+  const initialAction = state?.action as "camera" | "file" | undefined;
+  const isImageOnly = IMAGE_ONLY_STEPS.includes(stepType);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -19,6 +26,19 @@ export function MediaUpload() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Auto-trigger camera or file picker based on action from StepCard
+  useEffect(() => {
+    if (!initialAction) return;
+    const timer = setTimeout(() => {
+      if (initialAction === "camera") {
+        cameraInputRef.current?.click();
+      } else if (initialAction === "file") {
+        fileInputRef.current?.click();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [initialAction]);
 
   // Capture GPS on mount
   useEffect(() => {
@@ -145,7 +165,7 @@ export function MediaUpload() {
             <input
               ref={cameraInputRef}
               type="file"
-              accept="video/*"
+              accept={isImageOnly ? "image/*" : "video/*"}
               capture="environment"
               onChange={handleFileChange}
               className="hidden"
@@ -155,7 +175,7 @@ export function MediaUpload() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*"
+              accept={isImageOnly ? "image/*" : "image/*,video/*"}
               onChange={handleFileChange}
               className="hidden"
             />
@@ -186,7 +206,9 @@ export function MediaUpload() {
                   <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                   <circle cx="12" cy="13" r="4" />
                 </svg>
-                <p className="text-sm font-medium text-neutral-300">Record Video</p>
+                <p className="text-sm font-medium text-neutral-300">
+                  {isImageOnly ? "Take Photo" : "Record Video"}
+                </p>
                 <p className="text-xs text-neutral-500 mt-1">Tap to open camera</p>
               </button>
             )}

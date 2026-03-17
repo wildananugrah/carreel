@@ -103,9 +103,14 @@ export function InspectionDetail() {
     );
   }
 
+  const STEP_ORDER = ["BODY_INSPECTION", "SPEEDOMETER"];
+  const visibleSteps = inspection.steps
+    .filter((s) => STEP_ORDER.includes(s.stepType))
+    .sort((a, b) => STEP_ORDER.indexOf(a.stepType) - STEP_ORDER.indexOf(b.stepType));
+
   const isDraft = inspection.status === "DRAFT";
   const allStepsUploaded =
-    inspection.steps.length > 0 && inspection.steps.every((s) => s.status !== "PENDING");
+    visibleSteps.length > 0 && visibleSteps.every((s) => s.status !== "PENDING");
   const isPreTrip = inspection.tripType === "PRE_TRIP";
   const isSubmitted = inspection.status !== "DRAFT";
   const showEndTrip = isPreTrip && isSubmitted && !inspection.linkedFrom;
@@ -198,16 +203,157 @@ export function InspectionDetail() {
           </div>
         )}
 
-        {/* Steps */}
-        <div className="px-4 py-4">
-          <h3 className="text-sm font-semibold text-white mb-3">
-            Steps ({inspection.steps.length})
-          </h3>
+        {/* Step Progress */}
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex items-center justify-center">
+            {visibleSteps.map((step, i) => {
+              const done = step.status !== "PENDING";
+              const label =
+                step.stepType === "BODY_INSPECTION" ? "Body" : "Speedometer";
+              return (
+                <div key={step.id} className="flex flex-row items-center">
+                  <div className="flex flex-row space-x-2 items-center gap-1">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        done
+                          ? "bg-yellow-400 text-black"
+                          : "bg-[#2a2a2a] text-yellow-400 border border-yellow-400/40"
+                      }`}
+                    >
+                      {done ? (
+                        <svg
+                          aria-hidden="true"
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        i + 1
+                      )}
+                    </div>
+                    <span className="text-xs text-yellow-400 font-medium">{label}</span>
+                  </div>
+                  {i < visibleSteps.length - 1 && (
+                    <div className="w-12 h-0.5 bg-yellow-400 mx-2 " />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-          <div className="space-y-3">
-            {inspection.steps.map((step) => (
-              <StepCard key={step.id} step={step} inspectionStatus={inspection.status} />
+        {/* Media */}
+        <div className="px-4 py-4">
+          <h3 className="text-sm font-semibold text-neutral-500 mb-1">Media</h3>
+          <p className="text-xs text-neutral-600 mb-3">Upload media for each inspection step.</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            {visibleSteps.map((step, i) => (
+              <StepCard
+                key={step.id}
+                step={step}
+                inspectionStatus={inspection.status}
+                index={i}
+                onUploadComplete={fetchDetail}
+              />
             ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-sm mt-3">
+            <span className="text-neutral-500">
+              {visibleSteps.filter((s) => s.status !== "PENDING").length} /{" "}
+              {visibleSteps.length} uploaded
+            </span>
+            {visibleSteps.every((s) => s.status !== "PENDING") && (
+              <svg
+                aria-hidden="true"
+                className="w-4 h-4 text-yellow-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+          </div>
+        </div>
+
+        {/* Step Instructions */}
+        <div className="px-4 pb-4 space-y-3">
+          <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-yellow-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
+                    1
+                  </span>
+                  <span className="text-xs text-neutral-500 uppercase font-medium">Body</span>
+                </div>
+                <p className="text-sm text-white font-semibold leading-snug">
+                  Silahkan ambil rekaman seluruh bodi secara perlahan. Jangan terburu-buru agar AI
+                  bisa mendeteksi setiap sudut dengan maksimal.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-yellow-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
+                    2
+                  </span>
+                  <span className="text-xs text-neutral-500 uppercase font-medium">
+                    Speedometer
+                  </span>
+                </div>
+                <p className="text-sm text-white font-semibold leading-snug">
+                  Tunjukkan SPEEDOMETER dengan jelas agar angka Odometer terlihat dengan jelas
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
