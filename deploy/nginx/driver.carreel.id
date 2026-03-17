@@ -6,7 +6,7 @@ server {
   client_max_body_size 1024M;
   server_name driver.carreel.id;
 
-  root root /var/www/html/carreel/driver/dist;
+  root /var/www/html/carreel/driver/dist;
   index index.html;
 
   # Security Headers
