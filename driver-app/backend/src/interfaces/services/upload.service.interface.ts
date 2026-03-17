@@ -10,4 +10,5 @@ export interface IUploadService {
   ): Promise<MediaFileResponse>;
   getPresignedUrl(key: string, driverId: string): Promise<string>;
   getMediaUrl(mediaId: string): Promise<string>;
+  getMediaData(mediaId: string): Promise<{ buffer: Buffer; mimeType: string }>;
 }

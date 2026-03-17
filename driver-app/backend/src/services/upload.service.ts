@@ -100,4 +100,18 @@ export class UploadService implements IUploadService {
       media.minioKey,
     );
   }
+
+  async getMediaData(
+    mediaId: string,
+  ): Promise<{ buffer: Buffer; mimeType: string }> {
+    const media = await this.mediaFileRepository.findById(mediaId);
+    if (!media) {
+      throw new Error("Media file not found");
+    }
+    const buffer = await this.storageProvider.download(
+      media.minioBucket,
+      media.minioKey,
+    );
+    return { buffer, mimeType: media.mimeType };
+  }
 }

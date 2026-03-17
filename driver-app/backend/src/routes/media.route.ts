@@ -8,12 +8,17 @@ export function createMediaRoutes(
 ) {
   const app = new Hono();
 
-  // GET /api/media/:id/url — redirects to presigned MinIO URL
-  // No auth required: presigned URLs are time-limited and act as their own authorization.
-  // This allows <img src="/api/media/:id/url"> to work without JWT headers.
+  // GET /api/media/:id/url — proxy image data from MinIO
+  // Proxies instead of redirecting so the client never needs direct MinIO access.
+  // No auth required: used by <img src="/api/media/:id/url"> tags.
   app.get("/:id/url", async (c) => {
-    const url = await uploadService.getMediaUrl(c.req.param("id"));
-    return c.redirect(url);
+    const { buffer, mimeType } = await uploadService.getMediaData(c.req.param("id"));
+    return new Response(buffer, {
+      headers: {
+        "Content-Type": mimeType,
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
   });
 
   // GET /api/media/:id/stream — proxy video stream with Range support
