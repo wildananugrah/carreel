@@ -6,7 +6,7 @@ server {
   client_max_body_size 1024M;
   server_name planner.carreel.id;
 
-  root /root/repo/carreel/planner-app/frontend/dist;
+  root /var/www/html/carreel/planner/dist;
   index index.html;
 
   # Security Headers

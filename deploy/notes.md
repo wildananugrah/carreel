@@ -18,8 +18,8 @@ certbot certonly --nginx -d monit.carreel.id
 
 ```bash
 cp nginx/driver.carreel.id /etc/nginx/sites-available/driver.carreel.id
-cp nginx/driver-api.carreel.id /etc/nginx/sites-available/driver-api.carreel.id
 cp nginx/planner.carreel.id /etc/nginx/sites-available/planner.carreel.id
+cp nginx/driver-api.carreel.id /etc/nginx/sites-available/driver-api.carreel.id
 cp nginx/planner-api.carreel.id /etc/nginx/sites-available/planner-api.carreel.id
 cp nginx/ws.carreel.id /etc/nginx/sites-available/ws.carreel.id
 cp nginx/minio.carreel.id /etc/nginx/sites-available/minio.carreel.id
@@ -52,3 +52,9 @@ systemctl reload nginx; systemctl restart nginx; systemctl status nginx;
 
 ssl_certificate /etc/letsencrypt/live/oc.carreel.id/fullchain.pem;
 ssl_certificate_key /etc/letsencrypt/live/oc.carreel.id/privkey.pem;
+
+7. html
+
+```bash
+cp -r /root/repo/carreel/driver-app/frontend/dist /var/www/html/carreel/driver
+```
