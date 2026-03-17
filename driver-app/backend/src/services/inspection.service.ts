@@ -136,8 +136,11 @@ export class InspectionService implements IInspectionService {
       throw new Error("Only DRAFT inspections can be submitted");
     }
 
-    // All steps must have media uploaded
-    const pendingSteps = inspection.steps.filter((s) => s.status === "PENDING");
+    // Only required steps must have media uploaded
+    const REQUIRED_STEPS = ["BODY_INSPECTION", "SPEEDOMETER"];
+    const pendingSteps = inspection.steps.filter(
+      (s) => REQUIRED_STEPS.includes(s.stepType) && s.status === "PENDING",
+    );
     if (pendingSteps.length > 0) {
       const pendingTypes = pendingSteps.map((s) => s.stepType).join(", ");
       throw new Error(
