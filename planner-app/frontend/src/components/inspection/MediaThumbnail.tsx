@@ -27,7 +27,7 @@ export function MediaThumbnail({ file }: MediaThumbnailProps) {
   }, [file.minioKey, file.minioBucket]);
 
   if (!url) {
-    return <div className="w-20 h-20 bg-gray-100 rounded animate-pulse" />;
+    return <div className="w-20 h-20 bg-[#2a2a2a] rounded animate-pulse" />;
   }
 
   return (
@@ -36,7 +36,7 @@ export function MediaThumbnail({ file }: MediaThumbnailProps) {
       <button
         type="button"
         onClick={() => setShowMeta(!showMeta)}
-        className="block focus:outline-none focus:ring-2 focus:ring-gray-900 rounded"
+        className="block focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded"
       >
         {file.mimeType.startsWith("image/") ? (
           <img

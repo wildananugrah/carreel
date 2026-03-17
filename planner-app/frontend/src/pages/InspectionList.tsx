@@ -63,7 +63,7 @@ export function InspectionList() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Inspections</h1>
+      <h1 className="text-2xl font-semibold text-white mb-6">Inspections</h1>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
@@ -79,7 +79,7 @@ export function InspectionList() {
           />
         </div>
         <div>
-          <label htmlFor="filter-from" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="filter-from" className="block text-sm font-medium text-neutral-400 mb-1">
             From
           </label>
           <input
@@ -90,11 +90,11 @@ export function InspectionList() {
               setDateFrom(e.target.value);
               setPage(1);
             }}
-            className="px-3 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="px-3 py-2 rounded-lg border border-[#2a2a2a] text-sm bg-[#171717] text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
           />
         </div>
         <div>
-          <label htmlFor="filter-to" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="filter-to" className="block text-sm font-medium text-neutral-400 mb-1">
             To
           </label>
           <input
@@ -105,7 +105,7 @@ export function InspectionList() {
               setDateTo(e.target.value);
               setPage(1);
             }}
-            className="px-3 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="px-3 py-2 rounded-lg border border-[#2a2a2a] text-sm bg-[#171717] text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
           />
         </div>
       </div>
@@ -120,34 +120,34 @@ export function InspectionList() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left">
-                  <th className="pb-3 font-medium text-gray-500">Status</th>
-                  <th className="pb-3 font-medium text-gray-500">Driver</th>
-                  <th className="pb-3 font-medium text-gray-500">Unit</th>
-                  <th className="pb-3 font-medium text-gray-500">Type</th>
-                  <th className="pb-3 font-medium text-gray-500">Steps</th>
-                  <th className="pb-3 font-medium text-gray-500">Date</th>
-                  <th className="pb-3 font-medium text-gray-500" />
+                <tr className="border-b border-[#2a2a2a] text-left">
+                  <th className="pb-3 font-medium text-neutral-500">Status</th>
+                  <th className="pb-3 font-medium text-neutral-500">Driver</th>
+                  <th className="pb-3 font-medium text-neutral-500">Unit</th>
+                  <th className="pb-3 font-medium text-neutral-500">Type</th>
+                  <th className="pb-3 font-medium text-neutral-500">Steps</th>
+                  <th className="pb-3 font-medium text-neutral-500">Date</th>
+                  <th className="pb-3 font-medium text-neutral-500" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#2a2a2a]">
                 {data.data.map((insp) => (
                   <tr
                     key={insp.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-[#1a1a1a] cursor-pointer transition-colors"
                     onClick={() => navigate(`/inspections/${insp.id}`)}
                   >
                     <td className="py-3">
                       <StatusBadge status={insp.status as InspectionStatus} />
                     </td>
-                    <td className="py-3 text-gray-900">{insp.driverName}</td>
-                    <td className="py-3 text-gray-500">{insp.unitPlate ?? "—"}</td>
-                    <td className="py-3 text-gray-500">
+                    <td className="py-3 text-white">{insp.driverName}</td>
+                    <td className="py-3 text-neutral-500">{insp.unitPlate ?? "—"}</td>
+                    <td className="py-3 text-neutral-500">
                       {insp.tripType === "PRE_TRIP" ? "Pre" : "Post"}
                     </td>
-                    <td className="py-3 text-gray-500">{insp.stepCount}</td>
-                    <td className="py-3 text-gray-500">{formatDate(insp.createdAt)}</td>
-                    <td className="py-3 text-gray-400 text-right">
+                    <td className="py-3 text-neutral-500">{insp.stepCount}</td>
+                    <td className="py-3 text-neutral-500">{formatDate(insp.createdAt)}</td>
+                    <td className="py-3 text-neutral-500 text-right">
                       <svg
                         aria-hidden="true"
                         width="16"

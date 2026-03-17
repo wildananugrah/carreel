@@ -10,13 +10,13 @@ export function ReviewHistory({ reviews }: ReviewHistoryProps) {
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">Review History</h3>
+      <h3 className="text-sm font-semibold text-white mb-3">Review History</h3>
       <div className="space-y-3">
         {reviews.map((review) => (
-          <div key={review.id} className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+          <div key={review.id} className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4">
             <div className="flex items-center justify-between mb-2">
               <StatusBadge status={review.decision} />
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-neutral-500">
                 {new Date(review.createdAt).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -26,7 +26,7 @@ export function ReviewHistory({ reviews }: ReviewHistoryProps) {
                 })}
               </span>
             </div>
-            {review.notes && <p className="text-sm text-gray-600">{review.notes}</p>}
+            {review.notes && <p className="text-sm text-neutral-400">{review.notes}</p>}
           </div>
         ))}
       </div>

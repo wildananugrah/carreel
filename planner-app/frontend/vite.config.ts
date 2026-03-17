@@ -14,10 +14,10 @@ export default defineConfig(({ mode }) => {
       port: parseInt(env.VITE_PORT) || 5174,
       allowedHosts,
       proxy: {
-        "/api": {
-          target: env.VITE_API_URL || "http://localhost:3002",
-          changeOrigin: true,
-        },
+        // "/api": {
+        //   target: env.VITE_API_URL || "http://localhost:3002",
+        //   changeOrigin: true,
+        // },
         "/health": {
           target: env.VITE_API_URL || "http://localhost:3002",
           changeOrigin: true,

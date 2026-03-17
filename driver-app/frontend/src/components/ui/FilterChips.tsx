@@ -18,8 +18,8 @@ export function FilterChips<T extends string>({
           onClick={() => onChange(option.value)}
           className={`whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
             selected === option.value
-              ? "bg-teal-600 text-white"
-              : "bg-white text-gray-600 border border-gray-200"
+              ? "bg-yellow-400 text-black"
+              : "bg-[#1a1a1a] text-neutral-400 border border-[#2a2a2a]"
           }`}
         >
           {option.label}

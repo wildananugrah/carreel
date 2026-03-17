@@ -24,12 +24,10 @@ export function StepCard({ step, inspectionStatus }: StepCardProps) {
     <Card className="p-4">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <p className="font-medium text-gray-900">
-            {stepTypeLabels[step.stepType] ?? step.stepType}
-          </p>
+          <p className="font-medium text-white">{stepTypeLabels[step.stepType] ?? step.stepType}</p>
           <div className="flex items-center gap-2 mt-1">
             <StatusBadge status={step.status} />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-neutral-500">
               {step.mediaFiles.length} file
               {step.mediaFiles.length !== 1 ? "s" : ""}
             </span>
@@ -39,7 +37,7 @@ export function StepCard({ step, inspectionStatus }: StepCardProps) {
           <button
             type="button"
             onClick={() => navigate(`/inspections/${step.inspectionId}/steps/${step.id}/upload`)}
-            className="text-teal-600 text-sm font-medium px-3 py-1.5 rounded-lg bg-teal-50 active:bg-teal-100 transition-colors"
+            className="text-yellow-400 text-sm font-medium px-3 py-1.5 rounded-lg bg-yellow-400/10 active:bg-yellow-400/20 transition-colors"
           >
             Upload
           </button>
@@ -51,7 +49,7 @@ export function StepCard({ step, inspectionStatus }: StepCardProps) {
           {step.mediaFiles.map((file) => (
             <div
               key={file.id}
-              className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden"
+              className="w-16 h-16 rounded-lg bg-[#0f0f0f] flex-shrink-0 flex items-center justify-center overflow-hidden"
             >
               {file.mimeType.startsWith("image/") ? (
                 <img

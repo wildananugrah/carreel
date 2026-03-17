@@ -35,17 +35,19 @@ export function Header() {
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `px-3 py-2 text-sm font-medium transition-colors ${
-      isActive ? "text-gray-900 border-b-2 border-gray-900" : "text-gray-500 hover:text-gray-700"
+      isActive
+        ? "text-yellow-400 border-b-2 border-yellow-400"
+        : "text-neutral-500 hover:text-neutral-300"
     }`;
 
   return (
-    <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-10 bg-[#171717] border-b border-[#2a2a2a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo + Nav */}
           <div className="flex items-center gap-6">
-            <NavLink to="/" className="text-lg font-bold text-gray-900">
-              Carreel
+            <NavLink to="/">
+              <img src="/car-reel-logo.png" alt="Carreel" className="h-8" />
             </NavLink>
             <nav className="hidden sm:flex items-center gap-1">
               <NavLink to="/" className={navLinkClass} end>
@@ -73,21 +75,21 @@ export function Header() {
             <button
               type="button"
               onClick={() => setShowDropdown((prev) => !prev)}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+              className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center text-sm font-medium text-neutral-300 hover:bg-[#333333] transition-colors"
             >
               {user?.fullName?.charAt(0).toUpperCase() ?? "?"}
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
-                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-56 bg-[#1a1a1a] rounded-lg shadow-lg border border-[#2a2a2a] py-1 z-20">
+                <div className="px-4 py-3 border-b border-[#2a2a2a]">
+                  <p className="text-sm font-medium text-white">{user?.fullName}</p>
+                  <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
                 </div>
                 <NavLink
                   to="/profile"
                   onClick={() => setShowDropdown(false)}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#222222]"
                 >
                   Profile
                 </NavLink>
@@ -97,7 +99,7 @@ export function Header() {
                     setShowDropdown(false);
                     logout();
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#222222]"
                 >
                   Log out
                 </button>

@@ -79,7 +79,7 @@ export function InspectionDetail() {
       <button
         type="button"
         onClick={() => navigate("/inspections")}
-        className="text-sm text-gray-500 hover:text-gray-900 mb-4 inline-flex items-center gap-1"
+        className="text-sm text-neutral-500 hover:text-white mb-4 inline-flex items-center gap-1"
       >
         <svg
           aria-hidden="true"
@@ -98,10 +98,10 @@ export function InspectionDetail() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <StatusBadge status={inspection.status} />
-        <span className="text-sm text-gray-500 uppercase font-medium">
+        <span className="text-sm text-neutral-500 uppercase font-medium">
           {inspection.tripType === "PRE_TRIP" ? "Pre-Trip" : "Post-Trip"}
         </span>
-        <span className="text-sm text-gray-400">{date}</span>
+        <span className="text-sm text-neutral-500">{date}</span>
         {inspection.unitId && (
           <Button variant="ghost" size="sm" onClick={handleCompare}>
             Compare Pre/Post
@@ -115,15 +115,15 @@ export function InspectionDetail() {
           {/* Driver & Unit */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="p-4">
-              <p className="text-xs font-medium text-gray-500 uppercase mb-1">Driver</p>
-              <p className="text-sm font-medium text-gray-900">{inspection.driver.fullName}</p>
-              <p className="text-xs text-gray-500">{inspection.driver.email}</p>
+              <p className="text-xs font-medium text-neutral-500 uppercase mb-1">Driver</p>
+              <p className="text-sm font-medium text-white">{inspection.driver.fullName}</p>
+              <p className="text-xs text-neutral-500">{inspection.driver.email}</p>
             </Card>
             {inspection.unit && (
               <Card className="p-4">
-                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Unit</p>
-                <p className="text-sm font-medium text-gray-900">{inspection.unit.licensePlate}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs font-medium text-neutral-500 uppercase mb-1">Unit</p>
+                <p className="text-sm font-medium text-white">{inspection.unit.licensePlate}</p>
+                <p className="text-xs text-neutral-500">
                   {inspection.unit.make} {inspection.unit.model}
                 </p>
               </Card>
@@ -132,7 +132,7 @@ export function InspectionDetail() {
 
           {/* GPS */}
           {inspection.latitude != null && (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-neutral-600">
               GPS: {inspection.latitude.toFixed(5)}, {inspection.longitude?.toFixed(5)}
             </p>
           )}
@@ -140,11 +140,13 @@ export function InspectionDetail() {
           {/* Linked Inspection */}
           {inspection.linkedInspection && (
             <Card
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#222222] transition-colors"
               onClick={() => navigate(`/inspections/${inspection.linkedInspection?.id}`)}
             >
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Linked Pre-Trip</p>
+                <p className="text-xs font-medium text-neutral-500 uppercase mb-1">
+                  Linked Pre-Trip
+                </p>
                 <StatusBadge status={inspection.linkedInspection.status} />
               </div>
               <svg
@@ -155,7 +157,7 @@ export function InspectionDetail() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="text-gray-400"
+                className="text-neutral-500"
               >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -163,11 +165,13 @@ export function InspectionDetail() {
           )}
           {inspection.linkedFrom && (
             <Card
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#222222] transition-colors"
               onClick={() => navigate(`/inspections/${inspection.linkedFrom?.id}`)}
             >
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Linked Post-Trip</p>
+                <p className="text-xs font-medium text-neutral-500 uppercase mb-1">
+                  Linked Post-Trip
+                </p>
                 <StatusBadge status={inspection.linkedFrom.status} />
               </div>
               <svg
@@ -178,7 +182,7 @@ export function InspectionDetail() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="text-gray-400"
+                className="text-neutral-500"
               >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -187,17 +191,17 @@ export function InspectionDetail() {
 
           {/* Steps */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+            <h2 className="text-lg font-semibold text-white mb-3">
               Steps ({inspection.steps.length})
             </h2>
             {inspection.steps.length === 0 ? (
-              <p className="text-sm text-gray-400">No steps</p>
+              <p className="text-sm text-neutral-500">No steps</p>
             ) : (
               <div className="space-y-4">
                 {inspection.steps.map((step) => (
                   <Card key={step.id} className="p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-gray-900 text-sm">
+                      <p className="font-medium text-white text-sm">
                         {stepTypeLabels[step.stepType] ?? step.stepType}
                       </p>
                       <StatusBadge status={step.status} />

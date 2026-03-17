@@ -28,19 +28,19 @@ function InspectionColumn({ inspection, label }: { inspection: InspectionDetail;
   return (
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-semibold uppercase text-gray-500">{label}</span>
+        <span className="text-xs font-semibold uppercase text-neutral-500">{label}</span>
         <StatusBadge status={inspection.status} />
       </div>
-      <p className="text-xs text-gray-400 mb-4">{date}</p>
+      <p className="text-xs text-neutral-500 mb-4">{date}</p>
 
       {inspection.steps.length === 0 ? (
-        <p className="text-sm text-gray-400">No steps</p>
+        <p className="text-sm text-neutral-500">No steps</p>
       ) : (
         <div className="space-y-3">
           {inspection.steps.map((step) => (
             <Card key={step.id} className="p-3">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-gray-900">
+                <p className="text-xs font-medium text-white">
                   {stepTypeLabels[step.stepType] ?? step.stepType}
                 </p>
                 <StatusBadge status={step.status} />
@@ -70,11 +70,11 @@ export function ComparisonView({ current, counterpart, onClose }: ComparisonView
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Pre vs Post Comparison</h2>
+        <h2 className="text-lg font-semibold text-white">Pre vs Post Comparison</h2>
         <button
           type="button"
           onClick={onClose}
-          className="text-sm text-gray-500 hover:text-gray-900"
+          className="text-sm text-neutral-500 hover:text-white"
         >
           Close
         </button>
@@ -82,7 +82,7 @@ export function ComparisonView({ current, counterpart, onClose }: ComparisonView
 
       <div className="flex gap-6">
         <InspectionColumn inspection={preTrip} label="Pre-Trip" />
-        <div className="w-px bg-gray-200 shrink-0" />
+        <div className="w-px bg-[#2a2a2a] shrink-0" />
         <InspectionColumn inspection={postTrip} label="Post-Trip" />
       </div>
     </div>

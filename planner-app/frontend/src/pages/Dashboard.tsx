@@ -21,7 +21,8 @@ export function Dashboard() {
   }, []);
 
   if (loading) return <Spinner className="mt-12" />;
-  if (!kpis) return <div className="text-center text-gray-500 mt-12">Failed to load dashboard</div>;
+  if (!kpis)
+    return <div className="text-center text-neutral-500 mt-12">Failed to load dashboard</div>;
 
   const kpiCards = [
     { label: "Total Inspections", value: kpis.totalInspections },
@@ -36,16 +37,16 @@ export function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-semibold text-white mb-6">Dashboard</h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {kpiCards.map((kpi) => (
           <Card key={kpi.label} className="p-5">
-            <p className="text-sm text-gray-500">{kpi.label}</p>
+            <p className="text-sm text-neutral-500">{kpi.label}</p>
             <p
               className={`text-3xl font-bold mt-1 ${
-                kpi.highlight ? "text-amber-600" : "text-gray-900"
+                kpi.highlight ? "text-amber-400" : "text-white"
               }`}
             >
               {kpi.value}
@@ -55,12 +56,12 @@ export function Dashboard() {
       </div>
 
       {/* Status Distribution */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-3">By Status</h2>
+      <h2 className="text-lg font-semibold text-white mb-3">By Status</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
         {Object.entries(kpis.inspectionsByStatus).map(([status, count]) => (
           <Card key={status} className="p-4 flex items-center justify-between">
             <StatusBadge status={status as InspectionStatus} />
-            <span className="text-lg font-semibold text-gray-900">{count}</span>
+            <span className="text-lg font-semibold text-white">{count}</span>
           </Card>
         ))}
       </div>

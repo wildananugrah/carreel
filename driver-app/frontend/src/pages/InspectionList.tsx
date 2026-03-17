@@ -105,7 +105,7 @@ export function InspectionList() {
         {loading ? (
           <Spinner className="mt-12" />
         ) : error ? (
-          <div className="text-center text-red-500 mt-12 text-sm">{error}</div>
+          <div className="text-center text-red-400 mt-12 text-sm">{error}</div>
         ) : inspections.length === 0 ? (
           <EmptyState
             title="No inspections"
@@ -119,7 +119,7 @@ export function InspectionList() {
           <div className="space-y-5">
             {grouped.map(([key, { label, items }]) => (
               <div key={key}>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2">
                   {label}
                 </h3>
                 <div className="space-y-3">

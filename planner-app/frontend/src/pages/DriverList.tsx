@@ -46,7 +46,7 @@ export function DriverList() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Drivers</h1>
+      <h1 className="text-2xl font-semibold text-white mb-6">Drivers</h1>
 
       <div className="max-w-xs mb-6">
         <Input
@@ -65,20 +65,20 @@ export function DriverList() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left">
-                  <th className="pb-3 font-medium text-gray-500">Name</th>
-                  <th className="pb-3 font-medium text-gray-500">Email</th>
-                  <th className="pb-3 font-medium text-gray-500">Inspections</th>
-                  <th className="pb-3 font-medium text-gray-500">Joined</th>
+                <tr className="border-b border-[#2a2a2a] text-left">
+                  <th className="pb-3 font-medium text-neutral-500">Name</th>
+                  <th className="pb-3 font-medium text-neutral-500">Email</th>
+                  <th className="pb-3 font-medium text-neutral-500">Inspections</th>
+                  <th className="pb-3 font-medium text-neutral-500">Joined</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#2a2a2a]">
                 {data.data.map((driver) => (
-                  <tr key={driver.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 text-gray-900 font-medium">{driver.fullName}</td>
-                    <td className="py-3 text-gray-500">{driver.email}</td>
-                    <td className="py-3 text-gray-500">{driver._count.inspections}</td>
-                    <td className="py-3 text-gray-500">
+                  <tr key={driver.id} className="hover:bg-[#1a1a1a] transition-colors">
+                    <td className="py-3 text-white font-medium">{driver.fullName}</td>
+                    <td className="py-3 text-neutral-500">{driver.email}</td>
+                    <td className="py-3 text-neutral-500">{driver._count.inspections}</td>
+                    <td className="py-3 text-neutral-500">
                       {new Date(driver.createdAt).toLocaleDateString("en-US", {
                         month: "short",
                         year: "numeric",

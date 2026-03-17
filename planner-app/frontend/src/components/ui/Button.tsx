@@ -1,11 +1,12 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 const variantStyles = {
-  primary: "bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-700 disabled:bg-gray-400",
+  primary:
+    "bg-yellow-400 text-black hover:bg-yellow-300 focus:ring-yellow-400 disabled:bg-yellow-400/30 disabled:text-black/50",
   secondary:
-    "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500 disabled:opacity-50",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-300",
-  ghost: "text-gray-600 hover:text-gray-900 hover:bg-gray-100",
+    "bg-[#1a1a1a] text-neutral-300 border border-[#2a2a2a] hover:bg-[#222222] focus:ring-yellow-400 disabled:opacity-50",
+  danger: "bg-red-600 text-white hover:bg-red-500 focus:ring-red-500 disabled:bg-red-600/30",
+  ghost: "text-neutral-400 hover:text-white hover:bg-[#1a1a1a]",
 } as const;
 
 const sizeStyles = {
@@ -40,7 +41,7 @@ export function Button({
       disabled={disabled || loading}
       className={[
         "inline-flex items-center justify-center font-medium rounded-lg",
-        "focus:outline-none focus:ring-2 focus:ring-offset-2",
+        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0f0f0f]",
         "transition-colors duration-150",
         "disabled:cursor-not-allowed",
         variantStyles[variant],

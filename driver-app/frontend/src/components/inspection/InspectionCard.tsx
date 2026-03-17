@@ -19,28 +19,28 @@ export function InspectionCard({ inspection }: InspectionCardProps) {
 
   return (
     <Card
-      className="p-4 active:bg-gray-50 transition-colors cursor-pointer"
+      className="p-4 active:bg-[#222222] transition-colors cursor-pointer"
       onClick={() => navigate(`/inspections/${inspection.id}`)}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <StatusBadge status={inspection.status} />
-            <span className="text-xs text-gray-400 uppercase font-medium">
+            <span className="text-xs text-neutral-500 uppercase font-medium">
               {inspection.tripType === "PRE_TRIP" ? "Pre-Trip" : "Post-Trip"}
             </span>
           </div>
-          <p className="text-sm text-gray-900 font-medium truncate">
+          <p className="text-sm text-white font-medium truncate">
             Inspection #{inspection.id.slice(0, 8)}
           </p>
           {inspection.unit && (
-            <p className="text-xs text-gray-600 mt-0.5 font-medium">
+            <p className="text-xs text-neutral-400 mt-0.5 font-medium">
               {inspection.unit.licensePlate}
             </p>
           )}
-          <p className="text-xs text-gray-500 mt-0.5">{date}</p>
+          <p className="text-xs text-neutral-500 mt-0.5">{date}</p>
         </div>
-        <div className="flex items-center text-gray-400 ml-2">
+        <div className="flex items-center text-neutral-500 ml-2">
           <span className="text-xs mr-1">{inspection._count?.steps ?? 0} steps</span>
           <svg
             aria-hidden="true"

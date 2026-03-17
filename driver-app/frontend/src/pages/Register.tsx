@@ -28,15 +28,15 @@ export function Register() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center px-6 bg-gray-50">
+    <div className="min-h-screen flex flex-col justify-center px-6 bg-[#0f0f0f]">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-teal-600">Carreel</h1>
-        <p className="text-gray-500 mt-1">Create your account</p>
+        <img src="/car-reel-logo.png" alt="Carreel" className="h-16 mx-auto" />
+        <p className="text-neutral-500 mt-2">Create your account</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>
+          <div className="bg-red-500/10 text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>
         )}
 
         <Input
@@ -75,9 +75,9 @@ export function Register() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-6">
+      <p className="text-center text-sm text-neutral-500 mt-6">
         Already have an account?{" "}
-        <Link to="/login" className="text-teal-600 font-medium">
+        <Link to="/login" className="text-yellow-400 font-medium">
           Log In
         </Link>
       </p>

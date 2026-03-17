@@ -9,7 +9,7 @@ export function TopBar({ title, showBack }: TopBarProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-teal-600 text-white px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+    <div className="bg-[#171717] text-white px-4 py-3 flex items-center gap-3 sticky top-0 z-10 border-b border-[#2a2a2a]">
       {showBack && (
         <button
           type="button"

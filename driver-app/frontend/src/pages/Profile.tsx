@@ -20,27 +20,25 @@ export function Profile() {
       <div className="flex-1 px-4 pt-6">
         <Card className="p-6">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-full bg-teal-100 flex items-center justify-center">
-              <span className="text-teal-700 font-bold text-xl">
+            <div className="w-14 h-14 rounded-full bg-yellow-400/20 flex items-center justify-center">
+              <span className="text-yellow-400 font-bold text-xl">
                 {user?.fullName?.charAt(0).toUpperCase() ?? "?"}
               </span>
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">{user?.fullName}</h2>
-              <p className="text-sm text-gray-500">{user?.email}</p>
+              <h2 className="text-lg font-semibold text-white">{user?.fullName}</h2>
+              <p className="text-sm text-neutral-500">{user?.email}</p>
             </div>
           </div>
 
-          <div className="space-y-3 border-t border-gray-100 pt-4">
+          <div className="space-y-3 border-t border-[#2a2a2a] pt-4">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Role</span>
-              <span className="text-gray-900 font-medium capitalize">
-                {user?.role?.toLowerCase()}
-              </span>
+              <span className="text-neutral-500">Role</span>
+              <span className="text-white font-medium capitalize">{user?.role?.toLowerCase()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Member since</span>
-              <span className="text-gray-900 font-medium">{joinDate}</span>
+              <span className="text-neutral-500">Member since</span>
+              <span className="text-white font-medium">{joinDate}</span>
             </div>
           </div>
         </Card>

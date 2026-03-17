@@ -72,7 +72,7 @@ export function AlertList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Alerts</h1>
+        <h1 className="text-2xl font-semibold text-white">Alerts</h1>
         <Button variant="ghost" size="sm" loading={markingAll} onClick={handleMarkAllRead}>
           Mark all read
         </Button>
@@ -87,7 +87,9 @@ export function AlertList() {
             setPage(1);
           }}
           className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            !showUnreadOnly ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
+            !showUnreadOnly
+              ? "bg-yellow-400 text-black"
+              : "bg-[#1a1a1a] text-neutral-400 border border-[#2a2a2a]"
           }`}
         >
           All
@@ -99,7 +101,9 @@ export function AlertList() {
             setPage(1);
           }}
           className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            showUnreadOnly ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
+            showUnreadOnly
+              ? "bg-yellow-400 text-black"
+              : "bg-[#1a1a1a] text-neutral-400 border border-[#2a2a2a]"
           }`}
         >
           Unread
@@ -119,17 +123,17 @@ export function AlertList() {
                 key={alert.id}
                 className={`rounded-lg border p-4 transition-colors ${
                   alert.isRead
-                    ? "bg-white border-gray-200"
-                    : "bg-white border-gray-200 border-l-4 border-l-gray-900"
+                    ? "bg-[#1a1a1a] border-[#2a2a2a]"
+                    : "bg-[#1a1a1a] border-[#2a2a2a] border-l-4 border-l-yellow-400"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <StatusBadge status={alert.alertType} />
-                      <span className="text-xs text-gray-400">{timeAgo(alert.createdAt)}</span>
+                      <span className="text-xs text-neutral-500">{timeAgo(alert.createdAt)}</span>
                     </div>
-                    <p className="text-sm text-gray-900">{alert.message}</p>
+                    <p className="text-sm text-white">{alert.message}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {!alert.isRead && (

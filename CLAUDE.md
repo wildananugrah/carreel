@@ -663,11 +663,41 @@ app.use("*", createRequestLoggerMiddleware(logger));
 
 ### Frontend Architecture
 
-**Driver-App Frontend** — Mobile-first PWA (port 5173). Bottom tab navigation. Teal color theme. Token: `carreel_token`. Proxy to backend port 3001.
+**Driver-App Frontend** — Mobile-first PWA (port 5173). Bottom tab navigation. Dark mode with gold accent. Token: `carreel_token`. Proxy to backend port 3001.
 
-**Planner-App Frontend** — Desktop-first corporate dashboard (port 5174). Top header navigation with `max-w-7xl` container. Corporate gray theme (gray-900 primary, white bg, gray-50 cards). Token: `carreel_planner_token`. Proxy to backend port 3002. Polls `/api/alerts/unread-count` every 30s for nav badge.
+**Planner-App Frontend** — Desktop-first corporate dashboard (port 5174). Top header navigation with `max-w-7xl` container. Dark mode with gold accent. Token: `carreel_planner_token`. Proxy to backend port 3002. Polls `/api/alerts/unread-count` every 30s for nav badge.
 
 Both share the same stack: React 19 + Vite 8 + TypeScript 5.9 + Tailwind CSS 4 (`@tailwindcss/vite`) + React Router v7 + Biome 2.4. Auth via React Context (AuthProvider/useAuth). API client is a thin fetch wrapper with JWT auth and auto-redirect on 401.
+
+#### Dark Mode Theme Specification
+
+Both apps use the same dark theme palette:
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Background | `#0F0F0F` | Page background (`bg-[#0f0f0f]`) |
+| Surface | `#1A1A1A` | Cards, panels (`bg-[#1a1a1a]`) |
+| Surface elevated | `#171717` | Headers, nav bars, inputs (`bg-[#171717]`) |
+| Surface hover | `#222222` | Hover states (`hover:bg-[#222222]`) |
+| Border | `#2A2A2A` | All borders (`border-[#2a2a2a]`) |
+| Text primary | `white` | Headings, names, values |
+| Text secondary | `neutral-500` | Labels, descriptions, timestamps |
+| Text tertiary | `neutral-400` | Less prominent labels |
+| Text muted | `neutral-600` | GPS coords, very subtle text |
+| Accent | `yellow-400` | Logo, active nav, primary buttons, links, spinner |
+| Accent hover | `yellow-300` | Primary button hover |
+| Primary button | `bg-yellow-400 text-black` | Main CTAs |
+| Secondary button | `bg-[#1a1a1a] text-neutral-300 border-[#2a2a2a]` | Secondary actions |
+| Danger | `bg-red-600 text-white` | Destructive actions |
+| Error text | `text-red-400` | Error messages |
+| Error bg | `bg-red-500/10` | Error containers |
+| Focus ring | `ring-yellow-400` | Focus indicators with `ring-offset-[#0f0f0f]` |
+| Status badges | `bg-{color}-500/20 text-{color}-400` | Semi-transparent dark badges |
+| Avatar | `bg-[#2a2a2a] text-neutral-300` | User avatars |
+| Inputs | `bg-[#171717] text-white border-[#2a2a2a] placeholder-neutral-500` | Form inputs |
+| Table header | `text-neutral-500 border-[#2a2a2a]` | Table headers |
+| Table row hover | `hover:bg-[#1a1a1a]` | Table row hover |
+| Table divider | `divide-[#2a2a2a]` | Table row borders |
 
 #### Mobile-First Design (Driver-App)
 

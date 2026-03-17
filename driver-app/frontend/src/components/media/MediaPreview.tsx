@@ -7,7 +7,7 @@ export function MediaPreview({ file }: MediaPreviewProps) {
   const isVideo = file.type.startsWith("video/");
 
   return (
-    <div className="rounded-lg overflow-hidden bg-gray-100">
+    <div className="rounded-lg overflow-hidden bg-[#171717]">
       {isVideo ? (
         // biome-ignore lint/a11y/useMediaCaption: User-uploaded video preview, captions not available
         <video
@@ -24,7 +24,7 @@ export function MediaPreview({ file }: MediaPreviewProps) {
           onLoad={() => URL.revokeObjectURL(url)}
         />
       )}
-      <div className="px-3 py-2 text-xs text-gray-500 truncate">
+      <div className="px-3 py-2 text-xs text-neutral-500 truncate">
         {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)
       </div>
     </div>

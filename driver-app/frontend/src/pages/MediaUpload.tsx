@@ -150,7 +150,7 @@ export function MediaUpload() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center py-16 border-2 border-dashed border-gray-300 rounded-lg bg-white active:bg-gray-50 transition-colors"
+              className="w-full flex flex-col items-center justify-center py-16 border-2 border-dashed border-[#2a2a2a] rounded-lg bg-[#1a1a1a] active:bg-[#222222] transition-colors"
             >
               <svg
                 aria-hidden="true"
@@ -160,13 +160,13 @@ export function MediaUpload() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
-                className="text-gray-400 mb-3"
+                className="text-neutral-500 mb-3"
               >
                 <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                 <circle cx="12" cy="13" r="4" />
               </svg>
-              <p className="text-sm font-medium text-gray-700">Take Photo or Video</p>
-              <p className="text-xs text-gray-400 mt-1">Tap to open camera or select file</p>
+              <p className="text-sm font-medium text-neutral-300">Take Photo or Video</p>
+              <p className="text-xs text-neutral-500 mt-1">Tap to open camera or select file</p>
             </button>
           </div>
         ) : (
@@ -174,16 +174,16 @@ export function MediaUpload() {
             <MediaPreview file={file} />
 
             {uploading && (
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-[#2a2a2a] rounded-full h-2">
                 <div
-                  className="bg-teal-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
             )}
 
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>
+              <div className="bg-red-500/10 text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>
             )}
 
             <div className="space-y-2">

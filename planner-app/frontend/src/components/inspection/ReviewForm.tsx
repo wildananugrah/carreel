@@ -41,11 +41,11 @@ export function ReviewForm({ inspectionId, onSubmitted }: ReviewFormProps) {
   }
 
   return (
-    <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">Submit Review</h3>
+    <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4">
+      <h3 className="text-sm font-semibold text-white mb-3">Submit Review</h3>
       <form onSubmit={handleSubmit} className="space-y-3">
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg">{error}</div>
+          <div className="bg-red-500/10 text-red-400 text-sm px-3 py-2 rounded-lg">{error}</div>
         )}
 
         <Select
@@ -57,7 +57,7 @@ export function ReviewForm({ inspectionId, onSubmitted }: ReviewFormProps) {
         />
 
         <div>
-          <label htmlFor="review-notes" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="review-notes" className="block text-sm font-medium text-neutral-400 mb-1">
             Notes (optional)
           </label>
           <textarea
@@ -65,7 +65,7 @@ export function ReviewForm({ inspectionId, onSubmitted }: ReviewFormProps) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#171717] text-white text-sm placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
             placeholder="Add review notes..."
           />
         </div>

@@ -45,7 +45,7 @@ const tabs = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20">
+    <nav className="fixed bottom-0 left-0 right-0 bg-[#171717] border-t border-[#2a2a2a] z-20">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
         {tabs.map((tab) => (
           <NavLink
@@ -54,7 +54,7 @@ export function BottomNav() {
             end={tab.to === "/"}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center min-w-[64px] h-12 ${
-                isActive ? "text-teal-600" : "text-gray-400"
+                isActive ? "text-yellow-400" : "text-neutral-500"
               }`
             }
           >
