@@ -57,4 +57,5 @@ ssl_certificate_key /etc/letsencrypt/live/oc.carreel.id/privkey.pem;
 
 ```bash
 cp -r /root/repo/carreel/driver-app/frontend/dist /var/www/html/carreel/driver
+cp -r /root/repo/carreel/planner-app/frontend/dist /var/www/html/carreel/planner
 ```

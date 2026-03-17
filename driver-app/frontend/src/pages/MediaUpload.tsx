@@ -5,9 +5,12 @@ import { MediaPreview } from "../components/media/MediaPreview";
 import { Button } from "../components/ui/Button";
 import { api } from "../lib/api";
 
+const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
+
 export function MediaUpload() {
   const { id, stepId } = useParams<{ id: string; stepId: string }>();
   const navigate = useNavigate();
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -135,39 +138,78 @@ export function MediaUpload() {
       <TopBar title="Upload Media" showBack />
 
       <div className="flex-1 px-4 pt-6">
-        {/* Camera / File Input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,video/*"
-          capture="environment"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+        {/* Camera Input (with capture attribute) */}
+        {(UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both") && (
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*,video/*"
+            capture="environment"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        )}
+
+        {/* File Input (without capture attribute) */}
+        {(UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both") && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        )}
 
         {!file ? (
           <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center py-16 border-2 border-dashed border-[#2a2a2a] rounded-lg bg-[#1a1a1a] active:bg-[#222222] transition-colors"
-            >
-              <svg
-                aria-hidden="true"
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-neutral-500 mb-3"
+            {(UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both") && (
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="w-full flex flex-col items-center justify-center py-16 border-2 border-dashed border-[#2a2a2a] rounded-lg bg-[#1a1a1a] active:bg-[#222222] transition-colors"
               >
-                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              <p className="text-sm font-medium text-neutral-300">Take Photo or Video</p>
-              <p className="text-xs text-neutral-500 mt-1">Tap to open camera or select file</p>
-            </button>
+                <svg
+                  aria-hidden="true"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-neutral-500 mb-3"
+                >
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                <p className="text-sm font-medium text-neutral-300">Take Photo or Video</p>
+                <p className="text-xs text-neutral-500 mt-1">Tap to open camera</p>
+              </button>
+            )}
+
+            {(UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both") && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex flex-col items-center justify-center py-16 border-2 border-dashed border-[#2a2a2a] rounded-lg bg-[#1a1a1a] active:bg-[#222222] transition-colors"
+              >
+                <svg
+                  aria-hidden="true"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-neutral-500 mb-3"
+                >
+                  <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+                  <polyline points="13 2 13 9 20 9" />
+                </svg>
+                <p className="text-sm font-medium text-neutral-300">Choose from Files</p>
+                <p className="text-xs text-neutral-500 mt-1">Tap to browse files</p>
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
