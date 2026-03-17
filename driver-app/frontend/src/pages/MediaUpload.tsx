@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import { TopBar } from "../components/layout/TopBar";
 import { MediaPreview } from "../components/media/MediaPreview";
@@ -137,30 +138,33 @@ export function MediaUpload() {
     <div className="flex flex-col h-full">
       <TopBar title="Upload Media" showBack />
 
+      {/* Hidden file inputs — rendered via portal to document.body to avoid form interference */}
+      {createPortal(
+        <>
+          {(UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both") && (
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*,video/*"
+              capture="environment"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          )}
+          {(UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both") && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          )}
+        </>,
+        document.body,
+      )}
+
       <div className="flex-1 px-4 pt-6">
-        {/* Camera Input (with capture attribute) */}
-        {(UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both") && (
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*,video/*"
-            capture="environment"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        )}
-
-        {/* File Input (without capture attribute) */}
-        {(UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both") && (
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,video/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        )}
-
         {!file ? (
           <div className="space-y-3">
             {(UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both") && (
