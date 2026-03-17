@@ -145,6 +145,7 @@ export function MediaUpload() {
             <input
               ref={cameraInputRef}
               type="file"
+              accept="video/*"
               capture="environment"
               onChange={handleFileChange}
               className="hidden"
@@ -185,7 +186,7 @@ export function MediaUpload() {
                   <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                   <circle cx="12" cy="13" r="4" />
                 </svg>
-                <p className="text-sm font-medium text-neutral-300">Take Photo or Video</p>
+                <p className="text-sm font-medium text-neutral-300">Record Video</p>
                 <p className="text-xs text-neutral-500 mt-1">Tap to open camera</p>
               </button>
             )}
