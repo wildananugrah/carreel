@@ -6,6 +6,12 @@ server {
   client_max_body_size 1024M;
   server_name driver.carreel.id;
 
+  # === CHANGE THIS to your actual repo path ===
+  set $app_root /root/repo/carreel/driver-app/frontend/dist;
+
+  root $app_root;
+  index index.html;
+
   # Security Headers
   add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
   add_header X-Frame-Options "SAMEORIGIN" always;
@@ -21,6 +27,12 @@ server {
   gzip_comp_level 6;
   gzip_types text/plain text/css text/xml application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
 
+  # Cache static assets (JS, CSS, images) — Vite uses content hashes so safe to cache long
+  location /assets/ {
+      expires 1y;
+      add_header Cache-Control "public, immutable";
+  }
+
   # Social media bot detection for OG meta tags on listing pages
   location ~ ^/reels/([a-zA-Z0-9-]+)$ {
       set $og_backend 0;
@@ -29,33 +41,25 @@ server {
       }
       if ($og_backend = 1) {
           rewrite ^/reels/(.+)$ /og/reels/$1 break;
-          proxy_pass http://localhost:5173;
+          proxy_pass http://localhost:3001;
       }
-      proxy_pass http://localhost:5173;
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection upgrade;
-      proxy_set_header Accept-Encoding gzip;
+      # Non-bot: serve SPA
+      try_files $uri /index.html;
   }
 
-  location / {
-      proxy_pass http://localhost:5173/;
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection upgrade;
-      proxy_set_header Accept-Encoding gzip;
-  }
-
+  # API proxy to backend
   location /api/ {
       proxy_pass http://localhost:3001;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
   }
 
+  # SPA fallback — serve index.html for all frontend routes
+  location / {
+      try_files $uri $uri/ /index.html;
+  }
 }
 
 server {
