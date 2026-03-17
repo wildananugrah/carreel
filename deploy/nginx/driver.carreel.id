@@ -6,10 +6,7 @@ server {
   client_max_body_size 1024M;
   server_name driver.carreel.id;
 
-  # === CHANGE THIS to your actual repo path ===
-  set $app_root /root/repo/carreel/driver-app/frontend/dist;
-
-  root $app_root;
+  root /root/repo/carreel/driver-app/frontend/dist;
   index index.html;
 
   # Security Headers

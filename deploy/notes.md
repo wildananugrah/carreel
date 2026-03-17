@@ -41,13 +41,13 @@ ln -s /etc/nginx/sites-available/monit.carreel.id /etc/nginx/sites-enabled/monit
 5. check the nginx config
 
 ```bash
-nginx -t
+nginx -t;
 ```
 
 6. restart nginx
 
 ```bash
-systemctl reload nginx; systemctl restart nginx; systemctl status nginx
+systemctl reload nginx; systemctl restart nginx; systemctl status nginx;
 ```
 
 ssl_certificate /etc/letsencrypt/live/oc.carreel.id/fullchain.pem;
