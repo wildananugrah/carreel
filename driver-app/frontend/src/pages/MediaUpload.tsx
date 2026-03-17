@@ -145,7 +145,6 @@ export function MediaUpload() {
             <input
               ref={cameraInputRef}
               type="file"
-              accept="image/*,video/*"
               capture="environment"
               onChange={handleFileChange}
               className="hidden"
