@@ -23,6 +23,15 @@ export class MinIOProvider implements IStorageProvider {
     return this.client.presignedGetObject(bucket, key, expiresIn);
   }
 
+  async download(bucket: string, key: string): Promise<Buffer> {
+    const stream = await this.client.getObject(bucket, key);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
+
   async ping(): Promise<boolean> {
     try {
       await this.client.listBuckets();

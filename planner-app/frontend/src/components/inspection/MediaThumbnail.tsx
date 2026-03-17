@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { useState } from "react";
 import type { MediaFile } from "../../lib/types";
 
 interface MediaThumbnailProps {
@@ -16,19 +15,7 @@ function formatDate(iso: string) {
 }
 
 export function MediaThumbnail({ file }: MediaThumbnailProps) {
-  const [url, setUrl] = useState<string | null>(null);
   const [showMeta, setShowMeta] = useState(false);
-
-  useEffect(() => {
-    api
-      .get<{ url: string }>(`/api/upload/presigned/${file.minioKey}?bucket=${file.minioBucket}`)
-      .then((res) => setUrl(res.url))
-      .catch(() => {});
-  }, [file.minioKey, file.minioBucket]);
-
-  if (!url) {
-    return <div className="w-20 h-20 bg-[#2a2a2a] rounded animate-pulse" />;
-  }
 
   return (
     <div className="relative group">
@@ -40,7 +27,7 @@ export function MediaThumbnail({ file }: MediaThumbnailProps) {
       >
         {file.mimeType.startsWith("image/") ? (
           <img
-            src={url}
+            src={`/api/media/${file.id}/url`}
             alt={file.fileName}
             className="w-20 h-20 object-cover rounded"
             loading="lazy"

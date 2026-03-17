@@ -5,6 +5,7 @@ export interface IStorageProvider {
     expiresIn?: number,
   ): Promise<string>;
   ping(): Promise<boolean>;
+  download(bucket: string, key: string): Promise<Buffer>;
   statObject(
     bucket: string,
     key: string,

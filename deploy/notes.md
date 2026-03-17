@@ -59,3 +59,8 @@ ssl_certificate_key /etc/letsencrypt/live/oc.carreel.id/privkey.pem;
 cp -r /root/repo/carreel/driver-app/frontend/dist /var/www/html/carreel/driver
 cp -r /root/repo/carreel/planner-app/frontend/dist /var/www/html/carreel/planner
 ```
+
+8. database
+```bash
+docker exec -it carreel-driver-db psql -U carreel -d carreel_driver
+```

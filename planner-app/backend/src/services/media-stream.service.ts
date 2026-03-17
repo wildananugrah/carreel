@@ -16,6 +16,22 @@ export class MediaStreamService {
     private storageProvider: IStorageProvider,
   ) {}
 
+  async getMediaData(
+    mediaId: string,
+  ): Promise<{ buffer: Buffer; mimeType: string }> {
+    const media = await this.prisma.mediaFile.findUnique({
+      where: { id: mediaId },
+    });
+    if (!media) {
+      throw new Error("Media file not found");
+    }
+    const buffer = await this.storageProvider.download(
+      media.minioBucket,
+      media.minioKey,
+    );
+    return { buffer, mimeType: media.mimeType };
+  }
+
   async getVideoStream(
     mediaId: string,
     rangeHeader?: string,
