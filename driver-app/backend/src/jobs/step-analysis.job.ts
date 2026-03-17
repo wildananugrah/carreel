@@ -347,7 +347,11 @@ export class StepAnalysisJob {
     const inspection = await this.inspectionRepository.findById(inspectionId);
     if (!inspection) return;
 
-    const allTerminal = inspection.steps.every(
+    const REQUIRED_STEPS = ["BODY_INSPECTION", "SPEEDOMETER"];
+    const requiredSteps = inspection.steps.filter((step) =>
+      REQUIRED_STEPS.includes(step.stepType),
+    );
+    const allTerminal = requiredSteps.every(
       (step) => step.status === "COMPLETED" || step.status === "FAILED",
     );
 
