@@ -30,5 +30,13 @@ export function createAuthRoutes(
     return c.json(profile);
   });
 
+  // PUT /api/auth/me (protected)
+  app.put("/me", authMiddleware, async (c) => {
+    const userId = c.get("userId") as string;
+    const body = await c.req.json();
+    const profile = await authService.updateProfile(userId, body);
+    return c.json(profile);
+  });
+
   return app;
 }

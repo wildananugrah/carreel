@@ -9,4 +9,5 @@ export interface IUserRepository {
     fullName: string;
     role: "DRIVER";
   }): Promise<User>;
+  update(id: string, data: { fullName?: string; email?: string }): Promise<User>;
 }

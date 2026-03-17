@@ -20,4 +20,11 @@ export class UserRepository implements IUserRepository {
   }): Promise<User> {
     return this.prisma.user.create({ data });
   }
+
+  async update(
+    id: string,
+    data: { fullName?: string; email?: string },
+  ): Promise<User> {
+    return this.prisma.user.update({ where: { id }, data });
+  }
 }

@@ -31,6 +31,11 @@ export interface LoginDTO {
   password: string;
 }
 
+export interface UpdateProfileDTO {
+  fullName?: string;
+  email?: string;
+}
+
 export interface AuthResponse {
   token: string;
   user: UserResponse;

@@ -5,6 +5,7 @@ import type {
   AuthResponse,
   LoginDTO,
   RegisterDTO,
+  UpdateProfileDTO,
   UserResponse,
 } from "../types/dto";
 import { signToken } from "../utils/jwt";
@@ -81,6 +82,22 @@ export class AuthService implements IAuthService {
     if (!user) {
       throw new Error("User not found");
     }
+    return this.toUserResponse(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    data: UpdateProfileDTO,
+  ): Promise<UserResponse> {
+    if (data.email) {
+      const existing = await this.userRepository.findByEmail(data.email);
+      if (existing && existing.id !== userId) {
+        throw new Error("Email already in use");
+      }
+    }
+
+    const user = await this.userRepository.update(userId, data);
+    this.logger.info("Profile updated", { userId });
     return this.toUserResponse(user);
   }
 
