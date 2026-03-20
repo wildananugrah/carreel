@@ -28,7 +28,6 @@ export function VideoRecorder() {
   const [unitData, setUnitData] = useState<PreTripUnitData | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -184,19 +183,6 @@ export function VideoRecorder() {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
-    }
-  }
-
-  async function handleSubmit() {
-    if (!id) return;
-    setSubmitting(true);
-    setError("");
-    try {
-      await api.post(`/api/inspections/${id}/submit`);
-      navigate(`/inspections/${id}`, { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit");
-      setSubmitting(false);
     }
   }
 
