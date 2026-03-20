@@ -94,6 +94,21 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
 - [x] 6.9 E2E test scripts (driver-flow, planner-flow, comparison-flow)
 - [x] 6.10 Root package.json with test:e2e scripts
 
+## Phase 7: Restructure Pre-Trip / Post-Trip Inspection Flow
+
+- [x] 7.1 Backend: Make createWithSteps() trip-type-aware (PRE_TRIP: 3 steps, POST_TRIP: 2 steps)
+- [x] 7.2 Backend: Update REQUIRED_STEPS in submit validation (inspection service)
+- [x] 7.3 Backend: Update REQUIRED_STEPS in job completion check (step-analysis job)
+- [x] 7.4 Backend: Add getPreTripUnitData() endpoint (interface + service + route)
+- [x] 7.5 Backend: Update tests for trip-type-aware step creation and new endpoint
+- [x] 7.6 Frontend: Create useVideoRecorder hook (MediaRecorder API)
+- [x] 7.7 Frontend: Create VideoGuidanceOverlay component (4-stage guidance)
+- [x] 7.8 Frontend: Create PhotoCapture page (Page 1 — photos)
+- [x] 7.9 Frontend: Create VideoRecorder page (Page 2 — in-browser video recorder)
+- [x] 7.10 Frontend: Update App.tsx routes, InspectionList, InspectionDetail navigation
+- [x] 7.11 Update docs (requirements.md, todo.md)
+- [ ] 7.12 Validation (types, lint, tests, build)
+
 ## Upcoming
 
-- [ ] Phase 7: Deployment (Docker images, CI/CD, cloud hosting)
+- [ ] Phase 8: Deployment (Docker images, CI/CD, cloud hosting)

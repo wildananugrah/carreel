@@ -84,7 +84,7 @@ export function InspectionDetail() {
         latitude,
         longitude,
       });
-      navigate(`/inspections/${postTrip.id}`, { replace: true });
+      navigate(`/inspections/${postTrip.id}/photos`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create post-trip");
       setEndingTrip(false);
@@ -103,16 +103,19 @@ export function InspectionDetail() {
     );
   }
 
-  const STEP_ORDER = ["BODY_INSPECTION", "SPEEDOMETER"];
+  const isDraft = inspection.status === "DRAFT";
+  const isPreTrip = inspection.tripType === "PRE_TRIP";
+  const isSubmitted = inspection.status !== "DRAFT";
+
+  const STEP_ORDER = isPreTrip
+    ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
+    : ["SPEEDOMETER", "BODY_INSPECTION"];
   const visibleSteps = inspection.steps
     .filter((s) => STEP_ORDER.includes(s.stepType))
     .sort((a, b) => STEP_ORDER.indexOf(a.stepType) - STEP_ORDER.indexOf(b.stepType));
 
-  const isDraft = inspection.status === "DRAFT";
   const allStepsUploaded =
     visibleSteps.length > 0 && visibleSteps.every((s) => s.status !== "PENDING");
-  const isPreTrip = inspection.tripType === "PRE_TRIP";
-  const isSubmitted = inspection.status !== "DRAFT";
   const showEndTrip = isPreTrip && isSubmitted && !inspection.linkedFrom;
 
   const date = new Date(inspection.createdAt).toLocaleDateString("en-US", {
@@ -209,7 +212,11 @@ export function InspectionDetail() {
             {visibleSteps.map((step, i) => {
               const done = step.status !== "PENDING";
               const label =
-                step.stepType === "BODY_INSPECTION" ? "Body" : "Speedometer";
+                step.stepType === "BODY_INSPECTION"
+                  ? "Body"
+                  : step.stepType === "UNIT_IDENTIFICATION"
+                    ? "Unit ID"
+                    : "Speedometer";
               return (
                 <div key={step.id} className="flex flex-row items-center">
                   <div className="flex flex-row space-x-2 items-center gap-1">
@@ -359,6 +366,23 @@ export function InspectionDetail() {
 
         {/* Actions */}
         <div className="px-4 pb-6 space-y-3">
+          {isDraft && !allStepsUploaded && (
+            <Button
+              className="w-full"
+              onClick={() => {
+                const photoSteps = visibleSteps.filter(
+                  (s) => s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "SPEEDOMETER",
+                );
+                const allPhotosDone = photoSteps.every((s) => s.status !== "PENDING");
+                navigate(
+                  `/inspections/${id}/${allPhotosDone ? "video" : "photos"}`,
+                );
+              }}
+            >
+              Continue Inspection
+            </Button>
+          )}
+
           {isDraft && allStepsUploaded && (
             <Button className="w-full" loading={submitting} onClick={handleSubmit}>
               Submit Inspection

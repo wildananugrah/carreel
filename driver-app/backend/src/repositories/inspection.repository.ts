@@ -41,6 +41,11 @@ export class InspectionRepository implements IInspectionRepository {
     driverId: string,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
+    const stepTypes =
+      data.tripType === "PRE_TRIP"
+        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
+        : ["SPEEDOMETER", "BODY_INSPECTION"];
+
     return this.prisma.inspection.create({
       data: {
         driverId,
@@ -50,10 +55,10 @@ export class InspectionRepository implements IInspectionRepository {
         longitude: data.longitude,
         status: "DRAFT",
         steps: {
-          create: [
-            { stepType: "BODY_INSPECTION", status: "PENDING" },
-            { stepType: "SPEEDOMETER", status: "PENDING" },
-          ],
+          create: stepTypes.map((stepType) => ({
+            stepType: stepType as "UNIT_IDENTIFICATION" | "SPEEDOMETER" | "BODY_INSPECTION",
+            status: "PENDING" as const,
+          })),
         },
       },
     });

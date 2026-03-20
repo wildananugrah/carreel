@@ -347,7 +347,10 @@ export class StepAnalysisJob {
     const inspection = await this.inspectionRepository.findById(inspectionId);
     if (!inspection) return;
 
-    const REQUIRED_STEPS = ["BODY_INSPECTION", "SPEEDOMETER"];
+    const REQUIRED_STEPS =
+      inspection.tripType === "PRE_TRIP"
+        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
+        : ["SPEEDOMETER", "BODY_INSPECTION"];
     const requiredSteps = inspection.steps.filter((step) =>
       REQUIRED_STEPS.includes(step.stepType),
     );

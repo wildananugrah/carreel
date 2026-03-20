@@ -137,7 +137,10 @@ export class InspectionService implements IInspectionService {
     }
 
     // Only required steps must have media uploaded
-    const REQUIRED_STEPS = ["BODY_INSPECTION", "SPEEDOMETER"];
+    const REQUIRED_STEPS =
+      inspection.tripType === "PRE_TRIP"
+        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
+        : ["SPEEDOMETER", "BODY_INSPECTION"];
     const pendingSteps = inspection.steps.filter(
       (s) => REQUIRED_STEPS.includes(s.stepType) && s.status === "PENDING",
     );
@@ -218,5 +221,45 @@ export class InspectionService implements IInspectionService {
       stepId,
       status as StepStatus,
     );
+  }
+
+  async getPreTripUnitData(
+    postTripId: string,
+    driverId: string,
+  ): Promise<{
+    licensePlate: string | null;
+    make: string | null;
+    model: string | null;
+  } | null> {
+    const postTrip = await this.inspectionRepository.findById(postTripId);
+    if (!postTrip) {
+      throw new Error("Inspection not found");
+    }
+    if (postTrip.driverId !== driverId) {
+      throw new Error("Unauthorized access to inspection");
+    }
+    if (postTrip.tripType !== "POST_TRIP" || !postTrip.linkedInspectionId) {
+      return null;
+    }
+
+    const preTrip = await this.inspectionRepository.findById(
+      postTrip.linkedInspectionId,
+    );
+    if (!preTrip) return null;
+
+    const unitIdStep = preTrip.steps.find(
+      (s) => s.stepType === "UNIT_IDENTIFICATION",
+    );
+    if (!unitIdStep?.aiAnalysis?.structuredData) return null;
+
+    const data = unitIdStep.aiAnalysis.structuredData as Record<
+      string,
+      unknown
+    >;
+    return {
+      licensePlate: (data.licensePlate as string) ?? null,
+      make: (data.make as string) ?? null,
+      model: (data.model as string) ?? null,
+    };
   }
 }

@@ -76,6 +76,16 @@ export function createInspectionRoutes(
     return c.json({ success: true });
   });
 
+  // GET /api/inspections/:id/pre-trip-data
+  app.get("/:id/pre-trip-data", async (c) => {
+    const userId = c.get("userId") as string;
+    const data = await inspectionService.getPreTripUnitData(
+      c.req.param("id"),
+      userId,
+    );
+    return c.json(data);
+  });
+
   // POST /api/inspections/:id/end-trip
   app.post("/:id/end-trip", async (c) => {
     const userId = c.get("userId") as string;

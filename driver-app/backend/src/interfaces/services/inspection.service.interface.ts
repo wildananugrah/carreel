@@ -33,4 +33,13 @@ export interface IInspectionService {
     driverId: string,
     status: string,
   ): Promise<InspectionStep>;
+
+  getPreTripUnitData(
+    postTripId: string,
+    driverId: string,
+  ): Promise<{
+    licensePlate: string | null;
+    make: string | null;
+    model: string | null;
+  } | null>;
 }

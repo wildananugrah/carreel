@@ -74,7 +74,7 @@ export function InspectionList() {
         latitude,
         longitude,
       });
-      navigate(`/inspections/${inspection.id}`);
+      navigate(`/inspections/${inspection.id}/photos`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start trip");
       setStarting(false);

@@ -46,6 +46,28 @@ Core Workflows to Implement:
     Alerts: Notify planners if AI detects significant damage or low fuel.
 
 
+5. Driver Inspection Flow (Two-Page Guided Flow)
+
+    Pre-Trip (2 pages, 2 routes):
+    - Page 1 — Photos (/inspections/:id/photos):
+      - Task 1: Front-side body photo (UNIT_IDENTIFICATION step). Copywriting: "Silahkan ambil foto kendaraan dari depan. Pastikan nomer plat kendaraan terlihat dengan jelas."
+      - Task 2: Speedometer photo (SPEEDOMETER step). Copywriting: "Tunjukkan SPEEDOMETER dengan jelas agar angka Odometer terlihat dengan jelas"
+      - Instruction cards hidden when step status is not PENDING.
+      - "Selanjutnya" button navigates to video page when all photos are uploaded.
+    - Page 2 — Video (/inspections/:id/video):
+      - In-browser video recorder using MediaRecorder API (rear camera, 720p).
+      - Guidance overlay with 4 stages: Depan (front) → Kanan (right) → Belakang (back) → Kiri (left).
+      - Duration: minimum 30 seconds, maximum 3 minutes. Auto-stops at max.
+      - After recording: preview, upload (chunked), then submit inspection.
+
+    Post-Trip (2 pages, 2 routes):
+    - Page 1 — Photos: Only speedometer photo (no UNIT_IDENTIFICATION step).
+    - Page 2 — Video: Same recorder with guidance. Shows car brand and plate number from linked pre-trip's UNIT_IDENTIFICATION AI result via GET /api/inspections/:id/pre-trip-data.
+
+    Step creation is trip-type-aware:
+    - PRE_TRIP creates 3 steps: UNIT_IDENTIFICATION, SPEEDOMETER, BODY_INSPECTION
+    - POST_TRIP creates 2 steps: SPEEDOMETER, BODY_INSPECTION
+
 Technical & UX Requirements:
 
     Metadata: Every media file must include a timestamp and GPS geotag.

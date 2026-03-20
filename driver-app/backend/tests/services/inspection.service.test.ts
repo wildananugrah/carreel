@@ -36,40 +36,24 @@ function createMockInspection(overrides: Partial<Inspection> = {}): Inspection {
 
 function createMockSteps(
   inspectionId: string,
+  tripType: string = "PRE_TRIP",
   statusOverride?: string,
 ): InspectionWithRelations["steps"] {
-  return [
-    {
-      id: `${inspectionId}-step-1`,
-      inspectionId,
-      stepType: "UNIT_IDENTIFICATION",
-      status: statusOverride ?? "PENDING",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      mediaFiles: [],
-      aiAnalysis: null,
-    } as any,
-    {
-      id: `${inspectionId}-step-2`,
-      inspectionId,
-      stepType: "SPEEDOMETER",
-      status: statusOverride ?? "PENDING",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      mediaFiles: [],
-      aiAnalysis: null,
-    } as any,
-    {
-      id: `${inspectionId}-step-3`,
-      inspectionId,
-      stepType: "BODY_INSPECTION",
-      status: statusOverride ?? "PENDING",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      mediaFiles: [],
-      aiAnalysis: null,
-    } as any,
-  ];
+  const stepTypes =
+    tripType === "PRE_TRIP"
+      ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
+      : ["SPEEDOMETER", "BODY_INSPECTION"];
+
+  return stepTypes.map((stepType, i) => ({
+    id: `${inspectionId}-step-${i + 1}`,
+    inspectionId,
+    stepType,
+    status: statusOverride ?? "PENDING",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    mediaFiles: [],
+    aiAnalysis: null,
+  })) as any;
 }
 
 function createMockInspectionWithRelations(
@@ -116,7 +100,7 @@ describe("InspectionService", () => {
           linkedInspectionId: data.linkedInspectionId ?? null,
           latitude: data.latitude ?? null,
           longitude: data.longitude ?? null,
-          steps: createMockSteps(id),
+          steps: createMockSteps(id, data.tripType),
         });
         inspections.set(insp.id, insp);
         // If linked, update the pre-trip's linkedFrom
@@ -440,5 +424,87 @@ describe("InspectionService", () => {
     expect(service.delete("non-existent", "driver-1")).rejects.toThrow(
       "not found",
     );
+  });
+
+  test("POST_TRIP creates 2 steps (no UNIT_IDENTIFICATION)", async () => {
+    const result = await service.create("driver-1", { tripType: "POST_TRIP" });
+    const detail = await service.getById(result.id, "driver-1");
+    expect(detail.steps.length).toBe(2);
+    expect(detail.steps.map((s) => s.stepType)).toEqual([
+      "SPEEDOMETER",
+      "BODY_INSPECTION",
+    ]);
+  });
+
+  test("submit POST_TRIP succeeds without UNIT_IDENTIFICATION", async () => {
+    await service.create("driver-1", { tripType: "POST_TRIP" });
+    const insp = inspections.get("insp-1")!;
+    for (const step of insp.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    const result = await service.submit("insp-1", "driver-1");
+    expect(result.status).toBe("PENDING_AI");
+  });
+
+  test("submit PRE_TRIP fails when UNIT_IDENTIFICATION is PENDING", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    const insp = inspections.get("insp-1")!;
+    // Only upload SPEEDOMETER and BODY_INSPECTION, leave UNIT_IDENTIFICATION pending
+    for (const step of insp.steps) {
+      if (step.stepType !== "UNIT_IDENTIFICATION") {
+        (step as any).status = "UPLOADED";
+      }
+    }
+    expect(service.submit("insp-1", "driver-1")).rejects.toThrow(
+      "UNIT_IDENTIFICATION",
+    );
+  });
+
+  test("getPreTripUnitData returns data for POST_TRIP with linked PRE_TRIP", async () => {
+    // Create PRE_TRIP and submit
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    const preTrip = inspections.get("insp-1")!;
+    for (const step of preTrip.steps) {
+      (step as any).status = "UPLOADED";
+    }
+    await service.submit("insp-1", "driver-1");
+
+    // Add AI analysis to UNIT_IDENTIFICATION step
+    const unitIdStep = preTrip.steps.find(
+      (s) => s.stepType === "UNIT_IDENTIFICATION",
+    )!;
+    (unitIdStep as any).aiAnalysis = {
+      id: "ai-1",
+      status: "COMPLETED",
+      structuredData: {
+        licensePlate: "B 1234 XYZ",
+        make: "Toyota",
+        model: "Corolla",
+        color: "White",
+      },
+      confidenceScore: 0.95,
+    };
+
+    // Create POST_TRIP
+    const postTrip = await service.createPostTrip("driver-1", "insp-1", {});
+
+    const result = await service.getPreTripUnitData(postTrip.id, "driver-1");
+    expect(result).not.toBeNull();
+    expect(result!.licensePlate).toBe("B 1234 XYZ");
+    expect(result!.make).toBe("Toyota");
+    expect(result!.model).toBe("Corolla");
+  });
+
+  test("getPreTripUnitData returns null for PRE_TRIP", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    const result = await service.getPreTripUnitData("insp-1", "driver-1");
+    expect(result).toBeNull();
+  });
+
+  test("getPreTripUnitData throws for wrong driver", async () => {
+    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    expect(
+      service.getPreTripUnitData("insp-1", "driver-2"),
+    ).rejects.toThrow("Unauthorized");
   });
 });

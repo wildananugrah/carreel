@@ -6,8 +6,10 @@ import { InspectionDetail } from "./pages/InspectionDetail";
 import { InspectionList } from "./pages/InspectionList";
 import { Login } from "./pages/Login";
 import { MediaUpload } from "./pages/MediaUpload";
+import { PhotoCapture } from "./pages/PhotoCapture";
 import { Profile } from "./pages/Profile";
 import { Register } from "./pages/Register";
+import { VideoRecorder } from "./pages/VideoRecorder";
 
 export default function App() {
   return (
@@ -23,6 +25,8 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<InspectionList />} />
               <Route path="/inspections/:id" element={<InspectionDetail />} />
+              <Route path="/inspections/:id/photos" element={<PhotoCapture />} />
+              <Route path="/inspections/:id/video" element={<VideoRecorder />} />
               <Route path="/inspections/:id/steps/:stepId/upload" element={<MediaUpload />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
