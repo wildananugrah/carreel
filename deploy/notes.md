@@ -64,3 +64,8 @@ cp -r /root/repo/carreel/planner-app/frontend/dist /var/www/html/carreel/planner
 ```bash
 docker exec -it carreel-driver-db psql -U carreel -d carreel_driver
 ```
+
+```bash
+bun run generate
+bunx prisma db push
+```

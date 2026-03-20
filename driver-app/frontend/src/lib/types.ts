@@ -43,6 +43,8 @@ export interface Inspection {
   completedAt: string | null;
   latitude: number | null;
   longitude: number | null;
+  signatureKey: string | null;
+  signerName: string | null;
   createdAt: string;
   updatedAt: string;
   unit?: {

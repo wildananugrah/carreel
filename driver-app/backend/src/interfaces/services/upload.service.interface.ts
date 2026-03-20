@@ -11,4 +11,17 @@ export interface IUploadService {
   getPresignedUrl(key: string, driverId: string): Promise<string>;
   getMediaUrl(mediaId: string): Promise<string>;
   getMediaData(mediaId: string): Promise<{ buffer: Buffer; mimeType: string }>;
+  deleteMedia(
+    inspectionId: string,
+    stepId: string,
+    mediaId: string,
+    driverId: string,
+  ): Promise<void>;
+  uploadSignature(
+    inspectionId: string,
+    driverId: string,
+    file: Buffer,
+    mimeType: string,
+    signerName: string,
+  ): Promise<{ signatureKey: string }>;
 }

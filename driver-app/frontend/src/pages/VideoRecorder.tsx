@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { StepCard } from "../components/inspection/StepCard";
 import { VideoGuidanceOverlay } from "../components/inspection/VideoGuidanceOverlay";
 import { TopBar } from "../components/layout/TopBar";
 import { Button } from "../components/ui/Button";
@@ -10,6 +11,7 @@ import type { InspectionDetail } from "../lib/types";
 
 const MIN_DURATION = 30;
 const MAX_DURATION = 180;
+const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
 interface PreTripUnitData {
   licensePlate: string | null;
@@ -33,6 +35,10 @@ export function VideoRecorder() {
   } | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
+  const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
 
   const {
     status: recorderStatus,
@@ -144,6 +150,43 @@ export function VideoRecorder() {
     }
   }
 
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !id || !bodyStep) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+    setError("");
+
+    try {
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      await api.uploadChunked(
+        id,
+        bodyStep.id,
+        file,
+        {
+          capturedAt: new Date().toISOString(),
+          latitude: location?.latitude,
+          longitude: location?.longitude,
+        },
+        setUploadProgress,
+        controller.signal,
+      );
+
+      abortRef.current = null;
+      setUploadProgress(100);
+      await fetchDetail();
+    } catch (err) {
+      if (err instanceof Error && err.message === "Upload cancelled") return;
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleSubmit() {
     if (!id) return;
     setSubmitting(true);
@@ -170,7 +213,7 @@ export function VideoRecorder() {
   }
   if (!inspection || !bodyStep) return null;
 
-  // Already uploaded — show submit view
+  // Already uploaded — show grid view matching InspectionDetail layout
   if (hasMedia) {
     return (
       <div className="flex flex-col h-full">
@@ -180,10 +223,11 @@ export function VideoRecorder() {
           {/* Progress indicator */}
           <div className="px-4 py-3 bg-[#171717] border-b border-[#2a2a2a]">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-500">Halaman 2 dari 2</span>
+              <span className="text-sm text-neutral-500">Halaman 2 dari 3</span>
               <div className="flex items-center gap-1.5">
                 <div className="w-8 h-1.5 rounded-full bg-yellow-400" />
                 <div className="w-8 h-1.5 rounded-full bg-yellow-400" />
+                <div className="w-8 h-1.5 rounded-full bg-[#2a2a2a]" />
               </div>
             </div>
           </div>
@@ -222,25 +266,73 @@ export function VideoRecorder() {
             </div>
           )}
 
-          <div className="px-4 pt-4">
-            <div className="relative aspect-video bg-[#0f0f0f] rounded-xl overflow-hidden border border-[#2a2a2a]">
-              {/* biome-ignore lint/a11y/useMediaCaption: User-recorded video */}
-              <video
-                src={`/api/media/${bodyStep.mediaFiles[0].id}/stream`}
-                className="w-full h-full object-cover"
-                controls
-                preload="metadata"
-              />
-              <div className="absolute top-2 right-2">
-                <span className="px-2 py-1 bg-yellow-400 text-black text-xs font-bold rounded-lg">
-                  ✓
-                </span>
+          {/* Media */}
+          <div className="px-4 py-4">
+            <h3 className="text-sm font-semibold text-neutral-500 mb-1">Media</h3>
+            <p className="text-xs text-neutral-600 mb-3">Upload video rekaman bodi kendaraan.</p>
+
+            <StepCard
+              step={bodyStep}
+              inspectionStatus={inspection.status}
+              index={0}
+              onUploadComplete={fetchDetail}
+            />
+
+            <div className="flex items-center justify-center gap-2 text-sm mt-3">
+              <span className="text-neutral-500">1 / 1 uploaded</span>
+              <svg
+                aria-hidden="true"
+                className="w-4 h-4 text-yellow-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Step Instructions */}
+          <div className="px-4 pb-4 space-y-3">
+            <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
+                  <svg
+                    aria-hidden="true"
+                    className="w-5 h-5 text-yellow-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
+                      1
+                    </span>
+                    <span className="text-xs text-neutral-500 uppercase font-medium">Body</span>
+                  </div>
+                  <p className="text-sm text-white font-semibold leading-snug">
+                    Silahkan ambil rekaman seluruh bodi secara perlahan. Jangan terburu-buru agar AI
+                    bisa mendeteksi setiap sudut dengan maksimal.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="px-4 pt-4">
+            <div className="px-4 pb-4">
               <div className="bg-red-500/10 text-red-400 text-sm px-4 py-3 rounded-lg">
                 {error}
               </div>
@@ -249,8 +341,11 @@ export function VideoRecorder() {
         </div>
 
         <div className="px-4 py-4 border-t border-[#2a2a2a] bg-[#0f0f0f]">
-          <Button className="w-full" loading={submitting} onClick={handleSubmit}>
-            Submit Inspection
+          <Button
+            className="w-full"
+            onClick={() => navigate(`/inspections/${id}/signature`)}
+          >
+            Selanjutnya
           </Button>
         </div>
       </div>
@@ -266,10 +361,11 @@ export function VideoRecorder() {
         {/* Progress indicator */}
         <div className="px-4 py-3 bg-[#171717] border-b border-[#2a2a2a]">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-500">Halaman 2 dari 2</span>
+            <span className="text-sm text-neutral-500">Halaman 2 dari 3</span>
             <div className="flex items-center gap-1.5">
               <div className="w-8 h-1.5 rounded-full bg-yellow-400" />
               <div className="w-8 h-1.5 rounded-full bg-yellow-400" />
+              <div className="w-8 h-1.5 rounded-full bg-[#2a2a2a]" />
             </div>
           </div>
         </div>
@@ -318,7 +414,18 @@ export function VideoRecorder() {
           </div>
         )}
 
-        {/* State: idle — show instruction + start camera */}
+        {/* Hidden file input for gallery upload */}
+        {allowFile && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+        )}
+
+        {/* State: idle — show instruction + upload options */}
         {recorderStatus === "idle" && (
           <div className="px-4 pt-4 space-y-4">
             <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
@@ -340,15 +447,38 @@ export function VideoRecorder() {
                   </svg>
                 </div>
                 <p className="text-sm text-white font-semibold leading-snug">
-                  Silahkan ambil foto kendaraan dari depan. Pastikan nomer plat
-                  kendaraan terlihat dengan jelas.
+                  Silahkan ambil rekaman seluruh bodi secara perlahan. Jangan
+                  terburu-buru agar AI bisa mendeteksi setiap sudut dengan
+                  maksimal.
                 </p>
               </div>
             </div>
 
-            <Button className="w-full" onClick={startCamera}>
-              Buka Kamera
-            </Button>
+            {allowCamera && allowFile ? (
+              <div className="flex items-center gap-3">
+                <Button className="flex-1" onClick={startCamera}>
+                  Buka Kamera
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Upload File
+                </Button>
+              </div>
+            ) : allowCamera ? (
+              <Button className="w-full" onClick={startCamera}>
+                Buka Kamera
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload File
+              </Button>
+            )}
           </div>
         )}
 

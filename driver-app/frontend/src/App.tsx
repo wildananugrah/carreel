@@ -9,6 +9,7 @@ import { MediaUpload } from "./pages/MediaUpload";
 import { PhotoCapture } from "./pages/PhotoCapture";
 import { Profile } from "./pages/Profile";
 import { Register } from "./pages/Register";
+import { SignatureCapture } from "./pages/SignatureCapture";
 import { VideoRecorder } from "./pages/VideoRecorder";
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
               <Route path="/inspections/:id" element={<InspectionDetail />} />
               <Route path="/inspections/:id/photos" element={<PhotoCapture />} />
               <Route path="/inspections/:id/video" element={<VideoRecorder />} />
+              <Route path="/inspections/:id/signature" element={<SignatureCapture />} />
               <Route path="/inspections/:id/steps/:stepId/upload" element={<MediaUpload />} />
               <Route path="/profile" element={<Profile />} />
             </Route>

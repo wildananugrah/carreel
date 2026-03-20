@@ -86,6 +86,33 @@ export function createInspectionRoutes(
     return c.json(data);
   });
 
+  // POST /api/inspections/:id/signature
+  app.post("/:id/signature", async (c) => {
+    const userId = c.get("userId") as string;
+    const formData = await c.req.formData();
+
+    const file = formData.get("file") as File | null;
+    if (!file) {
+      return c.json({ error: "Signature file is required" }, 400);
+    }
+
+    const signerName = (formData.get("signerName") as string | null)?.trim();
+    if (!signerName) {
+      return c.json({ error: "Signer name is required" }, 400);
+    }
+
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const result = await uploadService.uploadSignature(
+      c.req.param("id"),
+      userId,
+      fileBuffer,
+      file.type || "image/png",
+      signerName,
+    );
+
+    return c.json(result, 201);
+  });
+
   // POST /api/inspections/:id/end-trip
   app.post("/:id/end-trip", async (c) => {
     const userId = c.get("userId") as string;
@@ -149,6 +176,18 @@ export function createInspectionRoutes(
     );
 
     return c.json(result, 201);
+  });
+
+  // DELETE /api/inspections/:id/steps/:stepId/media/:mediaId
+  app.delete("/:id/steps/:stepId/media/:mediaId", async (c) => {
+    const userId = c.get("userId") as string;
+    await uploadService.deleteMedia(
+      c.req.param("id"),
+      c.req.param("stepId"),
+      c.req.param("mediaId"),
+      userId,
+    );
+    return c.json({ success: true });
   });
 
   return app;

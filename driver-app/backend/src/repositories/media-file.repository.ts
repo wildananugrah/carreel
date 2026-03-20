@@ -36,4 +36,8 @@ export class MediaFileRepository implements IMediaFileRepository {
       orderBy: { createdAt: "asc" },
     });
   }
+
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.mediaFile.delete({ where: { id } });
+  }
 }

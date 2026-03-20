@@ -110,6 +110,8 @@ export interface InspectionDetail {
   completedAt: string | null;
   latitude: number | null;
   longitude: number | null;
+  signatureKey: string | null;
+  signerName: string | null;
   createdAt: string;
   updatedAt: string;
   driver: { id: string; fullName: string; email: string };

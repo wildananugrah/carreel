@@ -8,4 +8,5 @@ export interface IMediaFileRepository {
   ): Promise<MediaFile>;
   findById(id: string): Promise<MediaFile | null>;
   findByStepId(stepId: string): Promise<MediaFile[]>;
+  deleteById(id: string): Promise<void>;
 }

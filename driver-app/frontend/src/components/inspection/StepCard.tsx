@@ -13,6 +13,7 @@ interface StepCardProps {
   inspectionStatus: string;
   index: number;
   onUploadComplete: () => void;
+  readOnly?: boolean;
 }
 
 const stepTypeLabels: Record<string, string> = {
@@ -64,16 +65,34 @@ function StepIcon({ stepType }: { stepType: string }) {
   );
 }
 
-export function StepCard({ step, inspectionStatus, index, onUploadComplete }: StepCardProps) {
+export function StepCard({ step, inspectionStatus, index, onUploadComplete, readOnly }: StepCardProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
-  const canUpload =
-    inspectionStatus === "DRAFT" && (step.status === "PENDING" || step.status === "FAILED");
   const hasMedia = step.mediaFiles.length > 0;
+  const canUpload =
+    !readOnly && inspectionStatus === "DRAFT" && (step.status === "PENDING" || step.status === "FAILED");
+  const canDelete = !readOnly && inspectionStatus === "DRAFT" && hasMedia;
+
+  async function handleDelete() {
+    if (!hasMedia || deleting) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await api.del(
+        `/api/inspections/${step.inspectionId}/steps/${step.id}/media/${step.mediaFiles[0].id}`,
+      );
+      onUploadComplete();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
   const isImageOnly = IMAGE_ONLY_STEPS.includes(step.stepType);
   const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
   const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
@@ -174,9 +193,28 @@ export function StepCard({ step, inspectionStatus, index, onUploadComplete }: St
               />
             )}
             <div className="absolute top-1 right-1">
-              <span className="px-1.5 py-0.5 bg-yellow-400 text-black text-[10px] font-medium rounded">
-                ✓
-              </span>
+              {canDelete ? (
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={handleDelete}
+                  className="w-6 h-6 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="w-3.5 h-3.5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              ) : (
+                <span className="px-1.5 py-0.5 bg-yellow-400 text-black text-[10px] font-medium rounded">
+                  ✓
+                </span>
+              )}
             </div>
           </div>
           <p className="text-xs font-medium text-white">

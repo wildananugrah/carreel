@@ -213,4 +213,11 @@ export class InspectionRepository implements IInspectionRepository {
       data: { lastKnownKm: km },
     });
   }
+
+  async updateSignatureKey(id: string, signatureKey: string, signerName: string): Promise<void> {
+    await this.prisma.inspection.update({
+      where: { id },
+      data: { signatureKey, signerName },
+    });
+  }
 }

@@ -1533,6 +1533,8 @@ export const InspectionScalarFieldEnum = {
   completedAt: 'completedAt',
   latitude: 'latitude',
   longitude: 'longitude',
+  signatureKey: 'signatureKey',
+  signerName: 'signerName',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

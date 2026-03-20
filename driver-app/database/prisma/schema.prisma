@@ -96,6 +96,8 @@ model Inspection {
   completedAt        DateTime?
   latitude           Float?
   longitude          Float?
+  signatureKey       String?
+  signerName         String?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 

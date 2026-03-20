@@ -116,6 +116,16 @@ export function InspectionDetail() {
 
   const allStepsUploaded =
     visibleSteps.length > 0 && visibleSteps.every((s) => s.status !== "PENDING");
+
+  const photoSteps = visibleSteps.filter(
+    (s) => s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "SPEEDOMETER",
+  );
+  const photosDone = photoSteps.length > 0 && photoSteps.every((s) => s.status !== "PENDING");
+  const bodyStep = visibleSteps.find((s) => s.stepType === "BODY_INSPECTION");
+  const videoDone = bodyStep ? bodyStep.status !== "PENDING" : false;
+  const signatureDone = inspection.signatureKey != null;
+  const allComplete = allStepsUploaded && signatureDone;
+
   const showEndTrip = isPreTrip && isSubmitted && !inspection.linkedFrom;
 
   const date = new Date(inspection.createdAt).toLocaleDateString("en-US", {
@@ -206,52 +216,27 @@ export function InspectionDetail() {
           </div>
         )}
 
-        {/* Step Progress */}
+        {/* Page Progress */}
         <div className="px-4 pt-4 pb-2">
-          <div className="flex items-center justify-center">
-            {visibleSteps.map((step, i) => {
-              const done = step.status !== "PENDING";
-              const label =
-                step.stepType === "BODY_INSPECTION"
-                  ? "Body"
-                  : step.stepType === "UNIT_IDENTIFICATION"
-                    ? "Unit ID"
-                    : "Speedometer";
-              return (
-                <div key={step.id} className="flex flex-row items-center">
-                  <div className="flex flex-row space-x-2 items-center gap-1">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        done
-                          ? "bg-yellow-400 text-black"
-                          : "bg-[#2a2a2a] text-yellow-400 border border-yellow-400/40"
-                      }`}
-                    >
-                      {done ? (
-                        <svg
-                          aria-hidden="true"
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        i + 1
-                      )}
-                    </div>
-                    <span className="text-xs text-yellow-400 font-medium">{label}</span>
-                  </div>
-                  {i < visibleSteps.length - 1 && (
-                    <div className="w-12 h-0.5 bg-yellow-400 mx-2 " />
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-xs">
+              <span className={photosDone ? "text-yellow-400" : "text-neutral-500"}>Foto</span>
+              <span className={videoDone ? "text-yellow-400" : "text-neutral-500"}>Video</span>
+              <span className={signatureDone ? "text-yellow-400" : "text-neutral-500"}>
+                Tanda Tangan
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div
+                className={`w-8 h-1.5 rounded-full ${photosDone ? "bg-yellow-400" : "bg-[#2a2a2a]"}`}
+              />
+              <div
+                className={`w-8 h-1.5 rounded-full ${videoDone ? "bg-yellow-400" : "bg-[#2a2a2a]"}`}
+              />
+              <div
+                className={`w-8 h-1.5 rounded-full ${signatureDone ? "bg-yellow-400" : "bg-[#2a2a2a]"}`}
+              />
+            </div>
           </div>
         </div>
 
@@ -268,6 +253,7 @@ export function InspectionDetail() {
                 inspectionStatus={inspection.status}
                 index={i}
                 onUploadComplete={fetchDetail}
+                readOnly
               />
             ))}
           </div>
@@ -366,24 +352,24 @@ export function InspectionDetail() {
 
         {/* Actions */}
         <div className="px-4 pb-6 space-y-3">
-          {isDraft && !allStepsUploaded && (
+          {isDraft && !allComplete && (
             <Button
               className="w-full"
               onClick={() => {
-                const photoSteps = visibleSteps.filter(
-                  (s) => s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "SPEEDOMETER",
-                );
-                const allPhotosDone = photoSteps.every((s) => s.status !== "PENDING");
-                navigate(
-                  `/inspections/${id}/${allPhotosDone ? "video" : "photos"}`,
-                );
+                if (!photosDone) {
+                  navigate(`/inspections/${id}/photos`);
+                } else if (!videoDone) {
+                  navigate(`/inspections/${id}/video`);
+                } else {
+                  navigate(`/inspections/${id}/signature`);
+                }
               }}
             >
               Continue Inspection
             </Button>
           )}
 
-          {isDraft && allStepsUploaded && (
+          {isDraft && allComplete && (
             <Button className="w-full" loading={submitting} onClick={handleSubmit}>
               Submit Inspection
             </Button>

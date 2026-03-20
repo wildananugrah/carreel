@@ -1083,6 +1083,51 @@ The driver-app is primarily used on **mobile browsers**. All driver-app frontend
 - **Test on real mobile viewports** — use Chrome DevTools device emulation during development, but verify on actual devices before shipping.
 - **PWA support** — frontends are CSR (Client-Side Rendered) and must support Progressive Web App features (manifest.json, service worker, offline capability).
 
+#### Driver-App Inspection Flow
+
+The inspection process follows a 3-page wizard flow:
+
+1. **Page 1 — Photos** (`/inspections/:id/photos`): Upload photos for UNIT_IDENTIFICATION (PRE_TRIP only) and SPEEDOMETER steps.
+2. **Page 2 — Video** (`/inspections/:id/video`): Record or upload body inspection video for BODY_INSPECTION step.
+3. **Page 3 — Signature** (`/inspections/:id/signature`): Canvas-based signature capture (mandatory before submit). Stored as PNG in MinIO.
+
+Each page shows a progress indicator: "Halaman X dari 3" with 3 pill dots (`w-8 h-1.5 rounded-full`).
+
+All three pages share a consistent layout pattern matching `InspectionDetail`:
+- Progress pills bar at top
+- "Media" section header with a 2-column grid of `StepCard` components
+- Upload count summary below the grid
+- Instruction cards below the media section (yellow-bordered cards with numbered steps)
+- Bottom-anchored action button ("Selanjutnya" or "Submit Inspeksi")
+
+**Trip types differ in steps:**
+- **PRE_TRIP**: 3 steps — UNIT_IDENTIFICATION, SPEEDOMETER, BODY_INSPECTION
+- **POST_TRIP**: 2 steps — SPEEDOMETER, BODY_INSPECTION
+
+#### Upload Source Configuration (`VITE_UPLOAD_SOURCE`)
+
+The `VITE_UPLOAD_SOURCE` environment variable controls how media is captured in the driver-app. **Every page and component that handles media upload MUST respect this setting.**
+
+| Value | Behavior |
+|-------|----------|
+| `"both"` (default) | Show both camera capture and file/gallery upload options |
+| `"camera"` | Only allow camera capture (no gallery picker) |
+| `"file"` | Only allow file/gallery upload (no camera) |
+
+**How to read it:**
+```typescript
+const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
+const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
+const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
+```
+
+**Components that implement this:**
+- `StepCard.tsx` — shows Upload/Record buttons based on config
+- `VideoRecorder.tsx` — shows "Buka Kamera" / "Upload File" buttons based on config
+- Any new upload UI MUST read `VITE_UPLOAD_SOURCE` and conditionally render camera/file inputs
+
+**For camera inputs**, use `capture="environment"` attribute. For file inputs, omit the `capture` attribute to open the gallery. Hidden inputs should be rendered via `createPortal` to `document.body` to avoid layout issues.
+
 ### Database Architecture
 
 Both backends share a **single PostgreSQL instance** and a **single database** (`carreel_driver`). The Prisma schema lives in `driver-app/database/prisma/schema.prisma` with two generators that output clients to both backends. pgboss creates its own `pgboss` schema for job queues within the same database.

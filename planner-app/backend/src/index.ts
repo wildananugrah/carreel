@@ -119,7 +119,7 @@ app.route("/health", createHealthRoutes(prisma, storageProvider));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
-  createInspectionRoutes(inspectionService, authMiddleware),
+  createInspectionRoutes(inspectionService, authMiddleware, storageProvider),
 );
 app.route("/api/alerts", createAlertRoutes(alertService, authMiddleware));
 app.route(

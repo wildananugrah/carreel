@@ -151,6 +151,10 @@ export class InspectionService implements IInspectionService {
       );
     }
 
+    if (!inspection.signatureKey) {
+      throw new Error("Signature is required before submitting");
+    }
+
     const submitted = await this.inspectionRepository.updateStatus(
       id,
       "PENDING_AI",

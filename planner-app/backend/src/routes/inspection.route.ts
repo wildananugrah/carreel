@@ -1,14 +1,35 @@
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import type { InspectionStatus } from "../generated/prisma";
+import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
 import type { AppEnv } from "../types/dto";
 
 export function createInspectionRoutes(
   inspectionService: IInspectionService,
   authMiddleware: MiddlewareHandler<AppEnv>,
+  storageProvider: IStorageProvider,
 ) {
   const app = new Hono<AppEnv>();
+
+  // GET /api/inspections/:id/signature — proxy signature image from MinIO
+  // No auth required: used by <img src> tags (same pattern as media routes).
+  app.get("/:id/signature", async (c) => {
+    const inspection = await inspectionService.getById(c.req.param("id"));
+    if (!inspection?.signatureKey) {
+      return c.json({ error: "No signature found" }, 404);
+    }
+    const buffer = await storageProvider.download(
+      "carreel-images",
+      inspection.signatureKey,
+    );
+    return new Response(buffer, {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  });
 
   app.use("*", authMiddleware);
 

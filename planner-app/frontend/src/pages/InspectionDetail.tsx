@@ -137,6 +137,26 @@ export function InspectionDetail() {
             </p>
           )}
 
+          {/* Signature */}
+          {inspection.signatureKey && (
+            <Card className="p-4">
+              <p className="text-xs font-medium text-neutral-500 uppercase mb-3">Signature</p>
+              <div className="bg-[#0f0f0f] rounded-lg p-3 mb-2">
+                <img
+                  src={`/api/inspections/${inspection.id}/signature`}
+                  alt="Driver signature"
+                  className="w-full max-h-40 object-contain"
+                />
+              </div>
+              {inspection.signerName && (
+                <p className="text-sm text-white">
+                  <span className="text-neutral-500">Signed by: </span>
+                  {inspection.signerName}
+                </p>
+              )}
+            </Card>
+          )}
+
           {/* Linked Inspection */}
           {inspection.linkedInspection && (
             <Card
