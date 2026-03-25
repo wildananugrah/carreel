@@ -7,7 +7,7 @@ interface DashboardSearchBarProps {
 
 export function DashboardSearchBar({ value, onChange }: DashboardSearchBarProps) {
   const [local, setLocal] = useState(value);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setLocal(value);

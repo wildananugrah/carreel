@@ -1,27 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
-import { Badge } from "../ui/Badge";
 
 export function Header() {
   const { user, logout } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const fetchUnread = useCallback(() => {
-    api
-      .get<{ count: number }>("/api/alerts/unread-count")
-      .then((res) => setUnreadCount(res.count))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
-  }, [fetchUnread]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -53,20 +37,6 @@ export function Header() {
               <NavLink to="/" className={navLinkClass} end>
                 Dashboard
               </NavLink>
-              {/* <NavLink to="/inspections" className={navLinkClass}>
-                Inspections
-              </NavLink>
-              <NavLink to="/alerts" className={navLinkClass}>
-                <span className="relative">
-                  Alerts
-                  <span className="absolute -top-2 -right-5">
-                    <Badge count={unreadCount} />
-                  </span>
-                </span>
-              </NavLink>
-              <NavLink to="/drivers" className={navLinkClass}>
-                Drivers
-              </NavLink> */}
             </nav>
           </div>
 

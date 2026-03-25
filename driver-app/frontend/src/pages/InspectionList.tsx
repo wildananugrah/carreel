@@ -33,7 +33,7 @@ export function InspectionList() {
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const fetchInspections = useCallback(async () => {
     setLoading(true);
