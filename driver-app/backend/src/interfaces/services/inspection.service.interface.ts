@@ -41,5 +41,6 @@ export interface IInspectionService {
     licensePlate: string | null;
     make: string | null;
     model: string | null;
+    odometerKm: number | null;
   } | null>;
 }

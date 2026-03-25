@@ -56,6 +56,7 @@ export interface UserResponse {
 export interface CreateInspectionDTO {
   tripType: TripType;
   linkedInspectionId?: string;
+  unitId?: string;
   latitude?: number;
   longitude?: number;
 }

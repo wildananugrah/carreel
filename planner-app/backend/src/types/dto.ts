@@ -177,6 +177,8 @@ export interface DashboardVehicleCard {
   latestFuelLevelPct: number | null;
   hasAlerts: boolean;
   alertCount: number;
+  hasDamageAlerts: boolean;
+  damageAlertCount: number;
 }
 
 export interface DashboardOverviewResponse {

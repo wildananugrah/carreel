@@ -161,6 +161,20 @@ describe("InspectionService", () => {
       },
       findUnitByInspectionId: async () => null,
       updateUnitKm: async () => {},
+      updateSignatureKey: async () => {},
+      findOrCreateUnit: async (data) =>
+        ({
+          id: "unit-1",
+          ...data,
+          status: "ACTIVE",
+          lastKnownKm: null,
+          vin: null,
+          type: null,
+          company: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }) as any,
+      linkUnitToInspection: async () => {},
     };
 
     service = new InspectionService(mockRepo, mockLogger);
@@ -323,6 +337,20 @@ describe("InspectionService", () => {
       updateStepStatus: async () => ({}) as any,
       findUnitByInspectionId: async () => null,
       updateUnitKm: async () => {},
+      updateSignatureKey: async () => {},
+      findOrCreateUnit: async (data) =>
+        ({
+          id: "unit-1",
+          ...data,
+          status: "ACTIVE",
+          lastKnownKm: null,
+          vin: null,
+          type: null,
+          company: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }) as any,
+      linkUnitToInspection: async () => {},
     };
 
     const svcWithQueue = new InspectionService(
@@ -503,8 +531,8 @@ describe("InspectionService", () => {
 
   test("getPreTripUnitData throws for wrong driver", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
-    expect(
-      service.getPreTripUnitData("insp-1", "driver-2"),
-    ).rejects.toThrow("Unauthorized");
+    expect(service.getPreTripUnitData("insp-1", "driver-2")).rejects.toThrow(
+      "Unauthorized",
+    );
   });
 });

@@ -37,7 +37,7 @@ export function Dashboard() {
       <DashboardSearchBar value={search} onChange={setSearch} />
 
       {/* KPI Row */}
-      {data && <KPIRow kpis={data.kpis} />}
+      {data && <KPIRow kpis={data.kpis} onTabChange={setActiveTab} />}
 
       {/* Tab Bar */}
       <DashboardTabBar activeTab={activeTab} onTabChange={setActiveTab} />

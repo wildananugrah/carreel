@@ -108,10 +108,8 @@ export class DashboardRepository implements IDashboardRepository {
   async getVehicleCards(
     query: DashboardOverviewQuery,
   ): Promise<DashboardVehicleCard[]> {
-    // Build inspection-level search filter
-    const inspectionWhere: Record<string, unknown> = {
-      status: { not: "DRAFT" },
-    };
+    // Build inspection-level search filter — include all statuses
+    const inspectionWhere: Record<string, unknown> = {};
 
     if (query.search) {
       const s = query.search;
@@ -134,11 +132,24 @@ export class DashboardRepository implements IDashboardRepository {
 
     const allInspectionIds = inspections.map((i) => i.id);
 
-    const [alertCounts, telemetryData] = await Promise.all([
+    const [alertCounts, damageAlertCounts, telemetryData] = await Promise.all([
       allInspectionIds.length > 0
         ? this.prisma.alert.groupBy({
             by: ["inspectionId"],
             where: { inspectionId: { in: allInspectionIds }, isRead: false },
+            _count: { id: true },
+          })
+        : Promise.resolve([]),
+      allInspectionIds.length > 0
+        ? this.prisma.alert.groupBy({
+            by: ["inspectionId"],
+            where: {
+              inspectionId: { in: allInspectionIds },
+              isRead: false,
+              alertType: {
+                in: ["NEW_DAMAGE_DETECTED", "HIGH_SEVERITY_DAMAGE"],
+              },
+            },
             _count: { id: true },
           })
         : Promise.resolve([]),
@@ -152,6 +163,9 @@ export class DashboardRepository implements IDashboardRepository {
 
     const alertCountMap = new Map(
       alertCounts.map((a) => [a.inspectionId, a._count.id]),
+    );
+    const damageAlertCountMap = new Map(
+      damageAlertCounts.map((a) => [a.inspectionId, a._count.id]),
     );
     const telemetryMap = new Map(
       telemetryData.map((t) => [t.inspectionId, t.fuelLevelPct]),
@@ -196,6 +210,10 @@ export class DashboardRepository implements IDashboardRepository {
         (sum, i) => sum + (alertCountMap.get(i.id) ?? 0),
         0,
       );
+      const groupDamageAlertCount = group.reduce(
+        (sum, i) => sum + (damageAlertCountMap.get(i.id) ?? 0),
+        0,
+      );
       const latestFuelLevelPct = telemetryMap.get(latest.id) ?? null;
 
       const unitName = unit
@@ -217,26 +235,33 @@ export class DashboardRepository implements IDashboardRepository {
         latestFuelLevelPct,
         hasAlerts: groupAlertCount > 0,
         alertCount: groupAlertCount,
+        hasDamageAlerts: groupDamageAlertCount > 0,
+        damageAlertCount: groupDamageAlertCount,
       });
     }
 
+    // Tab filters:
+    // alert  — cards with damage alerts (NEW_DAMAGE_DETECTED, HIGH_SEVERITY_DAMAGE)
+    // ongoing — not yet reviewed by planner (DRAFT, PENDING_AI, AI_COMPLETE, UNDER_REVIEW)
+    // completed — reviewed by planner (APPROVED, REJECTED)
+    // all — everything
     switch (query.tab) {
       case "alert":
-        return cards.filter((c) => c.hasAlerts);
+        return cards.filter((c) => c.hasDamageAlerts);
       case "ongoing": {
-        const done = ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED", "REJECTED"];
+        const reviewed = ["APPROVED", "REJECTED"];
         return cards.filter(
           (c) =>
-            (!c.preTrip || !done.includes(c.preTrip.status)) &&
-            (!c.postTrip || !done.includes(c.postTrip.status)),
+            (c.preTrip && !reviewed.includes(c.preTrip.status)) ||
+            (c.postTrip && !reviewed.includes(c.postTrip.status)),
         );
       }
       case "completed": {
-        const finished = ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"];
+        const reviewed = ["APPROVED", "REJECTED"];
         return cards.filter(
           (c) =>
-            (c.preTrip && finished.includes(c.preTrip.status)) ||
-            (c.postTrip && finished.includes(c.postTrip.status)),
+            (c.preTrip && reviewed.includes(c.preTrip.status)) ||
+            (c.postTrip && reviewed.includes(c.postTrip.status)),
         );
       }
       default:

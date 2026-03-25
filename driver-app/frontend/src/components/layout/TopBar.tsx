@@ -13,7 +13,7 @@ export function TopBar({ title, showBack }: TopBarProps) {
       {showBack && (
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           className="w-10 h-10 flex items-center justify-center -ml-2"
         >
           <svg

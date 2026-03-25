@@ -196,6 +196,21 @@ describe("StepAnalysisJob", () => {
       delete: async () => {},
       findUnitByInspectionId: async () => mockUnit,
       updateUnitKm: async () => {},
+      updateSignatureKey: async () => {},
+      findOrCreateUnit: async (data) =>
+        mockUnit ??
+        ({
+          id: "unit-new",
+          ...data,
+          status: "ACTIVE",
+          lastKnownKm: null,
+          vin: null,
+          type: null,
+          company: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any),
+      linkUnitToInspection: async () => {},
     };
 
     mockMediaRepo = {

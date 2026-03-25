@@ -89,5 +89,17 @@ export interface IInspectionRepository {
 
   findUnitByInspectionId(inspectionId: string): Promise<Unit | null>;
   updateUnitKm(unitId: string, km: number): Promise<void>;
-  updateSignatureKey(id: string, signatureKey: string, signerName: string): Promise<void>;
+  updateSignatureKey(
+    id: string,
+    signatureKey: string,
+    signerName: string,
+  ): Promise<void>;
+  findOrCreateUnit(data: {
+    licensePlate: string;
+    make?: string | null;
+    model?: string | null;
+    color?: string | null;
+    vin?: string | null;
+  }): Promise<Unit>;
+  linkUnitToInspection(inspectionId: string, unitId: string): Promise<void>;
 }

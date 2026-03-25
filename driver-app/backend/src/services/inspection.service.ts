@@ -23,6 +23,7 @@ export class InspectionService implements IInspectionService {
     private inspectionRepository: IInspectionRepository,
     private logger: ILogger,
     private jobQueue?: IJobQueue,
+    private aiEnabled = true,
   ) {}
 
   async create(
@@ -56,9 +57,9 @@ export class InspectionService implements IInspectionService {
     if (preTrip.tripType !== "PRE_TRIP") {
       throw new Error("Can only create post-trip from a pre-trip inspection");
     }
-    if (preTrip.status === "DRAFT") {
+    if (preTrip.status !== "APPROVED") {
       throw new Error(
-        "Pre-trip inspection must be submitted before creating post-trip",
+        "Pre-trip inspection must be approved by planner before ending trip",
       );
     }
     if (preTrip.linkedFrom) {
@@ -70,6 +71,7 @@ export class InspectionService implements IInspectionService {
     const postTrip = await this.inspectionRepository.createWithSteps(driverId, {
       tripType: "POST_TRIP",
       linkedInspectionId: preTripId,
+      unitId: preTrip.unitId ?? undefined,
       latitude: data.latitude,
       longitude: data.longitude,
     });
@@ -156,6 +158,25 @@ export class InspectionService implements IInspectionService {
       throw new Error("Signature is required before submitting");
     }
 
+    if (!this.aiEnabled) {
+      // AI disabled — skip analysis, mark all steps as COMPLETED and inspection as AI_COMPLETE
+      const uploadedSteps = inspection.steps.filter(
+        (s) => s.status === "UPLOADED",
+      );
+      for (const step of uploadedSteps) {
+        await this.inspectionRepository.updateStepStatus(step.id, "COMPLETED");
+      }
+      const submitted = await this.inspectionRepository.updateStatus(
+        id,
+        "AI_COMPLETE",
+      );
+      this.logger.info("Inspection submitted (AI disabled, skipped analysis)", {
+        inspectionId: id,
+        driverId,
+      });
+      return submitted;
+    }
+
     const submitted = await this.inspectionRepository.updateStatus(
       id,
       "PENDING_AI",
@@ -235,6 +256,7 @@ export class InspectionService implements IInspectionService {
     licensePlate: string | null;
     make: string | null;
     model: string | null;
+    odometerKm: number | null;
   } | null> {
     const postTrip = await this.inspectionRepository.findById(postTripId);
     if (!postTrip) {
@@ -257,14 +279,29 @@ export class InspectionService implements IInspectionService {
     );
     if (!unitIdStep?.aiAnalysis?.structuredData) return null;
 
-    const data = unitIdStep.aiAnalysis.structuredData as Record<
+    const unitData = unitIdStep.aiAnalysis.structuredData as Record<
       string,
       unknown
     >;
+
+    // Extract odometer from SPEEDOMETER AI analysis
+    const speedoStep = preTrip.steps.find(
+      (s) => s.stepType === "SPEEDOMETER",
+    );
+    const speedoData = speedoStep?.aiAnalysis?.structuredData as Record<
+      string,
+      unknown
+    > | null;
+    const odometerKm =
+      speedoData?.odometerKm != null
+        ? Number(speedoData.odometerKm)
+        : null;
+
     return {
-      licensePlate: (data.licensePlate as string) ?? null,
-      make: (data.make as string) ?? null,
-      model: (data.model as string) ?? null,
+      licensePlate: (unitData.licensePlate as string) ?? null,
+      make: (unitData.make as string) ?? null,
+      model: (unitData.model as string) ?? null,
+      odometerKm,
     };
   }
 }

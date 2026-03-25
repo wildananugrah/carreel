@@ -126,7 +126,8 @@ export function InspectionDetail() {
   const signatureDone = inspection.signatureKey != null;
   const allComplete = allStepsUploaded && signatureDone;
 
-  const showEndTrip = isPreTrip && isSubmitted && !inspection.linkedFrom;
+  const isApproved = inspection.status === "APPROVED";
+  const showEndTrip = isPreTrip && isApproved && !inspection.linkedFrom;
 
   const date = new Date(inspection.createdAt).toLocaleDateString("en-US", {
     weekday: "short",

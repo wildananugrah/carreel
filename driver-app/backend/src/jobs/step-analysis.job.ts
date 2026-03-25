@@ -134,6 +134,31 @@ export class StepAnalysisJob {
           result.damages ?? [],
           "Unit Identification",
         );
+        // Create or find the unit and link it to the inspection
+        if (result.licensePlate) {
+          try {
+            const unit = await this.inspectionRepository.findOrCreateUnit({
+              licensePlate: result.licensePlate,
+              make: result.make,
+              model: result.model,
+              color: result.color,
+              vin: result.vin,
+            });
+            await this.inspectionRepository.linkUnitToInspection(
+              inspectionId,
+              unit.id,
+            );
+            log.info("Unit linked to inspection", {
+              unitId: unit.id,
+              licensePlate: result.licensePlate,
+            });
+          } catch (e) {
+            log.warn("Failed to link unit to inspection", {
+              error: e instanceof Error ? e.message : String(e),
+              licensePlate: result.licensePlate,
+            });
+          }
+        }
       } else if (stepType === "SPEEDOMETER") {
         const result = parsed as SpeedometerResult;
         const telemetry = await this.validateAndSaveTelemetry(

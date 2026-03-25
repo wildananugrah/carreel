@@ -102,10 +102,12 @@ const authService = new AuthService(
   process.env.JWT_EXPIRES_IN ?? "7d",
 );
 
+const aiEnabled = process.env.AI_ENABLED !== "false";
 const inspectionService = new InspectionService(
   inspectionRepository,
   logger,
   jobQueue,
+  aiEnabled,
 );
 
 const uploadService = new UploadService(
