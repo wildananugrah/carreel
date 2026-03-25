@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import type { IDashboardService } from "../interfaces/services/dashboard.service.interface";
-import type { AppEnv } from "../types/dto";
+import type { AppEnv, DashboardTab } from "../types/dto";
 
 export function createDashboardRoutes(
   dashboardService: IDashboardService,
@@ -15,6 +15,16 @@ export function createDashboardRoutes(
   app.get("/kpis", async (c) => {
     const kpis = await dashboardService.getKPIs();
     return c.json(kpis);
+  });
+
+  // GET /api/dashboard/overview
+  app.get("/overview", async (c) => {
+    const query = {
+      tab: (c.req.query("tab") as DashboardTab | undefined) ?? "all",
+      search: c.req.query("search") || undefined,
+    };
+    const overview = await dashboardService.getOverview(query);
+    return c.json(overview);
   });
 
   return app;

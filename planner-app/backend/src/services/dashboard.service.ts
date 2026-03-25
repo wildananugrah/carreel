@@ -1,9 +1,17 @@
 import type { PrismaClient } from "../generated/prisma";
+import type { IDashboardRepository } from "../interfaces/repositories/dashboard.repository.interface";
 import type { IDashboardService } from "../interfaces/services/dashboard.service.interface";
-import type { DashboardKPIs } from "../types/dto";
+import type {
+  DashboardKPIs,
+  DashboardOverviewQuery,
+  DashboardOverviewResponse,
+} from "../types/dto";
 
 export class DashboardService implements IDashboardService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(
+    private prisma: PrismaClient,
+    private dashboardRepository: IDashboardRepository,
+  ) {}
 
   async getKPIs(): Promise<DashboardKPIs> {
     const now = new Date();
@@ -59,5 +67,16 @@ export class DashboardService implements IDashboardService {
       alertsByType,
       unreadAlertCount,
     };
+  }
+
+  async getOverview(
+    query: DashboardOverviewQuery,
+  ): Promise<DashboardOverviewResponse> {
+    const [kpis, alertBanners, vehicles] = await Promise.all([
+      this.dashboardRepository.getOverviewKPIs(),
+      this.dashboardRepository.getAlertBanners(),
+      this.dashboardRepository.getVehicleCards(query),
+    ]);
+    return { kpis, alertBanners, vehicles };
   }
 }

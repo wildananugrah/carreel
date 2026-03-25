@@ -14,6 +14,7 @@ import { WebSocketNotificationProvider } from "./providers/websocket-notificatio
 import { WinstonLogger } from "./providers/winston-logger.provider";
 import { AlertRepository } from "./repositories/alert.repository";
 import { AuditLogRepository } from "./repositories/audit-log.repository";
+import { DashboardRepository } from "./repositories/dashboard.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
 import { ReviewRepository } from "./repositories/review.repository";
 // Repositories
@@ -87,7 +88,8 @@ const inspectionService = new InspectionService(
 
 const alertService = new AlertService(alertRepository);
 
-const dashboardService = new DashboardService(prisma);
+const dashboardRepository = new DashboardRepository(prisma);
+const dashboardService = new DashboardService(prisma, dashboardRepository);
 
 const mediaStreamService = new MediaStreamService(prisma, storageProvider);
 

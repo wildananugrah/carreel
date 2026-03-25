@@ -1,80 +1,101 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
+import { useCallback, useEffect, useState } from "react";
+import { AlertBannerCard } from "../components/dashboard/AlertBannerCard";
+import { DashboardSearchBar } from "../components/dashboard/DashboardSearchBar";
+import { DashboardTabBar } from "../components/dashboard/DashboardTabBar";
+import { KPIRow } from "../components/dashboard/KPIRow";
+import { VehicleCard } from "../components/dashboard/VehicleCard";
 import { Spinner } from "../components/ui/Spinner";
-import { StatusBadge } from "../components/ui/StatusBadge";
 import { api } from "../lib/api";
-import type { DashboardKPIs, InspectionStatus } from "../lib/types";
+import type { DashboardOverviewResponse, DashboardTab } from "../lib/types";
+
+function formatTodayDate(): string {
+  const d = new Date();
+  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const months = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export function Dashboard() {
-  const navigate = useNavigate();
-  const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
+  const [data, setData] = useState<DashboardOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<DashboardTab>("all");
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    params.set("tab", activeTab);
+    if (search) params.set("search", search);
+
     api
-      .get<DashboardKPIs>("/api/dashboard/kpis")
-      .then(setKpis)
+      .get<DashboardOverviewResponse>(`/api/dashboard/overview?${params}`)
+      .then(setData)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [activeTab, search]);
 
-  if (loading) return <Spinner className="mt-12" />;
-  if (!kpis)
-    return <div className="text-center text-neutral-500 mt-12">Failed to load dashboard</div>;
-
-  const kpiCards = [
-    { label: "Total Inspections", value: kpis.totalInspections },
-    { label: "Needs Review", value: kpis.unreviewedCount, highlight: kpis.unreviewedCount > 0 },
-    {
-      label: "Avg Confidence",
-      value:
-        kpis.avgConfidenceScore != null ? `${Math.round(kpis.avgConfidenceScore * 100)}%` : "—",
-    },
-    { label: "Unread Alerts", value: kpis.unreadAlertCount },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-white mb-6">Dashboard</h1>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {kpiCards.map((kpi) => (
-          <Card key={kpi.label} className="p-5">
-            <p className="text-sm text-neutral-500">{kpi.label}</p>
-            <p
-              className={`text-3xl font-bold mt-1 ${
-                kpi.highlight ? "text-amber-400" : "text-white"
-              }`}
-            >
-              {kpi.value}
-            </p>
-          </Card>
-        ))}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-white">PIC Dashboard</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-sm text-neutral-500">{formatTodayDate()}</span>
+          </div>
+        </div>
+        <DashboardSearchBar value={search} onChange={setSearch} />
       </div>
 
-      {/* Status Distribution */}
-      <h2 className="text-lg font-semibold text-white mb-3">By Status</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
-        {Object.entries(kpis.inspectionsByStatus).map(([status, count]) => (
-          <Card key={status} className="p-4 flex items-center justify-between">
-            <StatusBadge status={status as InspectionStatus} />
-            <span className="text-lg font-semibold text-white">{count}</span>
-          </Card>
-        ))}
+      {/* KPI Row */}
+      {data && <KPIRow kpis={data.kpis} />}
+
+      {/* Alert Banners */}
+      {data && data.alertBanners.length > 0 && (
+        <div className="mt-4 flex flex-col gap-2">
+          {data.alertBanners.map((banner) => (
+            <AlertBannerCard key={banner.type} banner={banner} />
+          ))}
+        </div>
+      )}
+
+      {/* Tab Bar */}
+      <div className="mt-6 mb-4">
+        <DashboardTabBar activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex gap-3">
-        <Button variant="secondary" onClick={() => navigate("/inspections")}>
-          View Inspections
-        </Button>
-        <Button variant="secondary" onClick={() => navigate("/alerts")}>
-          View Alerts
-        </Button>
-      </div>
+      {/* Vehicle Cards */}
+      {loading ? (
+        <Spinner className="mt-8" />
+      ) : !data ? (
+        <p className="text-center text-neutral-500 mt-8">Failed to load dashboard</p>
+      ) : data.vehicles.length === 0 ? (
+        <p className="text-center text-neutral-500 mt-8">Tidak ada unit ditemukan</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {data.vehicles.map((vehicle) => (
+            <VehicleCard key={vehicle.unitId} vehicle={vehicle} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

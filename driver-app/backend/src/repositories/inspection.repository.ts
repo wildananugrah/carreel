@@ -115,20 +115,38 @@ export class InspectionRepository implements IInspectionRepository {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: Record<string, unknown> = {
       driverId,
       ...(query.status ? { status: query.status } : {}),
     };
 
+    if (query.search) {
+      const s = query.search;
+      where.unit = {
+        OR: [
+          { licensePlate: { contains: s, mode: "insensitive" } },
+          { make: { contains: s, mode: "insensitive" } },
+          { model: { contains: s, mode: "insensitive" } },
+        ],
+      };
+    }
+
     const [data, total] = await Promise.all([
       this.prisma.inspection.findMany({
-        where,
+        where: where as never,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
           unit: {
-            select: { id: true, licensePlate: true, make: true, model: true },
+            select: {
+              id: true,
+              licensePlate: true,
+              make: true,
+              model: true,
+              type: true,
+              lastKnownKm: true,
+            },
           },
           linkedInspection: {
             select: { id: true, tripType: true, status: true },
@@ -138,7 +156,7 @@ export class InspectionRepository implements IInspectionRepository {
           },
         },
       }),
-      this.prisma.inspection.count({ where }),
+      this.prisma.inspection.count({ where: where as never }),
     ]);
 
     return { data, total, page, limit };

@@ -53,7 +53,7 @@ export function Header() {
               <NavLink to="/" className={navLinkClass} end>
                 Dashboard
               </NavLink>
-              <NavLink to="/inspections" className={navLinkClass}>
+              {/* <NavLink to="/inspections" className={navLinkClass}>
                 Inspections
               </NavLink>
               <NavLink to="/alerts" className={navLinkClass}>
@@ -66,7 +66,7 @@ export function Header() {
               </NavLink>
               <NavLink to="/drivers" className={navLinkClass}>
                 Drivers
-              </NavLink>
+              </NavLink> */}
             </nav>
           </div>
 

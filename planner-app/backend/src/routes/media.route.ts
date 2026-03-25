@@ -10,7 +10,7 @@ export function createMediaRoutes(mediaStreamService: MediaStreamService) {
     const { buffer, mimeType } = await mediaStreamService.getMediaData(
       c.req.param("id"),
     );
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": mimeType,
         "Cache-Control": "private, max-age=3600",

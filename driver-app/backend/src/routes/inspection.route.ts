@@ -27,10 +27,12 @@ export function createInspectionRoutes(
   app.get("/", async (c) => {
     const userId = c.get("userId") as string;
     const status = c.req.query("status") as InspectionStatus | undefined;
+    const search = c.req.query("search") || undefined;
     const page = Number(c.req.query("page")) || 1;
     const limit = Number(c.req.query("limit")) || 20;
     const result = await inspectionService.list(userId, {
       status,
+      search,
       page,
       limit,
     });

@@ -58,6 +58,7 @@ model Unit {
   vin          String?    @unique
   lastKnownKm  Int?
   status       UnitStatus @default(ACTIVE)
+  company      String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

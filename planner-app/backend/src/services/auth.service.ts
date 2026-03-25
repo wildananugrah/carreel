@@ -3,8 +3,10 @@ import type { IUserRepository } from "../interfaces/repositories/user.repository
 import type { IAuthService } from "../interfaces/services/auth.service.interface";
 import type {
   AuthResponse,
+  ChangePasswordDTO,
   LoginDTO,
   RegisterDTO,
+  UpdateProfileDTO,
   UserResponse,
 } from "../types/dto";
 import { signToken } from "../utils/jwt";
@@ -85,6 +87,50 @@ export class AuthService implements IAuthService {
       throw new Error("User not found");
     }
     return this.toUserResponse(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    data: UpdateProfileDTO,
+  ): Promise<UserResponse> {
+    if (data.email) {
+      const existing = await this.userRepository.findByEmail(data.email);
+      if (existing && existing.id !== userId) {
+        throw new Error("Email already in use");
+      }
+    }
+
+    const updated = await this.userRepository.update(userId, {
+      ...(data.fullName && { fullName: data.fullName }),
+      ...(data.email && { email: data.email }),
+    });
+
+    this.logger.info("Profile updated", { userId });
+
+    return this.toUserResponse(updated);
+  }
+
+  async changePassword(userId: string, data: ChangePasswordDTO): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const valid = await Bun.password.verify(
+      data.currentPassword,
+      user.passwordHash,
+    );
+    if (!valid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const passwordHash = await Bun.password.hash(data.newPassword, {
+      algorithm: "bcrypt",
+    });
+
+    await this.userRepository.update(userId, { passwordHash });
+
+    this.logger.info("Password changed", { userId });
   }
 
   private toUserResponse(user: {

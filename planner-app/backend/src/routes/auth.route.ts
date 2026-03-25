@@ -30,5 +30,21 @@ export function createAuthRoutes(
     return c.json(profile);
   });
 
+  // PATCH /api/auth/profile (protected)
+  app.patch("/profile", authMiddleware, async (c) => {
+    const userId = c.get("userId");
+    const body = await c.req.json();
+    const profile = await authService.updateProfile(userId, body);
+    return c.json(profile);
+  });
+
+  // POST /api/auth/change-password (protected)
+  app.post("/change-password", authMiddleware, async (c) => {
+    const userId = c.get("userId");
+    const body = await c.req.json();
+    await authService.changePassword(userId, body);
+    return c.json({ message: "Password updated" });
+  });
+
   return app;
 }

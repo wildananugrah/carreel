@@ -35,6 +35,11 @@ export interface UpdateProfileDTO {
   email?: string;
 }
 
+export interface ChangePasswordDTO {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface AuthResponse {
   token: string;
   user: UserResponse;
@@ -124,6 +129,60 @@ export interface DashboardKPIs {
   unreviewedCount: number;
   alertsByType: Record<string, number>;
   unreadAlertCount: number;
+}
+
+// ========================
+// DASHBOARD OVERVIEW (PIC Dashboard)
+// ========================
+
+export type DashboardTab = "alert" | "all" | "ongoing" | "completed";
+
+export interface DashboardOverviewQuery {
+  tab?: DashboardTab;
+  search?: string;
+}
+
+export interface DashboardOverviewKPIs {
+  activeUnits: number;
+  preCheckComplete: number;
+  postCheckComplete: number;
+  aiAlerts: number;
+  lowFuelCount: number;
+}
+
+export interface DashboardAlertBanner {
+  type: "signature_pending" | "low_fuel";
+  message: string;
+  plates: string[];
+}
+
+export interface DashboardVehicleTripInfo {
+  inspectionId: string;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  hasSigned: boolean;
+  signerName: string | null;
+}
+
+export interface DashboardVehicleCard {
+  unitId: string;
+  unitName: string;
+  licensePlate: string;
+  company: string | null;
+  lastKnownKm: number | null;
+  driverName: string | null;
+  preTrip: DashboardVehicleTripInfo | null;
+  postTrip: DashboardVehicleTripInfo | null;
+  latestFuelLevelPct: number | null;
+  hasAlerts: boolean;
+  alertCount: number;
+}
+
+export interface DashboardOverviewResponse {
+  kpis: DashboardOverviewKPIs;
+  alertBanners: DashboardAlertBanner[];
+  vehicles: DashboardVehicleCard[];
 }
 
 // ========================

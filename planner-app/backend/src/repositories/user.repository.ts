@@ -21,6 +21,13 @@ export class UserRepository implements IUserRepository {
     return this.prisma.user.create({ data: data as never });
   }
 
+  async update(
+    id: string,
+    data: { fullName?: string; email?: string; passwordHash?: string },
+  ): Promise<User> {
+    return this.prisma.user.update({ where: { id }, data });
+  }
+
   async findDrivers(
     query: DriverListQuery,
   ): Promise<PaginatedResponse<DriverWithInspectionCount>> {

@@ -52,6 +52,8 @@ export interface Inspection {
     licensePlate: string;
     make: string | null;
     model: string | null;
+    type: string | null;
+    lastKnownKm: number | null;
   } | null;
   linkedInspection?: LinkedInspectionSummary | null;
   linkedFrom?: LinkedInspectionSummary | null;

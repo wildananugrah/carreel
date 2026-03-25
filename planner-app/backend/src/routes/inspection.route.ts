@@ -23,7 +23,7 @@ export function createInspectionRoutes(
       "carreel-images",
       inspection.signatureKey,
     );
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": "private, max-age=3600",

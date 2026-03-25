@@ -68,6 +68,7 @@ export interface UpdateInspectionDTO {
 
 export interface InspectionListQuery {
   status?: InspectionStatus;
+  search?: string;
   page?: number;
   limit?: number;
 }
