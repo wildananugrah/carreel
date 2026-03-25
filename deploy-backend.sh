@@ -15,13 +15,9 @@ cd "$REPO_DIR/driver-app/backend"
 bun install
 make down; make up;
 
-echo "Building driver-app frontend..."
-cd "$REPO_DIR/driver-app/frontend"
-bun install
-bun run build
-
 echo "Building planner-app backend..."
 cd "$REPO_DIR/planner-app/backend"
+bun install
 make down; make up;
 
 echo "Done!"
