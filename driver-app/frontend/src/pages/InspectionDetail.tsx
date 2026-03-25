@@ -105,7 +105,6 @@ export function InspectionDetail() {
 
   const isDraft = inspection.status === "DRAFT";
   const isPreTrip = inspection.tripType === "PRE_TRIP";
-  const isSubmitted = inspection.status !== "DRAFT";
 
   const STEP_ORDER = isPreTrip
     ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
