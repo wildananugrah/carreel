@@ -21,27 +21,14 @@ export function DashboardSearchBar({ value, onChange }: DashboardSearchBarProps)
   }
 
   return (
-    <div className="relative">
-      <svg
-        aria-hidden="true"
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
+    <div className="flex items-center gap-2.5 bg-[#161616] border border-[#252525] rounded-xl px-3.5 py-2.5">
+      <span className="text-sm shrink-0">{"🔍"}</span>
       <input
         type="text"
         value={local}
         onChange={handleChange}
         placeholder="Cari plat, tipe, driver..."
-        className="w-64 pl-9 pr-3 py-2 text-sm rounded-lg bg-[#171717] text-white placeholder-neutral-500 border border-[#2a2a2a] focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-colors"
+        className="flex-1 bg-transparent text-[13px] text-white placeholder-[#444] outline-none border-none"
       />
     </div>
   );

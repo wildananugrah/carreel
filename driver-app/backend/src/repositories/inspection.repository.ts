@@ -8,6 +8,7 @@ import type {
 } from "../generated/prisma";
 import type {
   IInspectionRepository,
+  InspectionListItem,
   InspectionWithRelations,
 } from "../interfaces/repositories/inspection.repository.interface";
 import type {
@@ -110,7 +111,7 @@ export class InspectionRepository implements IInspectionRepository {
   async findByDriverId(
     driverId: string,
     query: InspectionListQuery,
-  ): Promise<PaginatedResponse<Inspection>> {
+  ): Promise<PaginatedResponse<InspectionListItem>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
@@ -153,6 +154,17 @@ export class InspectionRepository implements IInspectionRepository {
           },
           linkedFrom: {
             select: { id: true, tripType: true, status: true },
+          },
+          steps: {
+            where: { stepType: "UNIT_IDENTIFICATION" },
+            take: 1,
+            select: {
+              mediaFiles: {
+                take: 1,
+                select: { id: true },
+                orderBy: { createdAt: "asc" as const },
+              },
+            },
           },
         },
       }),

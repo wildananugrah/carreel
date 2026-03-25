@@ -78,7 +78,7 @@ export function InspectionDetail() {
       {/* Back */}
       <button
         type="button"
-        onClick={() => navigate("/inspections")}
+        onClick={() => navigate("/")}
         className="text-sm text-neutral-500 hover:text-white mb-4 inline-flex items-center gap-1"
       >
         <svg
@@ -92,7 +92,7 @@ export function InspectionDetail() {
         >
           <path d="M15 18l-6-6 6-6" />
         </svg>
-        Back to Inspections
+        Back to Dashboard
       </button>
 
       {/* Header */}

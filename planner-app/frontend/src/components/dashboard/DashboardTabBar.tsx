@@ -6,7 +6,7 @@ interface DashboardTabBarProps {
 }
 
 const tabs: { key: DashboardTab; label: string }[] = [
-  { key: "alert", label: "Alert" },
+  { key: "alert", label: "\u26A0 Alert" },
   { key: "all", label: "All" },
   { key: "ongoing", label: "On-Going" },
   { key: "completed", label: "Completed" },
@@ -14,16 +14,16 @@ const tabs: { key: DashboardTab; label: string }[] = [
 
 export function DashboardTabBar({ activeTab, onTabChange }: DashboardTabBarProps) {
   return (
-    <div className="flex gap-6 border-b border-[#2a2a2a]">
+    <div className="flex">
       {tabs.map((tab) => (
         <button
           key={tab.key}
           type="button"
           onClick={() => onTabChange(tab.key)}
-          className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+          className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors border-b-2 whitespace-nowrap ${
             activeTab === tab.key
-              ? "text-yellow-400 border-yellow-400"
-              : "text-neutral-500 border-transparent hover:text-neutral-300"
+              ? "text-[#F5C518] border-[#F5C518] font-extrabold"
+              : "text-[#555] border-transparent"
           }`}
         >
           {tab.label}

@@ -29,9 +29,9 @@ function formatDate(iso: string): string {
   return `${day} ${month} ${year} \u00B7 ${hours}.${minutes}`;
 }
 
-function formatKm(km: number | null | undefined): string | null {
-  if (km == null) return null;
-  return `${km.toLocaleString("id-ID")} KM`;
+function formatKm(km: number | null | undefined): string {
+  if (km == null) return "--";
+  return km.toLocaleString("id-ID");
 }
 
 function getStatusLabel(status: string): string {
@@ -56,33 +56,30 @@ function getStatusLabel(status: string): string {
 function getStatusColor(status: string): string {
   switch (status) {
     case "DRAFT":
-      return "text-neutral-400";
+      return "#888888";
     case "PENDING_AI":
-      return "text-amber-400";
+      return "#F5C842";
     case "AI_COMPLETE":
     case "UNDER_REVIEW":
     case "APPROVED":
-      return "text-emerald-400";
+      return "#C0C0C0";
     case "REJECTED":
-      return "text-red-400";
+      return "#888888";
     case "FLAGGED":
-      return "text-orange-400";
+      return "#aaaaaa";
     default:
-      return "text-neutral-400";
+      return "#888888";
   }
 }
 
-function getBorderClass(status: string): string {
-  const completed = ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"];
-  if (completed.includes(status)) return "border-l-4 border-l-emerald-500";
-  return "";
+function isCompleted(status: string): boolean {
+  return ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"].includes(status);
 }
 
-function getStatusIcon(status: string): string | null {
-  const completed = ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"];
-  if (completed.includes(status)) return "\u2713";
-  if (status === "PENDING_AI") return "\u25CB";
-  return null;
+function getThumbnailId(inspection: Inspection): string | null {
+  const step = inspection.steps?.[0];
+  const media = step?.mediaFiles?.[0];
+  return media?.id ?? null;
 }
 
 export function InspectionCard({ inspection }: InspectionCardProps) {
@@ -91,44 +88,68 @@ export function InspectionCard({ inspection }: InspectionCardProps) {
   const unitName = unit
     ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") || unit.licensePlate
     : `Inspection #${inspection.id.slice(0, 8)}`;
-  const plate = unit?.licensePlate ?? "--";
+  const plate = unit?.licensePlate ?? "X XXXX XXX";
   const km = formatKm(unit?.lastKnownKm);
   const statusLabel = getStatusLabel(inspection.status);
   const statusColor = getStatusColor(inspection.status);
-  const borderClass = getBorderClass(inspection.status);
-  const statusIcon = getStatusIcon(inspection.status);
+  const completed = isCompleted(inspection.status);
+  const thumbnailId = getThumbnailId(inspection);
 
   return (
     <button
       type="button"
-      className={`w-full text-left rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] p-4 cursor-pointer active:bg-[#222222] transition-colors ${borderClass}`}
+      className={`w-full text-left rounded-[14px] bg-[#0A0A0A] p-3.5 cursor-pointer active:bg-[#141414] transition-colors flex gap-3 items-center ${
+        completed ? "border border-[#F5C842]" : "border border-[#3a3a3a]"
+      }`}
       onClick={() => navigate(`/inspections/${inspection.id}`)}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            {statusIcon && <span className={`text-sm ${statusColor}`}>{statusIcon}</span>}
-            <h3 className="text-sm font-semibold text-white truncate">{unitName}</h3>
-          </div>
-          <p className="text-xs text-neutral-500 mb-1">
-            {plate} {"\u00B7"} <span className={statusColor}>{statusLabel}</span>
-          </p>
-          <div className="flex items-center gap-2">
-            {km && <span className="text-xs font-bold text-yellow-400">{km}</span>}
-            <span className="text-xs text-neutral-500">{formatDate(inspection.createdAt)}</span>
-          </div>
-        </div>
-        <svg
-          aria-hidden="true"
-          className="w-5 h-5 text-neutral-500 shrink-0 ml-2"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
+      {/* Thumbnail */}
+      <div className="w-[72px] h-[52px] rounded-lg overflow-hidden shrink-0 bg-[#1a1a1a]">
+        {thumbnailId ? (
+          <img
+            src={`/api/media/${thumbnailId}/url`}
+            alt={unitName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <svg
+            viewBox="0 0 72 52"
+            className="w-full h-full"
+            role="img"
+            aria-label="Car placeholder"
+          >
+            <rect width="72" height="52" fill="#1a1a1a" />
+            <rect x="8" y="28" width="56" height="14" rx="3" fill="#2a2a2a" />
+            <rect x="14" y="18" width="44" height="16" rx="4" fill="#333" />
+            <rect x="6" y="36" width="10" height="6" rx="3" fill="#111" />
+            <rect x="56" y="36" width="10" height="6" rx="3" fill="#111" />
+            <rect x="16" y="20" width="16" height="10" rx="2" fill="#1a1a1a" opacity="0.8" />
+            <rect x="38" y="20" width="16" height="10" rx="2" fill="#1a1a1a" opacity="0.8" />
+            <rect x="8" y="30" width="8" height="4" rx="1" fill="#F5C842" opacity="0.9" />
+            <rect x="56" y="30" width="8" height="4" rx="1" fill="#F5C842" opacity="0.6" />
+          </svg>
+        )}
       </div>
+
+      {/* Card info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-extrabold text-white truncate">{unitName}</p>
+        <p className="text-xs text-[#888] mb-1">
+          {plate}{" "}
+          <span style={{ color: statusColor }} className="font-bold ml-1.5">
+            {"\u00B7"} {statusLabel}
+          </span>
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-[#F5C842]">{km} KM</span>
+          <span className="text-[10px] text-[#555]">{formatDate(inspection.createdAt)}</span>
+        </div>
+      </div>
+
+      {/* Arrow */}
+      <span className={`text-sm shrink-0 ${completed ? "text-[#F5C842]" : "text-[#444]"}`}>
+        {"\u203A"}
+      </span>
     </button>
   );
 }

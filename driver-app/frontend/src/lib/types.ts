@@ -57,6 +57,7 @@ export interface Inspection {
   } | null;
   linkedInspection?: LinkedInspectionSummary | null;
   linkedFrom?: LinkedInspectionSummary | null;
+  steps?: { mediaFiles: { id: string }[] }[];
   _count?: {
     steps: number;
   };

@@ -50,6 +50,20 @@ export interface InspectionWithRelations extends Inspection {
   })[];
 }
 
+export interface InspectionListItem extends Inspection {
+  unit?: {
+    id: string;
+    licensePlate: string;
+    make: string | null;
+    model: string | null;
+    type?: string | null;
+    lastKnownKm?: number | null;
+  } | null;
+  linkedInspection?: LinkedInspectionSummary | null;
+  linkedFrom?: LinkedInspectionSummary | null;
+  steps?: { mediaFiles: { id: string }[] }[];
+}
+
 export interface IInspectionRepository {
   create(driverId: string, data: CreateInspectionDTO): Promise<Inspection>;
   createWithSteps(
@@ -60,7 +74,7 @@ export interface IInspectionRepository {
   findByDriverId(
     driverId: string,
     query: InspectionListQuery,
-  ): Promise<PaginatedResponse<Inspection>>;
+  ): Promise<PaginatedResponse<InspectionListItem>>;
   update(id: string, data: UpdateInspectionDTO): Promise<Inspection>;
   updateStatus(id: string, status: InspectionStatus): Promise<Inspection>;
 

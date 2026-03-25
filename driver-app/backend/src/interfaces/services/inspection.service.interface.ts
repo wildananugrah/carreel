@@ -5,7 +5,7 @@ import type {
   PaginatedResponse,
   UpdateInspectionDTO,
 } from "../../types/dto";
-import type { InspectionWithRelations } from "../repositories/inspection.repository.interface";
+import type { InspectionListItem, InspectionWithRelations } from "../repositories/inspection.repository.interface";
 
 export interface IInspectionService {
   create(driverId: string, data: CreateInspectionDTO): Promise<Inspection>;
@@ -18,7 +18,7 @@ export interface IInspectionService {
   list(
     driverId: string,
     query: InspectionListQuery,
-  ): Promise<PaginatedResponse<Inspection>>;
+  ): Promise<PaginatedResponse<InspectionListItem>>;
   update(
     id: string,
     driverId: string,

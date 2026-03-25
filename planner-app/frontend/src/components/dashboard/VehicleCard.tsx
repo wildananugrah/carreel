@@ -5,14 +5,14 @@ interface VehicleCardProps {
   vehicle: DashboardVehicleCard;
 }
 
-const companyColors: Record<string, string> = {
-  Valet: "bg-blue-500/20 text-blue-400",
-  "OLX Autos": "bg-emerald-500/20 text-emerald-400",
-  Bengkel: "bg-purple-500/20 text-purple-400",
+const companyColors: Record<string, { color: string; border: string }> = {
+  Valet: { color: "#F5C518", border: "#F5C518" },
+  "OLX Autos": { color: "#C8C8C8", border: "#C8C8C8" },
+  Bengkel: { color: "#D4A800", border: "#D4A800" },
 };
 
-function getCompanyClass(company: string): string {
-  return companyColors[company] ?? "bg-neutral-500/20 text-neutral-400";
+function getCompanyStyle(company: string) {
+  return companyColors[company] ?? { color: "#888", border: "#888" };
 }
 
 function formatDate(iso: string): string {
@@ -41,140 +41,135 @@ function formatDate(iso: string): string {
 
 function formatKm(km: number | null): string {
   if (km == null) return "--";
-  return `KM ${km.toLocaleString("id-ID")}`;
+  return km.toLocaleString("id-ID");
 }
 
 function getOverallStatus(vehicle: DashboardVehicleCard): {
   label: string;
-  className: string;
+  bg: string;
+  color: string;
 } {
   const preApproved = vehicle.preTrip?.status === "APPROVED";
   const postApproved = vehicle.postTrip?.status === "APPROVED";
 
   if (preApproved && postApproved) {
-    return { label: "Selesai \u2713", className: "bg-emerald-500/20 text-emerald-400" };
+    return { label: "Selesai \u2713", bg: "#1a1600", color: "#F5C518" };
   }
-
   if (postApproved) {
-    return { label: "Approved \u2713", className: "bg-emerald-500/20 text-emerald-400" };
+    return { label: "Post-Check \u2713", bg: "#161616", color: "#A8A8A8" };
   }
-
   if (preApproved) {
-    return { label: "Pre-Check \u2713", className: "bg-blue-500/20 text-blue-400" };
+    return { label: "Pre-Check \u2713", bg: "#1a1600", color: "#F5C518" };
   }
-
+  if (vehicle.hasAlerts) {
+    return { label: "\u26A0 AI Alert", bg: "#1a1600", color: "#F5C518" };
+  }
   if (
     (vehicle.preTrip && !vehicle.preTrip.hasSigned) ||
     (vehicle.postTrip && !vehicle.postTrip.hasSigned)
   ) {
-    return { label: "TTD Pending", className: "bg-yellow-400/20 text-yellow-400" };
+    return { label: "TTD Pending", bg: "#181200", color: "#D4A800" };
   }
-
-  return { label: "In Progress", className: "bg-amber-500/20 text-amber-400" };
+  return { label: "In Progress", bg: "#161616", color: "#A8A8A8" };
 }
 
 export function VehicleCard({ vehicle }: VehicleCardProps) {
   const navigate = useNavigate();
   const status = getOverallStatus(vehicle);
-
   const latestInspectionId = vehicle.postTrip?.inspectionId ?? vehicle.preTrip?.inspectionId;
+  const lowFuel = vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 20;
+  const ttdDone = vehicle.preTrip?.hasSigned || vehicle.postTrip?.hasSigned;
+  const ttdPending =
+    (vehicle.preTrip && !vehicle.preTrip.hasSigned) ||
+    (vehicle.postTrip && !vehicle.postTrip.hasSigned);
 
   return (
     <button
       type="button"
-      className="w-full text-left rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] border-l-4 border-l-yellow-400 p-4 cursor-pointer hover:bg-[#222222] transition-colors"
+      className="w-full text-left rounded-xl border border-[#222222] bg-[#111111] border-l-[3px] border-l-[#F5C518] px-4 py-3.5 cursor-pointer hover:bg-[#1a1a1a] transition-colors"
       onClick={() => {
         if (latestInspectionId) navigate(`/inspections/${latestInspectionId}`);
       }}
     >
-      <div className="flex items-start justify-between">
+      {/* Row 1: name + plate | status badges */}
+      <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <h3 className="text-sm font-semibold text-white truncate">{vehicle.unitName}</h3>
-          </div>
-          <div className="flex items-center gap-2 mb-1">
-            <p className="text-xs text-neutral-500">{vehicle.licensePlate}</p>
-            {vehicle.company && (
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getCompanyClass(vehicle.company)}`}
-              >
-                {vehicle.company}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-neutral-500">
-            Driver: {vehicle.driverName ?? "--"} &middot; {formatKm(vehicle.lastKnownKm)}
+          <p className="text-[13px] font-extrabold text-[#F0F0F0] mb-0.5 truncate">
+            {vehicle.unitName}
           </p>
+          <p className="text-[11px] text-[#666]">{vehicle.licensePlate}</p>
         </div>
-
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${status.className}`}>
+        <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
+          <span
+            className="text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap"
+            style={{
+              background: status.bg,
+              color: status.color,
+              border: `1px solid ${status.color}33`,
+            }}
+          >
             {status.label}
           </span>
-          {vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 20 && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-              {Math.round(vehicle.latestFuelLevelPct)}% — Perlu Isi
+          {lowFuel && (
+            <span
+              className="text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap animate-pulse"
+              style={{
+                background: "#181200",
+                color: "#D4A800",
+                border: "1px solid #D4A80033",
+              }}
+            >
+              {"\u26FD"} {Math.round(vehicle.latestFuelLevelPct ?? 0)}% — Perlu Isi
             </span>
           )}
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-4 text-xs flex-wrap">
+      {/* Row 2: company + driver + km */}
+      <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+        {vehicle.company && (
+          <span
+            className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+            style={{
+              background: "#1a1a1a",
+              color: getCompanyStyle(vehicle.company).color,
+              border: `1px solid ${getCompanyStyle(vehicle.company).border}33`,
+            }}
+          >
+            {vehicle.company}
+          </span>
+        )}
+        <span className="text-[10px] text-[#666]">Driver: {vehicle.driverName ?? "--"}</span>
+        <span className="text-[10px] text-[#666]">
+          {"\u00B7"} KM {formatKm(vehicle.lastKnownKm)}
+        </span>
+      </div>
+
+      {/* Row 3: timestamps + TTD + alerts */}
+      <div className="flex items-center gap-2 flex-wrap">
         {vehicle.preTrip && (
-          <span className="flex items-center gap-1 text-neutral-400">
-            <svg
-              aria-hidden="true"
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            {formatDate(vehicle.preTrip.startedAt)}
+          <span className="text-[10px] text-[#F5C518]">
+            {"\uD83D\uDCF7"} {formatDate(vehicle.preTrip.startedAt)}
           </span>
         )}
         {vehicle.postTrip && (
-          <span className="flex items-center gap-1 text-neutral-400">
-            <svg
-              aria-hidden="true"
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            {formatDate(vehicle.postTrip.startedAt)}
+          <span className="text-[10px] text-[#A8A8A8]">
+            {"\uD83C\uDFA5"} {formatDate(vehicle.postTrip.startedAt)}
           </span>
         )}
-        {(vehicle.preTrip?.hasSigned || vehicle.postTrip?.hasSigned) && (
-          <span className="text-yellow-400 font-medium flex items-center gap-1">
-            <svg
-              aria-hidden="true"
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-              />
-            </svg>
-            TTD {"\u2713"}
+        {ttdDone && (
+          <span className="text-[10px] text-[#F5C518]">
+            {"\u270D\uFE0F"} TTD {"\u2713"}
+          </span>
+        )}
+        {ttdPending && !ttdDone && (
+          <span className="text-[10px] text-[#D4A800] animate-pulse">
+            {"\u270D\uFE0F"} TTD Pending
+          </span>
+        )}
+        {vehicle.hasAlerts && vehicle.alertCount > 0 && (
+          <span className="text-[10px] text-[#D4A800] font-bold animate-pulse">
+            {"\u26A0\uFE0F"} {vehicle.alertCount} Alert
           </span>
         )}
       </div>

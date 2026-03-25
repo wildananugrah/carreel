@@ -72,7 +72,7 @@ export function InspectionList() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="bg-[#171717] px-4 py-3 flex items-center justify-between sticky top-0 z-10 border-b border-[#2a2a2a]">
+      <div className="bg-[#0A0A0A] px-5 pt-13 pb-2 flex items-center justify-between sticky top-0 z-10">
         {showSearch ? (
           <div className="flex items-center gap-2 flex-1">
             <input
@@ -106,14 +106,10 @@ export function InspectionList() {
         ) : (
           <>
             <div className="w-10" />
-            <img
-              src="/car-reel-logo.png"
-              alt="Car Reel"
-              className="h-8 w-auto"
-            />
+            <img src="/car-reel-logo.png" alt="Car Reel" className="h-8 w-auto" />
             <button
               type="button"
-              className="w-10 h-10 flex items-center justify-center text-neutral-400"
+              className="w-10 h-10 flex items-center justify-center text-[#F5C842]"
               onClick={() => {
                 setShowSearch(true);
                 setTimeout(() => searchRef.current?.focus(), 50);
@@ -136,16 +132,16 @@ export function InspectionList() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex border-b border-[#2a2a2a] px-4">
+      <div className="flex">
         {tabs.map((tab) => (
           <button
             type="button"
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
+            className={`flex-1 py-2.5 text-sm text-center transition-colors border-b-2 ${
               activeTab === tab.value
-                ? "text-yellow-400 border-b-2 border-yellow-400"
-                : "text-neutral-500"
+                ? "text-[#F5C842] border-[#F5C842] font-bold"
+                : "text-[#666] border-transparent font-medium"
             }`}
           >
             {tab.label}
@@ -154,7 +150,7 @@ export function InspectionList() {
       </div>
 
       {/* Inspection Cards */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
+      <div className="flex-1 overflow-y-auto px-5 pb-24 pt-3.5 bg-[#0A0A0A]">
         {loading ? (
           <Spinner className="mt-12" />
         ) : error ? (
@@ -169,14 +165,13 @@ export function InspectionList() {
             }
           />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {inspections.map((inspection) => (
               <InspectionCard key={inspection.id} inspection={inspection} />
             ))}
           </div>
         )}
       </div>
-
     </div>
   );
 }

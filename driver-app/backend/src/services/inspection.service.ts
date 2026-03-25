@@ -7,6 +7,7 @@ import type { IJobQueue } from "../interfaces/providers/job-queue.provider.inter
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
 import type {
   IInspectionRepository,
+  InspectionListItem,
   InspectionWithRelations,
 } from "../interfaces/repositories/inspection.repository.interface";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
@@ -99,7 +100,7 @@ export class InspectionService implements IInspectionService {
   async list(
     driverId: string,
     query: InspectionListQuery,
-  ): Promise<PaginatedResponse<Inspection>> {
+  ): Promise<PaginatedResponse<InspectionListItem>> {
     return this.inspectionRepository.findByDriverId(driverId, query);
   }
 
