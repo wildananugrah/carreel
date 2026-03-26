@@ -709,37 +709,85 @@ export function VideoReview() {
               </div>
             </div>
 
-            {/* AI Flagged section */}
-            {aiFlags.length > 0 && (
-              <div className="px-4 pb-4">
-                <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
-                  <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
-                    {"\u26A0\uFE0F"} AI Flagged — {aiFlags.length} Area Perlu Diperhatikan
-                  </p>
-                  <div className="space-y-2">
-                    {aiFlags.map((flag) => (
-                      <div
-                        key={`${flag.area}-${flag.description}-${flag.confidence}`}
-                        className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3"
+            {/* AI Flagged section — always shown after upload */}
+            <div className="px-4 pb-4">
+              <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
+                {bodyStep.status === "UPLOADED" || bodyStep.status === "PROCESSING" ? (
+                  <>
+                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+                      {"\u26A0\uFE0F"} AI Flagged
+                    </p>
+                    <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-4">
+                      <svg
+                        aria-hidden="true"
+                        className="animate-spin w-5 h-5 text-[#F5C842] shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
                       >
-                        <span className="text-lg shrink-0">{"\uD83D\uDE97"}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-white">{flag.area}</p>
-                          <p className="text-xs text-neutral-400">{flag.description}</p>
-                        </div>
-                        <span className="text-sm font-bold text-white shrink-0">
-                          {flag.confidence}%
-                        </span>
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-bold text-white">Sedang dianalisa AI...</p>
+                        <p className="text-xs text-neutral-500">
+                          Hasil inspeksi bodi akan muncul di sini
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-neutral-600 italic mt-3">
-                    {"\u26A0\uFE0F"} Hasil AI bersifat panduan awal. Konfirmasi dengan pemeriksaan
-                    fisik langsung.
-                  </p>
-                </div>
+                    </div>
+                  </>
+                ) : aiFlags.length > 0 ? (
+                  <>
+                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+                      {"\u26A0\uFE0F"} AI Flagged — {aiFlags.length} Area Perlu Diperhatikan
+                    </p>
+                    <div className="space-y-2">
+                      {aiFlags.map((flag) => (
+                        <div
+                          key={`${flag.area}-${flag.description}-${flag.confidence}`}
+                          className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3"
+                        >
+                          <span className="text-lg shrink-0">{"\uD83D\uDE97"}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-white">{flag.area}</p>
+                            <p className="text-xs text-neutral-400">{flag.description}</p>
+                          </div>
+                          <span className="text-sm font-bold text-white shrink-0">
+                            {flag.confidence}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+                      {"\u26A0\uFE0F"} AI Flagged
+                    </p>
+                    <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-4">
+                      <span className="text-lg shrink-0">{"\u2705"}</span>
+                      <p className="text-sm text-neutral-400">
+                        Tidak ada kerusakan terdeteksi oleh AI
+                      </p>
+                    </div>
+                  </>
+                )}
+                <p className="text-[10px] text-neutral-600 italic mt-3">
+                  {"\u26A0\uFE0F"} Hasil AI bersifat panduan awal. Konfirmasi dengan pemeriksaan
+                  fisik langsung.
+                </p>
               </div>
-            )}
+            </div>
 
             {/* Pre-check reference for POST_TRIP */}
             {isPostTrip && unitData && (

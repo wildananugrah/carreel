@@ -208,7 +208,10 @@ export class DashboardRepository implements IDashboardRepository {
       const pairIds = [insp.id];
       if (postTrip) pairIds.push(postTrip.id);
 
-      const pairAlertCount = pairIds.reduce((sum, id) => sum + (alertCountMap.get(id) ?? 0), 0);
+      const pairAlertCount = pairIds.reduce(
+        (sum, id) => sum + (alertCountMap.get(id) ?? 0),
+        0,
+      );
       const pairDamageAlertCount = pairIds.reduce(
         (sum, id) => sum + (damageAlertCountMap.get(id) ?? 0),
         0,
@@ -217,14 +220,17 @@ export class DashboardRepository implements IDashboardRepository {
 
       const unit = insp.unit;
       const unitName = unit
-        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") || unit.licensePlate
+        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") ||
+          unit.licensePlate
         : (insp.driver?.fullName ?? insp.id);
 
       cards.push({
         unitId: unit?.id ?? `driver:${insp.driverId}`,
         unitName,
         licensePlate: unit?.licensePlate ?? "--",
-        company: unit ? ((unit as unknown as { company?: string }).company ?? null) : null,
+        company: unit
+          ? ((unit as unknown as { company?: string }).company ?? null)
+          : null,
         lastKnownKm: unit?.lastKnownKm ?? null,
         driverName: insp.driver?.fullName ?? null,
         preTrip: mapTrip(insp),
@@ -245,14 +251,17 @@ export class DashboardRepository implements IDashboardRepository {
 
       const unit = insp.unit;
       const unitName = unit
-        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") || unit.licensePlate
+        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") ||
+          unit.licensePlate
         : (insp.driver?.fullName ?? insp.id);
 
       cards.push({
         unitId: unit?.id ?? `driver:${insp.driverId}`,
         unitName,
         licensePlate: unit?.licensePlate ?? "--",
-        company: unit ? ((unit as unknown as { company?: string }).company ?? null) : null,
+        company: unit
+          ? ((unit as unknown as { company?: string }).company ?? null)
+          : null,
         lastKnownKm: unit?.lastKnownKm ?? null,
         driverName: insp.driver?.fullName ?? null,
         preTrip: null,
