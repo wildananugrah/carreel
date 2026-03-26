@@ -60,9 +60,7 @@ export function VideoGuidanceOverlay({
                 />
                 {i < STAGES.length - 1 && (
                   <div
-                    className={`w-4 h-0.5 ${
-                      i < stageIndex ? "bg-yellow-400/50" : "bg-white/20"
-                    }`}
+                    className={`w-4 h-0.5 ${i < stageIndex ? "bg-yellow-400/50" : "bg-white/20"}`}
                   />
                 )}
               </div>
@@ -75,9 +73,7 @@ export function VideoGuidanceOverlay({
               {formatTime(elapsedSeconds)}
             </span>
             <span className="text-white/50">/</span>
-            <span className="text-white/50 font-mono">
-              {formatTime(maxDuration)}
-            </span>
+            <span className="text-white/50 font-mono">{formatTime(maxDuration)}</span>
           </div>
         </div>
       </div>

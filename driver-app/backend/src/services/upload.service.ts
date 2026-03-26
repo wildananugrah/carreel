@@ -115,6 +115,14 @@ export class UploadService implements IUploadService {
     return { buffer, mimeType: media.mimeType };
   }
 
+  async getMediaByKey(
+    bucket: string,
+    key: string,
+  ): Promise<{ buffer: Buffer; mimeType: string }> {
+    const buffer = await this.storageProvider.download(bucket, key);
+    return { buffer, mimeType: "image/png" };
+  }
+
   async deleteMedia(
     inspectionId: string,
     stepId: string,

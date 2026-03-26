@@ -8,12 +8,28 @@ export function createMediaRoutes(
 ) {
   const app = new Hono();
 
+  // GET /api/media/key/* — proxy files stored by MinIO key (e.g. signatures)
+  // No auth required: used by <img> tags.
+  app.get("/key/*", async (c) => {
+    const key = c.req.path.replace(/^\/api\/media\/key\//, "");
+    const { buffer, mimeType } = await uploadService.getMediaByKey(
+      "carreel-images",
+      decodeURIComponent(key),
+    );
+    return new Response(buffer as unknown as BodyInit, {
+      headers: {
+        "Content-Type": mimeType,
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  });
+
   // GET /api/media/:id/url — proxy image data from MinIO
   // Proxies instead of redirecting so the client never needs direct MinIO access.
   // No auth required: used by <img src="/api/media/:id/url"> tags.
   app.get("/:id/url", async (c) => {
     const { buffer, mimeType } = await uploadService.getMediaData(c.req.param("id"));
-    return new Response(buffer, {
+    return new Response(buffer as unknown as BodyInit, {
       headers: {
         "Content-Type": mimeType,
         "Cache-Control": "private, max-age=3600",

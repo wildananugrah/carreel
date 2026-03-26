@@ -44,6 +44,9 @@ const mockInspection: InspectionWithRelations = {
   completedAt: null,
   latitude: null,
   longitude: null,
+  signatureKey: null,
+  signerName: null,
+  driverComment: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   unit: null,
@@ -177,6 +180,7 @@ describe("ChunkedUploadService", () => {
       }),
       findById: async () => null,
       findByStepId: async () => [],
+      deleteById: async () => {},
     };
 
     const updatedSteps: { stepId: string; status: string }[] = [];

@@ -112,6 +112,7 @@ export interface InspectionDetail {
   longitude: number | null;
   signatureKey: string | null;
   signerName: string | null;
+  driverComment: string | null;
   createdAt: string;
   updatedAt: string;
   driver: { id: string; fullName: string; email: string };

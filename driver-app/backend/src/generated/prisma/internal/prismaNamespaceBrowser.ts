@@ -106,6 +106,7 @@ export const UnitScalarFieldEnum = {
   vin: 'vin',
   lastKnownKm: 'lastKnownKm',
   status: 'status',
+  company: 'company',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -126,6 +127,7 @@ export const InspectionScalarFieldEnum = {
   longitude: 'longitude',
   signatureKey: 'signatureKey',
   signerName: 'signerName',
+  driverComment: 'driverComment',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

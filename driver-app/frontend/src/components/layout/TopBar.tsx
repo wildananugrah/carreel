@@ -2,10 +2,12 @@ import { useNavigate } from "react-router-dom";
 
 interface TopBarProps {
   title: string;
+  subtitle?: string;
+  subtitle2?: string;
   showBack?: boolean;
 }
 
-export function TopBar({ title, showBack }: TopBarProps) {
+export function TopBar({ title, subtitle, subtitle2, showBack }: TopBarProps) {
   const navigate = useNavigate();
 
   return (
@@ -31,7 +33,11 @@ export function TopBar({ title, showBack }: TopBarProps) {
           </svg>
         </button>
       )}
-      <h1 className="text-lg font-semibold">{title}</h1>
+      <div>
+        <h1 className="text-lg font-bold">{title}</h1>
+        {subtitle && <p className="text-xs text-neutral-400">{subtitle}</p>}
+        {subtitle2 && <p className="text-[10px] text-neutral-500">{subtitle2}</p>}
+      </div>
     </div>
   );
 }

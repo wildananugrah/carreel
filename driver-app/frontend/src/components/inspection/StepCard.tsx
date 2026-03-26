@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { InspectionStep } from "../../lib/types";
 import { api } from "../../lib/api";
+import type { InspectionStep } from "../../lib/types";
+import { MediaLightbox } from "../ui/MediaLightbox";
 import { StatusBadge } from "../ui/StatusBadge";
 
 const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
@@ -65,17 +66,26 @@ function StepIcon({ stepType }: { stepType: string }) {
   );
 }
 
-export function StepCard({ step, inspectionStatus, index, onUploadComplete, readOnly }: StepCardProps) {
+export function StepCard({
+  step,
+  inspectionStatus,
+  index,
+  onUploadComplete,
+  readOnly,
+}: StepCardProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
 
   const hasMedia = step.mediaFiles.length > 0;
   const canUpload =
-    !readOnly && inspectionStatus === "DRAFT" && (step.status === "PENDING" || step.status === "FAILED");
+    !readOnly &&
+    inspectionStatus === "DRAFT" &&
+    (step.status === "PENDING" || step.status === "FAILED");
   const canDelete = !readOnly && inspectionStatus === "DRAFT" && hasMedia;
 
   async function handleDelete() {
@@ -178,18 +188,25 @@ export function StepCard({ step, inspectionStatus, index, onUploadComplete, read
         <div className="flex flex-col">
           <div className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden mb-2">
             {step.mediaFiles[0].mimeType.startsWith("image/") ? (
+              // biome-ignore lint/a11y/useKeyWithClickEvents: click-to-enlarge image
               <img
                 src={`/api/media/${step.mediaFiles[0].id}/url`}
                 alt={step.mediaFiles[0].fileName}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-pointer"
                 loading="lazy"
+                onClick={() =>
+                  setLightbox({ src: `/api/media/${step.mediaFiles[0].id}/url`, type: "image" })
+                }
               />
             ) : (
               // biome-ignore lint/a11y/useMediaCaption: User-uploaded video
               <video
                 src={`/api/media/${step.mediaFiles[0].id}/stream`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-pointer"
                 preload="metadata"
+                onClick={() =>
+                  setLightbox({ src: `/api/media/${step.mediaFiles[0].id}/stream`, type: "video" })
+                }
               />
             )}
             <div className="absolute top-1 right-1">
@@ -207,7 +224,12 @@ export function StepCard({ step, inspectionStatus, index, onUploadComplete, read
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               ) : (
@@ -307,6 +329,16 @@ export function StepCard({ step, inspectionStatus, index, onUploadComplete, read
       <div className="absolute -top-2 -left-2 w-5 h-5 bg-yellow-400 text-black text-xs font-bold rounded-full flex items-center justify-center">
         {index + 1}
       </div>
+
+      {lightbox &&
+        createPortal(
+          <MediaLightbox
+            src={lightbox.src}
+            type={lightbox.type}
+            onClose={() => setLightbox(null)}
+          />,
+          document.body,
+        )}
     </div>
   );
 }

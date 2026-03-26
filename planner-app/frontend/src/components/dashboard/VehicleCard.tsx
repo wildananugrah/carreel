@@ -1,8 +1,9 @@
-import { useNavigate } from "react-router-dom";
 import type { DashboardVehicleCard } from "../../lib/types";
 
 interface VehicleCardProps {
   vehicle: DashboardVehicleCard;
+  selected?: boolean;
+  onSelect?: (vehicle: DashboardVehicleCard) => void;
 }
 
 const companyColors: Record<string, { color: string; border: string }> = {
@@ -73,10 +74,8 @@ function getOverallStatus(vehicle: DashboardVehicleCard): {
   return { label: "In Progress", bg: "#161616", color: "#A8A8A8" };
 }
 
-export function VehicleCard({ vehicle }: VehicleCardProps) {
-  const navigate = useNavigate();
+export function VehicleCard({ vehicle, selected, onSelect }: VehicleCardProps) {
   const status = getOverallStatus(vehicle);
-  const latestInspectionId = vehicle.postTrip?.inspectionId ?? vehicle.preTrip?.inspectionId;
   const lowFuel = vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 20;
   const ttdDone = vehicle.preTrip?.hasSigned || vehicle.postTrip?.hasSigned;
   const ttdPending =
@@ -86,10 +85,12 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   return (
     <button
       type="button"
-      className="w-full text-left rounded-xl border border-[#222222] bg-[#111111] border-l-[3px] border-l-[#F5C518] px-4 py-3.5 cursor-pointer hover:bg-[#1a1a1a] transition-colors"
-      onClick={() => {
-        if (latestInspectionId) navigate(`/inspections/${latestInspectionId}`);
-      }}
+      className={`w-full text-left rounded-xl border border-l-[3px] border-l-[#F5C518] px-4 py-3.5 cursor-pointer transition-all ${
+        selected
+          ? "bg-[#1a1600] border-[#F5C518]"
+          : "bg-[#111111] border-[#222222] hover:bg-[#1a1a1a]"
+      }`}
+      onClick={() => onSelect?.(vehicle)}
     >
       {/* Row 1: name + plate | status badges */}
       <div className="flex items-start justify-between mb-2">

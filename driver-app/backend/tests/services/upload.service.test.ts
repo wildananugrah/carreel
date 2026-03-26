@@ -65,6 +65,7 @@ describe("UploadService", () => {
       }),
       findById: async () => null,
       findByStepId: async () => [],
+      deleteById: async () => {},
     };
 
     const mockStep: InspectionStep = {
@@ -90,6 +91,9 @@ describe("UploadService", () => {
             completedAt: null,
             latitude: null,
             longitude: null,
+            signatureKey: null,
+            signerName: null,
+            driverComment: null,
             createdAt: new Date(),
             updatedAt: new Date(),
             unit: null,

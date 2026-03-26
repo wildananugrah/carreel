@@ -7,30 +7,34 @@ export function BottomNav() {
   const [starting, setStarting] = useState(false);
 
   async function handleStartTrip() {
+    if (starting) return;
     setStarting(true);
-    let latitude: number | undefined;
-    let longitude: number | undefined;
 
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 5000,
-        }),
-      );
-      latitude = pos.coords.latitude;
-      longitude = pos.coords.longitude;
-    } catch {
-      // GPS is optional
-    }
-
-    try {
+      // Create inspection immediately — GPS is optional and can be updated later
       const inspection = await api.post<{ id: string }>("/api/inspections", {
         tripType: "PRE_TRIP",
-        latitude,
-        longitude,
       });
       navigate(`/inspections/${inspection.id}/photos`);
+
+      // Update GPS in the background after navigation
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            api
+              .patch(`/api/inspections/${inspection.id}`, {
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+              })
+              .catch(() => {});
+          },
+          () => {},
+          { timeout: 5000 },
+        );
+      }
     } catch {
+      // silently fail
+    } finally {
       setStarting(false);
     }
   }
@@ -65,45 +69,42 @@ export function BottomNav() {
           type="button"
           disabled={starting}
           onClick={handleStartTrip}
-          className="w-20 h-20 -mt-10 rounded-full bg-yellow-400 text-black flex items-center justify-center shadow-lg active:bg-yellow-300 transition-colors disabled:opacity-50"
+          className="w-16 h-16 -mt-8 rounded-full text-black flex items-center justify-center shadow-lg shadow-yellow-400/30 active:scale-95 transition-transform disabled:opacity-50"
+          style={{ background: "linear-gradient(135deg, #F5C842, #E8A800)" }}
         >
           {starting ? (
-              <svg
-                aria-hidden="true"
-                className="animate-spin w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-            ) : (
-              <svg
-                aria-hidden="true"
-                className="w-6 h-6"
-                fill="none"
+            <svg
+              aria-hidden="true"
+              className="animate-spin w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
                 stroke="currentColor"
-                strokeWidth={2.5}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
-              </svg>
-            )}
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          ) : (
+            <svg
+              aria-hidden="true"
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          )}
         </button>
 
         <NavLink

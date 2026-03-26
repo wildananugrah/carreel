@@ -28,6 +28,9 @@ function createMockInspection(overrides: Partial<Inspection> = {}): Inspection {
     completedAt: null,
     latitude: null,
     longitude: null,
+    signatureKey: null,
+    signerName: null,
+    driverComment: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -131,6 +134,8 @@ describe("InspectionService", () => {
       update: async (id, data) => {
         const insp = inspections.get(id)!;
         if (data.unitId !== undefined) insp.unitId = data.unitId!;
+        if (data.driverComment !== undefined)
+          (insp as any).driverComment = data.driverComment!;
         return insp;
       },
       updateStatus: async (id, status) => {
@@ -231,8 +236,9 @@ describe("InspectionService", () => {
 
   test("update throws for non-DRAFT inspection", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
-    // Mark steps as UPLOADED so submit passes
+    // Mark steps as UPLOADED and set signature so submit passes
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -244,8 +250,9 @@ describe("InspectionService", () => {
 
   test("submit changes status to PENDING_AI when all steps uploaded", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
-    // Mark all steps as UPLOADED
+    // Mark all steps as UPLOADED and set signature
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -263,6 +270,7 @@ describe("InspectionService", () => {
   test("submit throws for already submitted inspection", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -282,6 +290,7 @@ describe("InspectionService", () => {
     const inspWithSteps = createMockInspectionWithRelations({
       id: "insp-jobs",
       driverId: "driver-1",
+      signatureKey: "sig-key",
       steps: [
         {
           id: "s1",
@@ -369,8 +378,9 @@ describe("InspectionService", () => {
 
   test("createPostTrip creates linked POST_TRIP", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
-    // Mark steps as UPLOADED and submit
+    // Mark steps as UPLOADED, set signature, submit
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -391,6 +401,7 @@ describe("InspectionService", () => {
   test("createPostTrip throws if already has post-trip", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -404,6 +415,7 @@ describe("InspectionService", () => {
   test("createPostTrip throws for wrong driver", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -416,6 +428,7 @@ describe("InspectionService", () => {
   test("createPostTrip throws for non-PRE_TRIP", async () => {
     await service.create("driver-1", { tripType: "POST_TRIP" });
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -434,6 +447,7 @@ describe("InspectionService", () => {
   test("delete non-DRAFT inspection throws", async () => {
     await service.create("driver-1", { tripType: "PRE_TRIP" });
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -467,6 +481,7 @@ describe("InspectionService", () => {
   test("submit POST_TRIP succeeds without UNIT_IDENTIFICATION", async () => {
     await service.create("driver-1", { tripType: "POST_TRIP" });
     const insp = inspections.get("insp-1")!;
+    insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
@@ -492,6 +507,7 @@ describe("InspectionService", () => {
     // Create PRE_TRIP and submit
     await service.create("driver-1", { tripType: "PRE_TRIP" });
     const preTrip = inspections.get("insp-1")!;
+    preTrip.signatureKey = "sig-key";
     for (const step of preTrip.steps) {
       (step as any).status = "UPLOADED";
     }

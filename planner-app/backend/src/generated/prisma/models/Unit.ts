@@ -44,6 +44,7 @@ export type UnitMinAggregateOutputType = {
   vin: string | null
   lastKnownKm: number | null
   status: $Enums.UnitStatus | null
+  company: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -58,6 +59,7 @@ export type UnitMaxAggregateOutputType = {
   vin: string | null
   lastKnownKm: number | null
   status: $Enums.UnitStatus | null
+  company: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -72,6 +74,7 @@ export type UnitCountAggregateOutputType = {
   vin: number
   lastKnownKm: number
   status: number
+  company: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -96,6 +99,7 @@ export type UnitMinAggregateInputType = {
   vin?: true
   lastKnownKm?: true
   status?: true
+  company?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -110,6 +114,7 @@ export type UnitMaxAggregateInputType = {
   vin?: true
   lastKnownKm?: true
   status?: true
+  company?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -124,6 +129,7 @@ export type UnitCountAggregateInputType = {
   vin?: true
   lastKnownKm?: true
   status?: true
+  company?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -225,6 +231,7 @@ export type UnitGroupByOutputType = {
   vin: string | null
   lastKnownKm: number | null
   status: $Enums.UnitStatus
+  company: string | null
   createdAt: Date
   updatedAt: Date
   _count: UnitCountAggregateOutputType | null
@@ -262,6 +269,7 @@ export type UnitWhereInput = {
   vin?: Prisma.StringNullableFilter<"Unit"> | string | null
   lastKnownKm?: Prisma.IntNullableFilter<"Unit"> | number | null
   status?: Prisma.EnumUnitStatusFilter<"Unit"> | $Enums.UnitStatus
+  company?: Prisma.StringNullableFilter<"Unit"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
   inspections?: Prisma.InspectionListRelationFilter
@@ -277,6 +285,7 @@ export type UnitOrderByWithRelationInput = {
   vin?: Prisma.SortOrderInput | Prisma.SortOrder
   lastKnownKm?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  company?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   inspections?: Prisma.InspectionOrderByRelationAggregateInput
@@ -295,6 +304,7 @@ export type UnitWhereUniqueInput = Prisma.AtLeast<{
   color?: Prisma.StringNullableFilter<"Unit"> | string | null
   lastKnownKm?: Prisma.IntNullableFilter<"Unit"> | number | null
   status?: Prisma.EnumUnitStatusFilter<"Unit"> | $Enums.UnitStatus
+  company?: Prisma.StringNullableFilter<"Unit"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
   inspections?: Prisma.InspectionListRelationFilter
@@ -310,6 +320,7 @@ export type UnitOrderByWithAggregationInput = {
   vin?: Prisma.SortOrderInput | Prisma.SortOrder
   lastKnownKm?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  company?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UnitCountOrderByAggregateInput
@@ -332,6 +343,7 @@ export type UnitScalarWhereWithAggregatesInput = {
   vin?: Prisma.StringNullableWithAggregatesFilter<"Unit"> | string | null
   lastKnownKm?: Prisma.IntNullableWithAggregatesFilter<"Unit"> | number | null
   status?: Prisma.EnumUnitStatusWithAggregatesFilter<"Unit"> | $Enums.UnitStatus
+  company?: Prisma.StringNullableWithAggregatesFilter<"Unit"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Unit"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Unit"> | Date | string
 }
@@ -346,6 +358,7 @@ export type UnitCreateInput = {
   vin?: string | null
   lastKnownKm?: number | null
   status?: $Enums.UnitStatus
+  company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   inspections?: Prisma.InspectionCreateNestedManyWithoutUnitInput
@@ -361,6 +374,7 @@ export type UnitUncheckedCreateInput = {
   vin?: string | null
   lastKnownKm?: number | null
   status?: $Enums.UnitStatus
+  company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutUnitInput
@@ -376,6 +390,7 @@ export type UnitUpdateInput = {
   vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inspections?: Prisma.InspectionUpdateManyWithoutUnitNestedInput
@@ -391,6 +406,7 @@ export type UnitUncheckedUpdateInput = {
   vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inspections?: Prisma.InspectionUncheckedUpdateManyWithoutUnitNestedInput
@@ -406,6 +422,7 @@ export type UnitCreateManyInput = {
   vin?: string | null
   lastKnownKm?: number | null
   status?: $Enums.UnitStatus
+  company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -420,6 +437,7 @@ export type UnitUpdateManyMutationInput = {
   vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -434,6 +452,7 @@ export type UnitUncheckedUpdateManyInput = {
   vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -448,6 +467,7 @@ export type UnitCountOrderByAggregateInput = {
   vin?: Prisma.SortOrder
   lastKnownKm?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  company?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -466,6 +486,7 @@ export type UnitMaxOrderByAggregateInput = {
   vin?: Prisma.SortOrder
   lastKnownKm?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  company?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -480,6 +501,7 @@ export type UnitMinOrderByAggregateInput = {
   vin?: Prisma.SortOrder
   lastKnownKm?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  company?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -535,6 +557,7 @@ export type UnitCreateWithoutInspectionsInput = {
   vin?: string | null
   lastKnownKm?: number | null
   status?: $Enums.UnitStatus
+  company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -549,6 +572,7 @@ export type UnitUncheckedCreateWithoutInspectionsInput = {
   vin?: string | null
   lastKnownKm?: number | null
   status?: $Enums.UnitStatus
+  company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -579,6 +603,7 @@ export type UnitUpdateWithoutInspectionsInput = {
   vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -593,6 +618,7 @@ export type UnitUncheckedUpdateWithoutInspectionsInput = {
   vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -638,6 +664,7 @@ export type UnitSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   vin?: boolean
   lastKnownKm?: boolean
   status?: boolean
+  company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   inspections?: boolean | Prisma.Unit$inspectionsArgs<ExtArgs>
@@ -654,6 +681,7 @@ export type UnitSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   vin?: boolean
   lastKnownKm?: boolean
   status?: boolean
+  company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["unit"]>
@@ -668,6 +696,7 @@ export type UnitSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   vin?: boolean
   lastKnownKm?: boolean
   status?: boolean
+  company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["unit"]>
@@ -682,11 +711,12 @@ export type UnitSelectScalar = {
   vin?: boolean
   lastKnownKm?: boolean
   status?: boolean
+  company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UnitOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "licensePlate" | "make" | "model" | "type" | "color" | "vin" | "lastKnownKm" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["unit"]>
+export type UnitOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "licensePlate" | "make" | "model" | "type" | "color" | "vin" | "lastKnownKm" | "status" | "company" | "createdAt" | "updatedAt", ExtArgs["result"]["unit"]>
 export type UnitInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspections?: boolean | Prisma.Unit$inspectionsArgs<ExtArgs>
   _count?: boolean | Prisma.UnitCountOutputTypeDefaultArgs<ExtArgs>
@@ -709,6 +739,7 @@ export type $UnitPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     vin: string | null
     lastKnownKm: number | null
     status: $Enums.UnitStatus
+    company: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["unit"]>
@@ -1144,6 +1175,7 @@ export interface UnitFieldRefs {
   readonly vin: Prisma.FieldRef<"Unit", 'String'>
   readonly lastKnownKm: Prisma.FieldRef<"Unit", 'Int'>
   readonly status: Prisma.FieldRef<"Unit", 'UnitStatus'>
+  readonly company: Prisma.FieldRef<"Unit", 'String'>
   readonly createdAt: Prisma.FieldRef<"Unit", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Unit", 'DateTime'>
 }

@@ -107,8 +107,37 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
 - [x] 7.9 Frontend: Create VideoRecorder page (Page 2 — in-browser video recorder)
 - [x] 7.10 Frontend: Update App.tsx routes, InspectionList, InspectionDetail navigation
 - [x] 7.11 Update docs (requirements.md, todo.md)
-- [ ] 7.12 Validation (types, lint, tests, build)
+- [x] 7.12 Validation (types, lint, tests, build)
+
+## Phase 8: Driver App Flow Redesign
+
+- [x] 8.1 Database: Add driverComment field to Inspection model + migration
+- [x] 8.2-8.5 Backend: Update DTOs, service, repository, route for driverComment + thumbnails
+- [x] 8.6 Frontend types: Add driverComment to Inspection interface
+- [x] 8.7-8.8, 8.16 Home page: Redesign InspectionCard with thumbnails + InspectionList + backend thumbnail support
+- [x] 8.9 PhotoCapture: Redesign as 2-page wizard page 1 (PRE: 2-col grid, POST: single box)
+- [x] 8.10 VideoReview: Redesign as page 2 with video upload, AI info, flags, driver comment, signature
+- [x] 8.11 SignatureOverlay: Full-screen modal with canvas drawing, name input, confirm/cancel
+- [x] 8.12 Remove old pages: Delete SignatureCapture.tsx and VideoRecorder.tsx
+- [x] 8.13 Update App.tsx routes: Remove signature route, use VideoReview
+- [x] 8.14 InspectionDetail: Redesign with PRE/POST/AI Alert sub-tabs
+- [x] 8.15 BottomNav: Golden gradient "+" Shazam button
+
+## Phase 9: Planner App Flow Redesign (PIC Dashboard)
+
+- [x] 9.1-9.4 Backend: Dashboard service, DTOs, routes (already matched mockup)
+- [x] 9.5-9.6 Frontend: Dashboard page + components (KPIRow, VehicleCard, AlertBanner, tabs)
+- [x] 9.7 Frontend: VehicleDetailPanel with 3 tabs (Pre/Post Check, TTD Dokumen, AI Alert)
+- [x] 9.8 Frontend: Header update with CR logo + PIC Dashboard branding
+
+## Phase 10: Validation & Cleanup
+
+- [x] 10.1 Database migration (add-driver-comment)
+- [x] 10.2 Type checking (all 4 codebases: 0 errors)
+- [x] 10.3 Linting (all 4 codebases: 0 errors)
+- [x] 10.4 Tests (driver-app: 72/72, planner-app: 26/26)
+- [x] 10.5 Update docs/todo.md
 
 ## Upcoming
 
-- [ ] Phase 8: Deployment (Docker images, CI/CD, cloud hosting)
+- [ ] Phase 11: Deployment (Docker images, CI/CD, cloud hosting)

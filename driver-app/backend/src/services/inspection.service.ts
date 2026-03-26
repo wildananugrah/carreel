@@ -57,9 +57,9 @@ export class InspectionService implements IInspectionService {
     if (preTrip.tripType !== "PRE_TRIP") {
       throw new Error("Can only create post-trip from a pre-trip inspection");
     }
-    if (preTrip.status !== "APPROVED") {
+    if (preTrip.status === "DRAFT") {
       throw new Error(
-        "Pre-trip inspection must be approved by planner before ending trip",
+        "Pre-trip inspection must be submitted before ending trip",
       );
     }
     if (preTrip.linkedFrom) {
@@ -123,6 +123,22 @@ export class InspectionService implements IInspectionService {
     }
 
     const updated = await this.inspectionRepository.update(id, data);
+
+    // Handle manual unit info from driver
+    if (data.unitLicensePlate) {
+      const unit = await this.inspectionRepository.findOrCreateUnit({
+        licensePlate: data.unitLicensePlate,
+        make: data.unitMake ?? null,
+        model: data.unitModel ?? null,
+      });
+      await this.inspectionRepository.linkUnitToInspection(id, unit.id);
+      if (data.unitOdometerKm != null) {
+        await this.inspectionRepository.updateUnitKm(unit.id, data.unitOdometerKm);
+      }
+    } else if (data.unitOdometerKm != null && inspection.unitId) {
+      await this.inspectionRepository.updateUnitKm(inspection.unitId, data.unitOdometerKm);
+    }
+
     this.logger.info("Inspection updated", { inspectionId: id, driverId });
     return updated;
   }

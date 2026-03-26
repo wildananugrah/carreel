@@ -163,6 +163,9 @@ describe("StepAnalysisJob", () => {
           completedAt: null,
           latitude: null,
           longitude: null,
+          signatureKey: null,
+          signerName: null,
+          driverComment: null,
           createdAt: new Date(),
           updatedAt: new Date(),
           unit: null,
@@ -220,6 +223,7 @@ describe("StepAnalysisJob", () => {
         if (stepId === "step-empty") return [];
         return [createMockMediaFile({ stepId })];
       },
+      deleteById: async () => {},
     };
 
     mockAIAnalysisRepo = {

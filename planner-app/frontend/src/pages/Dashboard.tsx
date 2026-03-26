@@ -4,15 +4,17 @@ import { DashboardSearchBar } from "../components/dashboard/DashboardSearchBar";
 import { DashboardTabBar } from "../components/dashboard/DashboardTabBar";
 import { KPIRow } from "../components/dashboard/KPIRow";
 import { VehicleCard } from "../components/dashboard/VehicleCard";
+import { VehicleDetailPanel } from "../components/dashboard/VehicleDetailPanel";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
-import type { DashboardOverviewResponse, DashboardTab } from "../lib/types";
+import type { DashboardOverviewResponse, DashboardTab, DashboardVehicleCard } from "../lib/types";
 
 export function Dashboard() {
   const [data, setData] = useState<DashboardOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DashboardTab>("all");
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<DashboardVehicleCard | null>(null);
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -51,6 +53,9 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* Detail Panel */}
+      {selected && <VehicleDetailPanel vehicle={selected} onClose={() => setSelected(null)} />}
+
       {/* Vehicle Cards */}
       {loading ? (
         <Spinner className="mt-4" />
@@ -59,9 +64,14 @@ export function Dashboard() {
       ) : data.vehicles.length === 0 ? (
         <p className="text-center text-neutral-500 mt-8">Tidak ada unit ditemukan</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {data.vehicles.map((vehicle) => (
-            <VehicleCard key={vehicle.unitId} vehicle={vehicle} />
+            <VehicleCard
+              key={vehicle.unitId}
+              vehicle={vehicle}
+              selected={selected?.unitId === vehicle.unitId}
+              onSelect={setSelected}
+            />
           ))}
         </div>
       )}

@@ -65,6 +65,11 @@ export interface UpdateInspectionDTO {
   unitId?: string;
   latitude?: number;
   longitude?: number;
+  driverComment?: string;
+  unitMake?: string;
+  unitModel?: string;
+  unitLicensePlate?: string;
+  unitOdometerKm?: number;
 }
 
 export interface InspectionListQuery {

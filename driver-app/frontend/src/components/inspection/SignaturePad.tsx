@@ -31,19 +31,20 @@ export function SignaturePad({ onSignatureChange, canvasRef }: SignaturePadProps
     return () => window.removeEventListener("resize", resizeCanvas);
   }, [resizeCanvas]);
 
-  function getEventPoint(
-    e: MouseEvent | TouchEvent,
-  ): { x: number; y: number } | null {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    if ("touches" in e) {
-      const touch = e.touches[0];
-      if (!touch) return null;
-      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-    }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  }
+  const getEventPoint = useCallback(
+    (e: MouseEvent | TouchEvent): { x: number; y: number } | null => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+      const rect = canvas.getBoundingClientRect();
+      if ("touches" in e) {
+        const touch = e.touches[0];
+        if (!touch) return null;
+        return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+      }
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    },
+    [canvasRef],
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -61,7 +62,7 @@ export function SignaturePad({ onSignatureChange, canvasRef }: SignaturePadProps
       const point = getEventPoint(e);
       if (!point || !lastPoint.current) return;
 
-      const ctx = canvas!.getContext("2d");
+      const ctx = canvas?.getContext("2d");
       if (!ctx) return;
 
       ctx.strokeStyle = "#ffffff";
@@ -103,8 +104,7 @@ export function SignaturePad({ onSignatureChange, canvasRef }: SignaturePadProps
       canvas.removeEventListener("touchmove", handleMove);
       canvas.removeEventListener("touchend", handleEnd);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef, onSignatureChange]);
+  }, [canvasRef, onSignatureChange, getEventPoint]);
 
   return (
     <canvas

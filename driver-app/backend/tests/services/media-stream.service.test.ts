@@ -56,6 +56,7 @@ describe("MediaStreamService", () => {
         return null;
       },
       findByStepId: async () => [],
+      deleteById: async () => {},
     };
 
     service = new MediaStreamService(mockStorage, mockMediaFileRepo);

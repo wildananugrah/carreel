@@ -240,28 +240,28 @@ export class DashboardRepository implements IDashboardRepository {
       });
     }
 
-    // Tab filters:
-    // alert  — cards with damage alerts (NEW_DAMAGE_DETECTED, HIGH_SEVERITY_DAMAGE)
-    // ongoing — not yet reviewed by planner (DRAFT, PENDING_AI, AI_COMPLETE, UNDER_REVIEW)
-    // completed — reviewed by planner (APPROVED, REJECTED)
-    // all — everything
+    // Tab filters (follows driver-app pattern):
+    // alert     — cards with damage alerts
+    // ongoing   — still being processed (DRAFT, PENDING_AI)
+    // completed — AI done or reviewed (AI_COMPLETE, UNDER_REVIEW, APPROVED, REJECTED)
+    // all       — everything
     switch (query.tab) {
       case "alert":
         return cards.filter((c) => c.hasDamageAlerts);
       case "ongoing": {
-        const reviewed = ["APPROVED", "REJECTED"];
+        const inProgress = ["DRAFT", "PENDING_AI"];
         return cards.filter(
           (c) =>
-            (c.preTrip && !reviewed.includes(c.preTrip.status)) ||
-            (c.postTrip && !reviewed.includes(c.postTrip.status)),
+            (c.preTrip && inProgress.includes(c.preTrip.status)) ||
+            (c.postTrip && inProgress.includes(c.postTrip.status)),
         );
       }
       case "completed": {
-        const reviewed = ["APPROVED", "REJECTED"];
+        const done = ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED", "REJECTED"];
         return cards.filter(
           (c) =>
-            (c.preTrip && reviewed.includes(c.preTrip.status)) ||
-            (c.postTrip && reviewed.includes(c.postTrip.status)),
+            (c.preTrip && done.includes(c.preTrip.status)) ||
+            (c.postTrip && done.includes(c.postTrip.status)),
         );
       }
       default:

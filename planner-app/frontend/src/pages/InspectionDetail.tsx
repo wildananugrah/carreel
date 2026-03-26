@@ -7,6 +7,7 @@ import { ReviewForm } from "../components/inspection/ReviewForm";
 import { ReviewHistory } from "../components/inspection/ReviewHistory";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { api } from "../lib/api";
@@ -26,6 +27,7 @@ export function InspectionDetail() {
   const [error, setError] = useState("");
   const [comparison, setComparison] = useState<InspectionComparison | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -142,10 +144,17 @@ export function InspectionDetail() {
             <Card className="p-4">
               <p className="text-xs font-medium text-neutral-500 uppercase mb-3">Signature</p>
               <div className="bg-[#0f0f0f] rounded-lg p-3 mb-2">
+                {/* biome-ignore lint/a11y/useKeyWithClickEvents: click-to-enlarge image */}
                 <img
                   src={`/api/inspections/${inspection.id}/signature`}
                   alt="Driver signature"
-                  className="w-full max-h-40 object-contain"
+                  className="w-full max-h-40 object-contain cursor-pointer"
+                  onClick={() =>
+                    setLightbox({
+                      src: `/api/inspections/${inspection.id}/signature`,
+                      type: "image",
+                    })
+                  }
                 />
               </div>
               {inspection.signerName && (
@@ -263,6 +272,15 @@ export function InspectionDetail() {
           <ReviewHistory reviews={inspection.reviews} />
         </div>
       </div>
+
+      {lightbox && (
+        <MediaLightbox
+          src={lightbox.src}
+          type={lightbox.type}
+          alt="Inspection media"
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </div>
   );
 }

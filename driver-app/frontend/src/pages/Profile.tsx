@@ -135,9 +135,7 @@ export function Profile() {
                 </div>
               </div>
 
-              {success && (
-                <p className="text-sm text-green-400 mt-3">{success}</p>
-              )}
+              {success && <p className="text-sm text-green-400 mt-3">{success}</p>}
 
               <button
                 type="button"

@@ -185,6 +185,9 @@ export class InspectionRepository implements IInspectionRepository {
         ...(data.unitId !== undefined ? { unitId: data.unitId } : {}),
         ...(data.latitude !== undefined ? { latitude: data.latitude } : {}),
         ...(data.longitude !== undefined ? { longitude: data.longitude } : {}),
+        ...(data.driverComment !== undefined
+          ? { driverComment: data.driverComment }
+          : {}),
       },
     });
   }

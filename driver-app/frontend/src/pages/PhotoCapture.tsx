@@ -11,15 +11,11 @@ function getPhotoSteps(inspection: InspectionDetail): InspectionStep[] {
   const steps: InspectionStep[] = [];
 
   if (inspection.tripType === "PRE_TRIP") {
-    const unitIdStep = inspection.steps.find(
-      (s) => s.stepType === "UNIT_IDENTIFICATION",
-    );
+    const unitIdStep = inspection.steps.find((s) => s.stepType === "UNIT_IDENTIFICATION");
     if (unitIdStep) steps.push(unitIdStep);
   }
 
-  const speedoStep = inspection.steps.find(
-    (s) => s.stepType === "SPEEDOMETER",
-  );
+  const speedoStep = inspection.steps.find((s) => s.stepType === "SPEEDOMETER");
   if (speedoStep) steps.push(speedoStep);
 
   return steps;
@@ -53,9 +49,7 @@ export function PhotoCapture() {
     return (
       <div className="flex flex-col h-full">
         <TopBar title="Foto Inspeksi" showBack />
-        <div className="flex-1 flex items-center justify-center text-red-400 text-sm">
-          {error}
-        </div>
+        <div className="flex-1 flex items-center justify-center text-red-400 text-sm">{error}</div>
       </div>
     );
   }
@@ -72,10 +66,9 @@ export function PhotoCapture() {
         {/* Progress indicator */}
         <div className="px-4 py-3 bg-[#171717] border-b border-[#2a2a2a]">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-500">Halaman 1 dari 3</span>
+            <span className="text-sm text-neutral-500">Halaman 1 dari 2</span>
             <div className="flex items-center gap-1.5">
               <div className="w-8 h-1.5 rounded-full bg-yellow-400" />
-              <div className="w-8 h-1.5 rounded-full bg-[#2a2a2a]" />
               <div className="w-8 h-1.5 rounded-full bg-[#2a2a2a]" />
             </div>
           </div>
@@ -84,7 +77,9 @@ export function PhotoCapture() {
         {/* Media */}
         <div className="px-4 py-4">
           <h3 className="text-sm font-semibold text-neutral-500 mb-1">Media</h3>
-          <p className="text-xs text-neutral-600 mb-3">Upload foto untuk setiap langkah inspeksi.</p>
+          <p className="text-xs text-neutral-600 mb-3">
+            Upload foto untuk setiap langkah inspeksi.
+          </p>
 
           <div className="grid grid-cols-2 gap-3">
             {photoSteps.map((step, i) => (
@@ -100,8 +95,8 @@ export function PhotoCapture() {
 
           <div className="flex items-center justify-center gap-2 text-sm mt-3">
             <span className="text-neutral-500">
-              {photoSteps.filter((s) => s.status !== "PENDING").length} /{" "}
-              {photoSteps.length} uploaded
+              {photoSteps.filter((s) => s.status !== "PENDING").length} / {photoSteps.length}{" "}
+              uploaded
             </span>
             {allDone && (
               <svg
@@ -202,9 +197,7 @@ export function PhotoCapture() {
 
         {error && (
           <div className="px-4 pb-4">
-            <div className="bg-red-500/10 text-red-400 text-sm px-4 py-3 rounded-lg">
-              {error}
-            </div>
+            <div className="bg-red-500/10 text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>
           </div>
         )}
       </div>

@@ -29,11 +29,7 @@ interface UseVideoRecorderReturn {
 }
 
 function getSupportedMimeType(): string {
-  const candidates = [
-    "video/webm;codecs=vp8",
-    "video/webm",
-    "video/mp4",
-  ];
+  const candidates = ["video/webm;codecs=vp8", "video/webm", "video/mp4"];
   for (const mime of candidates) {
     if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(mime)) {
       return mime;

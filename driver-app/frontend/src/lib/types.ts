@@ -45,6 +45,7 @@ export interface Inspection {
   longitude: number | null;
   signatureKey: string | null;
   signerName: string | null;
+  driverComment: string | null;
   createdAt: string;
   updatedAt: string;
   unit?: {
@@ -68,6 +69,7 @@ export interface MediaFile {
   fileName: string;
   mimeType: string;
   mediaType: string;
+  capturedAt: string | null;
   createdAt: string;
 }
 

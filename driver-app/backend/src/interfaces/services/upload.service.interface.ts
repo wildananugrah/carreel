@@ -11,6 +11,10 @@ export interface IUploadService {
   getPresignedUrl(key: string, driverId: string): Promise<string>;
   getMediaUrl(mediaId: string): Promise<string>;
   getMediaData(mediaId: string): Promise<{ buffer: Buffer; mimeType: string }>;
+  getMediaByKey(
+    bucket: string,
+    key: string,
+  ): Promise<{ buffer: Buffer; mimeType: string }>;
   deleteMedia(
     inspectionId: string,
     stepId: string,
