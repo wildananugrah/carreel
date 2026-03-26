@@ -171,18 +171,8 @@ export class DashboardRepository implements IDashboardRepository {
       telemetryData.map((t) => [t.inspectionId, t.fuelLevelPct]),
     );
 
-    // Group inspections by unitId (or by driverId if no unit)
-    const grouped = new Map<string, typeof inspections>();
-    for (const insp of inspections) {
-      const key = insp.unitId ?? `driver:${insp.driverId}`;
-      const group = grouped.get(key);
-      if (group) {
-        group.push(insp);
-      } else {
-        grouped.set(key, [insp]);
-      }
-    }
-
+    // Group inspections into trip pairs (pre-trip + linked post-trip).
+    // Each pair becomes one card. Standalone inspections (no pair) get their own card.
     const mapTrip = (insp: (typeof inspections)[0] | null) =>
       insp
         ? {
@@ -195,48 +185,83 @@ export class DashboardRepository implements IDashboardRepository {
           }
         : null;
 
+    // Build a lookup: preTripId -> postTrip
+    const postTripByPreId = new Map<string, (typeof inspections)[0]>();
+    const usedIds = new Set<string>();
+
+    for (const insp of inspections) {
+      if (insp.tripType === "POST_TRIP" && insp.linkedInspectionId) {
+        postTripByPreId.set(insp.linkedInspectionId, insp);
+      }
+    }
+
     const cards: DashboardVehicleCard[] = [];
 
-    for (const [key, group] of grouped) {
-      const latest = group[0];
-      const unit = latest.unit;
-      const latestPreTrip =
-        group.find((i) => i.tripType === "PRE_TRIP") ?? null;
-      const latestPostTrip =
-        group.find((i) => i.tripType === "POST_TRIP") ?? null;
-      const driverName = latest.driver?.fullName ?? null;
+    // First pass: create cards from pre-trips (paired or standalone)
+    for (const insp of inspections) {
+      if (insp.tripType !== "PRE_TRIP") continue;
+      usedIds.add(insp.id);
 
-      const groupAlertCount = group.reduce(
-        (sum, i) => sum + (alertCountMap.get(i.id) ?? 0),
+      const postTrip = postTripByPreId.get(insp.id) ?? null;
+      if (postTrip) usedIds.add(postTrip.id);
+
+      const pairIds = [insp.id];
+      if (postTrip) pairIds.push(postTrip.id);
+
+      const pairAlertCount = pairIds.reduce((sum, id) => sum + (alertCountMap.get(id) ?? 0), 0);
+      const pairDamageAlertCount = pairIds.reduce(
+        (sum, id) => sum + (damageAlertCountMap.get(id) ?? 0),
         0,
       );
-      const groupDamageAlertCount = group.reduce(
-        (sum, i) => sum + (damageAlertCountMap.get(i.id) ?? 0),
-        0,
-      );
-      const latestFuelLevelPct = telemetryMap.get(latest.id) ?? null;
+      const fuelPct = telemetryMap.get(postTrip?.id ?? insp.id) ?? null;
 
+      const unit = insp.unit;
       const unitName = unit
-        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") ||
-          unit.licensePlate
-        : (driverName ?? key);
+        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") || unit.licensePlate
+        : (insp.driver?.fullName ?? insp.id);
 
       cards.push({
-        unitId: unit?.id ?? key,
+        unitId: unit?.id ?? `driver:${insp.driverId}`,
         unitName,
         licensePlate: unit?.licensePlate ?? "--",
-        company: unit
-          ? ((unit as unknown as { company?: string }).company ?? null)
-          : null,
+        company: unit ? ((unit as unknown as { company?: string }).company ?? null) : null,
         lastKnownKm: unit?.lastKnownKm ?? null,
-        driverName,
-        preTrip: mapTrip(latestPreTrip),
-        postTrip: mapTrip(latestPostTrip),
-        latestFuelLevelPct,
-        hasAlerts: groupAlertCount > 0,
-        alertCount: groupAlertCount,
-        hasDamageAlerts: groupDamageAlertCount > 0,
-        damageAlertCount: groupDamageAlertCount,
+        driverName: insp.driver?.fullName ?? null,
+        preTrip: mapTrip(insp),
+        postTrip: mapTrip(postTrip),
+        latestFuelLevelPct: fuelPct,
+        hasAlerts: pairAlertCount > 0,
+        alertCount: pairAlertCount,
+        hasDamageAlerts: pairDamageAlertCount > 0,
+        damageAlertCount: pairDamageAlertCount,
+      });
+    }
+
+    // Second pass: standalone post-trips (no linked pre-trip)
+    for (const insp of inspections) {
+      if (usedIds.has(insp.id)) continue;
+      if (insp.tripType !== "POST_TRIP") continue;
+      usedIds.add(insp.id);
+
+      const unit = insp.unit;
+      const unitName = unit
+        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") || unit.licensePlate
+        : (insp.driver?.fullName ?? insp.id);
+
+      cards.push({
+        unitId: unit?.id ?? `driver:${insp.driverId}`,
+        unitName,
+        licensePlate: unit?.licensePlate ?? "--",
+        company: unit ? ((unit as unknown as { company?: string }).company ?? null) : null,
+        lastKnownKm: unit?.lastKnownKm ?? null,
+        driverName: insp.driver?.fullName ?? null,
+        preTrip: null,
+        postTrip: mapTrip(insp),
+        latestFuelLevelPct: telemetryMap.get(insp.id) ?? null,
+        hasAlerts: (alertCountMap.get(insp.id) ?? 0) > 0,
+        alertCount: alertCountMap.get(insp.id) ?? 0,
+        hasDamageAlerts: (damageAlertCountMap.get(insp.id) ?? 0) > 0,
+        damageAlertCount: damageAlertCountMap.get(insp.id) ?? 0,
       });
     }
 
