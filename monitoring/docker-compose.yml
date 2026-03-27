@@ -35,6 +35,8 @@ services:
     image: grafana/grafana:11.0.0
     container_name: carreel-grafana
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3000:3000"
     environment:
