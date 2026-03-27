@@ -61,6 +61,16 @@ export function createInspectionRoutes(
     return c.json(inspection);
   });
 
+  // POST /api/inspections/:id/analyze-photos (Phase 1: early AI for photo steps)
+  app.post("/:id/analyze-photos", async (c) => {
+    const userId = c.get("userId") as string;
+    const result = await inspectionService.analyzePhotos(
+      c.req.param("id"),
+      userId,
+    );
+    return c.json(result);
+  });
+
   // POST /api/inspections/:id/submit
   app.post("/:id/submit", async (c) => {
     const userId = c.get("userId") as string;

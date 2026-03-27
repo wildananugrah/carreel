@@ -5,7 +5,10 @@ import type {
   PaginatedResponse,
   UpdateInspectionDTO,
 } from "../../types/dto";
-import type { InspectionListItem, InspectionWithRelations } from "../repositories/inspection.repository.interface";
+import type {
+  InspectionListItem,
+  InspectionWithRelations,
+} from "../repositories/inspection.repository.interface";
 
 export interface IInspectionService {
   create(driverId: string, data: CreateInspectionDTO): Promise<Inspection>;
@@ -25,6 +28,10 @@ export interface IInspectionService {
     data: UpdateInspectionDTO,
   ): Promise<Inspection>;
   submit(id: string, driverId: string): Promise<Inspection>;
+  analyzePhotos(
+    id: string,
+    driverId: string,
+  ): Promise<{ enqueuedSteps: string[] }>;
   delete(id: string, driverId: string): Promise<void>;
 
   updateStepStatus(

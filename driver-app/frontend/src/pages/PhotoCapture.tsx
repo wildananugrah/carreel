@@ -27,6 +27,7 @@ export function PhotoCapture() {
   const [inspection, setInspection] = useState<InspectionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [navigating, setNavigating] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -206,8 +207,18 @@ export function PhotoCapture() {
       <div className="px-4 py-4 border-t border-[#2a2a2a] bg-[#0f0f0f]">
         <Button
           className="w-full"
-          disabled={!allDone}
-          onClick={() => navigate(`/inspections/${id}/video`)}
+          disabled={!allDone || navigating}
+          loading={navigating}
+          onClick={async () => {
+            if (!id) return;
+            setNavigating(true);
+            try {
+              await api.post(`/api/inspections/${id}/analyze-photos`);
+            } catch {
+              // Phase 1 failure is non-blocking; AI will run at submit time for remaining UPLOADED steps
+            }
+            navigate(`/inspections/${id}/video`);
+          }}
         >
           Selanjutnya
         </Button>

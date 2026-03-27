@@ -16,6 +16,7 @@
         "definition": "",
         "hide": 0,
         "includeAll": true,
+        "allValue": ".+",
         "multi": false,
         "name": "app",
         "options": [],

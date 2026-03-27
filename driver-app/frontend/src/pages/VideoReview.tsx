@@ -201,11 +201,39 @@ export function VideoReview() {
     }
   }, [inspection, unitData]);
 
+  // Poll for Phase 1 AI results (UNIT_IDENTIFICATION + SPEEDOMETER)
+  useEffect(() => {
+    if (!inspection) return;
+    if (inspection.status !== "DRAFT") return;
+
+    const photoStepTypes =
+      inspection.tripType === "PRE_TRIP"
+        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER"]
+        : ["SPEEDOMETER"];
+    const photoSteps = inspection.steps.filter((s) => photoStepTypes.includes(s.stepType));
+    const allPhotoStepsDone = photoSteps.every(
+      (s) => s.status === "COMPLETED" || s.status === "FAILED" || s.status === "PENDING",
+    );
+
+    if (allPhotoStepsDone) return;
+
+    const interval = setInterval(() => {
+      fetchDetail();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [inspection, fetchDetail]);
+
   const bodyStep = inspection?.steps.find((s) => s.stepType === "BODY_INSPECTION");
   const hasMedia = bodyStep && bodyStep.mediaFiles.length > 0;
   const aiInfo = inspection ? extractUnitInfo(inspection, unitData) : null;
   const hasAIData = !!inspection?.steps.some(
     (s) => s.stepType === "UNIT_IDENTIFICATION" && s.aiAnalysis?.structuredData,
+  );
+  const photoStepsProcessing = !!inspection?.steps.some(
+    (s) =>
+      (s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "SPEEDOMETER") &&
+      (s.status === "PROCESSING" || s.status === "UPLOADED"),
   );
   const aiFlags = inspection ? extractAIFlags(inspection) : [];
   const isPostTrip = inspection?.tripType === "POST_TRIP";
@@ -585,90 +613,98 @@ export function VideoReview() {
           </div>
         )}
 
+        {/* Unit Info — always visible so AI Phase 1 results can auto-fill */}
+        <div className="px-4 pb-4">
+          <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
+            <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+              {"\uD83D\uDE98"}{" "}
+              {hasAIData
+                ? "AI Detected \u00B7 "
+                : photoStepsProcessing
+                  ? "AI Analyzing... \u00B7 "
+                  : ""}
+              Unit Info
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Merk & Tipe</p>
+                <input
+                  type="text"
+                  value={
+                    unitForm.make || unitForm.model
+                      ? [unitForm.make, unitForm.model].filter(Boolean).join(" ")
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const parts = val.split(" ");
+                    setUnitForm((prev) => ({
+                      ...prev,
+                      make: parts[0] || "",
+                      model: parts.slice(1).join(" ") || "",
+                    }));
+                  }}
+                  placeholder="cth. Toyota Avanza"
+                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
+                />
+              </div>
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Tahun</p>
+                <input
+                  type="text"
+                  value={unitForm.year}
+                  onChange={(e) => setUnitForm((prev) => ({ ...prev, year: e.target.value }))}
+                  placeholder="cth. 2022"
+                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
+                />
+              </div>
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Nomer Plat</p>
+                <input
+                  type="text"
+                  value={unitForm.licensePlate}
+                  onChange={(e) =>
+                    setUnitForm((prev) => ({
+                      ...prev,
+                      licensePlate: e.target.value.toUpperCase(),
+                    }))
+                  }
+                  placeholder="cth. B 1234 ABC"
+                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
+                />
+              </div>
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Odometer</p>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={unitForm.odometerKm}
+                    onChange={(e) =>
+                      setUnitForm((prev) => ({
+                        ...prev,
+                        odometerKm: e.target.value,
+                      }))
+                    }
+                    placeholder="0"
+                    className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-600 italic mt-3">
+              {hasAIData
+                ? "Terdeteksi otomatis \u2014 bisa disesuaikan manual"
+                : photoStepsProcessing
+                  ? "Sedang dianalisa AI... hasil akan muncul otomatis"
+                  : "Silakan isi manual atau tunggu hasil analisa AI"}
+            </p>
+          </div>
+        </div>
+
         {/* === Sections shown AFTER video upload === */}
         {hasMedia && (
           <>
-            {/* Unit Info */}
-            <div className="px-4 pb-4">
-              <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
-                <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
-                  {"\uD83D\uDE98"} {hasAIData ? "AI Detected \u00B7 " : ""}Unit Info
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Merk & Tipe</p>
-                    <input
-                      type="text"
-                      value={
-                        unitForm.make || unitForm.model
-                          ? [unitForm.make, unitForm.model].filter(Boolean).join(" ")
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const parts = val.split(" ");
-                        setUnitForm((prev) => ({
-                          ...prev,
-                          make: parts[0] || "",
-                          model: parts.slice(1).join(" ") || "",
-                        }));
-                      }}
-                      placeholder="cth. Toyota Avanza"
-                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                    />
-                  </div>
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Tahun</p>
-                    <input
-                      type="text"
-                      value={unitForm.year}
-                      onChange={(e) => setUnitForm((prev) => ({ ...prev, year: e.target.value }))}
-                      placeholder="cth. 2022"
-                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                    />
-                  </div>
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Nomer Plat</p>
-                    <input
-                      type="text"
-                      value={unitForm.licensePlate}
-                      onChange={(e) =>
-                        setUnitForm((prev) => ({
-                          ...prev,
-                          licensePlate: e.target.value.toUpperCase(),
-                        }))
-                      }
-                      placeholder="cth. B 1234 ABC"
-                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                    />
-                  </div>
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Odometer</p>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={unitForm.odometerKm}
-                        onChange={(e) =>
-                          setUnitForm((prev) => ({
-                            ...prev,
-                            odometerKm: e.target.value,
-                          }))
-                        }
-                        placeholder="0"
-                        className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[10px] text-neutral-600 italic mt-3">
-                  {hasAIData
-                    ? "Terdeteksi otomatis — bisa disesuaikan manual"
-                    : "Silakan isi manual atau tunggu hasil analisa AI"}
-                </p>
-              </div>
-            </div>
-
             {/* Instruction card */}
             <div className="px-4 pb-4">
               <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">

@@ -427,6 +427,10 @@ export class StepAnalysisJob {
 
     if (!allTerminal) return;
 
+    // Only transition when inspection is in PENDING_AI status.
+    // During Phase 1 (early photo analysis), the inspection is still DRAFT.
+    if (inspection.status !== "PENDING_AI") return;
+
     await this.inspectionRepository.updateStatus(inspectionId, "AI_COMPLETE");
     this.logger.info("All steps terminal, inspection marked AI_COMPLETE", {
       inspectionId,

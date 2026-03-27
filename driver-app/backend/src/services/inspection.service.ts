@@ -133,10 +133,16 @@ export class InspectionService implements IInspectionService {
       });
       await this.inspectionRepository.linkUnitToInspection(id, unit.id);
       if (data.unitOdometerKm != null) {
-        await this.inspectionRepository.updateUnitKm(unit.id, data.unitOdometerKm);
+        await this.inspectionRepository.updateUnitKm(
+          unit.id,
+          data.unitOdometerKm,
+        );
       }
     } else if (data.unitOdometerKm != null && inspection.unitId) {
-      await this.inspectionRepository.updateUnitKm(inspection.unitId, data.unitOdometerKm);
+      await this.inspectionRepository.updateUnitKm(
+        inspection.unitId,
+        data.unitOdometerKm,
+      );
     }
 
     this.logger.info("Inspection updated", { inspectionId: id, driverId });
@@ -224,6 +230,50 @@ export class InspectionService implements IInspectionService {
     return submitted;
   }
 
+  async analyzePhotos(
+    id: string,
+    driverId: string,
+  ): Promise<{ enqueuedSteps: string[] }> {
+    const inspection = await this.inspectionRepository.findById(id);
+    if (!inspection) {
+      throw new Error("Inspection not found");
+    }
+    if (inspection.driverId !== driverId) {
+      throw new Error("Unauthorized access to inspection");
+    }
+    if (inspection.status !== "DRAFT") {
+      throw new Error("Only DRAFT inspections can trigger photo analysis");
+    }
+
+    if (!this.aiEnabled || !this.jobQueue) {
+      return { enqueuedSteps: [] };
+    }
+
+    const PHOTO_STEP_TYPES = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
+    const eligibleSteps = inspection.steps.filter(
+      (s) => PHOTO_STEP_TYPES.includes(s.stepType) && s.status === "UPLOADED",
+    );
+
+    const enqueuedSteps: string[] = [];
+    for (const step of eligibleSteps) {
+      await this.jobQueue.enqueue("step-analysis", {
+        inspectionId: id,
+        stepId: step.id,
+        stepType: step.stepType,
+        driverId,
+      });
+      enqueuedSteps.push(step.stepType);
+    }
+
+    this.logger.info("Enqueued photo analysis jobs (Phase 1)", {
+      inspectionId: id,
+      jobCount: enqueuedSteps.length,
+      stepTypes: enqueuedSteps,
+    });
+
+    return { enqueuedSteps };
+  }
+
   async delete(id: string, driverId: string): Promise<void> {
     const inspection = await this.inspectionRepository.findById(id);
     if (!inspection) {
@@ -301,17 +351,13 @@ export class InspectionService implements IInspectionService {
     >;
 
     // Extract odometer from SPEEDOMETER AI analysis
-    const speedoStep = preTrip.steps.find(
-      (s) => s.stepType === "SPEEDOMETER",
-    );
+    const speedoStep = preTrip.steps.find((s) => s.stepType === "SPEEDOMETER");
     const speedoData = speedoStep?.aiAnalysis?.structuredData as Record<
       string,
       unknown
     > | null;
     const odometerKm =
-      speedoData?.odometerKm != null
-        ? Number(speedoData.odometerKm)
-        : null;
+      speedoData?.odometerKm != null ? Number(speedoData.odometerKm) : null;
 
     return {
       licensePlate: (unitData.licensePlate as string) ?? null,
