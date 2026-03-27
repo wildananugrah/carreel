@@ -35,4 +35,7 @@ cp -r "$REPO_DIR/driver-app/frontend/dist" "$DEPLOY_DIR/driver"
 echo "Deploying planner-app..."
 cp -r "$REPO_DIR/planner-app/frontend/dist" "$DEPLOY_DIR/planner"
 
+echo "Restarting monitoring stack..."
+cd "$REPO_DIR/monitoring" && docker compose restart grafana
+
 echo "Done!"

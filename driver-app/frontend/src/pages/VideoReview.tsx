@@ -625,6 +625,38 @@ export function VideoReview() {
                   : ""}
               Unit Info
             </p>
+            {photoStepsProcessing && !hasAIData && (
+              <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3 mb-3">
+                <svg
+                  aria-hidden="true"
+                  className="animate-spin w-4 h-4 text-[#F5C842] shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-white">
+                    Mengekstrak data kendaraan...
+                  </p>
+                  <p className="text-[10px] text-neutral-500">
+                    Merk, tipe, plat, dan odometer akan terisi otomatis
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-[#1a1a1a] rounded-lg p-2.5">
                 <p className="text-[9px] text-neutral-500 mb-0.5">Merk & Tipe</p>
@@ -748,7 +780,7 @@ export function VideoReview() {
             {/* AI Flagged section — always shown after upload */}
             <div className="px-4 pb-4">
               <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
-                {bodyStep.status === "UPLOADED" || bodyStep.status === "PROCESSING" ? (
+                {bodyStep.status === "PROCESSING" ? (
                   <>
                     <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
                       {"\u26A0\uFE0F"} AI Flagged
@@ -780,6 +812,18 @@ export function VideoReview() {
                           Hasil inspeksi bodi akan muncul di sini
                         </p>
                       </div>
+                    </div>
+                  </>
+                ) : bodyStep.status === "UPLOADED" ? (
+                  <>
+                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+                      {"\u26A0\uFE0F"} AI Flagged
+                    </p>
+                    <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-4">
+                      <span className="text-lg shrink-0">{"\u23F3"}</span>
+                      <p className="text-sm text-neutral-400">
+                        Video tersimpan — akan dianalisa AI setelah submit
+                      </p>
                     </div>
                   </>
                 ) : aiFlags.length > 0 ? (
