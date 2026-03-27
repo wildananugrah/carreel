@@ -1,7 +1,7 @@
 {
   "uid": "carreel-backend",
   "title": "Carreel Backend",
-  "tags": ["carreel", "backend", "loki"],
+  "tags": ["carreel", "backend", "loki", "pgboss"],
   "timezone": "browser",
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -448,6 +448,284 @@
         "enableLogDetails": true,
         "sortOrder": "Descending",
         "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 100,
+      "title": "--- Job Queue Monitoring ---",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 58 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 14,
+      "title": "Queue Depth",
+      "description": "Jobs waiting to be processed (created + retry)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 59 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT count(*) AS \"Queue Depth\" FROM pgboss.job WHERE state IN ('created', 'retry');",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "title": "Active Jobs",
+      "description": "Jobs currently being processed",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 59 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT count(*) AS \"Active Jobs\" FROM pgboss.job WHERE state = 'active';",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "title": "Completed (24h)",
+      "description": "Jobs successfully completed in the last 24 hours",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 59 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT count(*) AS \"Completed\" FROM pgboss.job WHERE state = 'completed' AND completed_on > now() - interval '24 hours';",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "title": "Failed (24h)",
+      "description": "Jobs that failed in the last 24 hours",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 59 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT count(*) AS \"Failed\" FROM pgboss.job WHERE state = 'failed' AND completed_on > now() - interval '24 hours';",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "title": "Job Throughput",
+      "description": "Completed jobs per 5-minute bucket",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 63 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT\n  $__timeGroup(completed_on, '5m') AS time,\n  count(*) AS \"Completed\"\nFROM pgboss.job\nWHERE state = 'completed'\n  AND $__timeFilter(completed_on)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A",
+          "format": "time_series"
+        },
+        {
+          "rawSql": "SELECT\n  $__timeGroup(completed_on, '5m') AS time,\n  count(*) AS \"Failed\"\nFROM pgboss.job\nWHERE state = 'failed'\n  AND $__timeFilter(completed_on)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "B",
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 0,
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal", "group": "A" },
+            "lineWidth": 0,
+            "pointSize": 5,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Completed" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] },
+          { "matcher": { "id": "byName", "options": "Failed" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] }
+        ]
+      }
+    },
+    {
+      "id": 19,
+      "title": "Processing Duration",
+      "description": "Job processing time percentiles (p50, p95, p99) in seconds",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 63 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT\n  $__timeGroup(completed_on, '5m') AS time,\n  percentile_cont(0.50) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_on - started_on))) AS \"p50\",\n  percentile_cont(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_on - started_on))) AS \"p95\",\n  percentile_cont(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_on - started_on))) AS \"p99\"\nFROM pgboss.job\nWHERE state = 'completed'\n  AND started_on IS NOT NULL\n  AND $__timeFilter(completed_on)\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never"
+          },
+          "unit": "s",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "title": "Jobs by Step Type",
+      "description": "Job count grouped by step type and state",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 71 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT\n  COALESCE(data->>'stepType', 'unknown') AS \"Step Type\",\n  count(*) FILTER (WHERE state = 'completed') AS \"Completed\",\n  count(*) FILTER (WHERE state = 'failed') AS \"Failed\",\n  count(*) FILTER (WHERE state = 'active') AS \"Active\",\n  count(*) FILTER (WHERE state IN ('created', 'retry')) AS \"Pending\"\nFROM pgboss.job\nWHERE $__timeFilter(created_on)\nGROUP BY 1\nORDER BY \"Completed\" DESC;",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0,
+        "stacking": "normal",
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "showValue": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Completed" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] },
+          { "matcher": { "id": "byName", "options": "Failed" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] },
+          { "matcher": { "id": "byName", "options": "Active" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }] },
+          { "matcher": { "id": "byName", "options": "Pending" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }] }
+        ]
+      }
+    },
+    {
+      "id": 21,
+      "title": "Recent Failed Jobs",
+      "description": "Last 20 failed jobs with error details",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 71 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT\n  created_on AS \"Time\",\n  data->>'stepType' AS \"Step Type\",\n  data->>'inspectionId' AS \"Inspection ID\",\n  COALESCE(output->>'message', output->>'error', 'N/A') AS \"Error\",\n  retry_count AS \"Retries\",\n  retry_limit AS \"Max Retries\"\nFROM pgboss.job\nWHERE state = 'failed'\nORDER BY created_on DESC\nLIMIT 20;",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Time", "desc": true }]
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Time" }, "properties": [{ "id": "custom.width", "value": 180 }] },
+          { "matcher": { "id": "byName", "options": "Step Type" }, "properties": [{ "id": "custom.width", "value": 160 }] },
+          { "matcher": { "id": "byName", "options": "Retries" }, "properties": [{ "id": "custom.width", "value": 70 }] },
+          { "matcher": { "id": "byName", "options": "Max Retries" }, "properties": [{ "id": "custom.width", "value": 90 }] }
+        ]
       }
     }
   ]

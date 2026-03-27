@@ -15,9 +15,10 @@ import type { IInspectionRepository } from "../interfaces/repositories/inspectio
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import {
   type BodyInspectionResult,
+  buildStepPrompt,
   type SpeedometerResult,
-  STEP_PROMPTS,
   type UnitIdentificationResult,
+  type VehicleContext,
 } from "../utils/prompts";
 
 export interface StepAnalysisJobData {
@@ -64,7 +65,20 @@ export class StepAnalysisJob {
 
       const primaryMedia = mediaFiles[0];
       const isVideo = primaryMedia.mimeType.startsWith("video/");
-      const prompt = STEP_PROMPTS[stepType];
+
+      // Fetch unit data for vehicle-aware prompts
+      const unit =
+        await this.inspectionRepository.findUnitByInspectionId(inspectionId);
+      const vehicleContext: VehicleContext | null = unit
+        ? {
+            make: unit.make,
+            model: unit.model,
+            color: unit.color,
+            licensePlate: unit.licensePlate,
+          }
+        : null;
+
+      const prompt = buildStepPrompt(stepType, vehicleContext);
 
       // 3. Analyze with Gemini
       let rawResponse: string;
@@ -125,7 +139,23 @@ export class StepAnalysisJob {
         status: "SUCCESS",
       });
 
-      // 6. Save step-type-specific data + generate alerts
+      // 6. Screen recapture detection alert (all step types)
+      if (parsed.screenRecaptureDetected) {
+        const stepLabel =
+          stepType === "UNIT_IDENTIFICATION"
+            ? "Unit Identification photo"
+            : stepType === "SPEEDOMETER"
+              ? "Speedometer photo"
+              : "Body Inspection video";
+        await this.createAlert(
+          inspectionId,
+          "SCREEN_RECAPTURE",
+          `Screen recapture detected in ${stepLabel}`,
+        );
+        log.warn("Screen recapture detected", { stepType });
+      }
+
+      // 7. Save step-type-specific data + generate alerts
       if (stepType === "UNIT_IDENTIFICATION") {
         const result = parsed as UnitIdentificationResult;
         await this.saveDamageMarkers(primaryMedia.id, result.damages ?? []);
@@ -164,8 +194,19 @@ export class StepAnalysisJob {
         const telemetry = await this.validateAndSaveTelemetry(
           inspectionId,
           result,
+          unit,
         );
         await this.generateSpeedometerAlerts(inspectionId, result, telemetry);
+
+        // Vehicle identity mismatch alert
+        if (result.vehicleMismatchDetected) {
+          await this.createAlert(
+            inspectionId,
+            "VEHICLE_MISMATCH",
+            "Dashboard does not match the expected vehicle make/model",
+          );
+          log.warn("Vehicle mismatch detected", { stepType });
+        }
       } else if (stepType === "BODY_INSPECTION") {
         const result = parsed as BodyInspectionResult;
         await this.saveDamageMarkers(primaryMedia.id, result.damages ?? []);
@@ -196,7 +237,7 @@ export class StepAnalysisJob {
         .createAnalysis({
           stepId,
           aiModel: "gemini",
-          promptUsed: STEP_PROMPTS[stepType],
+          promptUsed: buildStepPrompt(stepType),
           rawResponse: "",
           processingTimeMs,
           status: "FAILED",
@@ -226,6 +267,7 @@ export class StepAnalysisJob {
   private async validateAndSaveTelemetry(
     inspectionId: string,
     result: SpeedometerResult,
+    unit: { id: string; lastKnownKm: number | null } | null,
   ) {
     const odometerKm = result.odometerKm ?? undefined;
     let kmReasonable: boolean | undefined;
@@ -234,8 +276,6 @@ export class StepAnalysisJob {
 
     // Validate KM against historical data
     if (odometerKm != null) {
-      const unit =
-        await this.inspectionRepository.findUnitByInspectionId(inspectionId);
       if (unit?.lastKnownKm != null) {
         previousKm = unit.lastKnownKm;
         kmDelta = odometerKm - unit.lastKnownKm;
@@ -326,7 +366,9 @@ export class StepAnalysisJob {
       | "HIGH_SEVERITY_DAMAGE"
       | "LOW_FUEL"
       | "KM_ANOMALY"
-      | "AI_FAILURE",
+      | "AI_FAILURE"
+      | "SCREEN_RECAPTURE"
+      | "VEHICLE_MISMATCH",
     message: string,
   ): Promise<void> {
     await this.alertRepository

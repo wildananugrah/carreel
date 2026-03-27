@@ -13,3 +13,17 @@ datasources:
     access: proxy
     url: http://jaeger:16686
     editable: false
+
+  - name: PostgreSQL
+    uid: postgres
+    type: postgres
+    access: proxy
+    url: host.docker.internal:5432
+    database: carreel_driver
+    user: carreel
+    secureJsonData:
+      password: carreel_secret
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+    editable: false
