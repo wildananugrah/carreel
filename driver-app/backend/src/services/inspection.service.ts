@@ -199,6 +199,24 @@ export class InspectionService implements IInspectionService {
       return submitted;
     }
 
+    // Check if all steps were already analyzed (via early analysis)
+    const uploadedSteps = inspection.steps.filter(
+      (s) => s.status === "UPLOADED",
+    );
+
+    if (uploadedSteps.length === 0) {
+      // All steps already completed by early analysis — skip PENDING_AI
+      const submitted = await this.inspectionRepository.updateStatus(
+        id,
+        "AI_COMPLETE",
+      );
+      this.logger.info(
+        "Inspection submitted — all steps already analyzed, skipping to AI_COMPLETE",
+        { inspectionId: id, driverId },
+      );
+      return submitted;
+    }
+
     const submitted = await this.inspectionRepository.updateStatus(
       id,
       "PENDING_AI",
@@ -208,11 +226,8 @@ export class InspectionService implements IInspectionService {
       driverId,
     });
 
-    // Enqueue analysis jobs for each step with uploaded media
+    // Enqueue analysis jobs for remaining uploaded steps
     if (this.jobQueue) {
-      const uploadedSteps = inspection.steps.filter(
-        (s) => s.status === "UPLOADED",
-      );
       for (const step of uploadedSteps) {
         await this.jobQueue.enqueue("step-analysis", {
           inspectionId: id,
@@ -249,9 +264,14 @@ export class InspectionService implements IInspectionService {
       return { enqueuedSteps: [] };
     }
 
-    const PHOTO_STEP_TYPES = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
+    const ANALYZABLE_STEP_TYPES = [
+      "UNIT_IDENTIFICATION",
+      "SPEEDOMETER",
+      "BODY_INSPECTION",
+    ];
     const eligibleSteps = inspection.steps.filter(
-      (s) => PHOTO_STEP_TYPES.includes(s.stepType) && s.status === "UPLOADED",
+      (s) =>
+        ANALYZABLE_STEP_TYPES.includes(s.stepType) && s.status === "UPLOADED",
     );
 
     const enqueuedSteps: string[] = [];
@@ -265,7 +285,7 @@ export class InspectionService implements IInspectionService {
       enqueuedSteps.push(step.stepType);
     }
 
-    this.logger.info("Enqueued photo analysis jobs (Phase 1)", {
+    this.logger.info("Enqueued early analysis jobs", {
       inspectionId: id,
       jobCount: enqueuedSteps.length,
       stepTypes: enqueuedSteps,

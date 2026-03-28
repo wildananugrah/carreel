@@ -201,21 +201,16 @@ export function VideoReview() {
     }
   }, [inspection, unitData]);
 
-  // Poll for Phase 1 AI results (UNIT_IDENTIFICATION + SPEEDOMETER)
+  // Poll for AI results (photos + body video) while any step is still processing
   useEffect(() => {
     if (!inspection) return;
     if (inspection.status !== "DRAFT") return;
 
-    const photoStepTypes =
-      inspection.tripType === "PRE_TRIP"
-        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER"]
-        : ["SPEEDOMETER"];
-    const photoSteps = inspection.steps.filter((s) => photoStepTypes.includes(s.stepType));
-    const allPhotoStepsDone = photoSteps.every(
-      (s) => s.status === "COMPLETED" || s.status === "FAILED" || s.status === "PENDING",
+    const hasProcessingStep = inspection.steps.some(
+      (s) => s.status === "PROCESSING" || s.status === "UPLOADED",
     );
 
-    if (allPhotoStepsDone) return;
+    if (!hasProcessingStep) return;
 
     const interval = setInterval(() => {
       fetchDetail();
@@ -271,6 +266,8 @@ export function VideoReview() {
       setUploadProgress(100);
       setToast("Video tersimpan");
       await fetchDetail();
+      // Trigger AI analysis immediately (fire-and-forget)
+      api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
       setTimeout(
         () =>
           scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }),
@@ -310,6 +307,8 @@ export function VideoReview() {
       setUploadProgress(100);
       setToast("Video tersimpan");
       await fetchDetail();
+      // Trigger AI analysis immediately (fire-and-forget)
+      api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
       setTimeout(
         () =>
           scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }),
@@ -648,9 +647,7 @@ export function VideoReview() {
                   />
                 </svg>
                 <div>
-                  <p className="text-xs font-bold text-white">
-                    Mengekstrak data kendaraan...
-                  </p>
+                  <p className="text-xs font-bold text-white">Mengekstrak data kendaraan...</p>
                   <p className="text-[10px] text-neutral-500">
                     Merk, tipe, plat, dan odometer akan terisi otomatis
                   </p>
@@ -780,7 +777,7 @@ export function VideoReview() {
             {/* AI Flagged section — always shown after upload */}
             <div className="px-4 pb-4">
               <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
-                {bodyStep.status === "PROCESSING" ? (
+                {bodyStep.status === "PROCESSING" || bodyStep.status === "UPLOADED" ? (
                   <>
                     <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
                       {"\u26A0\uFE0F"} AI Flagged
@@ -812,18 +809,6 @@ export function VideoReview() {
                           Hasil inspeksi bodi akan muncul di sini
                         </p>
                       </div>
-                    </div>
-                  </>
-                ) : bodyStep.status === "UPLOADED" ? (
-                  <>
-                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
-                      {"\u26A0\uFE0F"} AI Flagged
-                    </p>
-                    <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-4">
-                      <span className="text-lg shrink-0">{"\u23F3"}</span>
-                      <p className="text-sm text-neutral-400">
-                        Video tersimpan — akan dianalisa AI setelah submit
-                      </p>
                     </div>
                   </>
                 ) : aiFlags.length > 0 ? (

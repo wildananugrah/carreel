@@ -217,6 +217,15 @@ export class StepAnalysisJob {
         );
       }
 
+      // Log the AI response details for observability
+      log.info("AI response received", {
+        inspectionId,
+        analysisId: analysis.id,
+        processingTimeMs,
+        confidenceScore: parsed.confidence ?? null,
+        aiResult: parsed,
+      });
+
       // 7. Set step → COMPLETED
       await this.inspectionRepository.updateStepStatus(stepId, "COMPLETED");
       log.info("Step analysis completed", {
