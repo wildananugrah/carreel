@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **AI Integration:** Google Gemini API (`@google/genai`) — optional, remove if not needed
 - **Logging:** Winston + winston-loki (structured JSON logs → Grafana Loki)
 - **Tracing:** OpenTelemetry → Jaeger
-- **Dashboards:** Grafana (Loki for logs, Jaeger for traces)
+- **Dashboards:** Grafana (Loki for logs, Jaeger for traces, Prometheus for infra metrics)
 - **Infrastructure:** docker-compose for database, MinIO, and monitoring stack
 - **Process Manager:** PM2 for backend and websocket services
 
@@ -36,7 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **{APP_2_DIR}/** — {APP_2_DESCRIPTION}. Contains its own frontend, backend, and database.
 - **websocket/** — Shared WebSocket service for real-time communication between apps.
 - **minio/** — MinIO object storage setup and configuration for file uploads.
-- **monitoring/** — Observability infrastructure (Grafana, Loki, Jaeger, etc.) via docker-compose.
+- **monitoring/** — Observability infrastructure (Grafana, Loki, Jaeger, Prometheus, Node Exporter) via docker-compose.
 - **docs/** — Project documentation, todo tracking (`todo.md`), and lessons learned (`lessons.md`).
 - **references/** — Reference materials and experiments (git-ignored).
 
@@ -262,12 +262,13 @@ const processingJob = new ProcessingJob(aiProvider, recordRepository, notificati
 await boss.work("processing", async (job) => processingJob.handle(job.data));
 ```
 
-### Observability (Winston + Loki + Grafana + OpenTelemetry + Jaeger)
+### Observability (Winston + Loki + Grafana + OpenTelemetry + Jaeger + Prometheus)
 
-The observability stack has two pipelines working together:
+The observability stack has three pipelines working together:
 
 1. **Logging**: App (Winston) → Loki → Grafana dashboards
 2. **Tracing**: App (OpenTelemetry) → OTel Collector → Jaeger → Grafana (linked via `traceId`)
+3. **Infrastructure Metrics**: Node Exporter → Prometheus → Grafana ("Node Exporter Full" dashboard)
 
 Both pipelines are correlated — every log line contains a `traceId` that links to the corresponding distributed trace in Jaeger.
 
@@ -283,6 +284,24 @@ Both pipelines are correlated — every log line contains a `traceId` that links
 │                      │
 │  OpenTelemetry SDK ──┼──► OTel Collector (:4317) ──► Jaeger (:16686) ──► Grafana
 └─────────────────────┘
+
+┌─────────────────────┐
+│   Node Exporter      │
+│   :9100              │
+│  Host metrics:       │
+│  CPU, RAM, disk,     │
+│  network, filesystem │
+└──────────┬───────────┘
+           │ scrape /metrics
+           ▼
+   ┌────────────────┐
+   │  Prometheus     │
+   │  :9090          │
+   │  Time-series DB │
+   └───────┬─────────┘
+           │
+           ▼
+       Grafana (:3000)
 ```
 
 #### Infrastructure (docker-compose)
@@ -306,10 +325,23 @@ services:
     ports: ["4317:4317"]
     depends_on: [jaeger]
 
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    ports: ["9100:9100"]
+    volumes: ["/proc:/host/proc:ro", "/sys:/host/sys:ro", "/:/rootfs:ro"]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    ports: ["9090:9090"]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on: [node-exporter]
+
   grafana:
     image: grafana/grafana:11.0.0
     ports: ["3000:3000"]
-    depends_on: [loki, jaeger]
+    depends_on: [loki, jaeger, prometheus]
 ```
 
 **Start/stop:** `cd monitoring && docker compose up -d` / `docker compose down`
@@ -355,6 +387,27 @@ const sdk = new NodeSDK({
 
 sdk.start();
 ```
+
+#### Infrastructure Monitoring (Node Exporter + Prometheus)
+
+Host-level metrics (CPU, memory, disk, network, filesystem) are collected by **Node Exporter** and stored in **Prometheus**. Grafana queries Prometheus to display the "Node Exporter Full" dashboard (community dashboard ID 1860).
+
+**Prometheus config** (`monitoring/prometheus/prometheus.yml`):
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+```
+
+**Dashboard**: Auto-provisioned from `monitoring/grafana/provisioning/dashboards/node-exporter-full.json`. Provides panels covering CPU usage, memory, disk I/O, network traffic, filesystem usage, system load, and more.
+
+**Verify**: After starting the stack, check `curl http://localhost:9090/api/v1/targets` — the `node-exporter` target should show state `UP`.
 
 #### Observability Rules
 

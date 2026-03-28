@@ -18,7 +18,7 @@ Carreel is a multi-app platform with two main applications (driver-app and plann
 - **AI Validation:** Google Gemini API (`@google/genai`)
 - **Logging:** Winston + winston-loki (structured JSON logs → Grafana Loki)
 - **Tracing:** OpenTelemetry → Jaeger
-- **Dashboards:** Grafana (Loki for logs, Jaeger for traces)
+- **Dashboards:** Grafana (Loki for logs, Jaeger for traces, Prometheus for infra metrics)
 - **Infrastructure:** docker-compose for database, MinIO, and monitoring stack
 - **Process Manager:** PM2 for backend and websocket services
 
@@ -28,7 +28,7 @@ Carreel is a multi-app platform with two main applications (driver-app and plann
 - **planner-app/** — Backoffice app for planners. Monitor driver activities, review inspections, and communicate with drivers. Contains its own frontend, backend, and database.
 - **websocket/** — Shared WebSocket service for real-time chat, notifications, and communication between driver-app and planner-app.
 - **minio/** — MinIO object storage setup and configuration for file/image/video uploads.
-- **monitoring/** — Observability infrastructure (Grafana, Loki, Jaeger, etc.) via docker-compose.
+- **monitoring/** — Observability infrastructure (Grafana, Loki, Jaeger, Prometheus, Node Exporter) via docker-compose.
 - **docs/** — Project documentation, todo tracking (`todo.md`), and lessons learned (`lessons.md`).
 - **references/** — Reference materials and experiments (git-ignored).
 
@@ -338,10 +338,11 @@ await boss.onFail("validation", async (job) => {
 
 ### Observability (Winston + Loki + Grafana + OpenTelemetry + Jaeger)
 
-The observability stack has two pipelines working together:
+The observability stack has three pipelines working together:
 
 1. **Logging**: App (Winston) → Loki → Grafana dashboards
 2. **Tracing**: App (OpenTelemetry) → OTel Collector → Jaeger → Grafana (linked via `traceId`)
+3. **Infrastructure Metrics**: Node Exporter → Prometheus → Grafana ("Node Exporter Full" dashboard)
 
 Both pipelines are correlated — every log line contains a `traceId` that links to the corresponding distributed trace in Jaeger.
 
@@ -385,11 +386,33 @@ Both pipelines are correlated — every log line contains a `traceId` that links
    │  Datasources:                │
    │    - Loki (logs, default)    │
    │    - Jaeger (traces)         │
+   │    - Prometheus (metrics)    │
    │                              │
-   │  Dashboard:                  │
+   │  Dashboards:                 │
    │    "Carreel Backend"         │
+   │    "Node Exporter Full"      │
    │    (auto-provisioned JSON)   │
    └──────────────────────────────┘
+
+┌─────────────────────┐
+│   Node Exporter      │
+│   :9100              │
+│                      │
+│  Host metrics:       │
+│  CPU, RAM, disk,     │
+│  network, filesystem │
+└──────────┬───────────┘
+           │ scrape /metrics
+           ▼
+   ┌────────────────┐
+   │  Prometheus     │
+   │  :9090          │
+   │                 │
+   │  Time-series DB │
+   └───────┬─────────┘
+           │
+           ▼
+       Grafana (:3000)
 ```
 
 #### Infrastructure (docker-compose)
@@ -418,6 +441,19 @@ services:
       - ./otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/config.yaml:ro
     depends_on: [jaeger]
 
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    ports: ["9100:9100"]
+    volumes: ["/proc:/host/proc:ro", "/sys:/host/sys:ro", "/:/rootfs:ro"]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    ports: ["9090:9090"]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on: [node-exporter]
+
   grafana:
     image: grafana/grafana:11.0.0
     ports: ["3000:3000"]
@@ -428,7 +464,7 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana-data:/var/lib/grafana
-    depends_on: [loki, jaeger]
+    depends_on: [loki, jaeger, prometheus]
 ```
 
 **Start/stop:** `cd monitoring && make up` / `make down` (or `docker compose up -d` / `docker compose down`)
@@ -441,6 +477,8 @@ services:
 | Jaeger UI | http://localhost:16686 | Distributed trace viewer |
 | Loki | http://localhost:3100 | Log aggregation API (no UI) |
 | OTel Collector | localhost:4317 (gRPC) | Trace receiver, forwards to Jaeger |
+| Prometheus | http://localhost:9090 | Metrics storage + query engine |
+| Node Exporter | http://localhost:9100 | Host metrics collector (CPU, RAM, disk, network) |
 
 #### Loki Configuration
 
@@ -541,6 +579,13 @@ datasources:
     type: jaeger
     access: proxy
     url: http://jaeger:16686
+    editable: false
+
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
     editable: false
 ```
 
@@ -966,6 +1011,27 @@ The `app` label is set by the Winston LokiTransport (`labels: { app: serviceName
 6. Export dashboard JSON: Dashboard settings → JSON Model → Copy
 7. Replace `monitoring/grafana/provisioning/dashboards/carreel-backend.json` with the exported JSON
 8. Restart Grafana to verify provisioning: `docker compose -f monitoring/docker-compose.yml restart grafana`
+
+#### Infrastructure Monitoring (Node Exporter + Prometheus)
+
+Host-level metrics (CPU, memory, disk, network, filesystem) are collected by **Node Exporter** and stored in **Prometheus**. Grafana queries Prometheus to display the "Node Exporter Full" dashboard (community dashboard ID 1860).
+
+**Prometheus config** (`monitoring/prometheus/prometheus.yml`):
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+```
+
+**Dashboard**: Auto-provisioned from `monitoring/grafana/provisioning/dashboards/node-exporter-full.json`. Provides 31 panels covering CPU usage, memory, disk I/O, network traffic, filesystem usage, system load, and more.
+
+**Verify**: After starting the stack, check `curl http://localhost:9090/api/v1/targets` — the `node-exporter` target should show state `UP`.
 
 #### How to Reuse This Stack in a New Project
 
