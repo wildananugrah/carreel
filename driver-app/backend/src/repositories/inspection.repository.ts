@@ -199,9 +199,13 @@ export class InspectionRepository implements IInspectionRepository {
     id: string,
     status: InspectionStatus,
   ): Promise<Inspection> {
+    const data: { status: InspectionStatus; completedAt?: Date } = { status };
+    if (status !== "DRAFT") {
+      data.completedAt = new Date();
+    }
     return this.prisma.inspection.update({
       where: { id },
-      data: { status },
+      data,
     });
   }
 
@@ -258,7 +262,7 @@ export class InspectionRepository implements IInspectionRepository {
   ): Promise<void> {
     await this.prisma.inspection.update({
       where: { id },
-      data: { signatureKey, signerName, completedAt: new Date() },
+      data: { signatureKey, signerName },
     });
   }
 
