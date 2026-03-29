@@ -3,6 +3,7 @@ import type {
   CreateInspectionDTO,
   InspectionListQuery,
   PaginatedResponse,
+  PreTripReferenceData,
   TripGroupCard,
   TripListQuery,
   UpdateInspectionDTO,
@@ -46,12 +47,7 @@ export interface IInspectionService {
   getPreTripUnitData(
     postTripId: string,
     driverId: string,
-  ): Promise<{
-    licensePlate: string | null;
-    make: string | null;
-    model: string | null;
-    odometerKm: number | null;
-  } | null>;
+  ): Promise<PreTripReferenceData | null>;
 
   listTrips(driverId: string, query: TripListQuery): Promise<TripGroupCard[]>;
 }

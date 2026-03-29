@@ -378,7 +378,22 @@ export function InspectionDetail() {
         )}
         {activeTab === "pre" && !preInspection && <EmptyState text="Pre-Check belum tersedia" />}
 
-        {activeTab === "post" && postInspection && (
+        {activeTab === "post" && postInspection && postInspection.status === "DRAFT" && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <div className="w-full rounded-xl border-2 border-dashed border-[#3a2800] p-8 flex flex-col items-center gap-3">
+              <p className="text-sm text-[#888]">Post-Check belum selesai</p>
+              <p className="text-xs text-[#555]">Lanjutkan untuk menyelesaikan inspeksi</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/inspections/${postInspection.id}/photos`)}
+              className="w-full py-3.5 rounded-xl bg-[#F5C842] text-black text-sm font-bold"
+            >
+              Lanjutkan Post-Check
+            </button>
+          </div>
+        )}
+        {activeTab === "post" && postInspection && postInspection.status !== "DRAFT" && (
           <PrePostPanel inspection={postInspection} label="Post-Check" />
         )}
         {activeTab === "post" && !postInspection && showEndTrip && (

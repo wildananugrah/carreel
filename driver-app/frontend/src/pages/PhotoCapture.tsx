@@ -21,6 +21,10 @@ function getPhotoSteps(inspection: InspectionDetail): InspectionStep[] {
   return steps;
 }
 
+interface PreTripRef {
+  odometerKm: number | null;
+}
+
 export function PhotoCapture() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -29,12 +33,24 @@ export function PhotoCapture() {
   const [error, setError] = useState("");
   const [navigating, setNavigating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [preTripRef, setPreTripRef] = useState<PreTripRef | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
     try {
       const data = await api.get<InspectionDetail>(`/api/inspections/${id}`);
       setInspection(data);
+
+      if (data.tripType === "POST_TRIP") {
+        try {
+          const ref = await api.get<{ odometerKm: number | null } | null>(
+            `/api/inspections/${id}/pre-trip-data`,
+          );
+          if (ref) setPreTripRef({ odometerKm: ref.odometerKm });
+        } catch {
+          // Non-critical
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -196,6 +212,23 @@ export function PhotoCapture() {
             </div>
           </div>
         </div>
+
+        {/* Pre-trip odometer reference for POST_TRIP */}
+        {inspection.tripType === "POST_TRIP" && preTripRef?.odometerKm != null && (
+          <div className="px-4 pb-4">
+            <div className="rounded-xl border border-[#2a2a2a] bg-[#111] p-3 flex items-center gap-3">
+              <span className="text-lg shrink-0">{"\uD83D\uDCCF"}</span>
+              <div>
+                <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-bold">
+                  Odometer Pre-Trip
+                </p>
+                <p className="text-sm font-bold text-[#F5C842]">
+                  {preTripRef.odometerKm.toLocaleString("id-ID")} KM
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="px-4 pb-4">

@@ -15,11 +15,19 @@ const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
 const COMMENT_CHIPS = ["Kondisi unit baik", "Ada baret minor", "Perlu dicek"];
 
+interface PreTripDamage {
+  area: string;
+  description: string;
+  confidence: number;
+}
+
 interface PreTripUnitData {
   licensePlate: string | null;
   make: string | null;
   model: string | null;
   odometerKm: number | null;
+  damages: PreTripDamage[];
+  bodyVideoMediaId: string | null;
 }
 
 interface AIDetectedInfo {
@@ -780,21 +788,97 @@ export function VideoReview() {
               </div>
             </div>
 
-            {/* Pre-check reference for POST_TRIP */}
+            {/* Pre vs Post Comparison for POST_TRIP */}
             {isPostTrip && unitData && (
               <div className="px-4 pb-4">
-                <div className="rounded-xl border border-[#2a2a2a] bg-[#111] p-4">
-                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2">
-                    Pre-Check &middot; Referensi
+                <div className="rounded-xl border border-[#2a2a2a] bg-[#111] p-3">
+                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3">
+                    Perbandingan Pre &middot; Post
                   </p>
-                  <p className="text-xs text-neutral-500">
-                    {unitData.make} — {unitData.licensePlate}
-                    {unitData.odometerKm != null && (
-                      <span className="ml-2 text-neutral-400">
-                        KM {unitData.odometerKm.toLocaleString("id-ID")}
-                      </span>
-                    )}
-                  </p>
+
+                  {/* Side-by-side columns */}
+                  <div className="flex gap-2">
+                    {/* PRE-CHECK column */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-bold text-[#F5C842] uppercase tracking-wider mb-2">
+                        Pre-Check
+                      </p>
+                      {/* Pre-trip body video */}
+                      {unitData.bodyVideoMediaId ? (
+                        <div className="rounded-lg overflow-hidden bg-[#1a1a1a] mb-2">
+                          {/* biome-ignore lint/a11y/useMediaCaption: pre-trip reference video */}
+                          <video
+                            src={`/api/media/${unitData.bodyVideoMediaId}/stream`}
+                            className="w-full aspect-video object-cover rounded-lg"
+                            controls
+                            playsInline
+                            preload="metadata"
+                          />
+                        </div>
+                      ) : (
+                        <div className="rounded-lg bg-[#1a1a1a] aspect-video flex items-center justify-center mb-2">
+                          <p className="text-[10px] text-neutral-600">Tidak ada video</p>
+                        </div>
+                      )}
+                      {/* Pre-trip unit info */}
+                      <div className="bg-[#1a1a1a] rounded-lg p-2">
+                        <p className="text-[10px] text-neutral-500 mb-0.5">Unit</p>
+                        <p className="text-xs font-bold text-white truncate">
+                          {[unitData.make, unitData.model].filter(Boolean).join(" ") || "—"}
+                        </p>
+                        <p className="text-[10px] text-neutral-400">
+                          {unitData.licensePlate || "—"}
+                        </p>
+                        {unitData.odometerKm != null && (
+                          <p className="text-xs font-bold text-[#F5C842] mt-1">
+                            KM {unitData.odometerKm.toLocaleString("id-ID")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="w-px bg-[#2a2a2a] shrink-0" />
+
+                    {/* POST-CHECK column */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
+                        Post-Check
+                      </p>
+                      {/* Post-trip body video */}
+                      {hasMedia ? (
+                        <div className="rounded-lg overflow-hidden bg-[#1a1a1a] mb-2">
+                          {/* biome-ignore lint/a11y/useMediaCaption: post-trip body video */}
+                          <video
+                            src={`/api/media/${bodyStep.mediaFiles[0].id}/stream`}
+                            className="w-full aspect-video object-cover rounded-lg"
+                            controls
+                            playsInline
+                            preload="metadata"
+                          />
+                        </div>
+                      ) : (
+                        <div className="rounded-lg bg-[#1a1a1a] aspect-video flex items-center justify-center mb-2">
+                          <p className="text-[10px] text-neutral-600">Belum ada video</p>
+                        </div>
+                      )}
+                      {/* Post-trip unit info */}
+                      <div className="bg-[#1a1a1a] rounded-lg p-2">
+                        <p className="text-[10px] text-neutral-500 mb-0.5">Unit</p>
+                        <p className="text-xs font-bold text-white truncate">
+                          {[unitForm.make, unitForm.model].filter(Boolean).join(" ") || "—"}
+                        </p>
+                        <p className="text-[10px] text-neutral-400">
+                          {unitForm.licensePlate || "—"}
+                        </p>
+                        {unitForm.odometerKm && (
+                          <p className="text-xs font-bold text-[#F5C842] mt-1">
+                            KM {Number(unitForm.odometerKm).toLocaleString("id-ID")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

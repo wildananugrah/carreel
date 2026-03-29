@@ -15,6 +15,8 @@ import type {
   CreateInspectionDTO,
   InspectionListQuery,
   PaginatedResponse,
+  PreTripDamage,
+  PreTripReferenceData,
   TripGroupCard,
   TripListQuery,
   UpdateInspectionDTO,
@@ -349,12 +351,7 @@ export class InspectionService implements IInspectionService {
   async getPreTripUnitData(
     postTripId: string,
     driverId: string,
-  ): Promise<{
-    licensePlate: string | null;
-    make: string | null;
-    model: string | null;
-    odometerKm: number | null;
-  } | null> {
+  ): Promise<PreTripReferenceData | null> {
     const postTrip = await this.inspectionRepository.findById(postTripId);
     if (!postTrip) {
       throw new Error("Inspection not found");
@@ -371,15 +368,12 @@ export class InspectionService implements IInspectionService {
     );
     if (!preTrip) return null;
 
+    // Extract unit identification data
     const unitIdStep = preTrip.steps.find(
       (s) => s.stepType === "UNIT_IDENTIFICATION",
     );
-    if (!unitIdStep?.aiAnalysis?.structuredData) return null;
-
-    const unitData = unitIdStep.aiAnalysis.structuredData as Record<
-      string,
-      unknown
-    >;
+    const unitData =
+      (unitIdStep?.aiAnalysis?.structuredData as Record<string, unknown>) ?? {};
 
     // Extract odometer from SPEEDOMETER AI analysis
     const speedoStep = preTrip.steps.find((s) => s.stepType === "SPEEDOMETER");
@@ -390,11 +384,32 @@ export class InspectionService implements IInspectionService {
     const odometerKm =
       speedoData?.odometerKm != null ? Number(speedoData.odometerKm) : null;
 
+    // Extract body damages from BODY_INSPECTION AI analysis
+    const bodyStep = preTrip.steps.find(
+      (s) => s.stepType === "BODY_INSPECTION",
+    );
+    const bodyData = bodyStep?.aiAnalysis?.structuredData as Record<
+      string,
+      unknown
+    > | null;
+    const rawDamages =
+      (bodyData?.damages as Array<Record<string, unknown>>) ?? [];
+    const damages: PreTripDamage[] = rawDamages.map((d) => ({
+      area: (d.area as string) || (d.damageType as string) || "Unknown",
+      description: (d.description as string) || "",
+      confidence: Number(d.confidence ?? d.confidenceScore ?? 0),
+    }));
+
+    // Extract body video media ID
+    const bodyVideoMediaId = bodyStep?.mediaFiles?.[0]?.id ?? null;
+
     return {
       licensePlate: (unitData.licensePlate as string) ?? null,
       make: (unitData.make as string) ?? null,
       model: (unitData.model as string) ?? null,
       odometerKm,
+      damages,
+      bodyVideoMediaId,
     };
   }
 }

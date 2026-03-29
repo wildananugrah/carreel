@@ -195,3 +195,22 @@ export interface TripGroupCard {
   tripStatus: "DRAFT" | "ON_GOING" | "COMPLETED";
   createdAt: string;
 }
+
+// ========================
+// PRE-TRIP REFERENCE DATA
+// ========================
+
+export interface PreTripDamage {
+  area: string;
+  description: string;
+  confidence: number;
+}
+
+export interface PreTripReferenceData {
+  licensePlate: string | null;
+  make: string | null;
+  model: string | null;
+  odometerKm: number | null;
+  damages: PreTripDamage[];
+  bodyVideoMediaId: string | null;
+}
