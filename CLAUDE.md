@@ -1151,20 +1151,14 @@ The driver-app is primarily used on **mobile browsers**. All driver-app frontend
 
 #### Driver-App Inspection Flow
 
-The inspection process follows a 3-page wizard flow:
+The inspection process follows a 2-page wizard flow:
 
 1. **Page 1 — Photos** (`/inspections/:id/photos`): Upload photos for UNIT_IDENTIFICATION (PRE_TRIP only) and SPEEDOMETER steps.
-2. **Page 2 — Video** (`/inspections/:id/video`): Record or upload body inspection video for BODY_INSPECTION step.
-3. **Page 3 — Signature** (`/inspections/:id/signature`): Canvas-based signature capture (mandatory before submit). Stored as PNG in MinIO.
+2. **Page 2 — Video & Submit** (`/inspections/:id/video`): Record body inspection video, fill unit info, add driver comment, capture signature, and submit.
 
-Each page shows a progress indicator: "Halaman X dari 3" with 3 pill dots (`w-8 h-1.5 rounded-full`).
+Each page shows a progress indicator: "Halaman X dari 2" with 2 pill dots (`w-8 h-1.5 rounded-full`).
 
-All three pages share a consistent layout pattern matching `InspectionDetail`:
-- Progress pills bar at top
-- "Media" section header with a 2-column grid of `StepCard` components
-- Upload count summary below the grid
-- Instruction cards below the media section (yellow-bordered cards with numbered steps)
-- Bottom-anchored action button ("Selanjutnya" or "Submit Inspeksi")
+**DRAFT auto-redirect**: When a user clicks a DRAFT inspection from the dashboard, `InspectionDetail` auto-redirects to the correct wizard page based on progress (photos done → video page, otherwise → photos page). This ensures the resume flow matches the creation flow. Uses `navigate(url, { replace: true })` so the back button goes to the dashboard, not back to the detail page.
 
 **Trip types differ in steps:**
 - **PRE_TRIP**: 3 steps — UNIT_IDENTIFICATION, SPEEDOMETER, BODY_INSPECTION
@@ -1188,11 +1182,35 @@ const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
 ```
 
 **Components that implement this:**
-- `StepCard.tsx` — shows Upload/Record buttons based on config
-- `VideoRecorder.tsx` — shows "Buka Kamera" / "Upload File" buttons based on config
+- `StepCard.tsx` — shows Upload/Camera buttons for photo steps
+- `VideoReview.tsx` — shows "Upload" / "Buka Kamera" buttons for video recording
 - Any new upload UI MUST read `VITE_UPLOAD_SOURCE` and conditionally render camera/file inputs
 
-**For camera inputs**, use `capture="environment"` attribute. For file inputs, omit the `capture` attribute to open the gallery. Hidden inputs should be rendered via `createPortal` to `document.body` to avoid layout issues.
+#### Camera Capture (Full-Screen Overlays via `getUserMedia`)
+
+Camera capture uses **full-screen overlay components** with `navigator.mediaDevices.getUserMedia` and `facingMode: { ideal: "environment" }` for reliable rear camera control. The HTML `capture="environment"` attribute is **not used** because Samsung Internet and some Android browsers ignore it.
+
+**Photo capture**: `CameraOverlay` in `StepCard.tsx` — opens full-screen camera via `createPortal`, captures a photo using canvas (`toBlob` as JPEG).
+
+**Video recording**: `VideoRecorderOverlay` in `components/inspection/VideoRecorderOverlay.tsx` — opens full-screen camera via `createPortal`, records video using `MediaRecorder`, includes `VideoGuidanceOverlay` with stage indicators (Depan → Kanan → Belakang → Kiri) and timer.
+
+Both overlays:
+- Use `createPortal(element, document.body)` for full-screen rendering
+- Request rear camera via `facingMode: { ideal: "environment" }`
+- Handle camera permission errors gracefully
+- Clean up streams on close/unmount
+
+#### Video Duration Configuration
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `VITE_VIDEO_MIN_DURATION` | `30` | Minimum recording duration in seconds |
+| `VITE_VIDEO_MAX_DURATION` | `180` | Maximum recording duration in seconds |
+
+```typescript
+const MIN_DURATION = Number(import.meta.env.VITE_VIDEO_MIN_DURATION) || 30;
+const MAX_DURATION = Number(import.meta.env.VITE_VIDEO_MAX_DURATION) || 180;
+```
 
 ### Database Architecture
 
