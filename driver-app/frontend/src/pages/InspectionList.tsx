@@ -1,33 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { InspectionCard } from "../components/inspection/InspectionCard";
+import { TripCard } from "../components/inspection/TripCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
-import type { Inspection, InspectionStatus } from "../lib/types";
+import type { TripGroupCard, TripTab } from "../lib/types";
 
-type TabValue = "ALL" | "DRAFT" | "ON_GOING" | "COMPLETED";
-
-const tabs: { value: TabValue; label: string }[] = [
+const tabs: { value: TripTab; label: string }[] = [
   { value: "ALL", label: "All" },
   { value: "DRAFT", label: "Draft" },
   { value: "ON_GOING", label: "On-Going" },
   { value: "COMPLETED", label: "Completed" },
 ];
 
-function tabToStatus(tab: TabValue): InspectionStatus | undefined {
-  switch (tab) {
-    case "DRAFT":
-      return "DRAFT";
-    case "ON_GOING":
-      return "PENDING_AI";
-    default:
-      return undefined;
-  }
-}
-
 export function InspectionList() {
-  const [inspections, setInspections] = useState<Inspection[]>([]);
-  const [activeTab, setActiveTab] = useState<TabValue>("ALL");
+  const [trips, setTrips] = useState<TripGroupCard[]>([]);
+  const [activeTab, setActiveTab] = useState<TripTab>("ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -35,24 +22,16 @@ export function InspectionList() {
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const fetchInspections = useCallback(async () => {
+  const fetchTrips = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const params = new URLSearchParams();
-      const status = tabToStatus(activeTab);
-      if (status) params.set("status", status);
+      params.set("tab", activeTab);
       if (search) params.set("search", search);
       params.set("limit", "50");
-      const data = await api.get<{ data: Inspection[]; total: number }>(
-        `/api/inspections?${params}`,
-      );
-      let items = data.data;
-      if (activeTab === "COMPLETED") {
-        const completedStatuses = ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"];
-        items = items.filter((i) => completedStatuses.includes(i.status));
-      }
-      setInspections(items);
+      const data = await api.get<{ data: TripGroupCard[] }>(`/api/inspections/trips?${params}`);
+      setTrips(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -61,8 +40,8 @@ export function InspectionList() {
   }, [activeTab, search]);
 
   useEffect(() => {
-    fetchInspections();
-  }, [fetchInspections]);
+    fetchTrips();
+  }, [fetchTrips]);
 
   function handleSearchChange(value: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -149,13 +128,13 @@ export function InspectionList() {
         ))}
       </div>
 
-      {/* Inspection Cards */}
+      {/* Trip Cards */}
       <div className="flex-1 overflow-y-auto px-5 pb-24 pt-3.5 bg-[#0A0A0A]">
         {loading ? (
           <Spinner className="mt-12" />
         ) : error ? (
           <div className="text-center text-red-400 mt-12 text-sm">{error}</div>
-        ) : inspections.length === 0 ? (
+        ) : trips.length === 0 ? (
           <EmptyState
             title="Tidak ada inspeksi"
             description={
@@ -166,8 +145,8 @@ export function InspectionList() {
           />
         ) : (
           <div className="space-y-2.5">
-            {inspections.map((inspection) => (
-              <InspectionCard key={inspection.id} inspection={inspection} />
+            {trips.map((trip) => (
+              <TripCard key={trip.preTripId} trip={trip} />
             ))}
           </div>
         )}

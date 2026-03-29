@@ -140,3 +140,29 @@ export interface UploadSession {
   status: string;
   createdAt: string;
 }
+
+// ========================
+// TRIP GROUPS (Dashboard)
+// ========================
+
+export type TripTab = "ALL" | "DRAFT" | "ON_GOING" | "COMPLETED";
+
+export interface TripInspectionSummary {
+  inspectionId: string;
+  status: InspectionStatus;
+  createdAt: string;
+  completedAt: string | null;
+  hasSigned: boolean;
+}
+
+export interface TripGroupCard {
+  preTripId: string;
+  unitName: string;
+  licensePlate: string;
+  lastKnownKm: number | null;
+  thumbnailMediaId: string | null;
+  preTrip: TripInspectionSummary;
+  postTrip: TripInspectionSummary | null;
+  tripStatus: "DRAFT" | "ON_GOING" | "COMPLETED";
+  createdAt: string;
+}

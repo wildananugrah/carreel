@@ -3,6 +3,8 @@ import type {
   CreateInspectionDTO,
   InspectionListQuery,
   PaginatedResponse,
+  TripGroupCard,
+  TripListQuery,
   UpdateInspectionDTO,
 } from "../../types/dto";
 import type {
@@ -50,4 +52,6 @@ export interface IInspectionService {
     model: string | null;
     odometerKm: number | null;
   } | null>;
+
+  listTrips(driverId: string, query: TripListQuery): Promise<TripGroupCard[]>;
 }

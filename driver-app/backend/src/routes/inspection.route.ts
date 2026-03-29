@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import type { InspectionStatus } from "../generated/prisma";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
 import type { IUploadService } from "../interfaces/services/upload.service.interface";
-import type { AppEnv } from "../types/dto";
+import type { AppEnv, TripTab } from "../types/dto";
 
 export function createInspectionRoutes(
   inspectionService: IInspectionService,
@@ -37,6 +37,20 @@ export function createInspectionRoutes(
       limit,
     });
     return c.json(result);
+  });
+
+  // GET /api/inspections/trips (grouped trip cards)
+  app.get("/trips", async (c) => {
+    const userId = c.get("userId") as string;
+    const tab = (c.req.query("tab") as TripTab | undefined) ?? "ALL";
+    const search = c.req.query("search") || undefined;
+    const limit = Number(c.req.query("limit")) || 50;
+    const trips = await inspectionService.listTrips(userId, {
+      tab,
+      search,
+      limit,
+    });
+    return c.json({ data: trips });
   });
 
   // GET /api/inspections/:id

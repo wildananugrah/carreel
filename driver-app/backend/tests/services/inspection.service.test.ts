@@ -180,6 +180,7 @@ describe("InspectionService", () => {
           updatedAt: new Date(),
         }) as any,
       linkUnitToInspection: async () => {},
+      findTripsByDriverId: async () => [],
     };
 
     service = new InspectionService(mockRepo, mockLogger);
@@ -360,6 +361,7 @@ describe("InspectionService", () => {
           updatedAt: new Date(),
         }) as any,
       linkUnitToInspection: async () => {},
+      findTripsByDriverId: async () => [],
     };
 
     const svcWithQueue = new InspectionService(

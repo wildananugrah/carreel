@@ -15,6 +15,8 @@ import type {
   CreateInspectionDTO,
   InspectionListQuery,
   PaginatedResponse,
+  TripGroupCard,
+  TripListQuery,
   UpdateInspectionDTO,
 } from "../types/dto";
 
@@ -335,6 +337,13 @@ export class InspectionService implements IInspectionService {
       stepId,
       status as StepStatus,
     );
+  }
+
+  async listTrips(
+    driverId: string,
+    query: TripListQuery,
+  ): Promise<TripGroupCard[]> {
+    return this.inspectionRepository.findTripsByDriverId(driverId, query);
   }
 
   async getPreTripUnitData(

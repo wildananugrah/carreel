@@ -16,6 +16,9 @@ import type {
   CreateStepDTO,
   InspectionListQuery,
   PaginatedResponse,
+  TripGroupCard,
+  TripInspectionSummary,
+  TripListQuery,
   UpdateInspectionDTO,
 } from "../types/dto";
 
@@ -305,5 +308,118 @@ export class InspectionRepository implements IInspectionRepository {
       where: { id: inspectionId },
       data: { unitId },
     });
+  }
+
+  async findTripsByDriverId(
+    driverId: string,
+    query: TripListQuery,
+  ): Promise<TripGroupCard[]> {
+    const where: Record<string, unknown> = { driverId };
+
+    if (query.search) {
+      const s = query.search;
+      where.unit = {
+        OR: [
+          { licensePlate: { contains: s, mode: "insensitive" } },
+          { make: { contains: s, mode: "insensitive" } },
+          { model: { contains: s, mode: "insensitive" } },
+        ],
+      };
+    }
+
+    const inspections = await this.prisma.inspection.findMany({
+      where: where as never,
+      orderBy: { createdAt: "desc" },
+      include: {
+        unit: {
+          select: {
+            id: true,
+            licensePlate: true,
+            make: true,
+            model: true,
+            type: true,
+            lastKnownKm: true,
+          },
+        },
+        steps: {
+          where: { stepType: "UNIT_IDENTIFICATION" },
+          take: 1,
+          select: {
+            mediaFiles: {
+              take: 1,
+              select: { id: true },
+              orderBy: { createdAt: "asc" as const },
+            },
+          },
+        },
+      },
+    });
+
+    // Build postTripByPreId map
+    const postTripByPreId = new Map<string, (typeof inspections)[0]>();
+    const usedIds = new Set<string>();
+
+    for (const insp of inspections) {
+      if (insp.tripType === "POST_TRIP" && insp.linkedInspectionId) {
+        postTripByPreId.set(insp.linkedInspectionId, insp);
+      }
+    }
+
+    const mapSummary = (
+      insp: (typeof inspections)[0],
+    ): TripInspectionSummary => ({
+      inspectionId: insp.id,
+      status: insp.status,
+      createdAt: insp.createdAt.toISOString(),
+      completedAt: insp.completedAt?.toISOString() ?? null,
+      hasSigned: insp.signatureKey != null,
+    });
+
+    const computeTripStatus = (
+      preStatus: string,
+      postTrip: (typeof inspections)[0] | null,
+    ): "DRAFT" | "ON_GOING" | "COMPLETED" => {
+      if (preStatus === "DRAFT") return "DRAFT";
+      if (!postTrip) return "ON_GOING";
+      if (postTrip.status === "DRAFT" || postTrip.status === "PENDING_AI")
+        return "ON_GOING";
+      return "COMPLETED";
+    };
+
+    const cards: TripGroupCard[] = [];
+
+    // First pass: pre-trips
+    for (const insp of inspections) {
+      if (insp.tripType !== "PRE_TRIP") continue;
+      usedIds.add(insp.id);
+
+      const postTrip = postTripByPreId.get(insp.id) ?? null;
+      if (postTrip) usedIds.add(postTrip.id);
+
+      const unit = insp.unit;
+      const unitName = unit
+        ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") ||
+          unit.licensePlate
+        : `Inspection #${insp.id.slice(0, 8)}`;
+
+      cards.push({
+        preTripId: insp.id,
+        unitName,
+        licensePlate: unit?.licensePlate ?? "X XXXX XXX",
+        lastKnownKm: unit?.lastKnownKm ?? null,
+        thumbnailMediaId: insp.steps?.[0]?.mediaFiles?.[0]?.id ?? null,
+        preTrip: mapSummary(insp),
+        postTrip: postTrip ? mapSummary(postTrip) : null,
+        tripStatus: computeTripStatus(insp.status, postTrip),
+        createdAt: insp.createdAt.toISOString(),
+      });
+    }
+
+    // Apply tab filter
+    if (query.tab && query.tab !== "ALL") {
+      return cards.filter((c) => c.tripStatus === query.tab);
+    }
+
+    return cards;
   }
 }

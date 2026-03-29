@@ -214,6 +214,7 @@ describe("StepAnalysisJob", () => {
           updatedAt: new Date(),
         } as any),
       linkUnitToInspection: async () => {},
+      findTripsByDriverId: async () => [],
     };
 
     mockMediaRepo = {

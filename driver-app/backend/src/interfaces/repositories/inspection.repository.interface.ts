@@ -10,6 +10,8 @@ import type {
   CreateStepDTO,
   InspectionListQuery,
   PaginatedResponse,
+  TripGroupCard,
+  TripListQuery,
   UpdateInspectionDTO,
 } from "../../types/dto";
 
@@ -103,4 +105,9 @@ export interface IInspectionRepository {
     type?: string | null;
   }): Promise<Unit>;
   linkUnitToInspection(inspectionId: string, unitId: string): Promise<void>;
+
+  findTripsByDriverId(
+    driverId: string,
+    query: TripListQuery,
+  ): Promise<TripGroupCard[]>;
 }
