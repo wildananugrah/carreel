@@ -130,6 +130,7 @@ export class StepAnalysisJob {
       // 5. Save AIAnalysis record
       const analysis = await this.aiAnalysisRepository.createAnalysis({
         stepId,
+        mediaFileId: primaryMedia.id,
         aiModel: "gemini",
         promptUsed: prompt,
         rawResponse,
@@ -173,6 +174,7 @@ export class StepAnalysisJob {
               model: result.model,
               color: result.color,
               vin: result.vin,
+              type: result.bodyType,
             });
             await this.inspectionRepository.linkUnitToInspection(
               inspectionId,

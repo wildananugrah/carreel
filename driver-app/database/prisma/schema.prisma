@@ -174,6 +174,7 @@ model MediaFile {
 
   step          InspectionStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
   damageMarkers DamageMarker[]
+  aiAnalyses    AIAnalysis[]
 
   @@map("media_files")
 }
@@ -191,6 +192,7 @@ enum AIAnalysisStatus {
 model AIAnalysis {
   id               String           @id @default(uuid())
   stepId           String           @unique
+  mediaFileId      String?
   aiModel          String
   promptUsed       String
   rawResponse      String
@@ -201,7 +203,8 @@ model AIAnalysis {
   errorMessage     String?
   createdAt        DateTime         @default(now())
 
-  step InspectionStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  step      InspectionStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  mediaFile MediaFile?     @relation(fields: [mediaFileId], references: [id], onDelete: SetNull)
 
   @@map("ai_analyses")
 }

@@ -28,7 +28,9 @@ export function createMediaRoutes(
   // Proxies instead of redirecting so the client never needs direct MinIO access.
   // No auth required: used by <img src="/api/media/:id/url"> tags.
   app.get("/:id/url", async (c) => {
-    const { buffer, mimeType } = await uploadService.getMediaData(c.req.param("id"));
+    const { buffer, mimeType } = await uploadService.getMediaData(
+      c.req.param("id"),
+    );
     return new Response(buffer as unknown as BodyInit, {
       headers: {
         "Content-Type": mimeType,

@@ -1578,6 +1578,7 @@ export type MediaFileScalarFieldEnum = (typeof MediaFileScalarFieldEnum)[keyof t
 export const AIAnalysisScalarFieldEnum = {
   id: 'id',
   stepId: 'stepId',
+  mediaFileId: 'mediaFileId',
   aiModel: 'aiModel',
   promptUsed: 'promptUsed',
   rawResponse: 'rawResponse',

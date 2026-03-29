@@ -8,6 +8,7 @@ import type {
 
 export interface CreateAIAnalysisDTO {
   stepId: string;
+  mediaFileId?: string;
   aiModel: string;
   promptUsed: string;
   rawResponse: string;

@@ -185,7 +185,11 @@ export class UploadService implements IUploadService {
     const bucket = "carreel-images";
 
     await this.storageProvider.upload(bucket, key, file, mimeType);
-    await this.inspectionRepository.updateSignatureKey(inspectionId, key, signerName);
+    await this.inspectionRepository.updateSignatureKey(
+      inspectionId,
+      key,
+      signerName,
+    );
 
     this.logger.info("Signature uploaded", { inspectionId, key, signerName });
 

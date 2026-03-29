@@ -268,16 +268,18 @@ export class InspectionRepository implements IInspectionRepository {
     model?: string | null;
     color?: string | null;
     vin?: string | null;
+    type?: string | null;
   }): Promise<Unit> {
     const existing = await this.prisma.unit.findUnique({
       where: { licensePlate: data.licensePlate },
     });
     if (existing) {
-      // Update make/model/color if currently null
+      // Update make/model/color/type if currently null
       const updates: Record<string, string> = {};
       if (!existing.make && data.make) updates.make = data.make;
       if (!existing.model && data.model) updates.model = data.model;
       if (!existing.color && data.color) updates.color = data.color;
+      if (!existing.type && data.type) updates.type = data.type;
       if (Object.keys(updates).length > 0) {
         return this.prisma.unit.update({
           where: { id: existing.id },
@@ -293,6 +295,7 @@ export class InspectionRepository implements IInspectionRepository {
         model: data.model ?? undefined,
         color: data.color ?? undefined,
         vin: data.vin ?? undefined,
+        type: data.type ?? undefined,
       },
     });
   }

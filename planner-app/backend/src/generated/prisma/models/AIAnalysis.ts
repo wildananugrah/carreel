@@ -39,6 +39,7 @@ export type AIAnalysisSumAggregateOutputType = {
 export type AIAnalysisMinAggregateOutputType = {
   id: string | null
   stepId: string | null
+  mediaFileId: string | null
   aiModel: string | null
   promptUsed: string | null
   rawResponse: string | null
@@ -52,6 +53,7 @@ export type AIAnalysisMinAggregateOutputType = {
 export type AIAnalysisMaxAggregateOutputType = {
   id: string | null
   stepId: string | null
+  mediaFileId: string | null
   aiModel: string | null
   promptUsed: string | null
   rawResponse: string | null
@@ -65,6 +67,7 @@ export type AIAnalysisMaxAggregateOutputType = {
 export type AIAnalysisCountAggregateOutputType = {
   id: number
   stepId: number
+  mediaFileId: number
   aiModel: number
   promptUsed: number
   rawResponse: number
@@ -91,6 +94,7 @@ export type AIAnalysisSumAggregateInputType = {
 export type AIAnalysisMinAggregateInputType = {
   id?: true
   stepId?: true
+  mediaFileId?: true
   aiModel?: true
   promptUsed?: true
   rawResponse?: true
@@ -104,6 +108,7 @@ export type AIAnalysisMinAggregateInputType = {
 export type AIAnalysisMaxAggregateInputType = {
   id?: true
   stepId?: true
+  mediaFileId?: true
   aiModel?: true
   promptUsed?: true
   rawResponse?: true
@@ -117,6 +122,7 @@ export type AIAnalysisMaxAggregateInputType = {
 export type AIAnalysisCountAggregateInputType = {
   id?: true
   stepId?: true
+  mediaFileId?: true
   aiModel?: true
   promptUsed?: true
   rawResponse?: true
@@ -218,6 +224,7 @@ export type AIAnalysisGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type AIAnalysisGroupByOutputType = {
   id: string
   stepId: string
+  mediaFileId: string | null
   aiModel: string
   promptUsed: string
   rawResponse: string
@@ -255,6 +262,7 @@ export type AIAnalysisWhereInput = {
   NOT?: Prisma.AIAnalysisWhereInput | Prisma.AIAnalysisWhereInput[]
   id?: Prisma.StringFilter<"AIAnalysis"> | string
   stepId?: Prisma.StringFilter<"AIAnalysis"> | string
+  mediaFileId?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   aiModel?: Prisma.StringFilter<"AIAnalysis"> | string
   promptUsed?: Prisma.StringFilter<"AIAnalysis"> | string
   rawResponse?: Prisma.StringFilter<"AIAnalysis"> | string
@@ -265,11 +273,13 @@ export type AIAnalysisWhereInput = {
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
   step?: Prisma.XOR<Prisma.InspectionStepScalarRelationFilter, Prisma.InspectionStepWhereInput>
+  mediaFile?: Prisma.XOR<Prisma.MediaFileNullableScalarRelationFilter, Prisma.MediaFileWhereInput> | null
 }
 
 export type AIAnalysisOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   stepId?: Prisma.SortOrder
+  mediaFileId?: Prisma.SortOrderInput | Prisma.SortOrder
   aiModel?: Prisma.SortOrder
   promptUsed?: Prisma.SortOrder
   rawResponse?: Prisma.SortOrder
@@ -280,6 +290,7 @@ export type AIAnalysisOrderByWithRelationInput = {
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   step?: Prisma.InspectionStepOrderByWithRelationInput
+  mediaFile?: Prisma.MediaFileOrderByWithRelationInput
 }
 
 export type AIAnalysisWhereUniqueInput = Prisma.AtLeast<{
@@ -288,6 +299,7 @@ export type AIAnalysisWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.AIAnalysisWhereInput | Prisma.AIAnalysisWhereInput[]
   OR?: Prisma.AIAnalysisWhereInput[]
   NOT?: Prisma.AIAnalysisWhereInput | Prisma.AIAnalysisWhereInput[]
+  mediaFileId?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   aiModel?: Prisma.StringFilter<"AIAnalysis"> | string
   promptUsed?: Prisma.StringFilter<"AIAnalysis"> | string
   rawResponse?: Prisma.StringFilter<"AIAnalysis"> | string
@@ -298,11 +310,13 @@ export type AIAnalysisWhereUniqueInput = Prisma.AtLeast<{
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
   step?: Prisma.XOR<Prisma.InspectionStepScalarRelationFilter, Prisma.InspectionStepWhereInput>
+  mediaFile?: Prisma.XOR<Prisma.MediaFileNullableScalarRelationFilter, Prisma.MediaFileWhereInput> | null
 }, "id" | "stepId">
 
 export type AIAnalysisOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   stepId?: Prisma.SortOrder
+  mediaFileId?: Prisma.SortOrderInput | Prisma.SortOrder
   aiModel?: Prisma.SortOrder
   promptUsed?: Prisma.SortOrder
   rawResponse?: Prisma.SortOrder
@@ -325,6 +339,7 @@ export type AIAnalysisScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AIAnalysisScalarWhereWithAggregatesInput | Prisma.AIAnalysisScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"AIAnalysis"> | string
   stepId?: Prisma.StringWithAggregatesFilter<"AIAnalysis"> | string
+  mediaFileId?: Prisma.StringNullableWithAggregatesFilter<"AIAnalysis"> | string | null
   aiModel?: Prisma.StringWithAggregatesFilter<"AIAnalysis"> | string
   promptUsed?: Prisma.StringWithAggregatesFilter<"AIAnalysis"> | string
   rawResponse?: Prisma.StringWithAggregatesFilter<"AIAnalysis"> | string
@@ -348,11 +363,13 @@ export type AIAnalysisCreateInput = {
   errorMessage?: string | null
   createdAt?: Date | string
   step: Prisma.InspectionStepCreateNestedOneWithoutAiAnalysisInput
+  mediaFile?: Prisma.MediaFileCreateNestedOneWithoutAiAnalysesInput
 }
 
 export type AIAnalysisUncheckedCreateInput = {
   id?: string
   stepId: string
+  mediaFileId?: string | null
   aiModel: string
   promptUsed: string
   rawResponse: string
@@ -376,11 +393,13 @@ export type AIAnalysisUpdateInput = {
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   step?: Prisma.InspectionStepUpdateOneRequiredWithoutAiAnalysisNestedInput
+  mediaFile?: Prisma.MediaFileUpdateOneWithoutAiAnalysesNestedInput
 }
 
 export type AIAnalysisUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepId?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   aiModel?: Prisma.StringFieldUpdateOperationsInput | string
   promptUsed?: Prisma.StringFieldUpdateOperationsInput | string
   rawResponse?: Prisma.StringFieldUpdateOperationsInput | string
@@ -395,6 +414,7 @@ export type AIAnalysisUncheckedUpdateInput = {
 export type AIAnalysisCreateManyInput = {
   id?: string
   stepId: string
+  mediaFileId?: string | null
   aiModel: string
   promptUsed: string
   rawResponse: string
@@ -422,6 +442,7 @@ export type AIAnalysisUpdateManyMutationInput = {
 export type AIAnalysisUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepId?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   aiModel?: Prisma.StringFieldUpdateOperationsInput | string
   promptUsed?: Prisma.StringFieldUpdateOperationsInput | string
   rawResponse?: Prisma.StringFieldUpdateOperationsInput | string
@@ -438,9 +459,20 @@ export type AIAnalysisNullableScalarRelationFilter = {
   isNot?: Prisma.AIAnalysisWhereInput | null
 }
 
+export type AIAnalysisListRelationFilter = {
+  every?: Prisma.AIAnalysisWhereInput
+  some?: Prisma.AIAnalysisWhereInput
+  none?: Prisma.AIAnalysisWhereInput
+}
+
+export type AIAnalysisOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type AIAnalysisCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   stepId?: Prisma.SortOrder
+  mediaFileId?: Prisma.SortOrder
   aiModel?: Prisma.SortOrder
   promptUsed?: Prisma.SortOrder
   rawResponse?: Prisma.SortOrder
@@ -460,6 +492,7 @@ export type AIAnalysisAvgOrderByAggregateInput = {
 export type AIAnalysisMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   stepId?: Prisma.SortOrder
+  mediaFileId?: Prisma.SortOrder
   aiModel?: Prisma.SortOrder
   promptUsed?: Prisma.SortOrder
   rawResponse?: Prisma.SortOrder
@@ -473,6 +506,7 @@ export type AIAnalysisMaxOrderByAggregateInput = {
 export type AIAnalysisMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   stepId?: Prisma.SortOrder
+  mediaFileId?: Prisma.SortOrder
   aiModel?: Prisma.SortOrder
   promptUsed?: Prisma.SortOrder
   rawResponse?: Prisma.SortOrder
@@ -520,6 +554,48 @@ export type AIAnalysisUncheckedUpdateOneWithoutStepNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AIAnalysisUpdateToOneWithWhereWithoutStepInput, Prisma.AIAnalysisUpdateWithoutStepInput>, Prisma.AIAnalysisUncheckedUpdateWithoutStepInput>
 }
 
+export type AIAnalysisCreateNestedManyWithoutMediaFileInput = {
+  create?: Prisma.XOR<Prisma.AIAnalysisCreateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput> | Prisma.AIAnalysisCreateWithoutMediaFileInput[] | Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput[]
+  connectOrCreate?: Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput | Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput[]
+  createMany?: Prisma.AIAnalysisCreateManyMediaFileInputEnvelope
+  connect?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+}
+
+export type AIAnalysisUncheckedCreateNestedManyWithoutMediaFileInput = {
+  create?: Prisma.XOR<Prisma.AIAnalysisCreateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput> | Prisma.AIAnalysisCreateWithoutMediaFileInput[] | Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput[]
+  connectOrCreate?: Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput | Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput[]
+  createMany?: Prisma.AIAnalysisCreateManyMediaFileInputEnvelope
+  connect?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+}
+
+export type AIAnalysisUpdateManyWithoutMediaFileNestedInput = {
+  create?: Prisma.XOR<Prisma.AIAnalysisCreateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput> | Prisma.AIAnalysisCreateWithoutMediaFileInput[] | Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput[]
+  connectOrCreate?: Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput | Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput[]
+  upsert?: Prisma.AIAnalysisUpsertWithWhereUniqueWithoutMediaFileInput | Prisma.AIAnalysisUpsertWithWhereUniqueWithoutMediaFileInput[]
+  createMany?: Prisma.AIAnalysisCreateManyMediaFileInputEnvelope
+  set?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  disconnect?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  delete?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  connect?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  update?: Prisma.AIAnalysisUpdateWithWhereUniqueWithoutMediaFileInput | Prisma.AIAnalysisUpdateWithWhereUniqueWithoutMediaFileInput[]
+  updateMany?: Prisma.AIAnalysisUpdateManyWithWhereWithoutMediaFileInput | Prisma.AIAnalysisUpdateManyWithWhereWithoutMediaFileInput[]
+  deleteMany?: Prisma.AIAnalysisScalarWhereInput | Prisma.AIAnalysisScalarWhereInput[]
+}
+
+export type AIAnalysisUncheckedUpdateManyWithoutMediaFileNestedInput = {
+  create?: Prisma.XOR<Prisma.AIAnalysisCreateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput> | Prisma.AIAnalysisCreateWithoutMediaFileInput[] | Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput[]
+  connectOrCreate?: Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput | Prisma.AIAnalysisCreateOrConnectWithoutMediaFileInput[]
+  upsert?: Prisma.AIAnalysisUpsertWithWhereUniqueWithoutMediaFileInput | Prisma.AIAnalysisUpsertWithWhereUniqueWithoutMediaFileInput[]
+  createMany?: Prisma.AIAnalysisCreateManyMediaFileInputEnvelope
+  set?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  disconnect?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  delete?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  connect?: Prisma.AIAnalysisWhereUniqueInput | Prisma.AIAnalysisWhereUniqueInput[]
+  update?: Prisma.AIAnalysisUpdateWithWhereUniqueWithoutMediaFileInput | Prisma.AIAnalysisUpdateWithWhereUniqueWithoutMediaFileInput[]
+  updateMany?: Prisma.AIAnalysisUpdateManyWithWhereWithoutMediaFileInput | Prisma.AIAnalysisUpdateManyWithWhereWithoutMediaFileInput[]
+  deleteMany?: Prisma.AIAnalysisScalarWhereInput | Prisma.AIAnalysisScalarWhereInput[]
+}
+
 export type EnumAIAnalysisStatusFieldUpdateOperationsInput = {
   set?: $Enums.AIAnalysisStatus
 }
@@ -535,10 +611,12 @@ export type AIAnalysisCreateWithoutStepInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  mediaFile?: Prisma.MediaFileCreateNestedOneWithoutAiAnalysesInput
 }
 
 export type AIAnalysisUncheckedCreateWithoutStepInput = {
   id?: string
+  mediaFileId?: string | null
   aiModel: string
   promptUsed: string
   rawResponse: string
@@ -577,10 +655,140 @@ export type AIAnalysisUpdateWithoutStepInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaFile?: Prisma.MediaFileUpdateOneWithoutAiAnalysesNestedInput
 }
 
 export type AIAnalysisUncheckedUpdateWithoutStepInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiModel?: Prisma.StringFieldUpdateOperationsInput | string
+  promptUsed?: Prisma.StringFieldUpdateOperationsInput | string
+  rawResponse?: Prisma.StringFieldUpdateOperationsInput | string
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type AIAnalysisCreateWithoutMediaFileInput = {
+  id?: string
+  aiModel: string
+  promptUsed: string
+  rawResponse: string
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  confidenceScore?: number | null
+  processingTimeMs: number
+  status?: $Enums.AIAnalysisStatus
+  errorMessage?: string | null
+  createdAt?: Date | string
+  step: Prisma.InspectionStepCreateNestedOneWithoutAiAnalysisInput
+}
+
+export type AIAnalysisUncheckedCreateWithoutMediaFileInput = {
+  id?: string
+  stepId: string
+  aiModel: string
+  promptUsed: string
+  rawResponse: string
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  confidenceScore?: number | null
+  processingTimeMs: number
+  status?: $Enums.AIAnalysisStatus
+  errorMessage?: string | null
+  createdAt?: Date | string
+}
+
+export type AIAnalysisCreateOrConnectWithoutMediaFileInput = {
+  where: Prisma.AIAnalysisWhereUniqueInput
+  create: Prisma.XOR<Prisma.AIAnalysisCreateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput>
+}
+
+export type AIAnalysisCreateManyMediaFileInputEnvelope = {
+  data: Prisma.AIAnalysisCreateManyMediaFileInput | Prisma.AIAnalysisCreateManyMediaFileInput[]
+  skipDuplicates?: boolean
+}
+
+export type AIAnalysisUpsertWithWhereUniqueWithoutMediaFileInput = {
+  where: Prisma.AIAnalysisWhereUniqueInput
+  update: Prisma.XOR<Prisma.AIAnalysisUpdateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedUpdateWithoutMediaFileInput>
+  create: Prisma.XOR<Prisma.AIAnalysisCreateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedCreateWithoutMediaFileInput>
+}
+
+export type AIAnalysisUpdateWithWhereUniqueWithoutMediaFileInput = {
+  where: Prisma.AIAnalysisWhereUniqueInput
+  data: Prisma.XOR<Prisma.AIAnalysisUpdateWithoutMediaFileInput, Prisma.AIAnalysisUncheckedUpdateWithoutMediaFileInput>
+}
+
+export type AIAnalysisUpdateManyWithWhereWithoutMediaFileInput = {
+  where: Prisma.AIAnalysisScalarWhereInput
+  data: Prisma.XOR<Prisma.AIAnalysisUpdateManyMutationInput, Prisma.AIAnalysisUncheckedUpdateManyWithoutMediaFileInput>
+}
+
+export type AIAnalysisScalarWhereInput = {
+  AND?: Prisma.AIAnalysisScalarWhereInput | Prisma.AIAnalysisScalarWhereInput[]
+  OR?: Prisma.AIAnalysisScalarWhereInput[]
+  NOT?: Prisma.AIAnalysisScalarWhereInput | Prisma.AIAnalysisScalarWhereInput[]
+  id?: Prisma.StringFilter<"AIAnalysis"> | string
+  stepId?: Prisma.StringFilter<"AIAnalysis"> | string
+  mediaFileId?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
+  aiModel?: Prisma.StringFilter<"AIAnalysis"> | string
+  promptUsed?: Prisma.StringFilter<"AIAnalysis"> | string
+  rawResponse?: Prisma.StringFilter<"AIAnalysis"> | string
+  structuredData?: Prisma.JsonNullableFilter<"AIAnalysis">
+  confidenceScore?: Prisma.FloatNullableFilter<"AIAnalysis"> | number | null
+  processingTimeMs?: Prisma.IntFilter<"AIAnalysis"> | number
+  status?: Prisma.EnumAIAnalysisStatusFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
+  errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
+}
+
+export type AIAnalysisCreateManyMediaFileInput = {
+  id?: string
+  stepId: string
+  aiModel: string
+  promptUsed: string
+  rawResponse: string
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  confidenceScore?: number | null
+  processingTimeMs: number
+  status?: $Enums.AIAnalysisStatus
+  errorMessage?: string | null
+  createdAt?: Date | string
+}
+
+export type AIAnalysisUpdateWithoutMediaFileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.StringFieldUpdateOperationsInput | string
+  promptUsed?: Prisma.StringFieldUpdateOperationsInput | string
+  rawResponse?: Prisma.StringFieldUpdateOperationsInput | string
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  step?: Prisma.InspectionStepUpdateOneRequiredWithoutAiAnalysisNestedInput
+}
+
+export type AIAnalysisUncheckedUpdateWithoutMediaFileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  stepId?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.StringFieldUpdateOperationsInput | string
+  promptUsed?: Prisma.StringFieldUpdateOperationsInput | string
+  rawResponse?: Prisma.StringFieldUpdateOperationsInput | string
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type AIAnalysisUncheckedUpdateManyWithoutMediaFileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  stepId?: Prisma.StringFieldUpdateOperationsInput | string
   aiModel?: Prisma.StringFieldUpdateOperationsInput | string
   promptUsed?: Prisma.StringFieldUpdateOperationsInput | string
   rawResponse?: Prisma.StringFieldUpdateOperationsInput | string
@@ -597,6 +805,7 @@ export type AIAnalysisUncheckedUpdateWithoutStepInput = {
 export type AIAnalysisSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   stepId?: boolean
+  mediaFileId?: boolean
   aiModel?: boolean
   promptUsed?: boolean
   rawResponse?: boolean
@@ -607,11 +816,13 @@ export type AIAnalysisSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   errorMessage?: boolean
   createdAt?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
+  mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }, ExtArgs["result"]["aIAnalysis"]>
 
 export type AIAnalysisSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   stepId?: boolean
+  mediaFileId?: boolean
   aiModel?: boolean
   promptUsed?: boolean
   rawResponse?: boolean
@@ -622,11 +833,13 @@ export type AIAnalysisSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   errorMessage?: boolean
   createdAt?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
+  mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }, ExtArgs["result"]["aIAnalysis"]>
 
 export type AIAnalysisSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   stepId?: boolean
+  mediaFileId?: boolean
   aiModel?: boolean
   promptUsed?: boolean
   rawResponse?: boolean
@@ -637,11 +850,13 @@ export type AIAnalysisSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   errorMessage?: boolean
   createdAt?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
+  mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }, ExtArgs["result"]["aIAnalysis"]>
 
 export type AIAnalysisSelectScalar = {
   id?: boolean
   stepId?: boolean
+  mediaFileId?: boolean
   aiModel?: boolean
   promptUsed?: boolean
   rawResponse?: boolean
@@ -653,25 +868,30 @@ export type AIAnalysisSelectScalar = {
   createdAt?: boolean
 }
 
-export type AIAnalysisOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "aiModel" | "promptUsed" | "rawResponse" | "structuredData" | "confidenceScore" | "processingTimeMs" | "status" | "errorMessage" | "createdAt", ExtArgs["result"]["aIAnalysis"]>
+export type AIAnalysisOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "mediaFileId" | "aiModel" | "promptUsed" | "rawResponse" | "structuredData" | "confidenceScore" | "processingTimeMs" | "status" | "errorMessage" | "createdAt", ExtArgs["result"]["aIAnalysis"]>
 export type AIAnalysisInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
+  mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }
 export type AIAnalysisIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
+  mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }
 export type AIAnalysisIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
+  mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }
 
 export type $AIAnalysisPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AIAnalysis"
   objects: {
     step: Prisma.$InspectionStepPayload<ExtArgs>
+    mediaFile: Prisma.$MediaFilePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     stepId: string
+    mediaFileId: string | null
     aiModel: string
     promptUsed: string
     rawResponse: string
@@ -1076,6 +1296,7 @@ readonly fields: AIAnalysisFieldRefs;
 export interface Prisma__AIAnalysisClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   step<T extends Prisma.InspectionStepDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InspectionStepDefaultArgs<ExtArgs>>): Prisma.Prisma__InspectionStepClient<runtime.Types.Result.GetResult<Prisma.$InspectionStepPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  mediaFile<T extends Prisma.AIAnalysis$mediaFileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AIAnalysis$mediaFileArgs<ExtArgs>>): Prisma.Prisma__MediaFileClient<runtime.Types.Result.GetResult<Prisma.$MediaFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1107,6 +1328,7 @@ export interface Prisma__AIAnalysisClient<T, Null = never, ExtArgs extends runti
 export interface AIAnalysisFieldRefs {
   readonly id: Prisma.FieldRef<"AIAnalysis", 'String'>
   readonly stepId: Prisma.FieldRef<"AIAnalysis", 'String'>
+  readonly mediaFileId: Prisma.FieldRef<"AIAnalysis", 'String'>
   readonly aiModel: Prisma.FieldRef<"AIAnalysis", 'String'>
   readonly promptUsed: Prisma.FieldRef<"AIAnalysis", 'String'>
   readonly rawResponse: Prisma.FieldRef<"AIAnalysis", 'String'>
@@ -1514,6 +1736,25 @@ export type AIAnalysisDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Limit how many AIAnalyses to delete.
    */
   limit?: number
+}
+
+/**
+ * AIAnalysis.mediaFile
+ */
+export type AIAnalysis$mediaFileArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MediaFile
+   */
+  select?: Prisma.MediaFileSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MediaFile
+   */
+  omit?: Prisma.MediaFileOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MediaFileInclude<ExtArgs> | null
+  where?: Prisma.MediaFileWhereInput
 }
 
 /**

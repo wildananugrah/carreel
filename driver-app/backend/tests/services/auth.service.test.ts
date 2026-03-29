@@ -53,7 +53,10 @@ describe("AuthService", () => {
         users.set(user.id, user);
         return user;
       },
-      update: async (id: string, data: { fullName?: string; email?: string }) => {
+      update: async (
+        id: string,
+        data: { fullName?: string; email?: string },
+      ) => {
         const user = users.get(id);
         if (!user) throw new Error("User not found");
         const updated = { ...user, ...data, updatedAt: new Date() };

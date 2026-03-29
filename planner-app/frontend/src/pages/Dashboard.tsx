@@ -38,26 +38,29 @@ export function Dashboard() {
       {/* Search */}
       <DashboardSearchBar value={search} onChange={setSearch} />
 
-      {/* KPI Row */}
-      {data && <KPIRow kpis={data.kpis} onTabChange={setActiveTab} />}
+      {!selected && (
+        <>
+          {/* KPI Row */}
+          {data && <KPIRow kpis={data.kpis} onTabChange={setActiveTab} />}
 
-      {/* Tab Bar */}
-      <DashboardTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+          {/* Tab Bar */}
+          <DashboardTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Alert Banners */}
-      {data && data.alertBanners.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {data.alertBanners.map((banner) => (
-            <AlertBannerCard key={banner.type} banner={banner} />
-          ))}
-        </div>
+          {/* Alert Banners */}
+          {data && data.alertBanners.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {data.alertBanners.map((banner) => (
+                <AlertBannerCard key={banner.type} banner={banner} />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Detail Panel */}
-      {selected && <VehicleDetailPanel vehicle={selected} onClose={() => setSelected(null)} />}
-
-      {/* Vehicle Cards */}
-      {loading ? (
+      {/* Detail Panel (replaces card list when open) */}
+      {selected ? (
+        <VehicleDetailPanel vehicle={selected} onClose={() => setSelected(null)} />
+      ) : loading ? (
         <Spinner className="mt-4" />
       ) : !data ? (
         <p className="text-center text-neutral-500 mt-8">Failed to load dashboard</p>
@@ -69,7 +72,7 @@ export function Dashboard() {
             <VehicleCard
               key={vehicle.unitId}
               vehicle={vehicle}
-              selected={selected?.unitId === vehicle.unitId}
+              selected={false}
               onSelect={setSelected}
             />
           ))}

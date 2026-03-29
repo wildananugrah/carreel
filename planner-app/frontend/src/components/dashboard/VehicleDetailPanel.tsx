@@ -90,6 +90,8 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
 
   const fetchDetails = useCallback(async () => {
     setLoading(true);
+    setPreDetail(null);
+    setPostDetail(null);
     try {
       const fetches: Promise<void>[] = [];
       if (vehicle.preTrip?.inspectionId) {

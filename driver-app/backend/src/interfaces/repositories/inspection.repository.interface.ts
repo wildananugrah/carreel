@@ -100,6 +100,7 @@ export interface IInspectionRepository {
     model?: string | null;
     color?: string | null;
     vin?: string | null;
+    type?: string | null;
   }): Promise<Unit>;
   linkUnitToInspection(inspectionId: string, unitId: string): Promise<void>;
 }
