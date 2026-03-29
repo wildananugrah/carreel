@@ -71,6 +71,17 @@ function extractUnitInfo(
   return { make, model, year, licensePlate, odometerKm };
 }
 
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function extractAIFlags(inspection: InspectionDetail): AIFlag[] {
   const bodyStep = inspection.steps.find((s) => s.stepType === "BODY_INSPECTION");
   const data = bodyStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
@@ -151,6 +162,9 @@ export function VideoReview() {
         }
       }
     } catch (err) {
+      // Ignore abort errors (iOS suspends fetches when camera is active)
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      if (err instanceof TypeError && /aborted|abort|network/i.test(err.message)) return;
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
       setLoading(false);
@@ -202,9 +216,16 @@ export function VideoReview() {
   }, [inspection, unitData]);
 
   // Poll for AI results (photos + body video) while any step is still processing
+  // Pause polling when camera/recorder is active (iOS suspends background fetches)
+  const cameraActive =
+    recorderStatus === "requesting" ||
+    recorderStatus === "previewing" ||
+    recorderStatus === "recording";
+
   useEffect(() => {
     if (!inspection) return;
     if (inspection.status !== "DRAFT") return;
+    if (cameraActive) return;
 
     const hasProcessingStep = inspection.steps.some(
       (s) => s.status === "PROCESSING" || s.status === "UPLOADED",
@@ -217,7 +238,7 @@ export function VideoReview() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [inspection, fetchDetail]);
+  }, [inspection, fetchDetail, cameraActive]);
 
   const bodyStep = inspection?.steps.find((s) => s.stepType === "BODY_INSPECTION");
   const hasMedia = bodyStep && bodyStep.mediaFiles.length > 0;
@@ -407,9 +428,167 @@ export function VideoReview() {
           </div>
         </div>
 
+        {/* Unit Info — always visible so AI Phase 1 results can auto-fill */}
+        <div className="px-4 py-4">
+          <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
+            <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+              {"\uD83D\uDE98"}{" "}
+              {photoStepsProcessing
+                ? "AI Analyzing... \u00B7 "
+                : hasAIData
+                  ? "AI Detected \u00B7 "
+                  : ""}
+              Unit Info
+            </p>
+            {photoStepsProcessing && (
+              <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3 mb-3">
+                <svg
+                  aria-hidden="true"
+                  className="animate-spin w-4 h-4 text-[#F5C842] shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-white">Mengekstrak data kendaraan...</p>
+                  <p className="text-[10px] text-neutral-500">
+                    Merk, tipe, plat, dan odometer akan terisi otomatis
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Merk & Tipe</p>
+                <input
+                  type="text"
+                  value={
+                    unitForm.make || unitForm.model
+                      ? [unitForm.make, unitForm.model].filter(Boolean).join(" ")
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const parts = val.split(" ");
+                    setUnitForm((prev) => ({
+                      ...prev,
+                      make: parts[0] || "",
+                      model: parts.slice(1).join(" ") || "",
+                    }));
+                  }}
+                  placeholder="cth. Toyota Avanza"
+                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
+                />
+              </div>
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Tahun</p>
+                <input
+                  type="text"
+                  value={unitForm.year}
+                  onChange={(e) => setUnitForm((prev) => ({ ...prev, year: e.target.value }))}
+                  placeholder="cth. 2022"
+                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
+                />
+              </div>
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Nomer Plat</p>
+                <input
+                  type="text"
+                  value={unitForm.licensePlate}
+                  onChange={(e) =>
+                    setUnitForm((prev) => ({
+                      ...prev,
+                      licensePlate: e.target.value.toUpperCase(),
+                    }))
+                  }
+                  placeholder="cth. B 1234 ABC"
+                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
+                />
+              </div>
+              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                <p className="text-[9px] text-neutral-500 mb-0.5">Odometer</p>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={unitForm.odometerKm}
+                    onChange={(e) =>
+                      setUnitForm((prev) => ({
+                        ...prev,
+                        odometerKm: e.target.value,
+                      }))
+                    }
+                    placeholder="0"
+                    className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-600 italic mt-3">
+              {photoStepsProcessing
+                ? "Sedang dianalisa AI... hasil akan muncul otomatis"
+                : hasAIData
+                  ? "Terdeteksi otomatis \u2014 bisa disesuaikan manual"
+                  : "Silakan isi manual atau tunggu hasil analisa AI"}
+            </p>
+          </div>
+        </div>
+
+        {/* Instruction card — always visible above video section */}
+        <div className="px-4 pb-4">
+          <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-yellow-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
+                    1
+                  </span>
+                  <span className="text-xs text-[#F5C842] uppercase font-bold tracking-wider">
+                    Video Inspeksi
+                  </span>
+                </div>
+                <p className="text-sm text-white leading-snug">
+                  Silahkan ambil rekaman{" "}
+                  <span className="font-bold text-[#F5C842]">seluruh bodi</span> secara perlahan.
+                  Jangan terburu-buru agar AI bisa mendeteksi setiap sudut dengan maksimal.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Video section - uploaded state */}
         {hasMedia && (
-          <div className="px-4 py-4">
+          <div className="px-4 pb-4">
             <StepCard
               step={bodyStep}
               inspectionStatus={inspection.status}
@@ -612,168 +791,9 @@ export function VideoReview() {
           </div>
         )}
 
-        {/* Unit Info — always visible so AI Phase 1 results can auto-fill */}
-        <div className="px-4 pb-4">
-          <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
-            <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
-              {"\uD83D\uDE98"}{" "}
-              {hasAIData
-                ? "AI Detected \u00B7 "
-                : photoStepsProcessing
-                  ? "AI Analyzing... \u00B7 "
-                  : ""}
-              Unit Info
-            </p>
-            {photoStepsProcessing && !hasAIData && (
-              <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3 mb-3">
-                <svg
-                  aria-hidden="true"
-                  className="animate-spin w-4 h-4 text-[#F5C842] shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <div>
-                  <p className="text-xs font-bold text-white">Mengekstrak data kendaraan...</p>
-                  <p className="text-[10px] text-neutral-500">
-                    Merk, tipe, plat, dan odometer akan terisi otomatis
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                <p className="text-[9px] text-neutral-500 mb-0.5">Merk & Tipe</p>
-                <input
-                  type="text"
-                  value={
-                    unitForm.make || unitForm.model
-                      ? [unitForm.make, unitForm.model].filter(Boolean).join(" ")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const parts = val.split(" ");
-                    setUnitForm((prev) => ({
-                      ...prev,
-                      make: parts[0] || "",
-                      model: parts.slice(1).join(" ") || "",
-                    }));
-                  }}
-                  placeholder="cth. Toyota Avanza"
-                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                />
-              </div>
-              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                <p className="text-[9px] text-neutral-500 mb-0.5">Tahun</p>
-                <input
-                  type="text"
-                  value={unitForm.year}
-                  onChange={(e) => setUnitForm((prev) => ({ ...prev, year: e.target.value }))}
-                  placeholder="cth. 2022"
-                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                />
-              </div>
-              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                <p className="text-[9px] text-neutral-500 mb-0.5">Nomer Plat</p>
-                <input
-                  type="text"
-                  value={unitForm.licensePlate}
-                  onChange={(e) =>
-                    setUnitForm((prev) => ({
-                      ...prev,
-                      licensePlate: e.target.value.toUpperCase(),
-                    }))
-                  }
-                  placeholder="cth. B 1234 ABC"
-                  className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                />
-              </div>
-              <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                <p className="text-[9px] text-neutral-500 mb-0.5">Odometer</p>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    value={unitForm.odometerKm}
-                    onChange={(e) =>
-                      setUnitForm((prev) => ({
-                        ...prev,
-                        odometerKm: e.target.value,
-                      }))
-                    }
-                    placeholder="0"
-                    className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
-                </div>
-              </div>
-            </div>
-            <p className="text-[10px] text-neutral-600 italic mt-3">
-              {hasAIData
-                ? "Terdeteksi otomatis \u2014 bisa disesuaikan manual"
-                : photoStepsProcessing
-                  ? "Sedang dianalisa AI... hasil akan muncul otomatis"
-                  : "Silakan isi manual atau tunggu hasil analisa AI"}
-            </p>
-          </div>
-        </div>
-
         {/* === Sections shown AFTER video upload === */}
         {hasMedia && (
           <>
-            {/* Instruction card */}
-            <div className="px-4 pb-4">
-              <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
-                    <svg
-                      aria-hidden="true"
-                      className="w-5 h-5 text-yellow-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
-                        1
-                      </span>
-                      <span className="text-xs text-[#F5C842] uppercase font-bold tracking-wider">
-                        Video Inspeksi
-                      </span>
-                    </div>
-                    <p className="text-sm text-white leading-snug">
-                      Silahkan ambil rekaman{" "}
-                      <span className="font-bold text-[#F5C842]">seluruh bodi</span> secara
-                      perlahan. Jangan terburu-buru agar AI bisa mendeteksi setiap sudut dengan
-                      maksimal.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* AI Flagged section — always shown after upload */}
             <div className="px-4 pb-4">
               <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
@@ -934,6 +954,20 @@ export function VideoReview() {
                 </div>
               )}
             </div>
+
+            {/* Submit timestamp */}
+            {inspection.completedAt && (
+              <div className="px-4 pb-4">
+                <div className="bg-[#141414] rounded-lg p-2.5 text-center">
+                  <p className="text-[11px] font-bold text-[#F5C842]">
+                    {"\u2705"} {isPostTrip ? "Post-Check" : "Pre-Check"} disubmit
+                  </p>
+                  <p className="text-[10px] text-[#555] mt-0.5">
+                    {formatDate(inspection.completedAt)}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Error */}
             {error && (

@@ -26,9 +26,11 @@ export interface StepAnalysisJobData {
   stepId: string;
   stepType: StepType;
   driverId: string;
+  tripType?: string;
 }
 
 const MAX_REASONABLE_KM_DELTA = 50000;
+const KM_TOLERANCE = Number(process.env.KM_TOLERANCE ?? 20);
 
 export class StepAnalysisJob {
   constructor(
@@ -43,7 +45,7 @@ export class StepAnalysisJob {
   ) {}
 
   async handle(data: StepAnalysisJobData): Promise<void> {
-    const { inspectionId, stepId, stepType, driverId } = data;
+    const { inspectionId, stepId, stepType, driverId, tripType } = data;
     const log = this.logger.child({
       jobName: "step-analysis",
       stepId,
@@ -198,7 +200,7 @@ export class StepAnalysisJob {
           result,
           unit,
         );
-        await this.generateSpeedometerAlerts(inspectionId, result, telemetry);
+        await this.generateSpeedometerAlerts(inspectionId, result, telemetry, tripType);
 
         // Vehicle identity mismatch alert
         if (result.vehicleMismatchDetected) {
@@ -351,13 +353,27 @@ export class StepAnalysisJob {
   private async generateSpeedometerAlerts(
     inspectionId: string,
     result: SpeedometerResult,
-    telemetry: { kmReasonable?: boolean; fuelLevelPct?: number },
+    telemetry: { kmReasonable?: boolean; kmDelta?: number; fuelLevelPct?: number },
+    tripType?: string,
   ): Promise<void> {
     if (telemetry.kmReasonable === false) {
       await this.createAlert(
         inspectionId,
         "KM_ANOMALY",
         "Odometer reading is unreasonable compared to previous record",
+      );
+    }
+
+    // Post-trip tolerance check: flag if KM delta exceeds configurable tolerance
+    if (
+      tripType === "POST_TRIP" &&
+      telemetry.kmDelta != null &&
+      telemetry.kmDelta > KM_TOLERANCE
+    ) {
+      await this.createAlert(
+        inspectionId,
+        "KM_ANOMALY",
+        `Odometer delta (${telemetry.kmDelta} KM) exceeds tolerance of ${KM_TOLERANCE} KM`,
       );
     }
 

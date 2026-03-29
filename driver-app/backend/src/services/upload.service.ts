@@ -40,6 +40,12 @@ export class UploadService implements IUploadService {
       throw new Error("Step not found");
     }
 
+    // Unit Identification and Speedometer only accept images
+    const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
+    if (IMAGE_ONLY_STEPS.includes(step.stepType) && meta.mimeType.startsWith("video/")) {
+      throw new Error(`${step.stepType} only accepts image uploads, not video`);
+    }
+
     // Generate MinIO key
     const ext = meta.fileName.split(".").pop() ?? "bin";
     const key = `inspections/${inspectionId}/${step.stepType}/${randomUUID()}.${ext}`;

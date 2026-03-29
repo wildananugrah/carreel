@@ -234,6 +234,7 @@ export class InspectionService implements IInspectionService {
           stepId: step.id,
           stepType: step.stepType,
           driverId,
+          tripType: inspection.tripType,
         });
       }
       this.logger.info("Enqueued step analysis jobs", {
@@ -281,6 +282,7 @@ export class InspectionService implements IInspectionService {
         stepId: step.id,
         stepType: step.stepType,
         driverId,
+        tripType: inspection.tripType,
       });
       enqueuedSteps.push(step.stepType);
     }

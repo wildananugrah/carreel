@@ -124,21 +124,30 @@ function buildVehicleIdentityPrompt(vehicle: VehicleContext): string {
   const expectedVehicle = parts.join(" ");
 
   return `
-[STRICT VEHICLE IDENTITY MATCHING PROTOCOL]
+[STRICT VEHICLE IDENTITY MATCHING PROTOCOL — EXACT MATCH REQUIRED]
 EXPECTED VEHICLE: ${expectedVehicle}
 
-STEP 1 — FORCED VISUAL EXTRACTION (DO THIS FIRST):
-Before looking at the EXPECTED VEHICLE, you MUST internally identify the defining characteristics of the uploaded dashboard:
-- For Analog Dashboards: Analyze the gauge layout (number of dials), illumination color, font style, and the exact placement of the small digital Odometer screen.
-- For Digital/EV Dashboards: Analyze the software UI/UX design. Look at the typography (font), the layout of the digital speed numbers, the design of the battery/power indicator, and the presence of any digital car avatar or 3D graphic on the screen.
+This is a critical anti-fraud check. The dashboard in this photo MUST belong to the EXPECTED VEHICLE listed above. Any mismatch means a driver may be submitting a photo from a different vehicle.
 
-STEP 2 — THE CROSS-EXAMINATION:
-Compare the exact visual footprint extracted in Step 1 against the known factory design (both physical structure and software UI) of the EXPECTED VEHICLE.
+STEP 1 — FORCED VISUAL EXTRACTION (DO THIS FIRST):
+Before looking at the EXPECTED VEHICLE, you MUST internally identify the dashboard's manufacturer and model:
+- For Analog Dashboards: Analyze the gauge layout (number of dials, their arrangement), illumination color, font style, needle design, and the exact placement and style of the digital Odometer screen. Identify which manufacturer and model family this dashboard belongs to.
+- For Digital/EV Dashboards: Analyze the software UI/UX design. Look at the typography (font), the layout of the digital speed numbers, the design of the battery/power indicator, the presence of any digital car avatar or 3D graphic, and any manufacturer logos or branding visible on the screen. Identify which manufacturer and model this digital dashboard belongs to.
+
+STEP 2 — EXACT MANUFACTURER AND MODEL CROSS-CHECK:
+Compare the dashboard identified in Step 1 against the EXPECTED VEHICLE:
+- The dashboard MUST belong to the same manufacturer (brand). A Toyota dashboard cannot pass for a Honda, a Wuling dashboard cannot pass for a Hyundai, etc.
+- The dashboard MUST be from the same model family. A Wuling Air EV dashboard cannot pass for a Wuling Almaz, a Toyota Avanza dashboard cannot pass for a Toyota Fortuner, etc.
+- Pay special attention to: manufacturer-specific UI themes, brand logos on the dashboard/screen, unique gauge designs, digital display layouts, and EV-specific power/battery indicators.
 
 STEP 3 — THE STRICT VERDICT:
-- REJECT: If the dashboard design (whether physical dials or digital UI) clearly belongs to a completely different manufacturer, or a blatantly different generation/model than the EXPECTED VEHICLE, set vehicleMismatchDetected to true.
-- DO NOT USE trim variations as an excuse to pass completely different dashboard or software architectures.
-- PASS: ONLY if the visual layout perfectly aligns or is reasonably consistent with the EXPECTED VEHICLE, set vehicleMismatchDetected to false.
+- REJECT (vehicleMismatchDetected = true): If the dashboard belongs to a DIFFERENT manufacturer OR a clearly different model than the EXPECTED VEHICLE. This includes:
+  - Different brand entirely (e.g., Wuling dashboard on a Toyota vehicle)
+  - Different model family (e.g., sedan dashboard on an SUV, or different generation)
+  - Dashboard UI/software that does not match the EXPECTED VEHICLE's known factory dashboard
+- PASS (vehicleMismatchDetected = false): ONLY if the dashboard design is an exact or near-exact match for the EXPECTED VEHICLE's factory dashboard. Minor trim-level differences within the same model are acceptable (e.g., different trim of the same car model).
+
+DO NOT give the benefit of the doubt. When uncertain, set vehicleMismatchDetected to true.
 `;
 }
 

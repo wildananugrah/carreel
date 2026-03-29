@@ -361,10 +361,6 @@ function CheckTab({
         </div>
       )}
 
-      {/* Fuel bar */}
-      {vehicle.latestFuelLevelPct != null && (
-        <FuelBar pct={vehicle.latestFuelLevelPct} label="BBM" />
-      )}
     </>
   );
 }
@@ -454,6 +450,11 @@ function TripColumn({
         <p className="text-[10px] font-bold text-[#aaa]">KM {formatKm(speedoAI?.odometerKm)}</p>
       </div>
 
+      {/* BBM */}
+      {speedoAI?.fuelLevelPct != null && (
+        <FuelBar pct={speedoAI.fuelLevelPct} label={`BBM (${label}-Check)`} />
+      )}
+
       {/* Timestamp */}
       <p className="text-[10px] text-[#666] mt-2">
         {formatDate(detail.completedAt ?? detail.startedAt)}
@@ -471,7 +472,7 @@ function TripColumn({
               style={{ background: "#141200", border: `1px solid ${accentColor}22` }}
             >
               <p className="text-[10px] font-bold" style={{ color: accentColor }}>
-                \u2705 {label}-Check disubmit
+                {"\u2705"} {label}-Check disubmit
               </p>
               <p className="text-[10px] text-[#666]">{formatDate(detail.completedAt)}</p>
             </div>

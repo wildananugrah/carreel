@@ -56,6 +56,12 @@ export class ChunkedUploadService implements IChunkedUploadService {
       throw new Error("Step not found");
     }
 
+    // Unit Identification and Speedometer only accept images
+    const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
+    if (IMAGE_ONLY_STEPS.includes(step.stepType)) {
+      throw new Error(`${step.stepType} only accepts image uploads, not video`);
+    }
+
     // Generate MinIO key
     const ext = dto.fileName.split(".").pop() ?? "bin";
     const key = `inspections/${dto.inspectionId}/${step.stepType}/${randomUUID()}.${ext}`;

@@ -7,7 +7,7 @@ import { StatusBadge } from "../ui/StatusBadge";
 
 const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
-const IMAGE_ONLY_STEPS = ["SPEEDOMETER"];
+const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
 
 interface StepCardProps {
   step: InspectionStep;

@@ -198,10 +198,7 @@ export class InspectionRepository implements IInspectionRepository {
   ): Promise<Inspection> {
     return this.prisma.inspection.update({
       where: { id },
-      data: {
-        status,
-        ...(status === "PENDING_AI" ? { completedAt: new Date() } : {}),
-      },
+      data: { status },
     });
   }
 
@@ -258,7 +255,7 @@ export class InspectionRepository implements IInspectionRepository {
   ): Promise<void> {
     await this.prisma.inspection.update({
       where: { id },
-      data: { signatureKey, signerName },
+      data: { signatureKey, signerName, completedAt: new Date() },
     });
   }
 

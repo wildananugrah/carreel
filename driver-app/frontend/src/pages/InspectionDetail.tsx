@@ -7,6 +7,8 @@ import type { InspectionDetail as InspectionDetailType } from "../lib/types";
 
 type Tab = "pre" | "post" | "ai-alert";
 
+const KM_TOLERANCE = Number(import.meta.env.VITE_KM_TOLERANCE ?? 20);
+
 interface DamageFlag {
   damageType: string;
   severity: string;
@@ -114,6 +116,21 @@ function damageLabel(type: string): string {
   return map[type] ?? type;
 }
 
+function getDraftRedirect(inspection: InspectionDetailType): string | null {
+  if (inspection.status !== "DRAFT") return null;
+
+  const photoStepTypes =
+    inspection.tripType === "PRE_TRIP" ? ["UNIT_IDENTIFICATION", "SPEEDOMETER"] : ["SPEEDOMETER"];
+
+  const allPhotosDone = photoStepTypes.every((type) => {
+    const step = inspection.steps.find((s) => s.stepType === type);
+    return step && step.status !== "PENDING";
+  });
+
+  if (!allPhotosDone) return `/inspections/${inspection.id}/photos`;
+  return `/inspections/${inspection.id}/video`;
+}
+
 export function InspectionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -167,6 +184,15 @@ export function InspectionDetail() {
 
     return () => clearInterval(interval);
   }, [inspection, fetchDetail]);
+
+  // Auto-redirect DRAFT inspections into the wizard flow
+  useEffect(() => {
+    if (!inspection) return;
+    const redirect = getDraftRedirect(inspection);
+    if (redirect) {
+      navigate(redirect, { replace: true });
+    }
+  }, [inspection, navigate]);
 
   async function handleEndTrip() {
     if (!id) return;
@@ -617,6 +643,17 @@ function AIAlertPanel({
       {kmDelta != null && (
         <div className="bg-[#141414] rounded-lg p-2 text-center mb-4">
           <p className="text-[11px] text-[#C0C0C0]">+{formatKm(kmDelta)} KM selama penggunaan</p>
+        </div>
+      )}
+
+      {kmDelta != null && kmDelta > KM_TOLERANCE && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-center mb-4">
+          <p className="text-[11px] font-bold text-red-400">
+            {"\u26A0\uFE0F"} KM delta melebihi toleransi ({KM_TOLERANCE} KM)
+          </p>
+          <p className="text-[10px] text-red-400/70 mt-0.5">
+            Perbedaan odometer pre dan post trip terlalu besar
+          </p>
         </div>
       )}
 
