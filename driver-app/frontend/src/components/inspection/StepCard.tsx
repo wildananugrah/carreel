@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../../lib/api";
 import type { InspectionStep } from "../../lib/types";
@@ -66,6 +66,124 @@ function StepIcon({ stepType }: { stepType: string }) {
   );
 }
 
+/* ─── Full-screen camera overlay for capturing photos with rear camera ─── */
+function CameraOverlay({
+  onCapture,
+  onClose,
+}: {
+  onCapture: (file: File) => void;
+  onClose: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [ready, setReady] = useState(false);
+  const [err, setErr] = useState("");
+
+  const stopStream = useCallback(() => {
+    if (streamRef.current) {
+      for (const track of streamRef.current.getTracks()) track.stop();
+      streamRef.current = null;
+    }
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.muted = true;
+        await videoRef.current.play();
+      }
+      setReady(true);
+    } catch {
+      setErr("Gagal membuka kamera. Mohon izinkan akses kamera.");
+    }
+  }, []);
+
+  // Start camera on mount, cleanup on unmount
+  const initialized = useRef(false);
+  if (!initialized.current) {
+    initialized.current = true;
+    // Use setTimeout to avoid calling setState during render
+    setTimeout(() => startCamera(), 0);
+  }
+
+  const handleCapture = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+        stopStream();
+        onCapture(file);
+      },
+      "image/jpeg",
+      0.9,
+    );
+  }, [stopStream, onCapture]);
+
+  const handleClose = useCallback(() => {
+    stopStream();
+    onClose();
+  }, [stopStream, onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {/* Camera preview */}
+      <div className="flex-1 relative overflow-hidden">
+        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+        {!ready && !err && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full" />
+          </div>
+        )}
+        {err && (
+          <div className="absolute inset-0 flex items-center justify-center px-8">
+            <p className="text-red-400 text-sm text-center">{err}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="bg-black px-6 py-5 flex items-center justify-between">
+        <button type="button" onClick={handleClose} className="text-white text-sm px-4 py-2">
+          Batal
+        </button>
+        <button
+          type="button"
+          disabled={!ready}
+          onClick={handleCapture}
+          className="w-16 h-16 rounded-full border-4 border-white bg-white/20 disabled:opacity-30 active:bg-white/40 transition-colors"
+          aria-label="Ambil foto"
+        />
+        <div className="w-16" />
+      </div>
+
+      {/* Hidden canvas for capture */}
+      <canvas ref={canvasRef} className="hidden" />
+    </div>,
+    document.body,
+  );
+}
+
 export function StepCard({
   step,
   inspectionStatus,
@@ -74,13 +192,13 @@ export function StepCard({
   readOnly,
 }: StepCardProps) {
   const uid = useId();
-  const cameraInputId = `${uid}-camera`;
   const fileInputId = `${uid}-file`;
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
 
   const hasMedia = step.mediaFiles.length > 0;
   const canUpload =
@@ -159,17 +277,7 @@ export function StepCard({
 
   return (
     <div className="relative border-2 border-dashed rounded-xl p-3 transition-all border-[#2a2a2a] bg-[#1a1a1a]">
-      {/* Hidden inputs — inline (not portal) so capture="environment" works on mobile */}
-      {allowCamera && (
-        <input
-          id={cameraInputId}
-          type="file"
-          accept={isImageOnly ? "image/*" : "video/*"}
-          capture="environment"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-      )}
+      {/* Hidden file input for Upload button */}
       {allowFile && (
         <input
           id={fileInputId}
@@ -177,6 +285,17 @@ export function StepCard({
           accept={isImageOnly ? "image/*" : "image/*,video/*"}
           onChange={handleFileChange}
           className="hidden"
+        />
+      )}
+
+      {/* Camera overlay — uses getUserMedia with facingMode: environment */}
+      {showCamera && (
+        <CameraOverlay
+          onCapture={(file) => {
+            setShowCamera(false);
+            handleFile(file);
+          }}
+          onClose={() => setShowCamera(false)}
         />
       )}
 
@@ -289,8 +408,9 @@ export function StepCard({
                 </label>
               )}
               {allowCamera && (
-                <label
-                  htmlFor={cameraInputId}
+                <button
+                  type="button"
+                  onClick={() => setShowCamera(true)}
                   className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors cursor-pointer"
                 >
                   <svg
@@ -304,11 +424,17 @@ export function StepCard({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  Record
-                </label>
+                  Camera
+                </button>
               )}
             </div>
           ) : (
