@@ -28,6 +28,7 @@ export function PhotoCapture() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [navigating, setNavigating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -204,7 +205,7 @@ export function PhotoCapture() {
       </div>
 
       {/* Bottom action */}
-      <div className="px-4 py-4 border-t border-[#2a2a2a] bg-[#0f0f0f]">
+      <div className="px-4 py-4 border-t border-[#2a2a2a] bg-[#0f0f0f] space-y-3">
         <Button
           className="w-full"
           disabled={!allDone || navigating}
@@ -222,6 +223,24 @@ export function PhotoCapture() {
         >
           Selanjutnya
         </Button>
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={async () => {
+            if (!id || !confirm("Hapus inspeksi ini?")) return;
+            setDeleting(true);
+            try {
+              await api.del(`/api/inspections/${id}`);
+              navigate("/", { replace: true });
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Gagal menghapus");
+              setDeleting(false);
+            }
+          }}
+          className="w-full py-3 rounded-xl bg-red-600/10 text-red-400 text-sm font-bold border border-red-600/20 disabled:opacity-40"
+        >
+          {deleting ? "Menghapus..." : "Hapus Inspeksi"}
+        </button>
       </div>
     </div>
   );

@@ -2,11 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
 import { StepCard } from "../components/inspection/StepCard";
-import { VideoGuidanceOverlay } from "../components/inspection/VideoGuidanceOverlay";
+import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
 import { TopBar } from "../components/layout/TopBar";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
-import { useVideoRecorder } from "../hooks/useVideoRecorder";
 import { api } from "../lib/api";
 import type { InspectionDetail } from "../lib/types";
 
@@ -119,6 +118,7 @@ export function VideoReview() {
   const [showSignature, setShowSignature] = useState(false);
   const [sigSaved, setSigSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
@@ -127,21 +127,7 @@ export function VideoReview() {
 
   const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
   const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
-
-  const {
-    status: recorderStatus,
-    error: recorderError,
-    elapsedSeconds,
-    canStop,
-    videoRef,
-    recordedBlob,
-    recordedUrl,
-    startCamera,
-    startRecording,
-    stopRecording,
-    retake,
-    cleanup,
-  } = useVideoRecorder({ minDuration: MIN_DURATION, maxDuration: MAX_DURATION });
+  const [showRecorder, setShowRecorder] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -189,10 +175,6 @@ export function VideoReview() {
     }
   }, []);
 
-  useEffect(() => {
-    return () => cleanup();
-  }, [cleanup]);
-
   // Auto-hide toast
   useEffect(() => {
     if (!toast) return;
@@ -217,15 +199,10 @@ export function VideoReview() {
 
   // Poll for AI results (photos + body video) while any step is still processing
   // Pause polling when camera/recorder is active (iOS suspends background fetches)
-  const cameraActive =
-    recorderStatus === "requesting" ||
-    recorderStatus === "previewing" ||
-    recorderStatus === "recording";
-
   useEffect(() => {
     if (!inspection) return;
     if (inspection.status !== "DRAFT") return;
-    if (cameraActive) return;
+    if (showRecorder) return;
 
     const hasProcessingStep = inspection.steps.some(
       (s) => s.status === "PROCESSING" || s.status === "UPLOADED",
@@ -238,7 +215,7 @@ export function VideoReview() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [inspection, fetchDetail, cameraActive]);
+  }, [inspection, fetchDetail, showRecorder]);
 
   const bodyStep = inspection?.steps.find((s) => s.stepType === "BODY_INSPECTION");
   const hasMedia = bodyStep && bodyStep.mediaFiles.length > 0;
@@ -259,16 +236,17 @@ export function VideoReview() {
       ? [unitData.make, unitData.model].filter(Boolean).join(" ")
       : "Unit";
 
-  async function handleUpload() {
-    if (!recordedBlob || !id || !bodyStep) return;
+  async function handleRecordedVideo(blob: Blob, durationSeconds: number) {
+    if (!id || !bodyStep) return;
+    setShowRecorder(false);
     setUploading(true);
     setUploadProgress(0);
     setError("");
     try {
       const controller = new AbortController();
       abortRef.current = controller;
-      const file = new File([recordedBlob], `body-inspection-${Date.now()}.webm`, {
-        type: recordedBlob.type,
+      const file = new File([blob], `body-inspection-${Date.now()}.webm`, {
+        type: blob.type,
       });
       await api.uploadChunked(
         id,
@@ -276,7 +254,7 @@ export function VideoReview() {
         file,
         {
           capturedAt: new Date().toISOString(),
-          durationSeconds: elapsedSeconds,
+          durationSeconds,
           latitude: location?.latitude,
           longitude: location?.longitude,
         },
@@ -616,11 +594,10 @@ export function VideoReview() {
         {/* Video section - recording flow (not yet uploaded) */}
         {!hasMedia && (
           <div className="px-4 pt-4">
-            {/* Recorder error */}
-            {(recorderError || error) && (
+            {error && (
               <div className="mb-4">
                 <div className="bg-red-500/10 text-red-400 text-sm px-4 py-3 rounded-lg">
-                  {recorderError || error}
+                  {error}
                 </div>
               </div>
             )}
@@ -635,9 +612,8 @@ export function VideoReview() {
               />
             )}
 
-            {recorderStatus === "idle" && (
+            {!uploading && (
               <div className="space-y-4">
-                {/* Video upload box matching mockup */}
                 <div className="rounded-xl border-2 border-dashed border-[#3a2800] bg-[#141414] p-5 flex flex-col items-center gap-3">
                   <svg
                     aria-hidden="true"
@@ -668,7 +644,7 @@ export function VideoReview() {
                     {allowCamera && (
                       <button
                         type="button"
-                        onClick={startCamera}
+                        onClick={() => setShowRecorder(true)}
                         className="text-xs text-[#F5C842] bg-[#1a1a1a] border border-[#3a2800] px-3 py-1.5 rounded-lg"
                       >
                         Buka Kamera
@@ -676,78 +652,6 @@ export function VideoReview() {
                     )}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {recorderStatus === "requesting" && (
-              <div className="flex items-center justify-center py-20">
-                <Spinner />
-              </div>
-            )}
-
-            {recorderStatus === "previewing" && (
-              <div className="space-y-4">
-                <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <Button className="w-full" onClick={startRecording}>
-                  Mulai Rekam
-                </Button>
-              </div>
-            )}
-
-            {recorderStatus === "recording" && (
-              <div className="space-y-4">
-                <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                  <VideoGuidanceOverlay
-                    elapsedSeconds={elapsedSeconds}
-                    maxDuration={MAX_DURATION}
-                    minDuration={MIN_DURATION}
-                    isRecording
-                  />
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-white text-xs font-bold bg-black/50 px-2 py-0.5 rounded">
-                      REC
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  className="w-full"
-                  variant={canStop ? "primary" : "secondary"}
-                  disabled={!canStop}
-                  onClick={stopRecording}
-                >
-                  {canStop ? "Berhenti Rekam" : `Minimum ${MIN_DURATION}s`}
-                </Button>
-              </div>
-            )}
-
-            {recorderStatus === "stopped" && recordedUrl && !uploading && (
-              <div className="space-y-4">
-                <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-                  {/* biome-ignore lint/a11y/useMediaCaption: Recorded video preview */}
-                  <video src={recordedUrl} controls className="w-full h-full object-cover" />
-                </div>
-                <Button className="w-full" onClick={handleUpload}>
-                  Unggah Video
-                </Button>
-                <Button variant="secondary" className="w-full" onClick={retake}>
-                  Rekam Ulang
-                </Button>
               </div>
             )}
 
@@ -780,15 +684,17 @@ export function VideoReview() {
                 </Button>
               </div>
             )}
-
-            {recorderStatus === "error" && (
-              <div className="space-y-4">
-                <Button variant="secondary" className="w-full" onClick={startCamera}>
-                  Coba Lagi
-                </Button>
-              </div>
-            )}
           </div>
+        )}
+
+        {/* Full-screen video recorder overlay */}
+        {showRecorder && (
+          <VideoRecorderOverlay
+            minDuration={MIN_DURATION}
+            maxDuration={MAX_DURATION}
+            onCapture={handleRecordedVideo}
+            onClose={() => setShowRecorder(false)}
+          />
         )}
 
         {/* === Sections shown AFTER video upload === */}
@@ -979,7 +885,7 @@ export function VideoReview() {
             )}
 
             {/* Submit */}
-            <div className="px-4 pb-6">
+            <div className="px-4 pb-4">
               <Button
                 className="w-full"
                 disabled={!canSubmit}
@@ -990,6 +896,30 @@ export function VideoReview() {
               </Button>
             </div>
           </>
+        )}
+
+        {/* Delete — always visible for DRAFT inspections */}
+        {inspection.status === "DRAFT" && (
+          <div className="px-4 pb-6">
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={async () => {
+                if (!id || !confirm("Hapus inspeksi ini?")) return;
+                setDeleting(true);
+                try {
+                  await api.del(`/api/inspections/${id}`);
+                  navigate("/", { replace: true });
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Gagal menghapus");
+                  setDeleting(false);
+                }
+              }}
+              className="w-full py-3 rounded-xl bg-red-600/10 text-red-400 text-sm font-bold border border-red-600/20 disabled:opacity-40"
+            >
+              {deleting ? "Menghapus..." : "Hapus Inspeksi"}
+            </button>
+          </div>
         )}
       </div>
 
