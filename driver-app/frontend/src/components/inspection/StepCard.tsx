@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../../lib/api";
 import type { InspectionStep } from "../../lib/types";
@@ -73,8 +73,9 @@ export function StepCard({
   onUploadComplete,
   readOnly,
 }: StepCardProps) {
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uid = useId();
+  const cameraInputId = `${uid}-camera`;
+  const fileInputId = `${uid}-file`;
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -158,30 +159,25 @@ export function StepCard({
 
   return (
     <div className="relative border-2 border-dashed rounded-xl p-3 transition-all border-[#2a2a2a] bg-[#1a1a1a]">
-      {/* Hidden inputs via portal */}
-      {createPortal(
-        <>
-          {allowCamera && (
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept={isImageOnly ? "image/*" : "video/*"}
-              capture="environment"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          )}
-          {allowFile && (
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={isImageOnly ? "image/*" : "image/*,video/*"}
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          )}
-        </>,
-        document.body,
+      {/* Hidden inputs — inline (not portal) so capture="environment" works on mobile */}
+      {allowCamera && (
+        <input
+          id={cameraInputId}
+          type="file"
+          accept={isImageOnly ? "image/*" : "video/*"}
+          capture="environment"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      )}
+      {allowFile && (
+        <input
+          id={fileInputId}
+          type="file"
+          accept={isImageOnly ? "image/*" : "image/*,video/*"}
+          onChange={handleFileChange}
+          className="hidden"
+        />
       )}
 
       {hasMedia ? (
@@ -271,10 +267,9 @@ export function StepCard({
           ) : canUpload ? (
             <div className="flex items-center gap-1.5 w-full">
               {allowFile && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors"
+                <label
+                  htmlFor={fileInputId}
+                  className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors cursor-pointer"
                 >
                   <svg
                     aria-hidden="true"
@@ -291,13 +286,12 @@ export function StepCard({
                     />
                   </svg>
                   Upload
-                </button>
+                </label>
               )}
               {allowCamera && (
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors"
+                <label
+                  htmlFor={cameraInputId}
+                  className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors cursor-pointer"
                 >
                   <svg
                     aria-hidden="true"
@@ -314,7 +308,7 @@ export function StepCard({
                     />
                   </svg>
                   Record
-                </button>
+                </label>
               )}
             </div>
           ) : (
