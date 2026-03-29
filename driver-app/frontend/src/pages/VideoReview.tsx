@@ -9,8 +9,8 @@ import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
 import type { InspectionDetail } from "../lib/types";
 
-const MIN_DURATION = 30;
-const MAX_DURATION = 180;
+const MIN_DURATION = Number(import.meta.env.VITE_VIDEO_MIN_DURATION) || 30;
+const MAX_DURATION = Number(import.meta.env.VITE_VIDEO_MAX_DURATION) || 180;
 const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
 const COMMENT_CHIPS = ["Kondisi unit baik", "Ada baret minor", "Perlu dicek"];
