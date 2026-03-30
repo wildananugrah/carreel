@@ -89,6 +89,40 @@ function formatDate(dateStr: string | null): string {
   });
 }
 
+function damageLabel(type: string): string {
+  const map: Record<string, string> = {
+    // New Indonesian enum values
+    goresan: "Goresan",
+    transfer_cat: "Transfer Cat",
+    penyok: "Penyok",
+    kaca_retak: "Kaca Retak",
+    bagian_pecah: "Bagian Pecah",
+    panel_bengkok: "Panel Bengkok",
+    bagian_hilang: "Bagian Hilang",
+    // Legacy English values (backward compat)
+    deep_scratch: "Goresan Dalam",
+    light_scratch: "Goresan Ringan",
+    scratch: "Goresan",
+    paint_transfer: "Transfer Cat",
+    dent: "Penyok",
+    ding: "Penyok Kecil",
+    cracked_glass: "Kaca Retak",
+    shattered_glass: "Kaca Pecah",
+    broken_light: "Lampu Rusak",
+    broken_mirror: "Spion Rusak",
+    bent_panel: "Panel Bengkok",
+    paint_peeling: "Cat Mengelupas",
+    missing_part: "Bagian Hilang",
+    deformation: "Deformasi",
+    tire_damage: "Kerusakan Ban",
+    wheel_damage: "Kerusakan Velg",
+    rust: "Karat",
+    crack: "Retak",
+    other: "Lainnya",
+  };
+  return map[type] ?? type;
+}
+
 function extractAIFlags(inspection: InspectionDetail): AIFlag[] {
   const bodyStep = inspection.steps.find((s) => s.stepType === "BODY_INSPECTION");
   const data = bodyStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
@@ -96,8 +130,10 @@ function extractAIFlags(inspection: InspectionDetail): AIFlag[] {
   const damages = data.damages as Array<Record<string, unknown>> | undefined;
   if (!damages) return [];
   return damages.map((d) => ({
-    area: (d.area as string) || (d.damageType as string) || "Unknown",
-    description: (d.description as string) || "",
+    area: (d.damageType as string) || (d.area as string) || "Unknown",
+    description: (d.location as string)
+      ? `${d.location as string} — ${(d.description as string) || ""}`
+      : (d.description as string) || "",
     confidence: Number(d.confidence ?? d.confidenceScore ?? 0),
   }));
 }
@@ -758,7 +794,7 @@ export function VideoReview() {
                         >
                           <span className="text-lg shrink-0">{"\uD83D\uDE97"}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-white">{flag.area}</p>
+                            <p className="text-sm font-bold text-white">{damageLabel(flag.area)}</p>
                             <p className="text-xs text-neutral-400">{flag.description}</p>
                           </div>
                           <span className="text-sm font-bold text-white shrink-0">

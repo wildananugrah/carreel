@@ -112,6 +112,7 @@ export interface InspectionDetail {
   longitude: number | null;
   signatureKey: string | null;
   signerName: string | null;
+  signedAt: string | null;
   driverComment: string | null;
   createdAt: string;
   updatedAt: string;
@@ -189,6 +190,7 @@ export interface DashboardVehicleTripInfo {
   completedAt: string | null;
   hasSigned: boolean;
   signerName: string | null;
+  signedAt: string | null;
 }
 
 export interface DashboardVehicleCard {

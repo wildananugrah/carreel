@@ -163,6 +163,7 @@ export interface DashboardVehicleTripInfo {
   completedAt: string | null;
   hasSigned: boolean;
   signerName: string | null;
+  signedAt: string | null;
 }
 
 export interface DashboardVehicleCard {

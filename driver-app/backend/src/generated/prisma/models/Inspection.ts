@@ -49,6 +49,7 @@ export type InspectionMinAggregateOutputType = {
   longitude: number | null
   signatureKey: string | null
   signerName: string | null
+  signedAt: Date | null
   driverComment: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -67,6 +68,7 @@ export type InspectionMaxAggregateOutputType = {
   longitude: number | null
   signatureKey: string | null
   signerName: string | null
+  signedAt: Date | null
   driverComment: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -85,6 +87,7 @@ export type InspectionCountAggregateOutputType = {
   longitude: number
   signatureKey: number
   signerName: number
+  signedAt: number
   driverComment: number
   createdAt: number
   updatedAt: number
@@ -115,6 +118,7 @@ export type InspectionMinAggregateInputType = {
   longitude?: true
   signatureKey?: true
   signerName?: true
+  signedAt?: true
   driverComment?: true
   createdAt?: true
   updatedAt?: true
@@ -133,6 +137,7 @@ export type InspectionMaxAggregateInputType = {
   longitude?: true
   signatureKey?: true
   signerName?: true
+  signedAt?: true
   driverComment?: true
   createdAt?: true
   updatedAt?: true
@@ -151,6 +156,7 @@ export type InspectionCountAggregateInputType = {
   longitude?: true
   signatureKey?: true
   signerName?: true
+  signedAt?: true
   driverComment?: true
   createdAt?: true
   updatedAt?: true
@@ -256,6 +262,7 @@ export type InspectionGroupByOutputType = {
   longitude: number | null
   signatureKey: string | null
   signerName: string | null
+  signedAt: Date | null
   driverComment: string | null
   createdAt: Date
   updatedAt: Date
@@ -297,6 +304,7 @@ export type InspectionWhereInput = {
   longitude?: Prisma.FloatNullableFilter<"Inspection"> | number | null
   signatureKey?: Prisma.StringNullableFilter<"Inspection"> | string | null
   signerName?: Prisma.StringNullableFilter<"Inspection"> | string | null
+  signedAt?: Prisma.DateTimeNullableFilter<"Inspection"> | Date | string | null
   driverComment?: Prisma.StringNullableFilter<"Inspection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
@@ -322,6 +330,7 @@ export type InspectionOrderByWithRelationInput = {
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   signatureKey?: Prisma.SortOrderInput | Prisma.SortOrder
   signerName?: Prisma.SortOrderInput | Prisma.SortOrder
+  signedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   driverComment?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -350,6 +359,7 @@ export type InspectionWhereUniqueInput = Prisma.AtLeast<{
   longitude?: Prisma.FloatNullableFilter<"Inspection"> | number | null
   signatureKey?: Prisma.StringNullableFilter<"Inspection"> | string | null
   signerName?: Prisma.StringNullableFilter<"Inspection"> | string | null
+  signedAt?: Prisma.DateTimeNullableFilter<"Inspection"> | Date | string | null
   driverComment?: Prisma.StringNullableFilter<"Inspection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
@@ -375,6 +385,7 @@ export type InspectionOrderByWithAggregationInput = {
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   signatureKey?: Prisma.SortOrderInput | Prisma.SortOrder
   signerName?: Prisma.SortOrderInput | Prisma.SortOrder
+  signedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   driverComment?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -401,6 +412,7 @@ export type InspectionScalarWhereWithAggregatesInput = {
   longitude?: Prisma.FloatNullableWithAggregatesFilter<"Inspection"> | number | null
   signatureKey?: Prisma.StringNullableWithAggregatesFilter<"Inspection"> | string | null
   signerName?: Prisma.StringNullableWithAggregatesFilter<"Inspection"> | string | null
+  signedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Inspection"> | Date | string | null
   driverComment?: Prisma.StringNullableWithAggregatesFilter<"Inspection"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Inspection"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Inspection"> | Date | string
@@ -416,6 +428,7 @@ export type InspectionCreateInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -441,6 +454,7 @@ export type InspectionUncheckedCreateInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -460,6 +474,7 @@ export type InspectionUpdateInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -485,6 +500,7 @@ export type InspectionUncheckedUpdateInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -507,6 +523,7 @@ export type InspectionCreateManyInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -522,6 +539,7 @@ export type InspectionUpdateManyMutationInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -540,6 +558,7 @@ export type InspectionUncheckedUpdateManyInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -573,6 +592,7 @@ export type InspectionCountOrderByAggregateInput = {
   longitude?: Prisma.SortOrder
   signatureKey?: Prisma.SortOrder
   signerName?: Prisma.SortOrder
+  signedAt?: Prisma.SortOrder
   driverComment?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -596,6 +616,7 @@ export type InspectionMaxOrderByAggregateInput = {
   longitude?: Prisma.SortOrder
   signatureKey?: Prisma.SortOrder
   signerName?: Prisma.SortOrder
+  signedAt?: Prisma.SortOrder
   driverComment?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -614,6 +635,7 @@ export type InspectionMinOrderByAggregateInput = {
   longitude?: Prisma.SortOrder
   signatureKey?: Prisma.SortOrder
   signerName?: Prisma.SortOrder
+  signedAt?: Prisma.SortOrder
   driverComment?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -835,6 +857,7 @@ export type InspectionCreateWithoutDriverInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -858,6 +881,7 @@ export type InspectionUncheckedCreateWithoutDriverInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -909,6 +933,7 @@ export type InspectionScalarWhereInput = {
   longitude?: Prisma.FloatNullableFilter<"Inspection"> | number | null
   signatureKey?: Prisma.StringNullableFilter<"Inspection"> | string | null
   signerName?: Prisma.StringNullableFilter<"Inspection"> | string | null
+  signedAt?: Prisma.DateTimeNullableFilter<"Inspection"> | Date | string | null
   driverComment?: Prisma.StringNullableFilter<"Inspection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Inspection"> | Date | string
@@ -924,6 +949,7 @@ export type InspectionCreateWithoutUnitInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -947,6 +973,7 @@ export type InspectionUncheckedCreateWithoutUnitInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -992,6 +1019,7 @@ export type InspectionCreateWithoutLinkedFromInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1016,6 +1044,7 @@ export type InspectionUncheckedCreateWithoutLinkedFromInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1039,6 +1068,7 @@ export type InspectionCreateWithoutLinkedInspectionInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1062,6 +1092,7 @@ export type InspectionUncheckedCreateWithoutLinkedInspectionInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1097,6 +1128,7 @@ export type InspectionUpdateWithoutLinkedFromInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1121,6 +1153,7 @@ export type InspectionUncheckedUpdateWithoutLinkedFromInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1150,6 +1183,7 @@ export type InspectionUpdateWithoutLinkedInspectionInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1173,6 +1207,7 @@ export type InspectionUncheckedUpdateWithoutLinkedInspectionInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1192,6 +1227,7 @@ export type InspectionCreateWithoutStepsInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1216,6 +1252,7 @@ export type InspectionUncheckedCreateWithoutStepsInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1250,6 +1287,7 @@ export type InspectionUpdateWithoutStepsInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1274,6 +1312,7 @@ export type InspectionUncheckedUpdateWithoutStepsInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1292,6 +1331,7 @@ export type InspectionCreateWithoutReviewsInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1316,6 +1356,7 @@ export type InspectionUncheckedCreateWithoutReviewsInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1350,6 +1391,7 @@ export type InspectionUpdateWithoutReviewsInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1374,6 +1416,7 @@ export type InspectionUncheckedUpdateWithoutReviewsInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1392,6 +1435,7 @@ export type InspectionCreateWithoutAuditLogsInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1416,6 +1460,7 @@ export type InspectionUncheckedCreateWithoutAuditLogsInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1450,6 +1495,7 @@ export type InspectionUpdateWithoutAuditLogsInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1474,6 +1520,7 @@ export type InspectionUncheckedUpdateWithoutAuditLogsInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1494,6 +1541,7 @@ export type InspectionCreateManyDriverInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1509,6 +1557,7 @@ export type InspectionUpdateWithoutDriverInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1532,6 +1581,7 @@ export type InspectionUncheckedUpdateWithoutDriverInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1553,6 +1603,7 @@ export type InspectionUncheckedUpdateManyWithoutDriverInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1570,6 +1621,7 @@ export type InspectionCreateManyUnitInput = {
   longitude?: number | null
   signatureKey?: string | null
   signerName?: string | null
+  signedAt?: Date | string | null
   driverComment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1585,6 +1637,7 @@ export type InspectionUpdateWithoutUnitInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1608,6 +1661,7 @@ export type InspectionUncheckedUpdateWithoutUnitInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1629,6 +1683,7 @@ export type InspectionUncheckedUpdateManyWithoutUnitInput = {
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1696,6 +1751,7 @@ export type InspectionSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   longitude?: boolean
   signatureKey?: boolean
   signerName?: boolean
+  signedAt?: boolean
   driverComment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1722,6 +1778,7 @@ export type InspectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   longitude?: boolean
   signatureKey?: boolean
   signerName?: boolean
+  signedAt?: boolean
   driverComment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1743,6 +1800,7 @@ export type InspectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   longitude?: boolean
   signatureKey?: boolean
   signerName?: boolean
+  signedAt?: boolean
   driverComment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1764,12 +1822,13 @@ export type InspectionSelectScalar = {
   longitude?: boolean
   signatureKey?: boolean
   signerName?: boolean
+  signedAt?: boolean
   driverComment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InspectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "driverId" | "unitId" | "tripType" | "status" | "linkedInspectionId" | "startedAt" | "completedAt" | "latitude" | "longitude" | "signatureKey" | "signerName" | "driverComment" | "createdAt" | "updatedAt", ExtArgs["result"]["inspection"]>
+export type InspectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "driverId" | "unitId" | "tripType" | "status" | "linkedInspectionId" | "startedAt" | "completedAt" | "latitude" | "longitude" | "signatureKey" | "signerName" | "signedAt" | "driverComment" | "createdAt" | "updatedAt", ExtArgs["result"]["inspection"]>
 export type InspectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   driver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   unit?: boolean | Prisma.Inspection$unitArgs<ExtArgs>
@@ -1815,6 +1874,7 @@ export type $InspectionPayload<ExtArgs extends runtime.Types.Extensions.Internal
     longitude: number | null
     signatureKey: string | null
     signerName: string | null
+    signedAt: Date | null
     driverComment: string | null
     createdAt: Date
     updatedAt: Date
@@ -2260,6 +2320,7 @@ export interface InspectionFieldRefs {
   readonly longitude: Prisma.FieldRef<"Inspection", 'Float'>
   readonly signatureKey: Prisma.FieldRef<"Inspection", 'String'>
   readonly signerName: Prisma.FieldRef<"Inspection", 'String'>
+  readonly signedAt: Prisma.FieldRef<"Inspection", 'DateTime'>
   readonly driverComment: Prisma.FieldRef<"Inspection", 'String'>
   readonly createdAt: Prisma.FieldRef<"Inspection", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Inspection", 'DateTime'>

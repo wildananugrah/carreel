@@ -2,6 +2,7 @@ import type { StepType } from "../generated/prisma";
 
 export interface DamageResult {
   damageType: string;
+  location?: string;
   severity: "MINOR" | "MODERATE" | "MAJOR";
   description: string;
   isNewDamage: boolean;
@@ -29,6 +30,10 @@ export interface SpeedometerResult {
   vehicleOn: boolean;
   dashboardMatch: boolean;
   vehicleMismatchDetected: boolean;
+  brandMatchDetected?: boolean;
+  modelMatchDetected?: boolean;
+  generationMatchDetected?: boolean;
+  trimMatchDetected?: boolean;
   confidence: number;
   screenRecaptureDetected: boolean;
 }
@@ -53,60 +58,88 @@ export interface VehicleContext {
 // ========================
 
 const SCREEN_CAPTURE_IMAGE = `
-[SCREEN-CAPTURE DETECTION PROTOCOL: IMAGE FORENSICS]
+[SCREEN-CAPTURE DETECTION PROTOCOL — PHOTO ONLY]
 
-STEP A — PIXEL & SENSOR INTERFERENCE (FAIL-FIRST):
-Scan the image for electronic interference caused by interaction between the recording sensor and a display. If any are present, set screenRecaptureDetected to true immediately.
-1. Moire Patterns: Look for shimmering, "rainbow" waves, or geometric patterns overlaying PHYSICAL objects. These occur when the camera's pixel grid overlaps with a display's pixel grid. Physical objects (steering wheel, plastic dashboard, gauge needles) DO NOT have pixels.
-2. Scan Lines & Refresh Artifacts: Identify horizontal or vertical bands of light/darkness. This is a synchronization mismatch between the camera's shutter and the display's refresh rate.
-3. RGB Sub-pixel Structure: In high-resolution or close-up shots, check for visible "mesh" or individual Red, Green, and Blue sub-pixel clusters. Physical dashboards do not have a mesh texture.
+If the image may have come from a display, treat it as recapture.
 
-STEP B — REFLECTION & SURFACE BEHAVIOR:
-1. Static "Screen-in-Screen" Reflections: Look for reflections of the room where the photo was taken (e.g., a ceiling fan, a window, or the person holding the phone) appearing inside the dashboard area.
-2. Surface Matte vs. Glass Gloss: Digital monitors often have anti-glare coating or a perfectly flat glass surface. Real dashboards have depth behind the glass; if the light "hits" the image of the needle rather than the glass protecting it, it's a screen.
-3. Bezel Continuity: Check the extreme edges of the frame. Is there a consistent black border (monitor/TV bezel), laptop keyboard, or device UI (phone notch, status bar) visible?
-4. Micro-Texture Validation: Check for natural material micro-texture on surfaces such as dashboard plastic or leather grain. Real car interiors contain irregular textures, tiny dust particles, or wear patterns. If surfaces appear unnaturally smooth, perfectly uniform, or display-like -> REJECT.
+TASK:
+Detect whether the input image is a photograph of a screen/display (monitor, phone, tablet, TV, dashboard LCD, or any other digital display).
+
+SCOPE:
+This protocol applies ONLY to a single still image.
+Do NOT use video-specific cues such as motion, parallax, flicker over time, or temporal refresh behavior.
+
+HARD RULE:
+If there is any reasonable indication that the image was photographed from a display, set screenRecaptureDetected = true.
+
+PREVENTIVE POLICY:
+False negatives are worse than false positives.
+When in doubt, classify as true.
+
+PRIMARY DISPLAY INDICATORS:
+1. Rectangular screen boundary, bezel, frame, or black border.
+2. UI-like content such as menus, icons, buttons, status bars, app layouts, overlays, text blocks, or interface elements.
+3. Content appears unnaturally flat, as if everything is on one plane.
+4. Reflection, glare, hotspot, or brightness falloff consistent with photographing a display.
+5. Visible pixel structure, subpixel grid, aliasing, or moiré on the content area.
+6. Uniform sharpness across the entire framed content, with no natural depth separation.
+7. Perspective and geometry consistent with a camera capturing a screen surface rather than a real physical scene.
+8. Signs that the image inside the frame is itself a digital render, screenshot, or screen photo.
+
+SECONDARY CHECK:
+Even if no obvious artifacts are visible, still classify as true if the scene strongly resembles a photographed display.
 
 DASHBOARD TYPE EXCEPTION:
-- Type A (Analog Dashboards): Expect physical needles and printed numbers. If there is a small digital LCD screen for the Odometer, moire patterns/pixels are ONLY permitted strictly inside that small LCD box.
-- Type B (Digital/EV Dashboards): Moire patterns and pixel grids are expected, but must be strictly confined INSIDE the boundary of the main digital screen and must never bleed onto the outer physical bezels.
+- Type A (Analog Dashboards): Expect physical needles and printed numbers. If there is a small digital LCD screen for the Odometer, moiré patterns/pixels are ONLY permitted strictly inside that small LCD box.
+- Type B (Digital/EV Dashboards): Moiré patterns and pixel grids are expected, but must be strictly confined INSIDE the boundary of the main digital screen and must never bleed onto the outer physical bezels.
 
-CONCLUSION:
-- PASS: Natural micro-textures, 3D structural depth, zero moire/flicker interference on physical surfaces -> set screenRecaptureDetected to false.
-- REJECT: Sub-pixel grid visibility, screen reflections, bezel edges, or unnaturally smooth surfaces -> set screenRecaptureDetected to true.
+DO NOT REQUIRE any of these to flag as recapture:
+- Moiré
+- Flicker
+- Motion
+- Parallax
+- Scan lines
+- Temporal artifacts
 `;
 
 const SCREEN_CAPTURE_VIDEO = `
-[SCREEN-CAPTURE DETECTION PROTOCOL: VIDEO FORENSICS]
+[SCREEN-CAPTURE DETECTION PROTOCOL — VIDEO]
 
-STEP A — PIXEL & SENSOR INTERFERENCE (FAIL-FIRST):
-Scan the video for electronic interference caused by the interaction between the recording sensor and a target display. If any are present, set screenRecaptureDetected to true immediately.
-1. Dynamic Moire Patterns: Look for shimmering, "rainbow" waves, or geometric patterns that shift as the camera moves. These occur when the camera's pixel grid overlaps with a display's pixel grid.
-2. Scan Lines & Refresh Flicker: Identify horizontal or vertical bands of light/darkness (scrolling bars) or a constant high-frequency pulse. This is a synchronization mismatch between the camera's shutter speed and the monitor's refresh rate.
-3. RGB Sub-pixel Structure: In high-resolution or close-up shots, can you see the "mesh" or the individual Red, Green, and Blue sub-pixel clusters? Physical dashboards do not have a mesh texture.
+If the video may have been recorded from a display, treat it as recapture.
 
-STEP B — OPTICAL DEPTH & MOTION PARALLAX:
-Analyze how the scene behaves during camera movement. A screen is a flat 2D plane; a car interior is a 3D space.
-1. The Parallax Test (Crucial): If the camera moves even slightly, does the steering wheel shift its position relative to the dashboard behind it?
-  - REAL: The foreground moves faster than the background (depth).
-  - SCREEN: The entire image moves as one rigid, flat block.
-2. Focal Plane Shift: Does the camera's focus change?
-  - REAL: When the camera focuses on the dashboard grain, the background (seat/window) or foreground (steering wheel) should blur.
-  - SCREEN: Everything on the "dashboard" stays in the same focus plane because it's all on one flat surface.
+TASK:
+Detect whether the input video is a recording of a screen/display (monitor, phone, tablet, TV, or any other digital display).
 
-STEP C — REFLECTION & SURFACE BEHAVIOR:
-1. Static "Screen-in-Screen" Reflections: Look for reflections of the room where the video is being recorded (e.g., a ceiling fan, a window, or the person holding the phone) appearing inside the dashboard.
-2. Surface Matte vs. Glass Gloss: Digital monitors often have anti-glare coating or a perfectly flat glass surface. Real dashboards have depth behind the glass; if the light "hits" the image of the needle rather than the glass protecting it, it's a screen.
-3. Bezel Continuity: Check the extreme edges of the frame. Is there a consistent black border (monitor bezel) that remains perfectly static while the "car interior" inside it moves?
-4. Micro-Texture Validation: Check for natural material micro-texture on surfaces such as dashboard plastic or leather grain. Real car interiors contain irregular textures, tiny dust particles, or wear patterns. If surfaces appear unnaturally smooth, perfectly uniform, or display-like -> REJECT.
+HARD RULE:
+If there is any reasonable indication that the video was recorded from a display, set screenRecaptureDetected = true.
 
-DASHBOARD TYPE EXCEPTION:
-- Type A (Analog Dashboards): Expect physical needles and printed numbers. If there is a small digital LCD screen for the Odometer, moire patterns/pixels are ONLY permitted strictly inside that small LCD box.
-- Type B (Digital/EV Dashboards): Moire patterns and pixel grids are expected, but must be strictly confined INSIDE the boundary of the main digital screen and must never bleed onto the outer physical bezels.
+PREVENTIVE POLICY:
+False negatives are worse than false positives.
+When in doubt, classify as true.
 
-CONCLUSION:
-- PASS: If the video shows multi-plane motion parallax, natural focal shifts, natural micro-textures, and zero moire/flicker interference on physical surfaces -> set screenRecaptureDetected to false.
-- REJECT: If the scene exhibits flat-plane movement, refresh rate flickering, sub-pixel grid visibility, or unnaturally smooth surfaces -> set screenRecaptureDetected to true.
+PRIMARY DISPLAY INDICATORS (any single one is sufficient):
+1. Rectangular screen boundary, bezel, frame, or black border.
+2. UI-like content such as menus, icons, buttons, status bars, app layouts, overlays, text blocks, or interface elements.
+3. Content appears unnaturally flat, as if everything is on one plane.
+4. Reflection, glare, hotspot, or brightness falloff consistent with recording a display.
+5. Visible pixel structure, subpixel grid, aliasing, or moiré on the content area.
+6. Uniform sharpness across the entire framed content, with no natural depth separation.
+7. Perspective and geometry consistent with a camera capturing a screen surface rather than a real physical scene.
+8. Signs that the content inside the frame is itself a digital render, screenshot, or pre-recorded video.
+
+VIDEO-SPECIFIC INDICATORS (additional signals):
+9. Flat-plane movement: The entire scene moves as one rigid block during camera motion, with no parallax between foreground and background.
+10. Refresh flicker: Scrolling horizontal/vertical bands or pulsing brightness caused by shutter/refresh mismatch.
+11. No focal depth shift: Everything stays in the same focus plane during camera movement (real 3D scenes show focus change).
+
+SECONDARY CHECK:
+Even if no obvious artifacts are visible, still classify as true if the scene strongly resembles a recorded display.
+
+DO NOT REQUIRE any of these to flag as recapture:
+- Moiré
+- Flicker
+- Scan lines
+- These are bonus signals, not requirements.
 `;
 
 // ========================
@@ -114,40 +147,83 @@ CONCLUSION:
 // ========================
 
 function buildVehicleIdentityPrompt(vehicle: VehicleContext): string {
-  const parts: string[] = [];
-  if (vehicle.make) parts.push(vehicle.make);
-  if (vehicle.model) parts.push(vehicle.model);
-  if (vehicle.color) parts.push(`(${vehicle.color})`);
+  const brand = vehicle.make ?? "";
+  const model = vehicle.model ?? "";
 
-  if (parts.length === 0) return "";
+  if (!brand && !model) return "";
 
-  const expectedVehicle = parts.join(" ");
+  const expectedLabel = [
+    brand,
+    model,
+    vehicle.color ? `(${vehicle.color})` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return `
-[STRICT VEHICLE IDENTITY MATCHING PROTOCOL — EXACT MATCH REQUIRED]
-EXPECTED VEHICLE: ${expectedVehicle}
+[STRICT VEHICLE IDENTITY MATCHING PROTOCOL — 6-STEP VERIFICATION]
+EXPECTED VEHICLE: ${expectedLabel}
+EXPECTED BRAND: ${brand || "UNKNOWN"}
+EXPECTED MODEL: ${model || "UNKNOWN"}
 
-This is a critical anti-fraud check. The dashboard in this photo MUST belong to the EXPECTED VEHICLE listed above. Any mismatch means a driver may be submitting a photo from a different vehicle.
+This is a critical anti-fraud check. The dashboard/speedometer in this photo MUST belong to the EXPECTED VEHICLE listed above. Any mismatch means a driver may be submitting a photo from a different vehicle.
 
-STEP 1 — FORCED VISUAL EXTRACTION (DO THIS FIRST):
-Before looking at the EXPECTED VEHICLE, you MUST internally identify the dashboard's manufacturer and model:
-- For Analog Dashboards: Analyze the gauge layout (number of dials, their arrangement), illumination color, font style, needle design, and the exact placement and style of the digital Odometer screen. Identify which manufacturer and model family this dashboard belongs to.
-- For Digital/EV Dashboards: Analyze the software UI/UX design. Look at the typography (font), the layout of the digital speed numbers, the design of the battery/power indicator, the presence of any digital car avatar or 3D graphic, and any manufacturer logos or branding visible on the screen. Identify which manufacturer and model this digital dashboard belongs to.
+STEP 1 — SOURCE VALIDATION
+Before analyzing dashboard identity, verify this is a genuine original photograph:
+- Check for screen bezels, pixel grids, moiré patterns, UI overlays
+- Check for unnatural flatness or uniform focus plane
+- Check for reflections/glare consistent with photographing a display
+If the image appears to be a photo of a screen/display, set screenRecaptureDetected = true.
 
-STEP 2 — EXACT MANUFACTURER AND MODEL CROSS-CHECK:
-Compare the dashboard identified in Step 1 against the EXPECTED VEHICLE:
-- The dashboard MUST belong to the same manufacturer (brand). A Toyota dashboard cannot pass for a Honda, a Wuling dashboard cannot pass for a Hyundai, etc.
-- The dashboard MUST be from the same model family. A Wuling Air EV dashboard cannot pass for a Wuling Almaz, a Toyota Avanza dashboard cannot pass for a Toyota Fortuner, etc.
-- Pay special attention to: manufacturer-specific UI themes, brand logos on the dashboard/screen, unique gauge designs, digital display layouts, and EV-specific power/battery indicators.
+STEP 2 — BLIND DASHBOARD IDENTIFICATION (DO THIS FIRST — NO PEEKING)
+WITHOUT referencing the expected vehicle data above, analyze:
+- Gauge cluster layout (analog dials vs. digital screen)
+- Illumination color palette
+- Font style and typography of numbers/text
+- Needle/indicator design
+- Digital display UI/UX patterns
+- Brand logos, emblems, or text visible on dash
+- EV-specific elements (battery indicator, power gauge, regen display)
 
-STEP 3 — THE STRICT VERDICT:
-- REJECT (vehicleMismatchDetected = true): If the dashboard belongs to a DIFFERENT manufacturer OR a clearly different model than the EXPECTED VEHICLE. This includes:
-  - Different brand entirely (e.g., Wuling dashboard on a Toyota vehicle)
-  - Different model family (e.g., sedan dashboard on an SUV, or different generation)
-  - Dashboard UI/software that does not match the EXPECTED VEHICLE's known factory dashboard
-- PASS (vehicleMismatchDetected = false): ONLY if the dashboard design is an exact or near-exact match for the EXPECTED VEHICLE's factory dashboard. Minor trim-level differences within the same model are acceptable (e.g., different trim of the same car model).
+From these visual cues alone, determine:
+→ What brand made this dashboard?
+→ What model family does it belong to?
+→ What generation/year range?
 
-DO NOT give the benefit of the doubt. When uncertain, set vehicleMismatchDetected to true.
+STEP 3 — BRAND CROSS-CHECK
+Compare identified brand vs. expected brand "${brand || "UNKNOWN"}":
+- Each manufacturer has distinctive design DNA
+- Toyota ≠ Honda ≠ Wuling ≠ Hyundai ≠ Suzuki ≠ Daihatsu ≠ Mitsubishi etc.
+- Look for manufacturer-specific signatures:
+  * Logo presence (steering wheel center, dash surface, digital display branding)
+  * Brand-specific color schemes (e.g., Wuling's teal/cyan EV theme)
+  * Proprietary UI elements (e.g., Toyota's multi-info display style)
+Set brandMatchDetected = true only if brands match.
+
+STEP 4 — MODEL CROSS-CHECK
+Compare identified model vs. expected model "${model || "UNKNOWN"}":
+- Within the same brand, models have distinct dashboards
+- SUV ≠ Sedan ≠ MPV ≠ City Car ≠ Truck within the same brand
+- Examples: Wuling Air EV ≠ Wuling Almaz; Toyota Avanza ≠ Toyota Fortuner
+- Check: gauge count, display size, layout proportions, unique model features
+Set modelMatchDetected = true only if models match.
+
+STEP 5 — GENERATION & TRIM CHECK
+- Same model but different generations often have completely redesigned dashboards
+- Compare: digital vs analog transition, screen size evolution, design era
+- Minor trim-level differences within the same model AND generation are acceptable
+Set generationMatchDetected = true if generation appears consistent.
+Set trimMatchDetected = true (acceptable if same model/generation with trim variation).
+
+STEP 6 — FINAL VERDICT
+Apply these rules strictly:
+- If brandMatchDetected = false → vehicleMismatchDetected = true (REJECT)
+- If modelMatchDetected = false → vehicleMismatchDetected = true (REJECT)
+- If generationMatchDetected = false → vehicleMismatchDetected = true (REJECT)
+- ONLY if all three match → vehicleMismatchDetected = false (PASS)
+
+HARD RULE: When uncertain about ANY match, default to mismatch (vehicleMismatchDetected = true).
+DO NOT give the benefit of the doubt.
 `;
 }
 
@@ -208,6 +284,7 @@ Rules:
 
 ### 2. Damage Assessment
 Identify any visible damage on the vehicle exterior.
+All damage "description" values MUST be written in Bahasa Indonesia.
 
 ## Response Format
 Respond ONLY with valid JSON in this exact format:
@@ -225,7 +302,7 @@ Respond ONLY with valid JSON in this exact format:
     {
       "damageType": "scratch|dent|crack|rust|missing_part|broken_light|other",
       "severity": "MINOR|MODERATE|MAJOR",
-      "description": "brief description",
+      "description": "deskripsi singkat dalam Bahasa Indonesia",
       "isNewDamage": true,
       "boundingBox": { "x": 0, "y": 0, "width": 0, "height": 0 }
     }
@@ -240,8 +317,12 @@ function buildSpeedometerPrompt(vehicle?: VehicleContext | null): string {
   const vehicleIdentitySection = hasVehicle
     ? buildVehicleIdentityPrompt(vehicle)
     : "";
-  const vehicleMismatchField = hasVehicle
-    ? `  "vehicleMismatchDetected": true/false,`
+  const vehicleMatchFields = hasVehicle
+    ? `  "vehicleMismatchDetected": true/false,
+  "brandMatchDetected": true/false,
+  "modelMatchDetected": true/false,
+  "generationMatchDetected": true/false,
+  "trimMatchDetected": true/false,`
     : `  "vehicleMismatchDetected": false,`;
 
   return `Act as a highly conservative vehicle dashboard OCR and indicator detection AI for a fleet management anti-fraud system.
@@ -295,7 +376,7 @@ Respond ONLY with valid JSON in this exact format:
   "warningLights": [],
   "vehicleOn": true,
   "dashboardMatch": true,
-${vehicleMismatchField}
+${vehicleMatchFields}
   "confidence": 0.0,
   "screenRecaptureDetected": false
 }
@@ -310,15 +391,17 @@ function buildBodyInspectionPrompt(vehicle?: VehicleContext | null): string {
       : "";
 
   return `You are a highly conservative Automotive Exterior Damage Appraiser AI for a fleet management anti-fraud system.
-
-Your job is to inspect the vehicle's exterior in the provided image or video and report ONLY physical damage that is directly, clearly, and unambiguously visible.
+Your job is to inspect the vehicle's exterior in the provided VIDEO and report ONLY physical damage that is directly, clearly, and unambiguously visible.
 
 You must prioritize accuracy over completeness. However, do not aggressively dismiss high-contrast marks (e.g., black scuffs on light paint) as dirt if they appear on typical impact zones like bumper corners.
 ${vehicleContext}
 ${SCREEN_CAPTURE_VIDEO}
 
-## ABSOLUTE RULES
+## ABSOLUTE RULES FOR VIDEO PROCESSING
 
+- DEDUPLICATION: You are analyzing a multi-frame video of a single vehicle. Track damage across frames. Do NOT report the same damage multiple times. Compile all findings into one deduplicated list.
+- MOTION vs DAMAGE: Use the movement across video frames to confirm damage. Moving reflections, glare, or shifting shadows as the camera pans are NOT damage. Real physical damage (dents/scratches) will remain fixed on the vehicle's surface regardless of camera angle.
+- VIDEO ARTIFACTS: Do not confuse motion blur, lens flares, or video compression artifacts with physical scuffs, bent panels, or paint transfer.
 - Do not guess or infer hidden damage.
 - Do not assume damage from shadows, reflections, glare, or perspective.
 - Do not "complete" partially visible damage.
@@ -326,43 +409,49 @@ ${SCREEN_CAPTURE_VIDEO}
 - Do not report normal design lines, panel gaps, trims, reflections, or lighting changes as damage.
 - Distinguish between loose dirt/splatters and physical scuffs. Directional, high-contrast marks (like paint transfer or deep scratches) on corners or edges MUST be evaluated as damage, not dirt.
 - Assess ONLY the primary subject vehicle in the foreground. Strictly ignore any vehicles, parts, or reflections in the background.
-- If the overall media quality is too low, blurry, heavily pixelated, or poorly lit to make an absolute assessment, set overallCondition to null, confidence to 0, and return an empty damages array.
+- If the overall video quality is too low, consistently blurry, or too dark to make an absolute assessment across frames, set overallCondition to null, confidence to 0, and return an empty damages array.
 
-## WHAT COUNTS AS REPORTABLE DAMAGE
+## STRICT DAMAGE TYPE DICTIONARY
 
-Report only damage that is visibly identifiable as one of the following:
-- deep_scratch
-- light_scratch
-- paint_transfer (e.g., dark scuffs on clear paint)
-- dent
-- ding
-- cracked_glass
-- shattered_glass
-- broken_light
-- broken_mirror
-- bent_panel
-- paint_peeling
-- missing_part
-- deformation
-- tire_damage
-- wheel_damage
+You MUST use ONLY the following damageType values. Do NOT use any other words, synonyms, or variations:
+- goresan (scratches — includes deep and light scratches)
+- transfer_cat (paint transfer / scuff marks)
+- penyok (dent or ding)
+- kaca_retak (cracked or shattered glass)
+- bagian_pecah (broken light, broken mirror, or other broken component)
+- panel_bengkok (bent panel or deformation)
+- bagian_hilang (missing part)
 
-## WHAT DOES NOT COUNT AS DAMAGE
+## STRICT LOCATION DICTIONARY
 
-Do not report:
-- Reflections on paint, glass, chrome, or mirrors
-- Shadows
-- Loose dirt, dust, mud, or water marks (Note: Do not confuse road grime with actual paint transfer/scuffs)
-- Normal curvature of the body
-- Compression artifacts or bad media quality
-- Background objects reflected on the vehicle
-- Panel seams, body lines, or factory gaps
-- Lens distortion
-- Occluded areas you cannot clearly see
+You MUST use ONLY the following location values for the "location" field. Do NOT use free-form text or any other values:
+- Bumper Depan Kiri
+- Bumper Depan Tengah
+- Bumper Depan Kanan
+- Bumper Belakang Kiri
+- Bumper Belakang Tengah
+- Bumper Belakang Kanan
+- Pintu Depan Kiri
+- Pintu Belakang Kiri
+- Pintu Depan Kanan
+- Pintu Belakang Kanan
+- Fender Depan Kiri
+- Panel Bodi Belakang Kiri
+- Fender Depan Kanan
+- Panel Bodi Belakang Kanan
+- Atap
+- Kap Mesin
+- Bagasi
+- Spion Kiri
+- Spion Kanan
+- Kaca Depan
+- Kaca Belakang
+- Roda / Ban
+- Eksterior Tidak Jelas
 
 ## MANDATORY VISUAL SCAN ORDER
 
-Inspect the vehicle in this exact sequence:
+Observe the vehicle as it is presented in the video sequence, but ensure the final deduplicated report accounts for:
 1. Front exterior
 2. Rear exterior (Pay close attention to lower corners)
 3. Left side
@@ -371,27 +460,11 @@ Inspect the vehicle in this exact sequence:
 6. Glass and mirrors
 7. Wheels and tires
 
-For each area, ask:
-- Is there a visible physical defect or clear paint transfer?
-- Can I clearly see its shape, size, and location?
-- Is it definitely damage, not an artifact or loose dirt?
-If any answer is no, do not report it.
-
 ## SEVERITY GUIDELINES
 
-- MINOR: Small cosmetic issue (like paint transfer, light scratch, ding) with no obvious structural impact
+- MINOR: Small cosmetic issue (paint transfer, light scratch, ding) with no obvious structural impact
 - MODERATE: Clearly visible damage affecting appearance or function, but not severe destruction
 - MAJOR: Major deformation, broken components, shattered glass, missing major parts, or obvious structural-level damage
-
-## LOCATION RULES
-
-Be specific and precise in the description. Use locations such as:
-- Front bumper left side / center / right side
-- Rear bumper left corner / right corner
-- Driver-side door / Passenger-side rear door
-- Front right fender / Left mirror / Front left wheel
-
-If the exact location is unclear, write "Unclear but visible on exterior" in the description.
 
 ## IMPORTANT FINAL CHECK
 
@@ -411,9 +484,10 @@ Respond ONLY with valid JSON in this exact format:
   "screenRecaptureDetected": false,
   "damages": [
     {
-      "damageType": "deep_scratch|light_scratch|dent|ding|cracked_glass|shattered_glass|broken_light|broken_mirror|bent_panel|paint_peeling|paint_transfer|missing_part|deformation|tire_damage|wheel_damage|other",
+      "damageType": "goresan|transfer_cat|penyok|kaca_retak|bagian_pecah|panel_bengkok|bagian_hilang",
+      "location": "EXACT string from STRICT LOCATION DICTIONARY above",
       "severity": "MINOR|MODERATE|MAJOR",
-      "description": "specific location and brief description of damage",
+      "description": "deskripsi singkat kerusakan dalam Bahasa Indonesia",
       "isNewDamage": true,
       "videoTimestamp": 0
     }

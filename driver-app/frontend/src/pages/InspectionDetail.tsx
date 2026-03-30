@@ -13,6 +13,7 @@ interface DamageFlag {
   damageType: string;
   severity: string;
   description: string;
+  location?: string;
   isNewDamage?: boolean;
   confidence?: number;
 }
@@ -90,13 +91,33 @@ function formatKm(km: number | null | undefined): string {
 
 function damageEmoji(type: string): string {
   const map: Record<string, string> = {
+    // New Indonesian enum values
+    goresan: "🚗",
+    transfer_cat: "🎨",
+    penyok: "🚙",
+    kaca_retak: "💥",
+    bagian_pecah: "💡",
+    panel_bengkok: "🔧",
+    bagian_hilang: "⚠️",
+    // Legacy English values (backward compat)
+    deep_scratch: "🚗",
+    light_scratch: "🚗",
     scratch: "🚗",
+    paint_transfer: "🎨",
     dent: "🚙",
-    crack: "💥",
-    rust: "🟤",
-    missing_part: "⚠️",
+    ding: "🚙",
+    cracked_glass: "💥",
+    shattered_glass: "💥",
     broken_light: "💡",
+    broken_mirror: "🪞",
+    bent_panel: "🔧",
+    paint_peeling: "🎨",
+    missing_part: "⚠️",
+    deformation: "⚠️",
     tire_damage: "🛞",
+    wheel_damage: "🛞",
+    rust: "🟤",
+    crack: "💥",
     other: "🔍",
   };
   return map[type] ?? "🔍";
@@ -104,13 +125,33 @@ function damageEmoji(type: string): string {
 
 function damageLabel(type: string): string {
   const map: Record<string, string> = {
-    scratch: "Baret / Goresan",
+    // New Indonesian enum values
+    goresan: "Goresan",
+    transfer_cat: "Transfer Cat",
+    penyok: "Penyok",
+    kaca_retak: "Kaca Retak",
+    bagian_pecah: "Bagian Pecah",
+    panel_bengkok: "Panel Bengkok",
+    bagian_hilang: "Bagian Hilang",
+    // Legacy English values (backward compat)
+    deep_scratch: "Goresan Dalam",
+    light_scratch: "Goresan Ringan",
+    scratch: "Goresan",
+    paint_transfer: "Transfer Cat",
     dent: "Penyok",
-    crack: "Retak",
-    rust: "Karat",
-    missing_part: "Bagian Hilang",
+    ding: "Penyok Kecil",
+    cracked_glass: "Kaca Retak",
+    shattered_glass: "Kaca Pecah",
     broken_light: "Lampu Rusak",
+    broken_mirror: "Spion Rusak",
+    bent_panel: "Panel Bengkok",
+    paint_peeling: "Cat Mengelupas",
+    missing_part: "Bagian Hilang",
+    deformation: "Deformasi",
     tire_damage: "Kerusakan Ban",
+    wheel_damage: "Kerusakan Velg",
+    rust: "Karat",
+    crack: "Retak",
     other: "Lainnya",
   };
   return map[type] ?? type;
@@ -589,7 +630,7 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
           <p className="text-xs font-bold text-white">{inspection.signerName}</p>
         )}
         <p className="text-[10px] text-[#555] mt-0.5">
-          {formatDate(inspection.completedAt ?? inspection.updatedAt)} · CR-
+          {formatDate(inspection.signedAt ?? inspection.completedAt ?? inspection.updatedAt)} · CR-
           {inspection.id.slice(0, 8).toUpperCase()}
         </p>
       </div>
@@ -755,7 +796,9 @@ function FlagSection({
                 <p className="text-sm font-bold text-white mb-0.5">
                   {damageLabel(flag.damageType)}
                 </p>
-                <p className="text-[11px] text-[#888] truncate">{flag.description}</p>
+                <p className="text-[11px] text-[#888] truncate">
+                  {flag.location ? `${flag.location} — ${flag.description}` : flag.description}
+                </p>
               </div>
               {flag.confidence != null && (
                 <span className="text-xs px-2.5 py-1 rounded-lg bg-[#1a1a1a] text-[#C0C0C0] font-bold shrink-0">

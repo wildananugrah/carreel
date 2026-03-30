@@ -1536,6 +1536,7 @@ export const InspectionScalarFieldEnum = {
   longitude: 'longitude',
   signatureKey: 'signatureKey',
   signerName: 'signerName',
+  signedAt: 'signedAt',
   driverComment: 'driverComment',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

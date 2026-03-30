@@ -24,6 +24,7 @@ cp nginx/planner-api.carreel.id /etc/nginx/sites-available/planner-api.carreel.i
 cp nginx/ws.carreel.id /etc/nginx/sites-available/ws.carreel.id
 cp nginx/minio.carreel.id /etc/nginx/sites-available/minio.carreel.id
 cp nginx/monit.carreel.id /etc/nginx/sites-available/monit.carreel.id
+cp nginx/carreel.id /etc/nginx/sites-available/carreel.id
 ```
 
 4. link it
@@ -58,6 +59,7 @@ ssl_certificate_key /etc/letsencrypt/live/oc.carreel.id/privkey.pem;
 ```bash
 cp -r /root/repo/carreel/driver-app/frontend/dist /var/www/html/carreel/driver
 cp -r /root/repo/carreel/planner-app/frontend/dist /var/www/html/carreel/planner
+cp -r /root/repo/carreel/landing-page/carreel-company.html /var/www/html/carreel/landing-page/company/dist/carreel-company.html
 ```
 
 8. database

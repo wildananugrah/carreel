@@ -11,6 +11,7 @@ interface DamageFlag {
   damageType: string;
   severity: string;
   description: string;
+  location?: string;
   isNewDamage?: boolean;
   confidence?: number;
 }
@@ -47,6 +48,40 @@ function getVideoMediaId(insp: InspectionDetail): string | null {
 function getSpeedoMediaId(insp: InspectionDetail): string | null {
   const step = insp.steps.find((s) => s.stepType === "SPEEDOMETER");
   return step?.mediaFiles?.[0]?.id ?? null;
+}
+
+function damageLabel(type: string): string {
+  const map: Record<string, string> = {
+    // New Indonesian enum values
+    goresan: "Goresan",
+    transfer_cat: "Transfer Cat",
+    penyok: "Penyok",
+    kaca_retak: "Kaca Retak",
+    bagian_pecah: "Bagian Pecah",
+    panel_bengkok: "Panel Bengkok",
+    bagian_hilang: "Bagian Hilang",
+    // Legacy English values (backward compat)
+    deep_scratch: "Goresan Dalam",
+    light_scratch: "Goresan Ringan",
+    scratch: "Goresan",
+    paint_transfer: "Transfer Cat",
+    dent: "Penyok",
+    ding: "Penyok Kecil",
+    cracked_glass: "Kaca Retak",
+    shattered_glass: "Kaca Pecah",
+    broken_light: "Lampu Rusak",
+    broken_mirror: "Spion Rusak",
+    bent_panel: "Panel Bengkok",
+    paint_peeling: "Cat Mengelupas",
+    missing_part: "Bagian Hilang",
+    deformation: "Deformasi",
+    tire_damage: "Kerusakan Ban",
+    wheel_damage: "Kerusakan Velg",
+    rust: "Karat",
+    crack: "Retak",
+    other: "Lainnya",
+  };
+  return map[type] ?? type;
 }
 
 function formatDate(iso: string | null): string {
@@ -360,7 +395,6 @@ function CheckTab({
           </div>
         </div>
       )}
-
     </>
   );
 }
@@ -648,7 +682,7 @@ function TTDCard({
             </p>
           )}
           <p className="text-[10px] text-[#666] mt-0.5">
-            {formatDate(detail.completedAt ?? detail.updatedAt)}
+            {formatDate(detail.signedAt ?? detail.completedAt ?? detail.updatedAt)}
           </p>
           <p className="text-[9px] text-[#444] mt-0.5">
             Ref: CR-{detail.id.slice(0, 8).toUpperCase()}-{label.replace("-", "")}
@@ -753,7 +787,9 @@ function AIFlagSection({
             >
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-xs font-bold text-[#D0D0D0]">
-                  {flag.description || flag.damageType}
+                  {flag.location
+                    ? `${flag.location} — ${flag.description || damageLabel(flag.damageType)}`
+                    : flag.description || damageLabel(flag.damageType)}
                 </p>
                 {flag.confidence != null && (
                   <span

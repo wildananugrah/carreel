@@ -262,7 +262,7 @@ export class InspectionRepository implements IInspectionRepository {
   ): Promise<void> {
     await this.prisma.inspection.update({
       where: { id },
-      data: { signatureKey, signerName },
+      data: { signatureKey, signerName, signedAt: new Date() },
     });
   }
 

@@ -45,6 +45,7 @@ export interface Inspection {
   longitude: number | null;
   signatureKey: string | null;
   signerName: string | null;
+  signedAt: string | null;
   driverComment: string | null;
   createdAt: string;
   updatedAt: string;

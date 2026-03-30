@@ -182,6 +182,7 @@ export class DashboardRepository implements IDashboardRepository {
             completedAt: insp.completedAt?.toISOString() ?? null,
             hasSigned: insp.signatureKey != null,
             signerName: insp.signerName,
+            signedAt: insp.signedAt?.toISOString() ?? null,
           }
         : null;
 
