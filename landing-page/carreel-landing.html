@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarReel — AI-Verified Used Car Listings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #D4A843;
+    --gold-light: #E8C96A;
+    --gold-dark: #B8922E;
+    --bg-primary: #0A0A0A;
+    --bg-secondary: #111111;
+    --bg-card: #161616;
+    --bg-card-hover: #1C1C1C;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9A9A9A;
+    --text-muted: #666666;
+    --border: #222222;
+    --border-light: #333333;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 48px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    transition: all 0.3s ease;
+  }
+
+  .nav-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: -0.5px;
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+    position: relative;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 1.5px;
+    background: var(--gold);
+    transition: width 0.3s ease;
+  }
+
+  .nav-links a:hover { color: var(--text-primary); }
+  .nav-links a:hover::after { width: 100%; }
+
+  .nav-cta {
+    background: var(--gold);
+    color: var(--bg-primary);
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border: none;
+    cursor: pointer;
+  }
+
+  .nav-cta:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(212,168,67,0.3);
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(212,168,67,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(to top, var(--bg-primary), transparent);
+    pointer-events: none;
+  }
+
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.8rem, 6.5vw, 5.2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    max-width: 800px;
+    margin-bottom: 32px;
+    letter-spacing: -2px;
+    animation: fadeUp 0.8s ease forwards;
+    opacity: 0;
+  }
+
+  .hero h1 .accent {
+    color: var(--gold);
+  }
+
+  .hero .tagline {
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 1.15rem;
+    margin-bottom: 28px;
+    animation: fadeUp 0.8s ease 0.15s forwards;
+    opacity: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .hero .desc {
+    max-width: 620px;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 48px;
+    animation: fadeUp 0.8s ease 0.3s forwards;
+    opacity: 0;
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 16px;
+    animation: fadeUp 0.8s ease 0.45s forwards;
+    opacity: 0;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--bg-primary);
+    padding: 14px 36px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(212,168,67,0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    padding: 14px 36px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1.5px solid var(--border-light);
+    transition: all 0.25s ease;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--text-secondary);
+    background: rgba(255,255,255,0.03);
+    transform: translateY(-2px);
+  }
+
+  /* ─── SECTION COMMON ─── */
+  section {
+    padding: 100px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+
+  .section-desc {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    max-width: 560px;
+    margin-bottom: 56px;
+  }
+
+  /* ─── HOW IT WORKS ─── */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .step-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 28px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .step-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .step-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-light);
+    transform: translateY(-4px);
+  }
+
+  .step-card:hover::before { opacity: 1; }
+
+  .step-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.25;
+    line-height: 1;
+    margin-bottom: 20px;
+  }
+
+  .step-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+
+  .step-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  /* ─── AI VERIFICATION ─── */
+  .verify-section {
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    padding: 64px;
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .verify-section::after {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(212,168,67,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .verify-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  .verify-features {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .verify-feature {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .verify-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: rgba(212,168,67,0.1);
+    border: 1px solid rgba(212,168,67,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .verify-feature h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .verify-feature p {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .verify-visual {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    position: relative;
+  }
+
+  .verify-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .verify-bar:last-child { border-bottom: none; }
+
+  .verify-bar-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .verify-bar-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .status-pass { color: #4ADE80; }
+  .status-warn { color: #FACC15; }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .status-dot.pass { background: #4ADE80; box-shadow: 0 0 8px rgba(74,222,128,0.4); }
+  .status-dot.warn { background: #FACC15; box-shadow: 0 0 8px rgba(250,204,21,0.4); }
+
+  /* ─── FOR SELLER / BUYER ─── */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .audience-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 36px;
+    transition: all 0.3s ease;
+  }
+
+  .audience-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-4px);
+  }
+
+  .audience-card .card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: rgba(212,168,67,0.1);
+    border: 1px solid rgba(212,168,67,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+  }
+
+  .audience-card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+
+  .audience-card > p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  .audience-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .audience-card li {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .audience-card li::before {
+    content: '→';
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  /* ─── CTA SECTION ─── */
+  .cta-section {
+    text-align: center;
+    padding: 120px 24px;
+  }
+
+  .cta-section .section-title {
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .cta-section .section-desc {
+    margin: 0 auto 48px;
+    text-align: center;
+  }
+
+  .cta-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 48px;
+    border-top: 1px solid var(--border);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .footer-copy {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text-secondary); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: all 0.6s ease;
+  }
+
+  .animate-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── MOBILE NAV ─── */
+  .mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+  }
+
+  .mobile-menu-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text-primary);
+    margin: 5px 0;
+    transition: all 0.3s;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    nav { padding: 0 24px; }
+    .nav-links { display: none; }
+    .mobile-menu-btn { display: block; }
+    section { padding: 64px 24px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .verify-grid { grid-template-columns: 1fr; }
+    .verify-section { padding: 36px 24px; }
+    .audience-grid { grid-template-columns: 1fr; }
+    .hero h1 { letter-spacing: -1px; }
+    .hero-buttons, .cta-buttons { flex-direction: column; align-items: center; }
+    .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">CarReel</a>
+  <ul class="nav-links">
+    <li><a href="#cara-kerja">Cara Kerja</a></li>
+    <li><a href="#verifikasi">Verifikasi AI</a></li>
+    <li><a href="#audience">Untuk Seller</a></li>
+    <li><a href="#audience">Untuk Buyer</a></li>
+  </ul>
+  <a href="#cta" class="nav-cta">Mulai Sekarang</a>
+  <button class="mobile-menu-btn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Lapisan Verifikasi Independen untuk <span class="accent">Iklan Mobil Bekas.</span></h1>
+  <p class="tagline">"See the Reel, Get the Real."</p>
+  <p class="desc">CarReel bukanlah platform jual-beli. Kami adalah infrastruktur kepercayaan yang bekerja di atas marketplace pilihan Anda — mengubah iklan statis menjadi dokumentasi visual berkelanjutan yang memvalidasi keaslian unit secara real-time.</p>
+  <div class="hero-buttons">
+    <a href="#cta" class="btn-primary">Lihat Demo</a>
+    <a href="#cara-kerja" class="btn-secondary">Pelajari Lebih Lanjut</a>
+  </div>
+</section>
+
+<!-- CARA KERJA -->
+<section id="cara-kerja">
+  <p class="section-label animate-in">Cara Kerja</p>
+  <h2 class="section-title animate-in">Tiga langkah menuju transparansi penuh.</h2>
+  <p class="section-desc animate-in">Proses verifikasi kami dirancang agar cepat, akurat, dan tidak bisa dimanipulasi.</p>
+
+  <div class="steps-grid">
+    <div class="step-card animate-in">
+      <div class="step-number">01</div>
+      <h3>Seller Rekam Video</h3>
+      <p>Seller merekam video walkthrough kendaraan mengikuti checklist standar CarReel. Tidak ada pengeditan — hanya rekaman murni.</p>
+    </div>
+    <div class="step-card animate-in">
+      <div class="step-number">02</div>
+      <h3>AI Analisis & Verifikasi</h3>
+      <p>Model AI kami menganalisis setiap frame: mencocokkan plat, mendeteksi kerusakan, membaca odometer, dan memvalidasi konsistensi visual.</p>
+    </div>
+    <div class="step-card animate-in">
+      <div class="step-number">03</div>
+      <h3>Badge Terbit</h3>
+      <p>Hasil verifikasi ditampilkan sebagai badge terpercaya di listing marketplace. Buyer bisa klik untuk melihat detail lengkap.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFIKASI AI -->
+<section id="verifikasi">
+  <p class="section-label animate-in">Verifikasi AI</p>
+  <h2 class="section-title animate-in">Mesin kepercayaan yang bekerja 24/7.</h2>
+  <p class="section-desc animate-in">Computer vision dan NLP bekerja sama menganalisis setiap detail kendaraan dari video yang dikirimkan seller.</p>
+
+  <div class="verify-section animate-in">
+    <div class="verify-grid">
+      <div class="verify-features">
+        <div class="verify-feature">
+          <div class="verify-icon">🔍</div>
+          <div>
+            <h4>Deteksi Kerusakan Visual</h4>
+            <p>Mengidentifikasi goresan, penyok, dan ketidaksesuaian warna cat pada bodi kendaraan.</p>
+          </div>
+        </div>
+        <div class="verify-feature">
+          <div class="verify-icon">📊</div>
+          <div>
+            <h4>Pembacaan Odometer</h4>
+            <p>OCR presisi tinggi membaca angka odometer dan mencocokkan dengan histori servis.</p>
+          </div>
+        </div>
+        <div class="verify-feature">
+          <div class="verify-icon">🛡️</div>
+          <div>
+            <h4>Validasi Plat & Dokumen</h4>
+            <p>Mencocokkan nomor plat di video dengan data STNK yang diunggah seller.</p>
+          </div>
+        </div>
+        <div class="verify-feature">
+          <div class="verify-icon">🎥</div>
+          <div>
+            <h4>Anti-Manipulasi Video</h4>
+            <p>Mendeteksi potongan, efek, dan pengeditan video untuk menjamin keaslian rekaman.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="verify-visual">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.85rem;margin-bottom:20px;color:var(--gold);letter-spacing:0.05em;">VERIFICATION REPORT</div>
+        <div class="verify-bar">
+          <span class="verify-bar-label">Exterior Condition</span>
+          <span class="verify-bar-status status-pass"><span class="status-dot pass"></span>Pass — Minor scratches</span>
+        </div>
+        <div class="verify-bar">
+          <span class="verify-bar-label">Odometer Reading</span>
+          <span class="verify-bar-status status-pass"><span class="status-dot pass"></span>Verified — 48,230 km</span>
+        </div>
+        <div class="verify-bar">
+          <span class="verify-bar-label">Plate Match</span>
+          <span class="verify-bar-status status-pass"><span class="status-dot pass"></span>Match confirmed</span>
+        </div>
+        <div class="verify-bar">
+          <span class="verify-bar-label">Video Integrity</span>
+          <span class="verify-bar-status status-pass"><span class="status-dot pass"></span>No edits detected</span>
+        </div>
+        <div class="verify-bar">
+          <span class="verify-bar-label">Interior Condition</span>
+          <span class="verify-bar-status status-warn"><span class="status-dot warn"></span>Note — Seat wear</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE -->
+<section id="audience">
+  <p class="section-label animate-in">Untuk Siapa?</p>
+  <h2 class="section-title animate-in">Dibangun untuk kedua sisi transaksi.</h2>
+  <p class="section-desc animate-in">CarReel menciptakan insentif positif: seller jujur mendapat lebih banyak buyer, buyer mendapat ketenangan pikiran.</p>
+
+  <div class="audience-grid">
+    <div class="audience-card animate-in">
+      <div class="card-icon">🏷️</div>
+      <h3>Untuk Seller</h3>
+      <p>Tampil beda di lautan listing. Badge verifikasi CarReel langsung meningkatkan kepercayaan buyer.</p>
+      <ul>
+        <li>Listing terjual lebih cepat dengan badge terverifikasi</li>
+        <li>Kurangi negosiasi berlebihan — buyer sudah yakin</li>
+        <li>Bangun reputasi seller terpercaya</li>
+        <li>Proses rekam video hanya 10-15 menit</li>
+      </ul>
+    </div>
+    <div class="audience-card animate-in">
+      <div class="card-icon">🔎</div>
+      <h3>Untuk Buyer</h3>
+      <p>Tidak perlu lagi menebak-nebak. Lihat kondisi real kendaraan sebelum datang ke lokasi.</p>
+      <ul>
+        <li>Video walkthrough terverifikasi AI, bukan foto editan</li>
+        <li>Laporan kondisi detail & transparan</li>
+        <li>Filter hanya listing yang sudah terverifikasi</li>
+        <li>Hemat waktu — tidak perlu survei unit abal-abal</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <p class="section-label animate-in">Mulai Sekarang</p>
+  <h2 class="section-title animate-in">Siap mengubah cara Indonesia jual-beli mobil bekas?</h2>
+  <p class="section-desc animate-in">Bergabunglah dengan program early access kami. Gratis untuk 100 seller pertama.</p>
+  <div class="cta-buttons animate-in">
+    <a href="#" class="btn-primary">Daftar Early Access</a>
+    <a href="#" class="btn-secondary">Hubungi Tim Kami</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">CarReel</div>
+    <div class="footer-links">
+      <a href="#">Syarat & Ketentuan</a>
+      <a href="#">Kebijakan Privasi</a>
+      <a href="#">Kontak</a>
+    </div>
+    <div class="footer-copy">© 2026 CarReel. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  // Scroll-triggered animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+  // Navbar shadow on scroll
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    nav.style.boxShadow = window.scrollY > 20 ? '0 4px 30px rgba(0,0,0,0.5)' : 'none';
+  });
+</script>
+</body>
+</html>
