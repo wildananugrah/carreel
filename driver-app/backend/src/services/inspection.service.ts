@@ -410,6 +410,7 @@ export class InspectionService implements IInspectionService {
       odometerKm,
       damages,
       bodyVideoMediaId,
+      driverComment: preTrip.driverComment ?? null,
     };
   }
 }

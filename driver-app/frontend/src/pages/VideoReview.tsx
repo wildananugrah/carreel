@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
-import { StepCard } from "../components/inspection/StepCard";
 import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
 import { TopBar } from "../components/layout/TopBar";
 import { Button } from "../components/ui/Button";
@@ -28,6 +27,7 @@ interface PreTripUnitData {
   odometerKm: number | null;
   damages: PreTripDamage[];
   bodyVideoMediaId: string | null;
+  driverComment: string | null;
 }
 
 interface AIDetectedInfo {
@@ -608,29 +608,76 @@ export function VideoReview() {
           </div>
         </div>
 
-        {/* Video section - uploaded state */}
-        {hasMedia && (
+        {/* Pre-Check Reference for POST_TRIP — shown above post-trip video */}
+        {hasMedia && isPostTrip && unitData && (
           <div className="px-4 pb-4">
-            <StepCard
-              step={bodyStep}
-              inspectionStatus={inspection.status}
-              index={0}
-              onUploadComplete={fetchDetail}
-            />
-            <div className="flex items-center justify-center gap-2 text-sm mt-3">
-              <span className="text-neutral-500">1 / 1 video direkam</span>
-              <svg
-                aria-hidden="true"
-                className="w-4 h-4 text-yellow-400"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
+            <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+              Pre-Check &middot; Referensi
+            </p>
+            <div className="rounded-xl border border-[#2a2a2a] bg-[#141414] overflow-hidden">
+              {/* Pre-trip body video */}
+              {unitData.bodyVideoMediaId ? (
+                <div className="bg-[#1a1a1a]">
+                  {/* biome-ignore lint/a11y/useMediaCaption: pre-trip reference video */}
+                  <video
+                    src={`/api/media/${unitData.bodyVideoMediaId}/stream`}
+                    className="w-full aspect-video object-cover"
+                    controls
+                    playsInline
+                    preload="metadata"
+                  />
+                  <p className="text-xs text-neutral-500 text-center py-2">
+                    Video Body &middot; Pre-Check
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-[#1a1a1a] aspect-video flex flex-col items-center justify-center">
+                  <svg
+                    aria-hidden="true"
+                    className="w-10 h-10 text-neutral-600 mb-2"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <p className="text-xs text-neutral-500">Video Body &middot; Pre-Check</p>
+                </div>
+              )}
+
+              {/* Pre-trip damages */}
+              {unitData.damages.length > 0 && (
+                <div className="divide-y divide-[#2a2a2a]">
+                  {unitData.damages.map((d) => (
+                    <div
+                      key={`pre-${d.area}-${d.description}`}
+                      className="flex items-center gap-3 px-4 py-3"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
+                        <span className="text-lg">{"\uD83D\uDE97"}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white">{damageLabel(d.area)}</p>
+                        <p className="text-xs text-neutral-500">{d.description}</p>
+                      </div>
+                      <span className="text-sm text-neutral-400 shrink-0">{d.confidence}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Pre-trip driver comment */}
+              {unitData.driverComment && (
+                <div className="px-4 py-3 border-t border-[#2a2a2a]">
+                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1">
+                    Catatan Driver
+                  </p>
+                  <p className="text-sm text-neutral-400">{unitData.driverComment}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -744,15 +791,33 @@ export function VideoReview() {
         {/* === Sections shown AFTER video upload === */}
         {hasMedia && (
           <>
-            {/* AI Flagged section — always shown after upload */}
+            {/* Post-Check card (video + AI flags) for POST_TRIP, or just AI Flagged for PRE_TRIP */}
             <div className="px-4 pb-4">
-              <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4">
+              {isPostTrip && (
+                <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
+                  Post-Check &middot; AI Flags
+                </p>
+              )}
+              <div className="rounded-xl border border-[#3a2800] bg-[#141414] overflow-hidden">
+                {/* Post-trip body video */}
+                <div className="bg-[#1a1a1a]">
+                  {/* biome-ignore lint/a11y/useMediaCaption: post-trip body video */}
+                  <video
+                    src={`/api/media/${bodyStep.mediaFiles[0].id}/stream`}
+                    className="w-full aspect-video object-cover"
+                    controls
+                    playsInline
+                    preload="metadata"
+                  />
+                  <p className="text-xs text-neutral-500 text-center py-2">
+                    Video Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
+                  </p>
+                </div>
+
+                {/* AI analysis results */}
                 {bodyStep.status === "PROCESSING" || bodyStep.status === "UPLOADED" ? (
-                  <>
-                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
-                      {"\u26A0\uFE0F"} AI Flagged
-                    </p>
-                    <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-4">
+                  <div className="px-4 py-3 border-t border-[#2a2a2a]">
+                    <div className="flex items-center gap-3">
                       <svg
                         aria-hidden="true"
                         className="animate-spin w-5 h-5 text-[#F5C842] shrink-0"
@@ -780,144 +845,39 @@ export function VideoReview() {
                         </p>
                       </div>
                     </div>
-                  </>
+                  </div>
                 ) : aiFlags.length > 0 ? (
-                  <>
-                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
-                      {"\u26A0\uFE0F"} AI Flagged — {aiFlags.length} Area Perlu Diperhatikan
-                    </p>
-                    <div className="space-y-2">
-                      {aiFlags.map((flag) => (
-                        <div
-                          key={`${flag.area}-${flag.description}-${flag.confidence}`}
-                          className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3"
-                        >
-                          <span className="text-lg shrink-0">{"\uD83D\uDE97"}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-white">{damageLabel(flag.area)}</p>
-                            <p className="text-xs text-neutral-400">{flag.description}</p>
-                          </div>
-                          <span className="text-sm font-bold text-white shrink-0">
-                            {flag.confidence}%
-                          </span>
+                  <div className="divide-y divide-[#2a2a2a]">
+                    {aiFlags.map((flag) => (
+                      <div
+                        key={`${flag.area}-${flag.description}-${flag.confidence}`}
+                        className="flex items-center gap-3 px-4 py-3"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
+                          <span className="text-lg">{"\uD83D\uDE97"}</span>
                         </div>
-                      ))}
-                    </div>
-                  </>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white">{damageLabel(flag.area)}</p>
+                          <p className="text-xs text-neutral-500">{flag.description}</p>
+                        </div>
+                        <span className="text-sm text-neutral-400 shrink-0">
+                          {flag.confidence}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <>
-                    <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
-                      {"\u26A0\uFE0F"} AI Flagged
-                    </p>
-                    <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-4">
+                  <div className="px-4 py-3 border-t border-[#2a2a2a]">
+                    <div className="flex items-center gap-3">
                       <span className="text-lg shrink-0">{"\u2705"}</span>
                       <p className="text-sm text-neutral-400">
                         Tidak ada kerusakan terdeteksi oleh AI
                       </p>
                     </div>
-                  </>
+                  </div>
                 )}
-                <p className="text-[10px] text-neutral-600 italic mt-3">
-                  {"\u26A0\uFE0F"} Hasil AI bersifat panduan awal. Konfirmasi dengan pemeriksaan
-                  fisik langsung.
-                </p>
               </div>
             </div>
-
-            {/* Pre vs Post Comparison for POST_TRIP */}
-            {isPostTrip && unitData && (
-              <div className="px-4 pb-4">
-                <div className="rounded-xl border border-[#2a2a2a] bg-[#111] p-3">
-                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3">
-                    Perbandingan Pre &middot; Post
-                  </p>
-
-                  {/* Side-by-side columns */}
-                  <div className="flex gap-2">
-                    {/* PRE-CHECK column */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[9px] font-bold text-[#F5C842] uppercase tracking-wider mb-2">
-                        Pre-Check
-                      </p>
-                      {/* Pre-trip body video */}
-                      {unitData.bodyVideoMediaId ? (
-                        <div className="rounded-lg overflow-hidden bg-[#1a1a1a] mb-2">
-                          {/* biome-ignore lint/a11y/useMediaCaption: pre-trip reference video */}
-                          <video
-                            src={`/api/media/${unitData.bodyVideoMediaId}/stream`}
-                            className="w-full aspect-video object-cover rounded-lg"
-                            controls
-                            playsInline
-                            preload="metadata"
-                          />
-                        </div>
-                      ) : (
-                        <div className="rounded-lg bg-[#1a1a1a] aspect-video flex items-center justify-center mb-2">
-                          <p className="text-[10px] text-neutral-600">Tidak ada video</p>
-                        </div>
-                      )}
-                      {/* Pre-trip unit info */}
-                      <div className="bg-[#1a1a1a] rounded-lg p-2">
-                        <p className="text-[10px] text-neutral-500 mb-0.5">Unit</p>
-                        <p className="text-xs font-bold text-white truncate">
-                          {[unitData.make, unitData.model].filter(Boolean).join(" ") || "—"}
-                        </p>
-                        <p className="text-[10px] text-neutral-400">
-                          {unitData.licensePlate || "—"}
-                        </p>
-                        {unitData.odometerKm != null && (
-                          <p className="text-xs font-bold text-[#F5C842] mt-1">
-                            KM {unitData.odometerKm.toLocaleString("id-ID")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="w-px bg-[#2a2a2a] shrink-0" />
-
-                    {/* POST-CHECK column */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
-                        Post-Check
-                      </p>
-                      {/* Post-trip body video */}
-                      {hasMedia ? (
-                        <div className="rounded-lg overflow-hidden bg-[#1a1a1a] mb-2">
-                          {/* biome-ignore lint/a11y/useMediaCaption: post-trip body video */}
-                          <video
-                            src={`/api/media/${bodyStep.mediaFiles[0].id}/stream`}
-                            className="w-full aspect-video object-cover rounded-lg"
-                            controls
-                            playsInline
-                            preload="metadata"
-                          />
-                        </div>
-                      ) : (
-                        <div className="rounded-lg bg-[#1a1a1a] aspect-video flex items-center justify-center mb-2">
-                          <p className="text-[10px] text-neutral-600">Belum ada video</p>
-                        </div>
-                      )}
-                      {/* Post-trip unit info */}
-                      <div className="bg-[#1a1a1a] rounded-lg p-2">
-                        <p className="text-[10px] text-neutral-500 mb-0.5">Unit</p>
-                        <p className="text-xs font-bold text-white truncate">
-                          {[unitForm.make, unitForm.model].filter(Boolean).join(" ") || "—"}
-                        </p>
-                        <p className="text-[10px] text-neutral-400">
-                          {unitForm.licensePlate || "—"}
-                        </p>
-                        {unitForm.odometerKm && (
-                          <p className="text-xs font-bold text-[#F5C842] mt-1">
-                            KM {Number(unitForm.odometerKm).toLocaleString("id-ID")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Driver Comment */}
             <div className="px-4 pb-4">

@@ -213,4 +213,5 @@ export interface PreTripReferenceData {
   odometerKm: number | null;
   damages: PreTripDamage[];
   bodyVideoMediaId: string | null;
+  driverComment: string | null;
 }
