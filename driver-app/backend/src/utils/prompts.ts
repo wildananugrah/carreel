@@ -59,50 +59,31 @@ export interface VehicleContext {
 // ========================
 
 const SCREEN_CAPTURE_IMAGE = `
-If the image may have come from a display, treat it as recapture.
-
-FOCUS_STEP 1. SCREEN-CAPTURE DETECTION PROTOCOL — PHOTO ONLY
+FOCUS_STEP 1. BOUNDARY & ARTIFACT ANTI-SPOOFING PROTOCOL (V4)
 
 TASK:
-Detect whether the input image is a photograph of a screen/display (monitor, phone, tablet, TV, dashboard LCD, or any other digital display).
+Detect if the image is a "screen recapture" (a photograph of a monitor/phone screen).
 
-SCOPE:
-This protocol applies ONLY to a single still image.
-Do NOT use video-specific cues such as motion, parallax, flicker over time, or temporal refresh behavior.
+CRITICAL ANALYSIS: THE BOUNDARY TEST
+You must distinguish between "natural darkness/shadows" (like a car parked at night) and "device boundaries" (the physical edges of a monitor or phone screen).
 
-HARD RULE:
-If there is any reasonable indication that the image was photographed from a display, set:
-screenRecaptureDetected = true
+PRIMARY SPOOFING INDICATORS (Classify as TRUE if found):
+1. The Device Frame: Look at the extreme edges of the image (top, bottom, left, right). Is the primary scene (e.g., the car interior) unnaturally constrained by a solid, thick, straight border (black, grey, or white) that resembles a physical monitor bezel or a phone screen's edge?
+   -> *Crucial Distinction*: A dark wall or night sky in a garage is NOT a device frame. A device frame is an artificial, perfectly straight border enclosing the photo.
+2. Moiré / Pixelation: Visible RGB grids or wavy interference patterns on the image surface.
+3. Screen Glare Overlay: A reflection of a room light, window, or person that sits ON TOP of the entire flat surface, distinct from natural reflections on 3D objects like a car windshield.
+
+EXEMPTIONS (Classify as FALSE if these are the ONLY findings):
+- Nighttime photography or dark shadows natively part of the 3D scene.
+- Natural reflections on glossy car paint or real dashboard screens.
 
 PREVENTIVE POLICY:
-False negatives are worse than false positives.
-When in doubt, classify as true.
-
-PRIMARY DISPLAY INDICATORS:
-1. Rectangular screen boundary, bezel, frame, or black border.
-2. UI-like content such as menus, icons, buttons, status bars, app layouts, overlays, text blocks, or interface elements.
-3. Content appears unnaturally flat, as if everything is on one plane.
-4. Reflection, glare, hotspot, or brightness falloff consistent with photographing a display.
-5. Visible pixel structure, subpixel grid, aliasing, or moiré on the content area.
-6. Uniform sharpness across the entire framed content, with no natural depth separation.
-7. Perspective and geometry consistent with a camera capturing a screen surface rather than a real physical scene.
-8. Signs that the image inside the frame is itself a digital render, screenshot, or screen photo.
-
-SECONDARY CHECK:
-Even if no obvious artifacts are visible, still classify as true if the scene strongly resembles a photographed display.
-
-DO NOT REQUIRE:
-- Moiré
-- Flicker
-- Motion
-- Parallax
-- Scan lines
-- Temporal artifacts
+If you see the primary scene boxed inside straight, artificial borders that look like a screen or monitor bezel, classify as TRUE, even if you do not see Moiré patterns.
 
 OUTPUT:
-Return only:
+Return exactly:
 screenRecaptureDetected: true/false
-reason: brief explanation based on the visible display evidence
+reason: [Explain if it failed the Boundary Test (device frame detected) or Artifact Test, OR if it passed because boundaries are natural 3D elements].
 `;
 
 const SCREEN_CAPTURE_VIDEO = `
