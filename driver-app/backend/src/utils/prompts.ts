@@ -133,6 +133,7 @@ DO NOT REQUIRE any of these to flag as recapture:
 function buildVehicleIdentityPrompt(vehicle: VehicleContext): string {
   const brand = vehicle.make ?? "";
   const model = vehicle.model ?? "";
+  const licensePlate = vehicle.licensePlate ?? "";
 
   if (!brand && !model) return "";
 
@@ -143,9 +144,13 @@ TASK:
 You will receive a single still photo of a vehicle dashboard / speedometer / instrument cluster.
 Your job is to verify whether the visible dashboard matches the EXPECTED VEHICLE identity.
 
-EXPECTED VEHICLE:
+CONTEXT:
+The expected vehicle data below was extracted by AI from a separate Unit Identification photo (exterior photo showing the vehicle's brand badge, license plate, body shape, etc.) taken earlier in the same inspection session.
+Your job is to cross-verify: does the dashboard in THIS photo belong to the same vehicle identified in that Unit Identification step?
+
+EXPECTED VEHICLE (from Unit Identification AI result):
 - Brand: ${brand || "UNKNOWN"}
-- Model: ${model || "UNKNOWN"}
+- Model: ${model || "UNKNOWN"}${licensePlate ? `\n- License Plate: ${licensePlate}` : ""}
 - Generation: UNKNOWN
 - Trim/Variant: NOT PROVIDED
 - Year: NOT PROVIDED
