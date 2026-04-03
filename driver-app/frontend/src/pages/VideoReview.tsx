@@ -610,8 +610,8 @@ export function VideoReview() {
           </div>
         </div>
 
-        {/* Pre-Check Reference for POST_TRIP — shown above post-trip video */}
-        {isPostTrip && unitData && (
+        {/* Pre-Check Reference for POST_TRIP — shown after post-trip video is uploaded */}
+        {isPostTrip && unitData && hasMedia && (
           <div className="px-4 pb-4">
             <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-3">
               Pre-Check &middot; Referensi

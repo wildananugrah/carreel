@@ -88,6 +88,8 @@ export function PhotoCapture() {
 
   const photoSteps = getPhotoSteps(inspection);
   const allDone = photoSteps.every((s) => s.status !== "PENDING");
+  const allAnalyzed = photoSteps.every((s) => s.status === "COMPLETED" || s.status === "FAILED");
+  const canProceed = allDone && allAnalyzed;
 
   return (
     <div className="flex flex-col h-full">
@@ -382,7 +384,7 @@ export function PhotoCapture() {
       <div className="px-4 py-4 border-t border-[#2a2a2a] bg-[#0f0f0f] space-y-3">
         <Button
           className="w-full"
-          disabled={!allDone || navigating}
+          disabled={!canProceed || navigating}
           loading={navigating}
           onClick={async () => {
             if (!id) return;
