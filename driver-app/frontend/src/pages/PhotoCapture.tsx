@@ -295,7 +295,7 @@ export function PhotoCapture() {
           const preKm = preTripRef.odometerKm!;
           const delta = postKm != null ? postKm - preKm : null;
           const isProcessing = speedoStep?.status === "UPLOADED" || speedoStep?.status === "PROCESSING";
-          const isCompleted = speedoStep?.status === "COMPLETED";
+
 
           return (
             <div className="px-4 pb-4">
