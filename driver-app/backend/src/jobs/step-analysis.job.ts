@@ -129,6 +129,27 @@ export class StepAnalysisJob {
       const parsed = JSON.parse(cleaned);
       const processingTimeMs = Date.now() - startTime;
 
+      log.info("AI structured result", {
+        stepType,
+        confidence: parsed.confidence,
+        screenRecaptureDetected: parsed.screenRecaptureDetected,
+        ...(stepType === "UNIT_IDENTIFICATION" && {
+          licensePlate: parsed.licensePlate,
+          make: parsed.make,
+          model: parsed.model,
+          color: parsed.color,
+        }),
+        ...(stepType === "SPEEDOMETER" && {
+          odometerKm: parsed.odometerKm,
+          fuelLevelPct: parsed.fuelLevelPct,
+          vehicleMismatchDetected: parsed.vehicleMismatchDetected,
+          brandMatchDetected: parsed.brandMatchDetected,
+          modelMatchDetected: parsed.modelMatchDetected,
+          dashboardMatch: parsed.dashboardMatch,
+        }),
+        processingTimeMs,
+      });
+
       // 5. Save AIAnalysis record
       const analysis = await this.aiAnalysisRepository.createAnalysis({
         stepId,

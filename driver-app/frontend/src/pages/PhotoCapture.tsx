@@ -89,7 +89,23 @@ export function PhotoCapture() {
   const photoSteps = getPhotoSteps(inspection);
   const allDone = photoSteps.every((s) => s.status !== "PENDING");
   const allAnalyzed = photoSteps.every((s) => s.status === "COMPLETED" || s.status === "FAILED");
-  const canProceed = allDone && allAnalyzed;
+
+  // Check for vehicle mismatch from speedometer AI result
+  const speedoStep = inspection.steps.find((s) => s.stepType === "SPEEDOMETER");
+  const speedoAI = speedoStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
+  const vehicleMismatch = speedoAI?.vehicleMismatchDetected === true;
+
+  // Check for screen recapture on any step
+  const screenRecapture = photoSteps.some((s) => {
+    const ai = s.aiAnalysis?.structuredData as Record<string, unknown> | null;
+    return ai?.screenRecaptureDetected === true;
+  });
+
+  // Check for AI failure
+  const hasFailed = photoSteps.some((s) => s.status === "FAILED");
+
+  const hasAIIssue = vehicleMismatch || screenRecapture || hasFailed;
+  const canProceed = allDone && allAnalyzed && !hasAIIssue;
 
   return (
     <div className="flex flex-col h-full">
@@ -174,16 +190,15 @@ export function PhotoCapture() {
                 <div>
                   <p className="text-xs font-bold text-white">AI sedang menganalisa foto...</p>
                   <p className="text-[10px] text-neutral-500">
-                    Anda bisa lanjut ke halaman berikutnya tanpa menunggu
+                    Mohon tunggu hingga analisa selesai sebelum melanjutkan
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* AI Complete Banner */}
-          {photoSteps.length > 0 &&
-            photoSteps.every((s) => s.status === "COMPLETED") && (
+          {/* AI Complete Banner (no issues) */}
+          {allAnalyzed && !hasAIIssue && photoSteps.length > 0 && (
             <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3">
               <div className="flex items-center gap-3">
                 <svg
@@ -202,6 +217,84 @@ export function PhotoCapture() {
                   <p className="text-xs font-bold text-white">Analisa AI selesai</p>
                   <p className="text-[10px] text-neutral-500">
                     Silakan lanjut ke halaman berikutnya
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Vehicle Mismatch Banner */}
+          {vehicleMismatch && (
+            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-3">
+              <div className="flex items-start gap-3">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-red-400 shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-red-400">Kendaraan tidak cocok</p>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">
+                    Dashboard speedometer tidak sesuai dengan kendaraan yang terdeteksi. Silakan hapus foto speedometer dan upload ulang foto yang benar.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Screen Recapture Banner */}
+          {screenRecapture && (
+            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-3">
+              <div className="flex items-start gap-3">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-red-400 shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-red-400">Foto layar terdeteksi</p>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">
+                    AI mendeteksi bahwa foto diambil dari layar perangkat, bukan langsung dari kamera. Silakan hapus dan ambil ulang foto langsung dari kamera.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Failed Banner */}
+          {hasFailed && !vehicleMismatch && !screenRecapture && (
+            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-3">
+              <div className="flex items-start gap-3">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-red-400 shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-red-400">Analisa AI gagal</p>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">
+                    Terjadi kesalahan saat menganalisa foto. Silakan hapus dan upload ulang foto.
                   </p>
                 </div>
               </div>
