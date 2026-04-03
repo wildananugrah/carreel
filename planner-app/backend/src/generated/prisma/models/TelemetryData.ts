@@ -232,7 +232,7 @@ export type TelemetryDataGroupByOutputType = {
   _max: TelemetryDataMaxAggregateOutputType | null
 }
 
-type GetTelemetryDataGroupByPayload<T extends TelemetryDataGroupByArgs> = Prisma.PrismaPromise<
+export type GetTelemetryDataGroupByPayload<T extends TelemetryDataGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TelemetryDataGroupByOutputType, T['by']> &
       {

@@ -216,7 +216,7 @@ export type DamageMarkerGroupByOutputType = {
   _max: DamageMarkerMaxAggregateOutputType | null
 }
 
-type GetDamageMarkerGroupByPayload<T extends DamageMarkerGroupByArgs> = Prisma.PrismaPromise<
+export type GetDamageMarkerGroupByPayload<T extends DamageMarkerGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<DamageMarkerGroupByOutputType, T['by']> &
       {
