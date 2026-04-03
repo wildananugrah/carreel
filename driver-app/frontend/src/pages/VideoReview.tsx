@@ -681,122 +681,6 @@ export function VideoReview() {
                 </div>
               )}
 
-              {/* Unit Info — POST_TRIP inline */}
-              <div className="px-4 py-3 border-t border-[#2a2a2a]">
-                <p className="text-[10px] font-bold text-[#F5C842] uppercase tracking-wider mb-2">
-                  {"\uD83D\uDE98"}{" "}
-                  {photoStepsProcessing
-                    ? "AI Analyzing... \u00B7 "
-                    : hasAIData
-                      ? "AI Detected \u00B7 "
-                      : ""}
-                  Unit Info
-                </p>
-                {photoStepsProcessing && (
-                  <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3 mb-3">
-                    <svg
-                      aria-hidden="true"
-                      className="animate-spin w-4 h-4 text-[#F5C842] shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    <div>
-                      <p className="text-xs font-bold text-white">Mengekstrak data kendaraan...</p>
-                      <p className="text-[10px] text-neutral-500">
-                        Merk, tipe, plat, dan odometer akan terisi otomatis
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Merk & Tipe</p>
-                    <input
-                      type="text"
-                      value={
-                        unitForm.make || unitForm.model
-                          ? [unitForm.make, unitForm.model].filter(Boolean).join(" ")
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const parts = val.split(" ");
-                        setUnitForm((prev) => ({
-                          ...prev,
-                          make: parts[0] || "",
-                          model: parts.slice(1).join(" ") || "",
-                        }));
-                      }}
-                      placeholder="cth. Toyota Avanza"
-                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                    />
-                  </div>
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Tahun</p>
-                    <input
-                      type="text"
-                      value={unitForm.year}
-                      onChange={(e) => setUnitForm((prev) => ({ ...prev, year: e.target.value }))}
-                      placeholder="cth. 2022"
-                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                    />
-                  </div>
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Nomer Plat</p>
-                    <input
-                      type="text"
-                      value={unitForm.licensePlate}
-                      onChange={(e) =>
-                        setUnitForm((prev) => ({
-                          ...prev,
-                          licensePlate: e.target.value.toUpperCase(),
-                        }))
-                      }
-                      placeholder="cth. B 1234 ABC"
-                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
-                    />
-                  </div>
-                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                    <p className="text-[9px] text-neutral-500 mb-0.5">Odometer</p>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={unitForm.odometerKm}
-                        onChange={(e) =>
-                          setUnitForm((prev) => ({
-                            ...prev,
-                            odometerKm: e.target.value,
-                          }))
-                        }
-                        placeholder="0"
-                        className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[10px] text-neutral-600 italic mt-2">
-                  {photoStepsProcessing
-                    ? "Sedang dianalisa AI... hasil akan muncul otomatis"
-                    : hasAIData
-                      ? "Terdeteksi otomatis \u2014 bisa disesuaikan manual"
-                      : "Silakan isi manual atau tunggu hasil analisa AI"}
-                </p>
-              </div>
             </div>
           </div>
         )}
@@ -1099,7 +983,7 @@ export function VideoReview() {
 
         {/* Delete — always visible for DRAFT inspections */}
         {inspection.status === "DRAFT" && (
-          <div className="px-4 pb-6">
+          <div className="px-4 pt-2 pb-6">
             <button
               type="button"
               disabled={deleting}

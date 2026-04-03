@@ -23,6 +23,7 @@ export class GeminiProvider implements IAIProvider {
     const response = await this.ai.models.generateContent({
       model: this.model,
       contents: [{ inlineData: { mimeType, data: base64 } }, { text: prompt }],
+      config: { temperature: 0.0 },
     });
     return response.text ?? "";
   }
@@ -38,6 +39,7 @@ export class GeminiProvider implements IAIProvider {
         createPartFromUri(fileUri, mimeType),
         prompt,
       ]),
+      config: { temperature: 0.0 },
     });
     return response.text ?? "";
   }

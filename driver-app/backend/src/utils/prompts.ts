@@ -34,7 +34,6 @@ export interface SpeedometerResult {
   modelMatchDetected?: boolean;
   generationMatchDetected?: boolean;
   trimMatchDetected?: boolean;
-  yearMatchDetected?: boolean;
   confidence: number;
   screenRecaptureDetected: boolean;
 }
@@ -59,31 +58,48 @@ export interface VehicleContext {
 // ========================
 
 const SCREEN_CAPTURE_IMAGE = `
-FOCUS_STEP 1. BOUNDARY & ARTIFACT ANTI-SPOOFING PROTOCOL (V4)
+[SCREEN-CAPTURE DETECTION PROTOCOL — PHOTO ONLY]
+
+If the image may have come from a display, treat it as recapture.
 
 TASK:
-Detect if the image is a "screen recapture" (a photograph of a monitor/phone screen).
+Detect whether the input image is a photograph of a screen/display (monitor, phone, tablet, TV, dashboard LCD, or any other digital display).
 
-CRITICAL ANALYSIS: THE BOUNDARY TEST
-You must distinguish between "natural darkness/shadows" (like a car parked at night) and "device boundaries" (the physical edges of a monitor or phone screen).
+SCOPE:
+This protocol applies ONLY to a single still image.
+Do NOT use video-specific cues such as motion, parallax, flicker over time, or temporal refresh behavior.
 
-PRIMARY SPOOFING INDICATORS (Classify as TRUE if found):
-1. The Device Frame: Look at the extreme edges of the image (top, bottom, left, right). Is the primary scene (e.g., the car interior) unnaturally constrained by a solid, thick, straight border (black, grey, or white) that resembles a physical monitor bezel or a phone screen's edge?
-   -> *Crucial Distinction*: A dark wall or night sky in a garage is NOT a device frame. A device frame is an artificial, perfectly straight border enclosing the photo.
-2. Moiré / Pixelation: Visible RGB grids or wavy interference patterns on the image surface.
-3. Screen Glare Overlay: A reflection of a room light, window, or person that sits ON TOP of the entire flat surface, distinct from natural reflections on 3D objects like a car windshield.
-
-EXEMPTIONS (Classify as FALSE if these are the ONLY findings):
-- Nighttime photography or dark shadows natively part of the 3D scene.
-- Natural reflections on glossy car paint or real dashboard screens.
+HARD RULE:
+If there is any reasonable indication that the image was photographed from a display, set screenRecaptureDetected = true.
 
 PREVENTIVE POLICY:
-If you see the primary scene boxed inside straight, artificial borders that look like a screen or monitor bezel, classify as TRUE, even if you do not see Moiré patterns.
+False negatives are worse than false positives.
+When in doubt, classify as true.
 
-OUTPUT:
-Return exactly:
-screenRecaptureDetected: true/false
-reason: [Explain if it failed the Boundary Test (device frame detected) or Artifact Test, OR if it passed because boundaries are natural 3D elements].
+PRIMARY DISPLAY INDICATORS:
+1. Rectangular screen boundary, bezel, frame, or black border.
+2. UI-like content such as menus, icons, buttons, status bars, app layouts, overlays, text blocks, or interface elements.
+3. Content appears unnaturally flat, as if everything is on one plane.
+4. Reflection, glare, hotspot, or brightness falloff consistent with photographing a display.
+5. Visible pixel structure, subpixel grid, aliasing, or moiré on the content area.
+6. Uniform sharpness across the entire framed content, with no natural depth separation.
+7. Perspective and geometry consistent with a camera capturing a screen surface rather than a real physical scene.
+8. Signs that the image inside the frame is itself a digital render, screenshot, or screen photo.
+
+SECONDARY CHECK:
+Even if no obvious artifacts are visible, still classify as true if the scene strongly resembles a photographed display.
+
+DASHBOARD TYPE EXCEPTION:
+- Type A (Analog Dashboards): Expect physical needles and printed numbers. If there is a small digital LCD screen for the Odometer, moiré patterns/pixels are ONLY permitted strictly inside that small LCD box.
+- Type B (Digital/EV Dashboards): Moiré patterns and pixel grids are expected, but must be strictly confined INSIDE the boundary of the main digital screen and must never bleed onto the outer physical bezels.
+
+DO NOT REQUIRE any of these to flag as recapture:
+- Moiré
+- Flicker
+- Motion
+- Parallax
+- Scan lines
+- Temporal artifacts
 `;
 
 const SCREEN_CAPTURE_VIDEO = `
@@ -212,11 +228,6 @@ Does the dashboard design belong to the expected generation or official design f
 If Trim is not provided, accept only OEM dashboard variants officially available for the same brand, model, market, and generation.
 A valid analog or digital cluster is acceptable only if it is an official OEM variant for that exact vehicle family.
 
-5. YEAR MATCH
-If a specific year is expected, check whether the dashboard design, cluster generation, UI style, font style, or layout is consistent with that year range.
-If the exact year cannot be visually distinguished from the dashboard photo alone, set yearMatchDetected = unknown.
-Do not guess the year.
-
 STEP 5 — HARD REJECTION RULES
 Immediately set vehicleMismatchDetected = true if ANY of the following are visible:
 - The dashboard clearly belongs to a different manufacturer
@@ -294,23 +305,28 @@ Rules:
 Identify any visible damage on the vehicle exterior.
 All damage "description" values MUST be written in Bahasa Indonesia.
 
+Allowed Body Types: SUV, Sedan, Hatchback, Pickup, MPV, Van, Truck, Coupe, Convertible, Wagon, other
+Allowed Damage Types: scratch, dent, crack, rust, missing_part, broken_light, other
+Allowed Severities: MINOR, MODERATE, MAJOR
+
 ## Response Format
-Respond ONLY with valid JSON in this exact format:
+Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings. Use null (without quotes) for unknown string values:
+
 {
-  "licensePlate": "string or null",
-  "make": "string or null",
-  "model": "string or null",
-  "trim": "string or null",
-  "bodyType": "SUV|Sedan|Hatchback|Pickup|MPV|Van|Truck|Coupe|Convertible|Wagon|other or null",
-  "color": "string or null",
-  "vin": "string or null",
+  "licensePlate": null,
+  "make": null,
+  "model": null,
+  "trim": null,
+  "bodyType": null,
+  "color": null,
+  "vin": null,
   "confidence": 0.0,
   "screenRecaptureDetected": false,
   "damages": [
     {
-      "damageType": "scratch|dent|crack|rust|missing_part|broken_light|other",
-      "severity": "MINOR|MODERATE|MAJOR",
-      "description": "deskripsi singkat dalam Bahasa Indonesia",
+      "damageType": "scratch",
+      "severity": "MINOR",
+      "description": "Terdapat goresan pada panel kiri",
       "isNewDamage": true,
       "boundingBox": { "x": 0, "y": 0, "width": 0, "height": 0 }
     }
@@ -326,12 +342,11 @@ function buildSpeedometerPrompt(vehicle?: VehicleContext | null): string {
     ? buildVehicleIdentityPrompt(vehicle)
     : "";
   const vehicleMatchFields = hasVehicle
-    ? `  "vehicleMismatchDetected": true/false,
-  "brandMatchDetected": true/false,
-  "modelMatchDetected": true/false,
-  "generationMatchDetected": true/false,
-  "trimMatchDetected": true/false,
-  "yearMatchDetected": true/false,`
+    ? `  "vehicleMismatchDetected": false,
+  "brandMatchDetected": true,
+  "modelMatchDetected": true,
+  "generationMatchDetected": true,
+  "trimMatchDetected": true,`
     : `  "vehicleMismatchDetected": false,`;
 
   return `Act as a highly conservative vehicle dashboard OCR and indicator detection AI for a fleet management anti-fraud system.
@@ -378,7 +393,8 @@ Determine if the vehicle's ignition is ON:
 - Use standard names: "check engine", "battery", "oil pressure", "temperature", "ABS", "airbag", "tire pressure", "brake", "door ajar", etc.
 
 ## Response Format
-Respond ONLY with valid JSON in this exact format:
+Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
+
 {
   "odometerKm": 0,
   "fuelLevelPct": 0,
@@ -399,7 +415,7 @@ function buildBodyInspectionPrompt(vehicle?: VehicleContext | null): string {
       ? `\nVEHICLE BEING INSPECTED: ${[vehicle.make, vehicle.model, vehicle.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
       : "";
 
-  return `You are a highly conservative Automotive Exterior Damage Appraiser AI.
+  return `You are a highly conservative Automotive Exterior Damage Appraiser AI for a fleet management anti-fraud system.
 Your job is to inspect the vehicle's exterior in the provided VIDEO and report ONLY physical damage that is directly, clearly, and unambiguously visible.
 
 You must prioritize accuracy over completeness. However, do not aggressively dismiss high-contrast marks (e.g., black scuffs on light paint) as dirt if they appear on typical impact zones like bumper corners.
@@ -467,17 +483,18 @@ SEVERITY MAPPING:
 - Berat = MAJOR (major deformation, broken components, shattered glass, missing major parts)
 
 ## Response Format
-Respond ONLY with valid JSON in this exact format:
+Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
+
 {
-  "overallCondition": "GOOD|FAIR|POOR",
+  "overallCondition": "GOOD",
   "confidence": 0.0,
   "screenRecaptureDetected": false,
   "damages": [
     {
-      "damageType": "goresan|transfer_cat|penyok|kaca_retak|bagian_pecah|panel_bengkok|bagian_hilang",
-      "location": "EXACT string from ALLOWED LOCATIONS above",
-      "severity": "MINOR|MODERATE|MAJOR",
-      "description": "deskripsi singkat kerusakan dalam Bahasa Indonesia",
+      "damageType": "goresan",
+      "location": "Bumper Belakang Kiri",
+      "severity": "MINOR",
+      "description": "Deskripsi sangat singkat dalam bahasa indonesia",
       "isNewDamage": true,
       "videoTimestamp": 0
     }

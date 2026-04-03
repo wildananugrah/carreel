@@ -11,7 +11,8 @@
     "validate": "bun run typecheck && bun run lint && bun test",
     "pm2:start": "pm2 start pm2.config.cjs",
     "pm2:stop": "pm2 stop driver-backend",
-    "pm2:logs": "pm2 logs driver-backend"
+    "pm2:logs": "pm2 logs driver-backend",
+    "postinstall": "bun run scripts/patch-pgboss.ts"
   },
   "dependencies": {
     "@google/genai": "^1.45.0",

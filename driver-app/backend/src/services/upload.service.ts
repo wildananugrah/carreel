@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { IJobQueue } from "../interfaces/providers/job-queue.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
 import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
@@ -11,12 +12,15 @@ const BUCKET_MAP: Record<string, string> = {
   VIDEO: "carreel-videos",
 };
 
+const IMMEDIATE_ANALYSIS_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
+
 export class UploadService implements IUploadService {
   constructor(
     private storageProvider: IStorageProvider,
     private mediaFileRepository: IMediaFileRepository,
     private inspectionRepository: IInspectionRepository,
     private logger: ILogger,
+    private jobQueue?: IJobQueue,
   ) {}
 
   async uploadMedia(
@@ -71,6 +75,26 @@ export class UploadService implements IUploadService {
       bucket,
       key,
     });
+
+    // Immediately enqueue AI analysis for photo steps
+    if (
+      this.jobQueue &&
+      IMMEDIATE_ANALYSIS_STEPS.includes(step.stepType) &&
+      meta.mediaType === "IMAGE"
+    ) {
+      await this.jobQueue.enqueue("step-analysis", {
+        inspectionId,
+        stepId,
+        stepType: step.stepType,
+        driverId,
+        tripType: inspection.tripType,
+      });
+      this.logger.info("Enqueued immediate AI analysis on upload", {
+        inspectionId,
+        stepId,
+        stepType: step.stepType,
+      });
+    }
 
     // Return with presigned URL
     const presignedUrl = await this.storageProvider.getPresignedUrl(

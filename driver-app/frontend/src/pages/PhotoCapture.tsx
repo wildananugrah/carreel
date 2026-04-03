@@ -62,6 +62,19 @@ export function PhotoCapture() {
     fetchDetail();
   }, [fetchDetail]);
 
+  // Poll while any photo step is being analyzed by AI
+  useEffect(() => {
+    if (!inspection) return;
+    const photoSteps = getPhotoSteps(inspection);
+    const hasProcessing = photoSteps.some(
+      (s) => s.status === "UPLOADED" || s.status === "PROCESSING",
+    );
+    if (!hasProcessing) return;
+
+    const interval = setInterval(fetchDetail, 3000);
+    return () => clearInterval(interval);
+  }, [inspection, fetchDetail]);
+
   if (loading) return <Spinner className="h-screen" />;
   if (error && !inspection) {
     return (
@@ -131,6 +144,67 @@ export function PhotoCapture() {
               </svg>
             )}
           </div>
+
+          {/* AI Processing Banner */}
+          {photoSteps.some((s) => s.status === "UPLOADED" || s.status === "PROCESSING") && (
+            <div className="mt-3 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3">
+              <div className="flex items-center gap-3">
+                <svg
+                  aria-hidden="true"
+                  className="animate-spin w-5 h-5 text-amber-400 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-white">AI sedang menganalisa foto...</p>
+                  <p className="text-[10px] text-neutral-500">
+                    Anda bisa lanjut ke halaman berikutnya tanpa menunggu
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Complete Banner */}
+          {photoSteps.length > 0 &&
+            photoSteps.every((s) => s.status === "COMPLETED") && (
+            <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3">
+              <div className="flex items-center gap-3">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-emerald-400 shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-white">Analisa AI selesai</p>
+                  <p className="text-[10px] text-neutral-500">
+                    Silakan lanjut ke halaman berikutnya
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Step Instructions */}
@@ -213,22 +287,89 @@ export function PhotoCapture() {
           </div>
         </div>
 
-        {/* Pre-trip odometer reference for POST_TRIP */}
-        {inspection.tripType === "POST_TRIP" && preTripRef?.odometerKm != null && (
-          <div className="px-4 pb-4">
-            <div className="rounded-xl border border-[#2a2a2a] bg-[#111] p-3 flex items-center gap-3">
-              <span className="text-lg shrink-0">{"\uD83D\uDCCF"}</span>
-              <div>
-                <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-bold">
-                  Odometer Pre-Trip
-                </p>
-                <p className="text-sm font-bold text-[#F5C842]">
-                  {preTripRef.odometerKm.toLocaleString("id-ID")} KM
-                </p>
+        {/* Odometer comparison for POST_TRIP */}
+        {inspection.tripType === "POST_TRIP" && preTripRef?.odometerKm != null && (() => {
+          const speedoStep = inspection.steps.find((s) => s.stepType === "SPEEDOMETER");
+          const speedoData = speedoStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
+          const postKm = speedoData?.odometerKm as number | undefined;
+          const preKm = preTripRef.odometerKm!;
+          const delta = postKm != null ? postKm - preKm : null;
+          const isProcessing = speedoStep?.status === "UPLOADED" || speedoStep?.status === "PROCESSING";
+          const isCompleted = speedoStep?.status === "COMPLETED";
+
+          return (
+            <div className="px-4 pb-4">
+              <div className="rounded-xl border border-[#2a2a2a] bg-[#141414] overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-center gap-3">
+                    {/* Pre KM */}
+                    <div className="flex-1 bg-[#1a1a1a] rounded-lg p-3 text-center">
+                      <p className="text-[9px] text-neutral-500 uppercase tracking-wider font-bold mb-1">
+                        Pre &middot; KM
+                      </p>
+                      <p className="text-lg font-bold text-white">
+                        {preKm.toLocaleString("id-ID")}
+                      </p>
+                    </div>
+
+                    {/* Arrow */}
+                    <svg
+                      aria-hidden="true"
+                      className="w-5 h-5 text-neutral-500 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+
+                    {/* Post KM */}
+                    <div className="flex-1 bg-[#1a1a1a] rounded-lg p-3 text-center">
+                      <p className="text-[9px] text-neutral-500 uppercase tracking-wider font-bold mb-1">
+                        Post &middot; KM
+                      </p>
+                      {isProcessing ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <svg
+                            aria-hidden="true"
+                            className="animate-spin w-4 h-4 text-amber-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          <span className="text-sm text-amber-400">...</span>
+                        </div>
+                      ) : postKm != null ? (
+                        <p className="text-lg font-bold text-[#F5C842]">
+                          {postKm.toLocaleString("id-ID")}
+                        </p>
+                      ) : (
+                        <p className="text-lg font-bold text-neutral-600">&mdash;</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Delta */}
+                  <div className="mt-3 bg-[#1a1a1a] rounded-lg p-2.5 text-center">
+                    {isProcessing ? (
+                      <p className="text-xs text-amber-400">AI sedang menghitung odometer...</p>
+                    ) : delta != null ? (
+                      <p className="text-xs text-neutral-400">
+                        +{delta.toLocaleString("id-ID")} KM selama penggunaan
+                      </p>
+                    ) : (
+                      <p className="text-xs text-neutral-600">
+                        Upload foto speedometer untuk melihat selisih KM
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {error && (
           <div className="px-4 pb-4">

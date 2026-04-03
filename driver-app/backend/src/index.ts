@@ -115,6 +115,7 @@ const uploadService = new UploadService(
   mediaFileRepository,
   inspectionRepository,
   logger,
+  jobQueue,
 );
 
 const chunkedUploadService = new ChunkedUploadService(
@@ -242,3 +243,15 @@ Bun.serve({
   port,
   fetch: app.fetch,
 });
+
+// Graceful shutdown — stop pgboss cleanly on process exit
+const shutdown = async () => {
+  try {
+    await boss.stop({ graceful: true, timeout: 5000 });
+  } catch {
+    // Ignore errors during shutdown
+  }
+  process.exit(0);
+};
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
