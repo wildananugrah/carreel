@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { IJobQueue } from "../interfaces/providers/job-queue.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
 import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IAIAnalysisRepository } from "../interfaces/repositories/ai-analysis.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import type { IUploadService } from "../interfaces/services/upload.service.interface";
@@ -21,6 +22,7 @@ export class UploadService implements IUploadService {
     private inspectionRepository: IInspectionRepository,
     private logger: ILogger,
     private jobQueue?: IJobQueue,
+    private aiAnalysisRepository?: IAIAnalysisRepository,
   ) {}
 
   async uploadMedia(
@@ -184,6 +186,16 @@ export class UploadService implements IUploadService {
           mediaId,
         });
       });
+
+    // Delete AI analysis for this step (allows re-analysis on re-upload)
+    if (this.aiAnalysisRepository) {
+      await this.aiAnalysisRepository.deleteByStepId(stepId).catch((e) => {
+        this.logger.warn("Failed to delete AI analysis", {
+          error: String(e),
+          stepId,
+        });
+      });
+    }
 
     // Delete DB record
     await this.mediaFileRepository.deleteById(mediaId);

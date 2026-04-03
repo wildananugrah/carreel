@@ -23,6 +23,10 @@ export class AIAnalysisRepository implements IAIAnalysisRepository {
     return this.prisma.aIAnalysis.findUnique({ where: { stepId } });
   }
 
+  async deleteByStepId(stepId: string): Promise<void> {
+    await this.prisma.aIAnalysis.deleteMany({ where: { stepId } });
+  }
+
   async createDamageMarkers(
     markers: CreateDamageMarkerDTO[],
   ): Promise<DamageMarker[]> {

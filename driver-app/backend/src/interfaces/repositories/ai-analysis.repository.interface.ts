@@ -42,6 +42,7 @@ export interface CreateTelemetryDataDTO {
 export interface IAIAnalysisRepository {
   createAnalysis(data: CreateAIAnalysisDTO): Promise<AIAnalysis>;
   findByStepId(stepId: string): Promise<AIAnalysis | null>;
+  deleteByStepId(stepId: string): Promise<void>;
   createDamageMarkers(
     markers: CreateDamageMarkerDTO[],
   ): Promise<DamageMarker[]>;

@@ -116,6 +116,7 @@ const uploadService = new UploadService(
   inspectionRepository,
   logger,
   jobQueue,
+  aiAnalysisRepository,
 );
 
 const chunkedUploadService = new ChunkedUploadService(
