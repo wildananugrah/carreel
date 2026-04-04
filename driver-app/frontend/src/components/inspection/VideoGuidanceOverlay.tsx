@@ -42,29 +42,9 @@ export function VideoGuidanceOverlay({
           {/* Stage name */}
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="text-2xl">{currentStage.icon}</span>
-            <span className="text-white text-lg font-bold">{currentStage.label}</span>
-          </div>
-
-          {/* Stage dots */}
-          <div className="flex items-center justify-center gap-2 mb-3">
-            {STAGES.map((stage, i) => (
-              <div key={stage.label} className="flex items-center gap-1">
-                <div
-                  className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                    i === stageIndex
-                      ? "bg-yellow-400"
-                      : i < stageIndex
-                        ? "bg-yellow-400/50"
-                        : "bg-white/30"
-                  }`}
-                />
-                {i < STAGES.length - 1 && (
-                  <div
-                    className={`w-4 h-0.5 ${i < stageIndex ? "bg-yellow-400/50" : "bg-white/20"}`}
-                  />
-                )}
-              </div>
-            ))}
+            <span className="text-white text-lg font-bold">
+              {currentStage.label}
+            </span>
           </div>
 
           {/* Timer */}
@@ -73,7 +53,9 @@ export function VideoGuidanceOverlay({
               {formatTime(elapsedSeconds)}
             </span>
             <span className="text-white/50">/</span>
-            <span className="text-white/50 font-mono">{formatTime(maxDuration)}</span>
+            <span className="text-white/50 font-mono">
+              {formatTime(maxDuration)}
+            </span>
           </div>
         </div>
       </div>
