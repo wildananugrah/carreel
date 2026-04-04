@@ -150,5 +150,15 @@ docker exec carreel-driver-db psql -U carreel carreel_driver -c '
 SELECT s."stepType", jsonb_pretty(a."structuredData"::jsonb)
 FROM ai_analyses a
 JOIN inspection_steps s ON s.id = a."stepId"
-ORDER BY a."createdAt" DESC LIMIT 2;
+ORDER BY a."createdAt" DESC LIMIT 2;'
+
+docker exec carreel-driver-db psql -U carreel carreel_driver -c 'select * from ai_analyses order by "createdAt" desc limit 2'
+
+docker exec carreel-driver-db psql -U carreel carreel_driver -c '\d ai_analyses'
+```
+
+```bash
+curl http://localhost:3001/api/media/b6501217-adb5-49b9-9218-8f6faca344ea/url
+
+curl https://driver.carreel.id/api/media/b6501217-adb5-49b9-9218-8f6faca344ea/url
 ```

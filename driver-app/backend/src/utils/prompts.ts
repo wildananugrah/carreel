@@ -60,38 +60,56 @@ export interface VehicleContext {
 const SCREEN_CAPTURE_IMAGE = `
 [SCREEN-CAPTURE DETECTION PROTOCOL — PHOTO ONLY]
 
-If the image may have come from a display, treat it as recapture.
+If the image may have come from a display or screenshot, treat it as recapture.
 
 TASK:
-Detect whether the input image is a photograph of a screen/display (monitor, phone, tablet, TV, dashboard LCD, or any other digital display).
+Detect whether the input image is:
+A) A photograph of a screen/display (monitor, phone, tablet, TV), OR
+B) A screenshot or saved image being re-submitted instead of a live camera capture.
 
 SCOPE:
 This protocol applies ONLY to a single still image.
 Do NOT use video-specific cues such as motion, parallax, flicker over time, or temporal refresh behavior.
 
 HARD RULE:
-If there is any reasonable indication that the image was photographed from a display, set screenRecaptureDetected = true.
+If there is any reasonable indication that the image was photographed from a display OR is a screenshot, set screenRecaptureDetected = true.
 
 PREVENTIVE POLICY:
 False negatives are worse than false positives.
 When in doubt, classify as true.
 
-PRIMARY DISPLAY INDICATORS:
-1. Rectangular screen boundary, bezel, frame, or black border.
-2. UI-like content such as menus, icons, buttons, status bars, app layouts, overlays, text blocks, or interface elements.
-3. Content appears unnaturally flat, as if everything is on one plane.
-4. Reflection, glare, hotspot, or brightness falloff consistent with photographing a display.
-5. Visible pixel structure, subpixel grid, aliasing, or moiré on the content area.
-6. Uniform sharpness across the entire framed content, with no natural depth separation.
-7. Perspective and geometry consistent with a camera capturing a screen surface rather than a real physical scene.
-8. Signs that the image inside the frame is itself a digital render, screenshot, or screen photo.
+CRITICAL SCREENSHOT INDICATORS (any single one = TRUE):
+1. ROUNDED CORNERS on black/dark borders — phone screenshots always have rounded corners. Real camera photos NEVER have rounded corners on the image boundary.
+2. Uniform black/dark padding or letterboxing on any side of the image — this means the photo was displayed on a screen with aspect ratio mismatch and then re-captured or screenshotted.
+3. The main content is visibly CONTAINED within a smaller rectangle inside the image — the photo-within-a-photo pattern.
+4. Perfect geometric alignment of borders — real photos of dashboards have irregular edges where the dashboard meets the car interior. If borders are perfectly straight and uniform, it is a screen.
 
-SECONDARY CHECK:
-Even if no obvious artifacts are visible, still classify as true if the scene strongly resembles a photographed display.
+DISPLAY CAPTURE INDICATORS (any single one = TRUE):
+5. Physical device bezel, frame, or monitor edge visible.
+6. UI-like content such as menus, icons, buttons, status bars, app layouts, overlays, or navigation elements from a phone/computer interface.
+7. Reflection, glare, hotspot, or brightness falloff consistent with photographing a display surface.
+8. Visible pixel structure, subpixel grid, or moiré OUTSIDE the dashboard screen area (on bezels, steering wheel, car interior).
+9. Content appears unnaturally flat — everything is on one focal plane with no depth separation between foreground (steering wheel) and background (dashboard).
+10. Perspective distortion consistent with photographing a flat screen at an angle.
 
-DASHBOARD TYPE EXCEPTION:
-- Type A (Analog Dashboards): Expect physical needles and printed numbers. If there is a small digital LCD screen for the Odometer, moiré patterns/pixels are ONLY permitted strictly inside that small LCD box.
-- Type B (Digital/EV Dashboards): Moiré patterns and pixel grids are expected, but must be strictly confined INSIDE the boundary of the main digital screen and must never bleed onto the outer physical bezels.
+COMPARISON TEST — REAL vs SCREEN:
+A REAL dashboard photo will show:
+- Natural depth: steering wheel is closer/blurrier than dashboard
+- Irregular edges where dashboard meets car interior
+- Natural lighting variation across 3D surfaces
+- No black borders or padding around the image
+
+A SCREEN CAPTURE will show:
+- Flat focal plane: everything equally sharp
+- Clean, uniform borders (especially rounded corners)
+- The dashboard image is "contained" within a visible rectangle
+- Aspect ratio padding (black bars)
+
+DASHBOARD TYPE EXCEPTION (applies ONLY to the dashboard screen itself):
+- Type A (Analog Dashboards): Expect physical needles and printed numbers. If there is a small digital LCD for the Odometer, moiré/pixels are ONLY permitted inside that small LCD box.
+- Type B (Digital/EV Dashboards): Moiré patterns and pixel grids are expected on the dashboard's own digital display surface. BUT: check for the screenshot/screen-capture indicators above AROUND the dashboard. If the dashboard photo itself is inside a frame with rounded corners or uniform padding, it is a screen capture regardless of what the dashboard looks like.
+
+IMPORTANT: The Dashboard Type Exception does NOT override the screenshot indicators. A real photo of a digital dashboard will NOT have rounded corners, uniform black padding, or the photo-within-a-photo pattern.
 
 DO NOT REQUIRE any of these to flag as recapture:
 - Moiré
@@ -423,12 +441,23 @@ ${vehicleContext}
 ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
+
+- SPATIAL ORIENTATION (LEFT vs RIGHT):
+  * Left and Right sides are ALWAYS defined from the perspective of a person sitting in the driver's seat facing forward.
+  * Before labeling a side, establish a reference point: The steering wheel is the primary anchor for the driver's side (Right-hand drive in Indonesia).
+  * Observe the direction of camera travel. If the camera starts from the driver's side and moves toward the rear, you are on the RIGHT side. If it crosses the trunk to the other corner, you are now on the LEFT side.
+
+- EXHAUSTIVE SCANNING (PEMINDAIAN MENYELURUH):
+  * You MUST analyze the entire video from start to finish (0:00 to end).
+  * Do NOT stop or reduce attention after finding the first damage.
+  * The vehicle may have multiple damages on different sides (e.g., both the left and right bumpers). You are required to find and list ALL distinct damages that meet the visibility threshold.
+
 - DEDUPLICATION: You are analyzing a multi-frame video of a single vehicle. Track damage across frames. Do NOT report the same damage multiple times. Compile all findings into one deduplicated list.
 - MOTION vs DAMAGE: Use the movement across video frames to confirm damage. Moving reflections, glare, or shifting shadows as the camera pans are NOT damage. Real physical damage (dents/scratches) will remain fixed on the vehicle's surface regardless of camera angle.
 - VIDEO ARTIFACTS: Do not confuse motion blur, lens flares, or video compression artifacts with physical scuffs, bent panels, or paint transfer.
 - Do not guess or infer hidden damage.
 - Assess ONLY the primary subject vehicle. Strictly ignore any vehicles, parts, or reflections in the background.
-- If the overall video quality is too low, consistently blurry, or too dark to make an absolute assessment across frames, set overallCondition to null, confidence to 0, and return an empty damages array.
+- If the overall video quality is too low, consistently blurry, or too dark to make an absolute assessment across frames, set overallCondition to "POOR", confidence to 0, and return an empty damages array.
 
 STRICT DICTIONARY (ENUMS)
 You MUST select damageType and location EXCLUSIVELY from the exact lists below. DO NOT use any other words, synonyms, English terms, or extra descriptions.

@@ -16,7 +16,6 @@ services:
     restart: unless-stopped
     ports:
       - "16686:16686"
-      - "4318:4318"
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
 
@@ -26,6 +25,7 @@ services:
     restart: unless-stopped
     ports:
       - "4317:4317"
+      - "4318:4318"
     volumes:
       - ./otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/config.yaml:ro
     depends_on:
