@@ -16,8 +16,11 @@ const COMMENT_CHIPS = ["Kondisi unit baik", "Ada baret minor", "Perlu dicek"];
 
 interface PreTripDamage {
   area: string;
+  location: string;
+  severity: string;
   description: string;
   confidence: number;
+  videoTimestamp?: number;
 }
 
 interface PreTripUnitData {
@@ -40,26 +43,39 @@ interface AIDetectedInfo {
 
 interface AIFlag {
   area: string;
+  location: string;
+  severity: "MINOR" | "MODERATE" | "MAJOR";
   description: string;
   confidence: number;
+  videoTimestamp?: number;
 }
 
 function extractUnitInfo(
   inspection: InspectionDetail,
   preTripData?: PreTripUnitData | null,
 ): AIDetectedInfo | null {
-  const unitIdStep = inspection.steps.find((s) => s.stepType === "UNIT_IDENTIFICATION");
-  const aiData = unitIdStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
+  const unitIdStep = inspection.steps.find(
+    (s) => s.stepType === "UNIT_IDENTIFICATION",
+  );
+  const aiData = unitIdStep?.aiAnalysis?.structuredData as Record<
+    string,
+    unknown
+  > | null;
 
   // Also check speedometer AI for odometer
   const speedoStep = inspection.steps.find((s) => s.stepType === "SPEEDOMETER");
-  const speedoData = speedoStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
+  const speedoData = speedoStep?.aiAnalysis?.structuredData as Record<
+    string,
+    unknown
+  > | null;
   const speedoKm = speedoData?.odometerKm as number | undefined;
 
   // Build unit info: AI data > inspection.unit > pre-trip reference
   const unit = inspection.unit;
-  const make = (aiData?.make as string) || unit?.make || preTripData?.make || undefined;
-  const model = (aiData?.model as string) || unit?.model || preTripData?.model || undefined;
+  const make =
+    (aiData?.make as string) || unit?.make || preTripData?.make || undefined;
+  const model =
+    (aiData?.model as string) || unit?.model || preTripData?.model || undefined;
   const year = (aiData?.year as string) || undefined;
   const licensePlate =
     (aiData?.licensePlate as string) ||
@@ -124,17 +140,23 @@ function damageLabel(type: string): string {
 }
 
 function extractAIFlags(inspection: InspectionDetail): AIFlag[] {
-  const bodyStep = inspection.steps.find((s) => s.stepType === "BODY_INSPECTION");
-  const data = bodyStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
+  const bodyStep = inspection.steps.find(
+    (s) => s.stepType === "BODY_INSPECTION",
+  );
+  const data = bodyStep?.aiAnalysis?.structuredData as Record<
+    string,
+    unknown
+  > | null;
   if (!data) return [];
   const damages = data.damages as Array<Record<string, unknown>> | undefined;
   if (!damages) return [];
   return damages.map((d) => ({
     area: (d.damageType as string) || (d.area as string) || "Unknown",
-    description: (d.location as string)
-      ? `${d.location as string} — ${(d.description as string) || ""}`
-      : (d.description as string) || "",
+    location: (d.location as string) || "",
+    severity: ((d.severity as string) || "MINOR") as AIFlag["severity"],
+    description: (d.description as string) || "",
     confidence: Number(d.confidence ?? d.confidenceScore ?? 0),
+    videoTimestamp: d.videoTimestamp as number | undefined,
   }));
 }
 
@@ -194,7 +216,11 @@ export function VideoReview() {
     } catch (err) {
       // Ignore abort errors (iOS suspends fetches when camera is active)
       if (err instanceof DOMException && err.name === "AbortError") return;
-      if (err instanceof TypeError && /aborted|abort|network/i.test(err.message)) return;
+      if (
+        err instanceof TypeError &&
+        /aborted|abort|network/i.test(err.message)
+      )
+        return;
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
       setLoading(false);
@@ -236,7 +262,9 @@ export function VideoReview() {
         model: prev.model || info.model || "",
         year: prev.year || info.year || "",
         licensePlate: prev.licensePlate || info.licensePlate || "",
-        odometerKm: prev.odometerKm || (info.odometerKm != null ? String(info.odometerKm) : ""),
+        odometerKm:
+          prev.odometerKm ||
+          (info.odometerKm != null ? String(info.odometerKm) : ""),
       }));
     }
   }, [inspection, unitData]);
@@ -261,7 +289,9 @@ export function VideoReview() {
     return () => clearInterval(interval);
   }, [inspection, fetchDetail, showRecorder]);
 
-  const bodyStep = inspection?.steps.find((s) => s.stepType === "BODY_INSPECTION");
+  const bodyStep = inspection?.steps.find(
+    (s) => s.stepType === "BODY_INSPECTION",
+  );
   const hasMedia = bodyStep && bodyStep.mediaFiles.length > 0;
   const aiInfo = inspection ? extractUnitInfo(inspection, unitData) : null;
   const hasAIData = !!inspection?.steps.some(
@@ -313,7 +343,10 @@ export function VideoReview() {
       api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
       setTimeout(
         () =>
-          scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }),
+          scrollRef.current?.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: "smooth",
+          }),
         200,
       );
     } catch (err) {
@@ -354,7 +387,10 @@ export function VideoReview() {
       api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
       setTimeout(
         () =>
-          scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }),
+          scrollRef.current?.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: "smooth",
+          }),
         200,
       );
     } catch (err) {
@@ -365,7 +401,10 @@ export function VideoReview() {
     }
   }
 
-  async function handleSignatureConfirm(data: { image: Blob; signerName: string }) {
+  async function handleSignatureConfirm(data: {
+    image: Blob;
+    signerName: string;
+  }) {
     if (!id) return;
     setShowSignature(false);
     try {
@@ -389,10 +428,12 @@ export function VideoReview() {
       // Save comment and unit info
       const patchData: Record<string, unknown> = {};
       if (comment.trim()) patchData.driverComment = comment.trim();
-      if (unitForm.licensePlate) patchData.unitLicensePlate = unitForm.licensePlate;
+      if (unitForm.licensePlate)
+        patchData.unitLicensePlate = unitForm.licensePlate;
       if (unitForm.make) patchData.unitMake = unitForm.make;
       if (unitForm.model) patchData.unitModel = unitForm.model;
-      if (unitForm.odometerKm) patchData.unitOdometerKm = Number(unitForm.odometerKm);
+      if (unitForm.odometerKm)
+        patchData.unitOdometerKm = Number(unitForm.odometerKm);
       if (Object.keys(patchData).length > 0) {
         await api.patch(`/api/inspections/${id}`, patchData);
       }
@@ -414,7 +455,9 @@ export function VideoReview() {
     return (
       <div className="flex flex-col h-full">
         <TopBar title="Video Inspeksi" showBack />
-        <div className="flex-1 flex items-center justify-center text-red-400 text-sm">{error}</div>
+        <div className="flex-1 flex items-center justify-center text-red-400 text-sm">
+          {error}
+        </div>
       </div>
     );
   }
@@ -425,7 +468,9 @@ export function VideoReview() {
   return (
     <div className="flex flex-col h-full">
       <TopBar
-        title={isPostTrip ? "Post Video & Body Review" : "Pre Video & Body Review"}
+        title={
+          isPostTrip ? "Post Video & Body Review" : "Pre Video & Body Review"
+        }
         subtitle={unitName !== "Unit" ? unitName : undefined}
         subtitle2={
           [
@@ -486,7 +531,9 @@ export function VideoReview() {
                     />
                   </svg>
                   <div>
-                    <p className="text-xs font-bold text-white">Mengekstrak data kendaraan...</p>
+                    <p className="text-xs font-bold text-white">
+                      Mengekstrak data kendaraan...
+                    </p>
                     <p className="text-[10px] text-neutral-500">
                       Merk, tipe, plat, dan odometer akan terisi otomatis
                     </p>
@@ -495,12 +542,16 @@ export function VideoReview() {
               )}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                  <p className="text-[9px] text-neutral-500 mb-0.5">Merk & Tipe</p>
+                  <p className="text-[9px] text-neutral-500 mb-0.5">
+                    Merk & Tipe
+                  </p>
                   <input
                     type="text"
                     value={
                       unitForm.make || unitForm.model
-                        ? [unitForm.make, unitForm.model].filter(Boolean).join(" ")
+                        ? [unitForm.make, unitForm.model]
+                            .filter(Boolean)
+                            .join(" ")
                         : ""
                     }
                     onChange={(e) => {
@@ -521,13 +572,17 @@ export function VideoReview() {
                   <input
                     type="text"
                     value={unitForm.year}
-                    onChange={(e) => setUnitForm((prev) => ({ ...prev, year: e.target.value }))}
+                    onChange={(e) =>
+                      setUnitForm((prev) => ({ ...prev, year: e.target.value }))
+                    }
                     placeholder="cth. 2022"
                     className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
                   />
                 </div>
                 <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                  <p className="text-[9px] text-neutral-500 mb-0.5">Nomer Plat</p>
+                  <p className="text-[9px] text-neutral-500 mb-0.5">
+                    Nomer Plat
+                  </p>
                   <input
                     type="text"
                     value={unitForm.licensePlate}
@@ -556,7 +611,9 @@ export function VideoReview() {
                       placeholder="0"
                       className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
+                    <span className="text-sm font-bold text-[#F5C842] shrink-0">
+                      KM
+                    </span>
                   </div>
                 </div>
               </div>
@@ -571,44 +628,49 @@ export function VideoReview() {
           </div>
         )}
 
-        {/* Instruction card — always visible above video section */}
-        <div className="px-4 pb-4">
-          <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
-                <svg
-                  aria-hidden="true"
-                  className="w-5 h-5 text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
-                    1
-                  </span>
-                  <span className="text-xs text-[#F5C842] uppercase font-bold tracking-wider">
-                    Video Inspeksi
-                  </span>
+        {/* Instruction card — hidden after video is uploaded */}
+        {!hasMedia && (
+          <div className="px-4 pt-4 pb-4">
+            <div className="rounded-xl border mt-4 border-yellow-400/40 bg-yellow-400/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
+                  <svg
+                    aria-hidden="true"
+                    className="w-5 h-5 text-yellow-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
                 </div>
-                <p className="text-sm text-white leading-snug">
-                  Silahkan ambil rekaman{" "}
-                  <span className="font-bold text-[#F5C842]">seluruh bodi</span> secara perlahan.
-                  Jangan terburu-buru agar AI bisa mendeteksi setiap sudut dengan maksimal.
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
+                      1
+                    </span>
+                    <span className="text-xs text-[#F5C842] uppercase font-bold tracking-wider">
+                      Video Inspeksi
+                    </span>
+                  </div>
+                  <p className="text-sm text-white leading-snug">
+                    Silahkan ambil rekaman{" "}
+                    <span className="font-bold text-[#F5C842]">
+                      seluruh bodi
+                    </span>{" "}
+                    secara perlahan. Jangan terburu-buru agar AI bisa mendeteksi
+                    setiap sudut dengan maksimal.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Pre-Check Reference for POST_TRIP — shown after post-trip video is uploaded */}
         {isPostTrip && unitData && hasMedia && (
@@ -646,26 +708,48 @@ export function VideoReview() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <p className="text-xs text-neutral-500">Video Body &middot; Pre-Check</p>
+                  <p className="text-xs text-neutral-500">
+                    Video Body &middot; Pre-Check
+                  </p>
                 </div>
               )}
 
               {/* Pre-trip damages */}
               {unitData.damages.length > 0 && (
                 <div className="divide-y divide-[#2a2a2a]">
-                  {unitData.damages.map((d) => (
+                  {unitData.damages.map((d, idx) => (
                     <div
-                      key={`pre-${d.area}-${d.description}`}
-                      className="flex items-center gap-3 px-4 py-3"
+                      key={`pre-${d.area}-${d.location}-${idx}`}
+                      className="flex items-start gap-3 px-4 py-3"
                     >
                       <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
-                        <span className="text-lg">{"\uD83D\uDE97"}</span>
+                        <span className="text-lg">
+                          {d.severity === "MAJOR" ? "\u26A0\uFE0F" : d.severity === "MODERATE" ? "\uD83D\uDFE1" : "\uD83D\uDD35"}
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white">{damageLabel(d.area)}</p>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-sm font-bold text-white">{damageLabel(d.area)}</p>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                            d.severity === "MAJOR"
+                              ? "bg-red-500/20 text-red-400"
+                              : d.severity === "MODERATE"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-blue-500/20 text-blue-400"
+                          }`}>
+                            {d.severity === "MAJOR" ? "Berat" : d.severity === "MODERATE" ? "Sedang" : "Ringan"}
+                          </span>
+                        </div>
+                        {d.location && (
+                          <p className="text-[10px] text-neutral-400 mb-0.5">{d.location}</p>
+                        )}
                         <p className="text-xs text-neutral-500">{d.description}</p>
+                        {d.videoTimestamp != null && d.videoTimestamp > 0 && (
+                          <p className="text-[10px] text-neutral-600 mt-0.5">
+                            {"\u23F1"} {Math.floor(d.videoTimestamp / 60)}:{String(Math.floor(d.videoTimestamp % 60)).padStart(2, "0")}
+                          </p>
+                        )}
                       </div>
-                      <span className="text-sm text-neutral-400 shrink-0">{d.confidence}%</span>
                     </div>
                   ))}
                 </div>
@@ -677,10 +761,11 @@ export function VideoReview() {
                   <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1">
                     Catatan Driver
                   </p>
-                  <p className="text-sm text-neutral-400">{unitData.driverComment}</p>
+                  <p className="text-sm text-neutral-400">
+                    {unitData.driverComment}
+                  </p>
                 </div>
               )}
-
             </div>
           </div>
         )}
@@ -723,8 +808,12 @@ export function VideoReview() {
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <p className="text-sm font-semibold text-white">Video Body Exterior</p>
-                  <p className="text-xs text-[#F5C842]">Video &middot; 30 detik</p>
+                  <p className="text-sm font-semibold text-white">
+                    Video Body Exterior
+                  </p>
+                  <p className="text-xs text-[#F5C842]">
+                    Video &middot; 30 detik
+                  </p>
                   <div className="flex items-center gap-2 mt-1">
                     {allowFile && (
                       <button
@@ -813,12 +902,14 @@ export function VideoReview() {
                     preload="metadata"
                   />
                   <p className="text-xs text-neutral-500 text-center py-2">
-                    Video Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
+                    Video Body &middot;{" "}
+                    {isPostTrip ? "Post-Check" : "Pre-Check"}
                   </p>
                 </div>
 
                 {/* AI analysis results */}
-                {bodyStep.status === "PROCESSING" || bodyStep.status === "UPLOADED" ? (
+                {bodyStep.status === "PROCESSING" ||
+                bodyStep.status === "UPLOADED" ? (
                   <div className="px-4 py-3 border-t border-[#2a2a2a]">
                     <div className="flex items-center gap-3">
                       <svg
@@ -842,7 +933,9 @@ export function VideoReview() {
                         />
                       </svg>
                       <div>
-                        <p className="text-sm font-bold text-white">Sedang dianalisa AI...</p>
+                        <p className="text-sm font-bold text-white">
+                          Sedang dianalisa AI...
+                        </p>
                         <p className="text-xs text-neutral-500">
                           Hasil inspeksi bodi akan muncul di sini
                         </p>
@@ -851,21 +944,60 @@ export function VideoReview() {
                   </div>
                 ) : aiFlags.length > 0 ? (
                   <div className="divide-y divide-[#2a2a2a]">
-                    {aiFlags.map((flag) => (
+                    {aiFlags.map((flag, idx) => (
                       <div
-                        key={`${flag.area}-${flag.description}-${flag.confidence}`}
-                        className="flex items-center gap-3 px-4 py-3"
+                        key={`${flag.area}-${flag.location}-${idx}`}
+                        className="flex items-start gap-3 px-4 py-3"
                       >
                         <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
-                          <span className="text-lg">{"\uD83D\uDE97"}</span>
+                          <span className="text-lg">
+                            {flag.severity === "MAJOR"
+                              ? "\u26A0\uFE0F"
+                              : flag.severity === "MODERATE"
+                                ? "\uD83D\uDFE1"
+                                : "\uD83D\uDD35"}
+                          </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-white">{damageLabel(flag.area)}</p>
-                          <p className="text-xs text-neutral-500">{flag.description}</p>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-bold text-white">
+                              {damageLabel(flag.area)}
+                            </p>
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                flag.severity === "MAJOR"
+                                  ? "bg-red-500/20 text-red-400"
+                                  : flag.severity === "MODERATE"
+                                    ? "bg-yellow-500/20 text-yellow-400"
+                                    : "bg-blue-500/20 text-blue-400"
+                              }`}
+                            >
+                              {flag.severity === "MAJOR"
+                                ? "Berat"
+                                : flag.severity === "MODERATE"
+                                  ? "Sedang"
+                                  : "Ringan"}
+                            </span>
+                          </div>
+                          {flag.location && (
+                            <p className="text-[10px] text-neutral-400 mb-0.5">
+                              {flag.location}
+                            </p>
+                          )}
+                          <p className="text-xs text-neutral-500">
+                            {flag.description}
+                          </p>
+                          {flag.videoTimestamp != null &&
+                            flag.videoTimestamp > 0 && (
+                              <p className="text-[10px] text-neutral-600 mt-0.5">
+                                {"\u23F1"}{" "}
+                                {Math.floor(flag.videoTimestamp / 60)}:
+                                {String(
+                                  Math.floor(flag.videoTimestamp % 60),
+                                ).padStart(2, "0")}
+                              </p>
+                            )}
                         </div>
-                        <span className="text-sm text-neutral-400 shrink-0">
-                          {flag.confidence}%
-                        </span>
                       </div>
                     ))}
                   </div>
@@ -884,7 +1016,9 @@ export function VideoReview() {
 
             {/* Driver Comment */}
             <div className="px-4 pb-4">
-              <p className="text-sm font-bold text-white mb-2">{"\uD83D\uDCAC"} Catatan Driver</p>
+              <p className="text-sm font-bold text-white mb-2">
+                {"\uD83D\uDCAC"} Catatan Driver
+              </p>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -911,8 +1045,12 @@ export function VideoReview() {
                 <div className="rounded-xl border border-[#3a2800] bg-[#141414] p-4 flex items-center gap-3">
                   <span className="text-lg">&#10003;</span>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-[#F5C842]">Tanda tangan tersimpan</p>
-                    <p className="text-xs text-neutral-500">{inspection.signerName || "Driver"}</p>
+                    <p className="text-sm font-semibold text-[#F5C842]">
+                      Tanda tangan tersimpan
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      {inspection.signerName || "Driver"}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -949,7 +1087,8 @@ export function VideoReview() {
               <div className="px-4 pb-4">
                 <div className="bg-[#141414] rounded-lg p-2.5 text-center">
                   <p className="text-[11px] font-bold text-[#F5C842]">
-                    {"\u2705"} {isPostTrip ? "Post-Check" : "Pre-Check"} disubmit
+                    {"\u2705"} {isPostTrip ? "Post-Check" : "Pre-Check"}{" "}
+                    disubmit
                   </p>
                   <p className="text-[10px] text-[#555] mt-0.5">
                     {formatDate(inspection.completedAt)}
@@ -994,7 +1133,9 @@ export function VideoReview() {
                   await api.del(`/api/inspections/${id}`);
                   navigate("/", { replace: true });
                 } catch (err) {
-                  setError(err instanceof Error ? err.message : "Gagal menghapus");
+                  setError(
+                    err instanceof Error ? err.message : "Gagal menghapus",
+                  );
                   setDeleting(false);
                 }
               }}

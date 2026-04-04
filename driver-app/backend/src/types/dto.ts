@@ -202,8 +202,11 @@ export interface TripGroupCard {
 
 export interface PreTripDamage {
   area: string;
+  location: string;
+  severity: string;
   description: string;
   confidence: number;
+  videoTimestamp?: number;
 }
 
 export interface PreTripReferenceData {

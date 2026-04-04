@@ -395,9 +395,12 @@ export class InspectionService implements IInspectionService {
     const rawDamages =
       (bodyData?.damages as Array<Record<string, unknown>>) ?? [];
     const damages: PreTripDamage[] = rawDamages.map((d) => ({
-      area: (d.area as string) || (d.damageType as string) || "Unknown",
+      area: (d.damageType as string) || (d.area as string) || "Unknown",
+      location: (d.location as string) || "",
+      severity: (d.severity as string) || "MINOR",
       description: (d.description as string) || "",
       confidence: Number(d.confidence ?? d.confidenceScore ?? 0),
+      videoTimestamp: d.videoTimestamp as number | undefined,
     }));
 
     // Extract body video media ID

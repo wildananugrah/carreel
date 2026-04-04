@@ -6,7 +6,7 @@ interface VideoGuidanceOverlayProps {
 }
 
 const STAGES = [
-  { label: "Depan", icon: "↑" },
+  { label: "Body", icon: "↑" },
   { label: "Kanan", icon: "→" },
   { label: "Belakang", icon: "↓" },
   { label: "Kiri", icon: "←" },
