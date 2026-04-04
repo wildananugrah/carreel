@@ -95,6 +95,14 @@ export function PhotoCapture() {
   const speedoAI = speedoStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
   const vehicleMismatch = speedoAI?.vehicleMismatchDetected === true;
 
+  // Check for KM anomaly (post-trip odometer < pre-trip odometer)
+  const postKmValue = speedoAI?.odometerKm as number | undefined;
+  const kmAnomaly =
+    inspection.tripType === "POST_TRIP" &&
+    preTripRef?.odometerKm != null &&
+    postKmValue != null &&
+    postKmValue < preTripRef.odometerKm;
+
   // Check for screen recapture on any step
   const screenRecapture = photoSteps.some((s) => {
     const ai = s.aiAnalysis?.structuredData as Record<string, unknown> | null;
@@ -104,7 +112,7 @@ export function PhotoCapture() {
   // Check for AI failure
   const hasFailed = photoSteps.some((s) => s.status === "FAILED");
 
-  const hasAIIssue = vehicleMismatch || screenRecapture || hasFailed;
+  const hasAIIssue = vehicleMismatch || screenRecapture || hasFailed || kmAnomaly;
   const canProceed = allDone && allAnalyzed && !hasAIIssue;
 
   return (
@@ -275,8 +283,34 @@ export function PhotoCapture() {
             </div>
           )}
 
+          {/* KM Anomaly Banner */}
+          {kmAnomaly && (
+            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-3">
+              <div className="flex items-start gap-3">
+                <svg
+                  aria-hidden="true"
+                  className="w-5 h-5 text-red-400 shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-bold text-red-400">Anomali odometer</p>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">
+                    Odometer post-trip ({postKmValue?.toLocaleString("id-ID")} KM) lebih kecil dari pre-trip ({preTripRef?.odometerKm?.toLocaleString("id-ID")} KM). Silakan hapus foto speedometer dan upload ulang foto yang benar.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* AI Failed Banner */}
-          {hasFailed && !vehicleMismatch && !screenRecapture && (
+          {hasFailed && !vehicleMismatch && !screenRecapture && !kmAnomaly && (
             <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-3">
               <div className="flex items-start gap-3">
                 <svg
@@ -437,7 +471,7 @@ export function PhotoCapture() {
                           <span className="text-sm text-amber-400">...</span>
                         </div>
                       ) : postKm != null ? (
-                        <p className="text-lg font-bold text-[#F5C842]">
+                        <p className={`text-lg font-bold ${postKm < preKm ? "text-red-400" : "text-[#F5C842]"}`}>
                           {postKm.toLocaleString("id-ID")}
                         </p>
                       ) : (
@@ -447,9 +481,13 @@ export function PhotoCapture() {
                   </div>
 
                   {/* Delta */}
-                  <div className="mt-3 bg-[#1a1a1a] rounded-lg p-2.5 text-center">
+                  <div className={`mt-3 rounded-lg p-2.5 text-center ${delta != null && delta < 0 ? "bg-red-500/10" : "bg-[#1a1a1a]"}`}>
                     {isProcessing ? (
                       <p className="text-xs text-amber-400">AI sedang menghitung odometer...</p>
+                    ) : delta != null && delta < 0 ? (
+                      <p className="text-xs text-red-400 font-bold">
+                        {delta.toLocaleString("id-ID")} KM — odometer tidak valid
+                      </p>
                     ) : delta != null ? (
                       <p className="text-xs text-neutral-400">
                         +{delta.toLocaleString("id-ID")} KM selama penggunaan

@@ -406,6 +406,9 @@ export class InspectionService implements IInspectionService {
     // Extract body video media ID
     const bodyVideoMediaId = bodyStep?.mediaFiles?.[0]?.id ?? null;
 
+    // Compare pre-trip vs post-trip damages
+    const noNewDamage = this.computeDamageSimilarity(damages, postTrip);
+
     return {
       licensePlate: (unitData.licensePlate as string) ?? null,
       make: (unitData.make as string) ?? null,
@@ -414,6 +417,49 @@ export class InspectionService implements IInspectionService {
       damages,
       bodyVideoMediaId,
       driverComment: preTrip.driverComment ?? null,
+      noNewDamage,
     };
+  }
+
+  private computeDamageSimilarity(
+    preDamages: PreTripDamage[],
+    postTrip: InspectionWithRelations,
+  ): boolean | null {
+    const postBodyStep = postTrip.steps.find(
+      (s) => s.stepType === "BODY_INSPECTION",
+    );
+    // Post-trip body not analyzed yet
+    if (!postBodyStep?.aiAnalysis?.structuredData) return null;
+
+    const postData = postBodyStep.aiAnalysis.structuredData as Record<
+      string,
+      unknown
+    >;
+    const postRawDamages =
+      (postData.damages as Array<Record<string, unknown>>) ?? [];
+
+    // Both have no damages = no new damage
+    if (preDamages.length === 0 && postRawDamages.length === 0) return true;
+    // One has damages, other doesn't = there's a change
+    if (preDamages.length === 0 && postRawDamages.length > 0) return false;
+    if (preDamages.length > 0 && postRawDamages.length === 0) return false;
+
+    const normalize = (s: string) => s.toLowerCase().trim();
+    const preKeys = new Set(
+      preDamages.map(
+        (d) => `${normalize(d.area)}|${normalize(d.location)}`,
+      ),
+    );
+    const postKeys = postRawDamages.map(
+      (d) =>
+        `${normalize((d.damageType as string) || (d.area as string) || "")}|${normalize((d.location as string) || "")}`,
+    );
+
+    const matchedCount = postKeys.filter((k) => preKeys.has(k)).length;
+    const total = Math.max(preDamages.length, postRawDamages.length);
+    const similarity = matchedCount / total;
+
+    const threshold = Number(process.env.DAMAGE_SIMILARITY_THRESHOLD ?? 0.9);
+    return similarity >= threshold;
   }
 }

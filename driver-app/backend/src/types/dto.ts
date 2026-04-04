@@ -217,4 +217,5 @@ export interface PreTripReferenceData {
   damages: PreTripDamage[];
   bodyVideoMediaId: string | null;
   driverComment: string | null;
+  noNewDamage: boolean | null;
 }

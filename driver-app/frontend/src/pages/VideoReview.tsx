@@ -31,6 +31,7 @@ interface PreTripUnitData {
   damages: PreTripDamage[];
   bodyVideoMediaId: string | null;
   driverComment: string | null;
+  noNewDamage: boolean | null;
 }
 
 interface AIDetectedInfo {
@@ -304,6 +305,9 @@ export function VideoReview() {
   );
   const aiFlags = inspection ? extractAIFlags(inspection) : [];
   const isPostTrip = inspection?.tripType === "POST_TRIP";
+
+  // Damage similarity comparison from backend
+  const noNewDamage = isPostTrip && unitData?.noNewDamage === true;
   const unitName = inspection?.unit
     ? [inspection.unit.make, inspection.unit.model].filter(Boolean).join(" ")
     : unitData
@@ -1013,6 +1017,48 @@ export function VideoReview() {
                 )}
               </div>
             </div>
+
+            {/* Damage comparison result for POST_TRIP */}
+            {isPostTrip && bodyStep.status === "COMPLETED" && (
+              <div className="px-4 pb-4">
+                {noNewDamage ? (
+                  <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3">
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg shrink-0">{"\u2705"}</span>
+                      <div>
+                        <p className="text-xs font-bold text-emerald-400">Tidak ada kerusakan baru</p>
+                        <p className="text-[10px] text-neutral-400 mt-0.5">
+                          Temuan Post-inspeksi sesuai dengan kondisi Pre-inspeksi.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : aiFlags.length > 0 && unitData ? (
+                  <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-3">
+                    <div className="flex items-start gap-3">
+                      <svg
+                        aria-hidden="true"
+                        className="w-5 h-5 text-amber-400 shrink-0 mt-0.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <div>
+                        <p className="text-xs font-bold text-amber-400">Terdapat perubahan kondisi kendaraan</p>
+                        <p className="text-[10px] text-neutral-400 mt-0.5">
+                          Temuan Post-inspeksi berbeda dari Pre-inspeksi. Periksa detail kerusakan di atas.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
 
             {/* Driver Comment */}
             <div className="px-4 pb-4">
