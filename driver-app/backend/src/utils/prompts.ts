@@ -447,39 +447,33 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-- SPATIAL ORIENTATION (EXTERIOR ANCHOR RULES - CRITICAL):
-  Do NOT attempt to look for the steering wheel or interior cabin, as dark window tints will make them invisible. You MUST determine Left and Right using ONLY the exterior anatomy of the vehicle.
+- SPATIAL ORIENTATION (CAR PERSPECTIVE - CRITICAL):
+  Left (Kiri) and Right (Kanan) are ALWAYS defined from the CAR'S OWN PERSPECTIVE — as if you are sitting in the driver's seat, facing forward toward the hood.
 
-  CORE PRINCIPLE: Left (Kiri) and Right (Kanan) are ALWAYS from the DRIVER'S perspective sitting inside the car facing forward. This means:
-  - The DRIVER'S side in Indonesia (right-hand drive) = RIGHT (Kanan)
-  - The PASSENGER side in Indonesia = LEFT (Kiri)
+  REMEMBER:
+  - Kiri (Left) = the PASSENGER side of the car (in Indonesia, right-hand drive)
+  - Kanan (Right) = the DRIVER's side of the car (in Indonesia, where the steering wheel is)
 
-  ANCHORS:
-  - Front Anchor: Headlights, Front Grille, Front Brand Logo
-  - Rear Anchor: Red Taillights, Rear License Plate, Trunk/Tailgate
+  HOW TO DETERMINE SIDES:
+  1. First, identify which end of the car you are looking at using exterior anchors:
+     - FRONT: Headlights, front grille, front brand logo
+     - REAR: Red taillights, rear license plate, trunk/tailgate
 
-  ORIENTATION RULES:
-  1. REAR VIEW (seeing taillights/rear plate):
-     - Screen LEFT = vehicle LEFT (Kiri)
-     - Screen RIGHT = vehicle RIGHT (Kanan)
+  2. Then imagine yourself SITTING INSIDE the car, facing the hood. From that seated position:
+     - Your LEFT hand points to Kiri
+     - Your RIGHT hand points to Kanan
+     - This NEVER changes regardless of where the camera is
 
-  2. FRONT VIEW (seeing headlights/grille):
-     - MIRRORED: Screen LEFT = vehicle RIGHT (Kanan), Screen RIGHT = vehicle LEFT (Kiri)
-
-  3. SIDE VIEW (seeing doors/fenders):
-     - Find the headlights. If headlights point LEFT on screen = you see the RIGHT (Kanan) side
-     - If headlights point RIGHT on screen = you see the LEFT (Kiri) side
-
-  4. CORNER VIEW (45 degrees, seeing anchor + side body):
-     - Front corner: side body extends RIGHT on screen = FRONT LEFT (Depan Kiri). Extends LEFT = FRONT RIGHT (Depan Kanan).
-     - Rear corner: side body extends RIGHT on screen = REAR LEFT (Belakang Kiri). Extends LEFT = REAR RIGHT (Belakang Kanan).
+  3. COMMON MISTAKE TO AVOID:
+     When looking at the FRONT of the car (face to face), your screen-left is actually the car's RIGHT (Kanan), and your screen-right is the car's LEFT (Kiri). This is because you and the car are facing OPPOSITE directions.
+     When looking at the REAR of the car, screen-left matches the car's LEFT (Kiri) because you and the car face the SAME direction.
 
   PER-DAMAGE VERIFICATION (MANDATORY):
   For EVERY damage you report, you MUST include an "orientationReason" field that explains:
-  1. What anchor (headlights or taillights) is visible in the frame
-  2. Which screen side the damage appears on
-  3. How you applied the orientation rule to determine Left vs Right
-  This forces you to verify orientation for each finding individually, preventing systematic L/R errors.
+  1. Whether you are viewing the front, rear, or side of the car in that frame
+  2. Imagine sitting in the driver's seat — which side (your left hand or right hand) is the damage on?
+  3. State the conclusion: Kiri or Kanan
+  This prevents systematic L/R errors by forcing per-damage reasoning.
 
 - EXHAUSTIVE SCANNING (PEMINDAIAN MENYELURUH):
   * You MUST analyze the entire video from start to finish (0:00 to end).
