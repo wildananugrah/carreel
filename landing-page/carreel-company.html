@@ -1,808 +1,1181 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CarReel Company — Inspeksi Body Eksterior Berbasis AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --gold: #D4A843;
-    --gold-light: #E8C96A;
-    --gold-dark: #B8922E;
-    --bg-primary: #0A0A0A;
-    --bg-secondary: #111111;
-    --bg-card: #151515;
-    --bg-card-hover: #1A1A1A;
-    --text-primary: #FFFFFF;
-    --text-secondary: #999999;
-    --text-muted: #5A5A5A;
-    --border: #1E1E1E;
-    --border-light: #2A2A2A;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ─── NAV ─── */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    padding: 0 48px;
-    height: 68px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(10,10,10,0.9);
-    backdrop-filter: blur(24px);
-    border-bottom: 1px solid var(--border);
-    transition: box-shadow 0.3s;
-  }
-
-  .nav-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .nav-logo {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--gold);
-    letter-spacing: -0.5px;
-    text-decoration: none;
-  }
-
-  .nav-badge {
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-light);
-    padding: 4px 10px;
-    border-radius: 4px;
-  }
-
-  .nav-cta {
-    color: var(--text-primary);
-    padding: 9px 22px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid var(--border-light);
-    transition: all 0.25s ease;
-  }
-
-  .nav-cta:hover {
-    border-color: var(--text-secondary);
-    background: rgba(255,255,255,0.04);
-  }
-
-  /* ─── HERO ─── */
-  .hero {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 120px 24px 100px;
-    position: relative;
-  }
-
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -300px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 900px;
-    height: 900px;
-    background: radial-gradient(circle, rgba(212,168,67,0.04) 0%, transparent 65%);
-    pointer-events: none;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-light);
-    padding: 10px 28px;
-    border-radius: 100px;
-    margin-bottom: 48px;
-    animation: fadeUp 0.7s ease forwards;
-    opacity: 0;
-  }
-
-  .hero h1 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: clamp(2.6rem, 6vw, 4.8rem);
-    font-weight: 700;
-    line-height: 1.1;
-    max-width: 820px;
-    margin-bottom: 32px;
-    letter-spacing: -2px;
-    animation: fadeUp 0.8s ease 0.1s forwards;
-    opacity: 0;
-  }
-
-  .hero h1 .accent { color: var(--gold); }
-
-  .hero .desc {
-    max-width: 580px;
-    color: var(--text-secondary);
-    font-size: 1rem;
-    line-height: 1.75;
-    margin-bottom: 48px;
-    animation: fadeUp 0.8s ease 0.25s forwards;
-    opacity: 0;
-  }
-
-  .hero-buttons {
-    display: flex;
-    gap: 16px;
-    animation: fadeUp 0.8s ease 0.4s forwards;
-    opacity: 0;
-  }
-
-  .btn-primary {
-    background: var(--gold);
-    color: var(--bg-primary);
-    padding: 14px 36px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.25s ease;
-    border: none;
-    cursor: pointer;
-  }
-
-  .btn-primary:hover {
-    background: var(--gold-light);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 28px rgba(212,168,67,0.25);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--text-primary);
-    padding: 14px 36px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1.5px solid var(--border-light);
-    transition: all 0.25s ease;
-    cursor: pointer;
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--text-secondary);
-    background: rgba(255,255,255,0.03);
-    transform: translateY(-2px);
-  }
-
-  /* ─── SECTIONS ─── */
-  section {
-    padding: 100px 48px;
-    max-width: 1140px;
-    margin: 0 auto;
-  }
-
-  .section-label {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 16px;
-  }
-
-  .section-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: clamp(1.7rem, 3.2vw, 2.6rem);
-    font-weight: 700;
-    letter-spacing: -1px;
-    line-height: 1.15;
-    margin-bottom: 18px;
-  }
-
-  .section-desc {
-    color: var(--text-secondary);
-    font-size: 1rem;
-    line-height: 1.7;
-    max-width: 520px;
-    margin-bottom: 56px;
-  }
-
-  /* ─── PROBLEM ─── */
-  .problem-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-
-  .problem-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 32px 24px;
-    transition: all 0.3s ease;
-  }
-
-  .problem-card:hover {
-    background: var(--bg-card-hover);
-    transform: translateY(-3px);
-    border-color: var(--border-light);
-  }
-
-  .problem-icon {
-    font-size: 1.6rem;
-    margin-bottom: 18px;
-  }
-
-  .problem-card h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    letter-spacing: -0.3px;
-  }
-
-  .problem-card p {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    line-height: 1.65;
-  }
-
-  /* ─── HOW IT WORKS ─── */
-  .steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-  }
-
-  .steps::before {
-    content: '';
-    position: absolute;
-    left: 23px;
-    top: 40px;
-    bottom: 40px;
-    width: 1px;
-    background: linear-gradient(to bottom, var(--gold), var(--border));
-  }
-
-  .step {
-    display: flex;
-    gap: 28px;
-    align-items: flex-start;
-    padding: 32px 0;
-    position: relative;
-  }
-
-  .step-marker {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    border-radius: 50%;
-    background: var(--bg-card);
-    border: 2px solid var(--gold);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--gold);
-    z-index: 1;
-  }
-
-  .step-content h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-    letter-spacing: -0.3px;
-  }
-
-  .step-content p {
-    color: var(--text-secondary);
-    font-size: 0.88rem;
-    line-height: 1.65;
-    max-width: 480px;
-  }
-
-  /* ─── USE CASES ─── */
-  .usecase-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-
-  .usecase-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 36px 28px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .usecase-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--gold), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .usecase-card:hover { transform: translateY(-4px); border-color: var(--border-light); }
-  .usecase-card:hover::after { opacity: 1; }
-
-  .usecase-tag {
-    display: inline-block;
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--gold);
-    background: rgba(212,168,67,0.08);
-    border: 1px solid rgba(212,168,67,0.15);
-    padding: 4px 12px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-  }
-
-  .usecase-card h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    letter-spacing: -0.3px;
-  }
-
-  .usecase-card p {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    line-height: 1.65;
-  }
-
-  /* ─── PROOF / VERIFICATION MOCK ─── */
-  .proof-container {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 56px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 48px;
-    align-items: center;
-  }
-
-  .proof-text h3 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: -0.8px;
-    margin-bottom: 16px;
-  }
-
-  .proof-text p {
-    color: var(--text-secondary);
-    font-size: 0.92rem;
-    line-height: 1.7;
-    margin-bottom: 28px;
-  }
-
-  .proof-stats {
-    display: flex;
-    gap: 32px;
-  }
-
-  .proof-stat {
-    text-align: left;
-  }
-
-  .proof-stat .num {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--gold);
-    letter-spacing: -1px;
-  }
-
-  .proof-stat .label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  .proof-mock {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 28px;
-    font-size: 0.82rem;
-  }
-
-  .proof-mock-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .proof-mock-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 700;
-    font-size: 0.78rem;
-    color: var(--gold);
-    letter-spacing: 0.06em;
-  }
-
-  .proof-mock-id {
-    color: var(--text-muted);
-    font-size: 0.72rem;
-    font-family: monospace;
-  }
-
-  .proof-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 11px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
-  }
-
-  .proof-row:last-child { border-bottom: none; }
-
-  .proof-row-label { color: var(--text-secondary); }
-
-  .proof-row-value {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-weight: 600;
-    font-size: 0.78rem;
-  }
-
-  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-  .dot-green { background: #4ADE80; box-shadow: 0 0 8px rgba(74,222,128,0.35); }
-  .dot-yellow { background: #FACC15; box-shadow: 0 0 8px rgba(250,204,21,0.35); }
-  .dot-red { background: #F87171; box-shadow: 0 0 8px rgba(248,113,113,0.35); }
-
-  .val-green { color: #4ADE80; }
-  .val-yellow { color: #FACC15; }
-  .val-red { color: #F87171; }
-
-  /* ─── CTA ─── */
-  .cta-section {
-    text-align: center;
-    padding: 120px 24px;
-  }
-
-  .cta-section .section-title {
-    max-width: 580px;
-    margin: 0 auto 18px;
-  }
-
-  .cta-section .section-desc {
-    margin: 0 auto 48px;
-    text-align: center;
-  }
-
-  .cta-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-  }
-
-  /* ─── FOOTER ─── */
-  footer {
-    padding: 40px 48px;
-    border-top: 1px solid var(--border);
-    max-width: 1140px;
-    margin: 0 auto;
-  }
-
-  .footer-inner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .footer-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .footer-logo span {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--gold);
-  }
-
-  .footer-copy {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 20px;
-  }
-
-  .footer-links a {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 0.78rem;
-    transition: color 0.2s;
-  }
-
-  .footer-links a:hover { color: var(--text-secondary); }
-
-  /* ─── ANIMATIONS ─── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .anim {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.55s ease;
-  }
-
-  .anim.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* ─── RESPONSIVE ─── */
-  @media (max-width: 900px) {
-    nav { padding: 0 20px; }
-    section { padding: 64px 20px; }
-    .problem-grid, .usecase-grid { grid-template-columns: 1fr; }
-    .proof-container { grid-template-columns: 1fr; padding: 32px 20px; }
-    .hero h1 { letter-spacing: -1px; }
-    .hero-buttons, .cta-buttons { flex-direction: column; align-items: center; }
-    .proof-stats { flex-direction: column; gap: 16px; }
-    .footer-inner { flex-direction: column; gap: 20px; text-align: center; }
-    .footer-links { flex-wrap: wrap; justify-content: center; }
-  }
-</style>
-</head>
-<body>
-
-<!-- NAV -->
-<nav>
-  <div class="nav-left">
-    <a href="#" class="nav-logo">CarReel</a>
-    <span class="nav-badge">COMPANY</span>
-  </div>
-  <a href="#cta" class="nav-cta">Hubungi Kami</a>
-</nav>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-badge">CARREEL COMPANY · UNTUK BISNIS</div>
-  <h1>Kondisi unit saat masuk dan saat keluar — <span class="accent">terdokumentasi.</span></h1>
-  <p class="desc">Sistem inspeksi body eksterior berbasis AI untuk serah terima kendaraan. Dirancang untuk valet, rental, dan bengkel — proteksi nyata dari klaim kerusakan yang tidak berdasar.</p>
-  <div class="hero-buttons">
-    <a href="#cta" class="btn-primary">Jadwalkan Demo</a>
-    <a href="#cara-kerja" class="btn-secondary">Lihat Cara Kerja</a>
-  </div>
-</section>
-
-<!-- MASALAH -->
-<section>
-  <p class="section-label anim">MASALAH</p>
-  <h2 class="section-title anim">Klaim kerusakan tanpa bukti — selesai.</h2>
-  <p class="section-desc anim">Bisnis kehilangan jutaan rupiah setiap bulan karena sengketa kerusakan yang tidak terdokumentasi dengan baik.</p>
-
-  <div class="problem-grid">
-    <div class="problem-card anim">
-      <div class="problem-icon">⚠️</div>
-      <h3>Klaim Palsu dari Pelanggan</h3>
-      <p>Pelanggan mengklaim kerusakan yang sudah ada sebelumnya sebagai kesalahan bisnis Anda. Tanpa bukti, Anda yang menanggung.</p>
-    </div>
-    <div class="problem-card anim">
-      <div class="problem-icon">📋</div>
-      <h3>Dokumentasi Manual Lambat</h3>
-      <p>Checklist kertas dan foto manual memakan waktu, mudah terlewat, dan sulit dijadikan bukti kuat saat sengketa.</p>
-    </div>
-    <div class="problem-card anim">
-      <div class="problem-icon">💸</div>
-      <h3>Biaya Perbaikan Membengkak</h3>
-      <p>Tanpa baseline kondisi yang jelas, kerusakan kecil yang sudah ada sebelumnya sering dibebankan ke operasional.</p>
-    </div>
-  </div>
-</section>
-
-<!-- CARA KERJA -->
-<section id="cara-kerja">
-  <p class="section-label anim">CARA KERJA</p>
-  <h2 class="section-title anim">Tiga langkah, proteksi penuh.</h2>
-  <p class="section-desc anim">Proses inspeksi yang cepat, konsisten, dan menghasilkan bukti digital yang tidak bisa dimanipulasi.</p>
-
-  <div class="steps">
-    <div class="step anim">
-      <div class="step-marker">01</div>
-      <div class="step-content">
-        <h3>Rekam Video Serah Terima</h3>
-        <p>Staff merekam video walkthrough 360° kendaraan saat unit masuk. Ikuti panduan checklist otomatis di aplikasi — pastikan semua sisi tercover dalam 2–3 menit.</p>
-      </div>
-    </div>
-    <div class="step anim">
-      <div class="step-marker">02</div>
-      <div class="step-content">
-        <h3>AI Analisis & Catat Kondisi</h3>
-        <p>Computer vision menganalisis setiap frame: mendeteksi goresan, penyok, baret, perbedaan warna, dan kerusakan lain. Hasilnya jadi baseline kondisi unit.</p>
-      </div>
-    </div>
-    <div class="step anim">
-      <div class="step-marker">03</div>
-      <div class="step-content">
-        <h3>Bandingkan Saat Unit Keluar</h3>
-        <p>Saat unit dikembalikan, rekam ulang. Sistem otomatis membandingkan kondisi masuk vs keluar dan menghasilkan laporan perbedaan yang bisa dijadikan bukti.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- USE CASES -->
-<section>
-  <p class="section-label anim">COCOK UNTUK</p>
-  <h2 class="section-title anim">Dirancang untuk operasional harian Anda.</h2>
-  <p class="section-desc anim">Apapun bisnis Anda, jika ada serah terima kendaraan — CarReel menjaga Anda.</p>
-
-  <div class="usecase-grid">
-    <div class="usecase-card anim">
-      <div class="usecase-tag">Valet Parking</div>
-      <h3>Hotel & Mall Valet</h3>
-      <p>Rekam kondisi mobil tamu saat masuk area valet. Jika ada klaim goresan baru, Anda punya bukti video + laporan AI yang terverifikasi.</p>
-    </div>
-    <div class="usecase-card anim">
-      <div class="usecase-tag">Rental Mobil</div>
-      <h3>Sewa Kendaraan</h3>
-      <p>Dokumentasi kondisi unit sebelum dan sesudah penyewaan. Tidak ada lagi debat soal kerusakan — data yang bicara.</p>
-    </div>
-    <div class="usecase-card anim">
-      <div class="usecase-tag">Bengkel & Detailing</div>
-      <h3>Workshop & Body Repair</h3>
-      <p>Catat kondisi kendaraan pelanggan saat masuk bengkel. Lindungi reputasi Anda dari tuduhan kerusakan yang bukan tanggung jawab Anda.</p>
-    </div>
-  </div>
-</section>
-
-<!-- PROOF / VERIFICATION -->
-<section>
-  <div class="proof-container anim">
-    <div class="proof-text">
-      <p class="section-label">LAPORAN INSPEKSI</p>
-      <h3>Bukti digital, bukan kertas checklist.</h3>
-      <p>Setiap inspeksi menghasilkan laporan digital lengkap dengan timestamp, frame video, dan peta kerusakan. Diterima sebagai bukti valid.</p>
-      <div class="proof-stats">
-        <div class="proof-stat">
-          <div class="num">&lt;3min</div>
-          <div class="label">Waktu inspeksi</div>
-        </div>
-        <div class="proof-stat">
-          <div class="num">98.5%</div>
-          <div class="label">Akurasi deteksi</div>
-        </div>
-        <div class="proof-stat">
-          <div class="num">24/7</div>
-          <div class="label">Siap diakses</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="proof-mock">
-      <div class="proof-mock-header">
-        <span class="proof-mock-title">INSPECTION REPORT</span>
-        <span class="proof-mock-id">#INS-20260330-0047</span>
-      </div>
-      <div class="proof-row">
-        <span class="proof-row-label">Panel Depan</span>
-        <span class="proof-row-value val-green"><span class="dot dot-green"></span>Bersih — No damage</span>
-      </div>
-      <div class="proof-row">
-        <span class="proof-row-label">Pintu Kiri Depan</span>
-        <span class="proof-row-value val-yellow"><span class="dot dot-yellow"></span>Goresan ringan 12cm</span>
-      </div>
-      <div class="proof-row">
-        <span class="proof-row-label">Fender Kanan</span>
-        <span class="proof-row-value val-green"><span class="dot dot-green"></span>Bersih — No damage</span>
-      </div>
-      <div class="proof-row">
-        <span class="proof-row-label">Bumper Belakang</span>
-        <span class="proof-row-value val-yellow"><span class="dot dot-yellow"></span>Penyok kecil 3cm</span>
-      </div>
-      <div class="proof-row">
-        <span class="proof-row-label">Kap Mesin</span>
-        <span class="proof-row-value val-green"><span class="dot dot-green"></span>Bersih — No damage</span>
-      </div>
-      <div class="proof-row">
-        <span class="proof-row-label">Velg & Ban</span>
-        <span class="proof-row-value val-green"><span class="dot dot-green"></span>Kondisi baik</span>
-      </div>
-      <div class="proof-row">
-        <span class="proof-row-label">Integritas Video</span>
-        <span class="proof-row-value val-green"><span class="dot dot-green"></span>Verified — No edits</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="cta-section" id="cta">
-  <p class="section-label anim">MULAI SEKARANG</p>
-  <h2 class="section-title anim">Lindungi bisnis Anda dari klaim kerusakan hari ini.</h2>
-  <p class="section-desc anim">Jadwalkan demo 15 menit dan lihat bagaimana CarReel bekerja di operasional Anda. Gratis untuk pilot program.</p>
-  <div class="cta-buttons anim">
-    <a href="#" class="btn-primary">Jadwalkan Demo</a>
-    <a href="#" class="btn-secondary">Hubungi Sales</a>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-logo">
-      <span>CarReel</span>
-      <span class="nav-badge">COMPANY</span>
-    </div>
-    <div class="footer-links">
-      <a href="#">Syarat & Ketentuan</a>
-      <a href="#">Kebijakan Privasi</a>
-      <a href="#">Kontak</a>
-    </div>
-    <div class="footer-copy">© 2026 CarReel Company. All rights reserved.</div>
-  </div>
-</footer>
-
-<script>
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((e, i) => {
-      if (e.isIntersecting) {
-        setTimeout(() => e.target.classList.add('visible'), i * 70);
-        obs.unobserve(e.target);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>CarReel — Inspeksi Serah Terima Kendaraan</title>
+    <style>
+      :root {
+        --gold: #f5c842;
+        --gold-dim: rgba(245, 200, 66, 0.08);
+        --gold-border: rgba(245, 200, 66, 0.22);
+        --bg: #000;
+        --surface: #111;
+        --border: #222;
+        --text: #ffffff;
+        --sub: #777;
       }
-    });
-  }, { threshold: 0.12 });
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
 
-  document.querySelectorAll('.anim').forEach(el => obs.observe(el));
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        height: 60px;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(0, 0, 0, 0.92);
+        backdrop-filter: blur(16px);
+      }
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .nav-logo {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(–gold);
+      }
+      .nav-badge {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(–sub);
+        border: 1px solid var(–border);
+        padding: 3px 8px;
+        border-radius: 4px;
+      }
+      .nav-btn {
+        background: var(–gold);
+        color: #000;
+        border: none;
+        padding: 9px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
 
-  window.addEventListener('scroll', () => {
-    document.querySelector('nav').style.boxShadow =
-      window.scrollY > 15 ? '0 4px 30px rgba(0,0,0,0.5)' : 'none';
-  });
-</script>
-</body>
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 100px 24px 80px;
+      }
+      .hero-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: var(–gold);
+        border: 1px solid var(–gold-border);
+        padding: 6px 16px;
+        border-radius: 100px;
+        margin-bottom: 28px;
+      }
+      .pill-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(–gold);
+        animation: blink 2s ease-in-out infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .hero-title {
+        font-size: clamp(32px, 7vw, 68px);
+        font-weight: 800;
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+        margin-bottom: 24px;
+        max-width: 760px;
+      }
+      .gold {
+        color: var(–gold);
+      }
+      .hero-sub {
+        font-size: clamp(14px, 2vw, 17px);
+        color: var(–sub);
+        max-width: 520px;
+        line-height: 1.7;
+        margin-bottom: 40px;
+      }
+      .hero-cta {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .btn-gold {
+        background: var(–gold);
+        color: #000;
+        border: none;
+        padding: 13px 26px;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(–text);
+        border: 1px solid var(–border);
+        padding: 13px 26px;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .section {
+        padding: 88px 32px;
+      }
+      .inner {
+        max-width: 1060px;
+        margin: 0 auto;
+      }
+      .eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(–gold);
+        margin-bottom: 12px;
+      }
+      .sec-title {
+        font-size: clamp(26px, 4vw, 44px);
+        font-weight: 800;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        margin-bottom: 14px;
+      }
+      .sec-sub {
+        font-size: 15px;
+        color: var(–sub);
+        max-width: 540px;
+        line-height: 1.7;
+        margin-bottom: 48px;
+      }
+
+      .section-card {
+        background: var(--surface);
+        border: 1px solid var(--gold-border);
+        border-radius: 18px;
+        padding: 40px;
+      }
+      .section-card .eyebrow {
+        text-align: center;
+      }
+      .section-card .sec-title {
+        text-align: center;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .section-card .sec-sub {
+        text-align: center;
+        max-width: 580px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .prob-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1px;
+        background: var(–border);
+        border: 1px solid var(–border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .prob-item {
+        background: var(–surface);
+        padding: 28px 24px;
+      }
+      .prob-icon {
+        margin-bottom: 14px;
+        color: var(–gold);
+      }
+      .prob-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .prob-desc {
+        font-size: 12px;
+        color: var(–sub);
+        line-height: 1.65;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 28px;
+      }
+      .step-n {
+        font-size: 42px;
+        font-weight: 800;
+        color: var(–border);
+        line-height: 1;
+        margin-bottom: 14px;
+        letter-spacing: -2px;
+      }
+      .step-tag {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(–gold);
+        margin-bottom: 6px;
+        display: block;
+      }
+      .step-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .step-desc {
+        font-size: 12px;
+        color: var(–sub);
+        line-height: 1.65;
+      }
+
+      .ai-card {
+        background: var(–surface);
+        border: 1px solid var(–gold-border);
+        border-radius: 18px;
+        padding: 40px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: start;
+      }
+      .ai-tag {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: var(–gold);
+        margin-bottom: 10px;
+      }
+      .ai-title {
+        font-size: clamp(20px, 3vw, 30px);
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 14px;
+        letter-spacing: -0.02em;
+      }
+      .ai-desc {
+        font-size: 13px;
+        color: var(–sub);
+        line-height: 1.7;
+        margin-bottom: 24px;
+      }
+      .ai-pts {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .ai-pt {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .ai-ck {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(–gold-dim);
+        border: 1px solid var(–gold-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        color: var(–gold);
+        font-weight: 800;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .ai-pt-txt {
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .ai-pt-txt span {
+        color: var(–sub);
+      }
+
+      .ai-report {
+        background: #0a0a0a;
+        border: 1px solid var(–border);
+        border-radius: 14px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .report-header {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(–sub);
+        margin-bottom: 2px;
+      }
+      .report-unit {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(–surface);
+        border: 1px solid var(–border);
+        border-radius: 9px;
+      }
+      .report-unit-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        background: var(–gold-dim);
+        border: 1px solid var(–gold-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(–gold);
+        flex-shrink: 0;
+      }
+      .report-unit-label {
+        font-size: 12px;
+        font-weight: 600;
+        flex: 1;
+      }
+      .ru-sub {
+        font-size: 9px;
+        color: var(–sub);
+      }
+      .status-ok {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #4ade80;
+      }
+
+      .report-findings {
+        background: var(–surface);
+        border: 1px solid var(–border);
+        border-radius: 9px;
+        padding: 14px;
+      }
+      .findings-lbl {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(–sub);
+        margin-bottom: 10px;
+      }
+      .finding-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+      .finding-row:last-child {
+        margin-bottom: 0;
+      }
+      .finding-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 5px;
+      }
+      .finding-title {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .finding-desc {
+        font-size: 11px;
+        color: var(–sub);
+      }
+      .finding-conf {
+        font-size: 10px;
+        color: #444;
+        margin-top: 2px;
+      }
+
+      .report-ttd {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: rgba(74, 222, 128, 0.04);
+        border: 1px solid rgba(74, 222, 128, 0.15);
+        border-radius: 9px;
+      }
+      .ttd-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: rgba(74, 222, 128, 0.08);
+        border: 1px solid rgba(74, 222, 128, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 12px;
+        color: #4ade80;
+      }
+      .ttd-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #4ade80;
+        flex: 1;
+      }
+      .ttd-status {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #4ade80;
+      }
+
+      .val-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+      }
+      .val-card {
+        background: var(–surface);
+        border: 1px solid var(–border);
+        border-radius: 14px;
+        padding: 24px;
+      }
+      .val-n {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: var(–gold);
+        margin-bottom: 12px;
+      }
+      .val-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        line-height: 1.3;
+      }
+      .val-desc {
+        font-size: 12px;
+        color: var(–sub);
+        line-height: 1.65;
+      }
+
+      .seg-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(–border);
+        border: 1px solid var(–border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .seg-card {
+        background: var(–surface);
+        padding: 28px 24px;
+      }
+      .seg-emoji {
+        font-size: 24px;
+        margin-bottom: 14px;
+        display: block;
+      }
+      .seg-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .seg-desc {
+        font-size: 12px;
+        color: var(–sub);
+        line-height: 1.65;
+      }
+      .seg-tag {
+        display: inline-block;
+        margin-top: 14px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(–gold);
+        border: 1px solid var(–gold-border);
+        padding: 3px 9px;
+        border-radius: 4px;
+      }
+
+      .statement {
+        padding: 72px 32px;
+        text-align: center;
+      }
+      .statement-bar {
+        width: 1px;
+        height: 52px;
+        background: var(–border);
+        margin: 0 auto 28px;
+      }
+      .statement-txt {
+        font-size: clamp(18px, 3vw, 28px);
+        font-weight: 600;
+        line-height: 1.5;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .statement-txt em {
+        color: var(–gold);
+        font-style: normal;
+      }
+      .statement-author {
+        font-size: 11px;
+        color: var(–sub);
+        margin-top: 18px;
+        letter-spacing: 1px;
+      }
+
+      .cta-wrap {
+        padding: 80px 32px;
+        text-align: center;
+      }
+      .cta-box {
+        max-width: 580px;
+        margin: 0 auto;
+        background: var(–surface);
+        border: 1px solid var(–border);
+        border-radius: 20px;
+        padding: 48px 40px;
+      }
+      .cta-title {
+        font-size: clamp(24px, 4vw, 36px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        margin-bottom: 14px;
+      }
+      .cta-sub {
+        font-size: 14px;
+        color: var(–sub);
+        line-height: 1.7;
+        margin-bottom: 28px;
+      }
+      .cta-note {
+        font-size: 11px;
+        color: var(–sub);
+        margin-top: 14px;
+      }
+
+      footer {
+        padding: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(–border);
+      }
+      .footer-logo {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(–gold);
+      }
+      .footer-links {
+        display: flex;
+        gap: 20px;
+      }
+      .footer-links a {
+        font-size: 12px;
+        color: var(–sub);
+        text-decoration: none;
+      }
+      .footer-tag {
+        font-size: 11px;
+        color: #333;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease;
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 768px) {
+        nav {
+          padding: 0 16px;
+        }
+        .section {
+          padding: 64px 16px;
+        }
+        .ai-card {
+          grid-template-columns: 1fr;
+        }
+        .seg-grid {
+          grid-template-columns: 1fr;
+        }
+        footer {
+          flex-direction: column;
+          gap: 14px;
+          text-align: center;
+        }
+        .cta-box {
+          padding: 32px 20px;
+        }
+        .statement {
+          padding: 56px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-brand">
+        <span class="nav-logo">CarReel</span>
+      </div>
+      <button
+        class="nav-btn"
+        onclick="
+          document
+            .getElementById('contact')
+            .scrollIntoView({ behavior: 'smooth' })
+        "
+      >
+        Hubungi Kami
+      </button>
+    </nav>
+
+    <div class="hero">
+      <div class="hero-pill">
+        <div class="pill-dot"></div>
+        CarReel · Untuk Bisnis
+      </div>
+      <h1 class="hero-title">
+        Kondisi unit saat masuk<br />dan saat keluar —
+        <span class="gold">terdokumentasi.</span>
+      </h1>
+      <p class="hero-sub">
+        Sistem inspeksi body eksterior berbasis AI untuk serah terima kendaraan.
+        Dirancang untuk valet, rental, dan bengkel — dasar dokumentasi yang
+        lebih kuat untuk penanganan klaim.
+      </p>
+      <div class="hero-cta">
+        <a href="#contact" class="btn-gold">Jadwalkan Demo</a>
+        <a href="#cara-kerja" class="btn-ghost">Lihat Cara Kerja</a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="inner">
+        <div class="section-card reveal">
+        <p class="eyebrow">Masalah</p>
+        <h2 class="sec-title">
+          Tanpa dokumentasi yang kuat,<br />bisnis Anda selalu rentan.
+        </h2>
+        <p class="sec-sub">
+          Dispute kondisi kendaraan adalah salah satu sumber kerugian yang
+          paling sering diabaikan oleh bisnis berbasis unit.
+        </p>
+        <div class="prob-grid">
+          <div class="prob-item">
+            <div class="prob-icon">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <path
+                  d="M16 4L4 28H28L16 4Z"
+                  stroke="#F5C842"
+                  stroke-width="1.4"
+                  stroke-linejoin="round"
+                />
+                <line
+                  x1="16"
+                  y1="14"
+                  x2="16"
+                  y2="20"
+                  stroke="#F5C842"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+                <circle cx="16" cy="24" r="1" fill="#F5C842" />
+              </svg>
+            </div>
+            <div class="prob-title">Tidak Ada Bukti Kondisi</div>
+            <div class="prob-desc">
+              Foto manual tidak terstruktur, tidak terverifikasi, dan mudah
+              disangkal pelanggan saat terjadi klaim kerusakan.
+            </div>
+          </div>
+          <div class="prob-item">
+            <div class="prob-icon">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="12"
+                  stroke="#F5C842"
+                  stroke-width="1.4"
+                />
+                <path
+                  d="M16 10V17"
+                  stroke="#F5C842"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+                <circle cx="16" cy="21" r="1" fill="#F5C842" />
+              </svg>
+            </div>
+            <div class="prob-title">Dispute yang Menguras Waktu</div>
+            <div class="prob-desc">
+              Setiap klaim yang tidak bisa dibuktikan berubah menjadi negosiasi
+              panjang — membuang waktu tim dan merusak reputasi bisnis.
+            </div>
+          </div>
+          <div class="prob-item">
+            <div class="prob-icon">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <rect
+                  x="4"
+                  y="7"
+                  width="24"
+                  height="18"
+                  rx="3"
+                  stroke="#F5C842"
+                  stroke-width="1.4"
+                />
+                <path
+                  d="M10 19L14 15L17 18L21 13"
+                  stroke="#F5C842"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <div class="prob-title">Tidak Ada Riwayat Unit</div>
+            <div class="prob-desc">
+              Unit yang berpindah tangan berkali-kali tanpa catatan kondisi
+              menciptakan risiko yang terus menumpuk tanpa terkelola.
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="cara-kerja">
+      <div class="inner">
+        <div class="section-card reveal">
+        <p class="eyebrow">Cara Kerja</p>
+        <h2 class="sec-title">
+          Proses serah terima yang<br />terdokumentasi dari ujung ke ujung.
+        </h2>
+        <p class="sec-sub">
+          AI CarReel menginspeksi kondisi body eksterior — menghasilkan laporan
+          kondisi yang terverifikasi dan bertimestamp.
+        </p>
+        <div class="steps">
+          <div class="step reveal">
+            <div class="step-n">01</div>
+            <span class="step-tag">Pre-Handover</span>
+            <div class="step-title">Rekam Body Sebelum Serah Terima</div>
+            <div class="step-desc">
+              Teknisi rekam body eksterior unit via kamera langsung sebelum
+              diserahkan ke pelanggan. Tidak dapat diunggah dari galeri.
+            </div>
+          </div>
+          <div class="step reveal">
+            <div class="step-n">02</div>
+            <span class="step-tag">AI Inspection</span>
+            <div class="step-title">AI Inspeksi Kondisi Body</div>
+            <div class="step-desc">
+              AI menganalisis rekaman — mendeteksi ada atau tidaknya kerusakan,
+              lokasi spesifik, dan confidence score. Laporan tekstual dihasilkan
+              otomatis.
+            </div>
+          </div>
+          <div class="step reveal">
+            <div class="step-n">03</div>
+            <span class="step-tag">Tanda Tangan Digital</span>
+            <div class="step-title">Konfirmasi Kondisi Dua Pihak</div>
+            <div class="step-desc">
+              Pelanggan menandatangani laporan kondisi secara digital. Keduanya
+              menerima salinan dokumen serah terima yang tercatat secara
+              digital.
+            </div>
+          </div>
+          <div class="step reveal">
+            <div class="step-n">04</div>
+            <span class="step-tag">Post-Handover</span>
+            <div class="step-title">Rekam Ulang Saat Kembali</div>
+            <div class="step-desc">
+              Proses yang sama diulang saat unit dikembalikan. Sistem
+              menyandingkan kondisi sebelum dan sesudah — memberikan konteks
+              visual untuk evaluasi klaim.
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="inner">
+        <div class="ai-card reveal">
+          <div>
+            <div class="ai-tag">AI CarReel</div>
+            <h3 class="ai-title">
+              AI yang dibangun khusus untuk satu pekerjaan: mendokumentasikan
+              kondisi body saat serah terima.
+            </h3>
+            <p class="ai-desc">
+              AI CarReel digunakan untuk menginspeksi kondisi body eksterior
+              kendaraan dari rekaman video langsung. Setiap rekaman dianalisis
+              secara otomatis — menghasilkan laporan kondisi yang terdokumentasi
+              dan bertimestamp.
+            </p>
+            <div class="ai-pts">
+              <div class="ai-pt">
+                <div class="ai-ck">✓</div>
+                <div class="ai-pt-txt">
+                  Deteksi kerusakan body eksterior
+                  <span
+                    >— goresan, penyok, kerusakan permukaan yang terlihat pada
+                    rekaman</span
+                  >
+                </div>
+              </div>
+              <div class="ai-pt">
+                <div class="ai-ck">✓</div>
+                <div class="ai-pt-txt">
+                  Laporan tekstual per area
+                  <span
+                    >— contoh: "Terdapat goresan pada pintu kiri belakang"</span
+                  >
+                </div>
+              </div>
+              <div class="ai-pt">
+                <div class="ai-ck">✓</div>
+                <div class="ai-pt-txt">
+                  Confidence score per temuan
+                  <span
+                    >— transparansi tingkat keyakinan AI untuk setiap kerusakan
+                    yang terdeteksi</span
+                  >
+                </div>
+              </div>
+              <div class="ai-pt">
+                <div class="ai-ck">✓</div>
+                <div class="ai-pt-txt">
+                  Timestamp otomatis per sesi
+                  <span>— rekaman dan laporan terikat waktu sejak diambil</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ai-report">
+            <div class="report-header">
+              AI Inspection Report · Body Exterior
+            </div>
+            <div class="report-unit">
+              <div class="report-unit-icon">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M2 10H14M2 10V12M14 10V12M2 10L3.5 6H12.5L14 10M5 6L5.5 4H10.5L11 6"
+                    stroke="#F5C842"
+                    stroke-width="1.2"
+                    stroke-linejoin="round"
+                  />
+                  <circle
+                    cx="4.5"
+                    cy="11.5"
+                    r="1"
+                    stroke="#F5C842"
+                    stroke-width="1"
+                  />
+                  <circle
+                    cx="11.5"
+                    cy="11.5"
+                    r="1"
+                    stroke="#F5C842"
+                    stroke-width="1"
+                  />
+                </svg>
+              </div>
+              <div style="flex: 1">
+                <div class="report-unit-label">Toyota Avanza · B 1234 XYZ</div>
+                <div class="ru-sub">Pre-Handover · Hari ini · 09.14</div>
+              </div>
+              <div class="status-ok">✓ Scanned</div>
+            </div>
+            <div class="report-findings">
+              <div class="findings-lbl">Temuan AI</div>
+              <div class="finding-row">
+                <div class="finding-dot" style="background: #f87171"></div>
+                <div>
+                  <div class="finding-title" style="color: #f87171">
+                    Kerusakan Terdeteksi
+                  </div>
+                  <div class="finding-desc">
+                    Goresan pada pintu kiri belakang
+                  </div>
+                  <div class="finding-conf">Confidence score: 87%</div>
+                </div>
+              </div>
+              <div class="finding-row">
+                <div class="finding-dot" style="background: #4ade80"></div>
+                <div>
+                  <div class="finding-title" style="color: #4ade80">
+                    Area Lain: Tidak Ada Kerusakan
+                  </div>
+                  <div class="finding-desc">
+                    Bumper, kap, fender, pintu lain
+                  </div>
+                  <div class="finding-conf">Confidence score: 92%</div>
+                </div>
+              </div>
+            </div>
+            <div class="report-ttd">
+              <div class="ttd-icon">✓</div>
+              <div class="ttd-label">Dokumen Serah Terima</div>
+              <div class="ttd-status">TTD Dua Pihak ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="inner">
+        <div class="section-card reveal">
+        <p class="eyebrow">Mengapa CarReel</p>
+        <h2 class="sec-title">
+          Dokumentasi yang melindungi,<br />bukan sekadar mencatat.
+        </h2>
+        <p class="sec-sub">
+          Setiap rekaman yang tersimpan di CarReel adalah aset defensif untuk
+          bisnis Anda.
+        </p>
+        <div class="val-grid">
+          <div class="val-card reveal">
+            <div class="val-n">01</div>
+            <div class="val-title">Proteksi Dispute yang Konkret</div>
+            <div class="val-desc">
+              Saat pelanggan mengklaim kerusakan yang sudah ada sebelumnya,
+              laporan AI terdokumentasi menjadi referensi kondisi yang lebih
+              kuat dibanding klaim lisan atau foto tidak terstruktur.
+            </div>
+          </div>
+          <div class="val-card reveal">
+            <div class="val-n">02</div>
+            <div class="val-title">Proses Serah Terima yang Profesional</div>
+            <div class="val-desc">
+              Pelanggan yang melihat proses inspeksi AI secara langsung mendapat
+              kepercayaan lebih tinggi terhadap standar operasional bisnis Anda.
+            </div>
+          </div>
+          <div class="val-card reveal">
+            <div class="val-n">03</div>
+            <div class="val-title">Riwayat Unit yang Terpusat</div>
+            <div class="val-desc">
+              Semua laporan tersimpan dalam satu sistem kronologis per unit —
+              bukan tersebar di WhatsApp atau folder foto yang tidak
+              terstruktur.
+            </div>
+          </div>
+          <div class="val-card reveal">
+            <div class="val-n">04</div>
+            <div class="val-title">Tanda Tangan Digital Dua Pihak</div>
+            <div class="val-desc">
+              Konfirmasi kondisi oleh kedua pihak sebelum dan sesudah —
+              menciptakan kontrak kondisi yang terdokumentasi secara digital.
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="inner">
+        <div class="section-card reveal">
+        <p class="eyebrow">Untuk Siapa</p>
+        <h2 class="sec-title">
+          Untuk bisnis di mana unit<br />berpindah tangan setiap hari.
+        </h2>
+        <div class="seg-grid">
+          <div class="seg-card">
+            <span class="seg-emoji">🚗</span>
+            <div class="seg-title">Valet & Titip Kendaraan</div>
+            <div class="seg-desc">
+              Dokumentasi kondisi saat masuk dan keluar parkir. Laporan kondisi
+              sebelum dan sesudah yang tercatat dan bertimestamp.
+            </div>
+            <span class="seg-tag">Pre · Post Recording</span>
+          </div>
+          <div class="seg-card">
+            <span class="seg-emoji">🔑</span>
+            <div class="seg-title">Rental Kendaraan</div>
+            <div class="seg-desc">
+              Setiap periode sewa terdokumentasi. Kondisi saat penyerahan dan
+              pengembalian terdokumentasi dalam laporan AI bertimestamp.
+            </div>
+            <span class="seg-tag">Multi-Unit Dashboard</span>
+          </div>
+          <div class="seg-card">
+            <span class="seg-emoji">🔧</span>
+            <div class="seg-title">Bengkel & Dealer</div>
+            <div class="seg-desc">
+              Unit masuk bengkel dengan kondisi terdokumentasi. Tidak ada lagi
+              dispute soal kerusakan yang "terjadi di dalam bengkel".
+            </div>
+            <span class="seg-tag">AI Damage Report</span>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top: 0">
+      <div class="inner">
+        <div class="section-card reveal" style="text-align: center;">
+          <p class="eyebrow">Mengapa AI</p>
+          <h2 class="sec-title">
+            Dokumentasi manual tidak terstruktur dan mudah disangkal.<br />Laporan
+            CarReel lebih sulit dibantah.
+          </h2>
+          <p class="sec-sub">
+            Foto WhatsApp tidak terstruktur dan mudah disangkal konteksnya.
+            Laporan AI CarReel terikat pada rekaman langsung dan dicap waktu
+            secara otomatis — memberikan dasar dokumentasi kondisi yang jauh
+            lebih kuat dibanding catatan manual.
+          </p>
+          <div
+            style="
+              display: flex;
+              justify-content: center;
+              gap: 32px;
+              flex-wrap: wrap;
+            "
+          >
+            <div style="text-align: center">
+              <div
+                style="font-size: 28px; font-weight: 800; color: var(--gold)"
+              >
+                AI
+              </div>
+              <div style="font-size: 11px; color: var(--sub); margin-top: 4px">
+                Inspeksi Otomatis
+              </div>
+            </div>
+            <div style="width: 1px; background: var(--border)"></div>
+            <div style="text-align: center">
+              <div
+                style="font-size: 28px; font-weight: 800; color: var(--gold)"
+              >
+                TTD
+              </div>
+              <div style="font-size: 11px; color: var(--sub); margin-top: 4px">
+                Digital Dua Pihak
+              </div>
+            </div>
+            <div style="width: 1px; background: var(--border)"></div>
+            <div style="text-align: center">
+              <div
+                style="font-size: 28px; font-weight: 800; color: var(--gold)"
+              >
+                ∞
+              </div>
+              <div style="font-size: 11px; color: var(--sub); margin-top: 4px">
+                Riwayat Terpusat
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-wrap" id="contact">
+      <div class="cta-box reveal">
+        <h2 class="cta-title">Siap melindungi bisnis Anda?</h2>
+        <p class="cta-sub">
+          Jadwalkan demo langsung dengan tim CarReel. Kami akan tunjukkan
+          bagaimana inspeksi AI bekerja untuk operasional bisnis Anda.
+        </p>
+        <a
+          href="/cdn-cgi/l/email-protection#5e363b3232311e3d3f2c2c3b3b3270373a"
+          class="btn-gold"
+          >Hubungi Kami</a
+        >
+        <p class="cta-note">
+          Pricing disesuaikan dengan skala operasional bisnis Anda
+        </p>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-logo">CarReel</div>
+      <div class="footer-links">
+        <a href="#">Tentang Kami</a>
+        <a href="#">Hubungi Kami</a>
+      </div>
+      <div class="footer-tag">See the Reel, Get the Real.</div>
+    </footer>
+
+    <script>
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) e.target.classList.add("visible");
+          });
+        },
+        { threshold: 0.1 },
+      );
+      document.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
+    </script>
+  </body>
 </html>
