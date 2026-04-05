@@ -276,7 +276,7 @@ export function StepCard({
   }
 
   return (
-    <div className="relative border-2 border-dashed rounded-xl p-3 transition-all border-[#2a2a2a] bg-[#1a1a1a]">
+    <div className={`relative border-2 border-dashed rounded-xl p-3 transition-all ${hasMedia ? "border-[#2a2a2a] bg-[#1a1a1a]" : "border-[#3a2800] bg-[#141414]"}`}>
       {/* Hidden file input for Upload button */}
       {allowFile && (
         <input
@@ -363,8 +363,8 @@ export function StepCard({
         </div>
       ) : (
         <div className="flex flex-col items-center text-center">
-          <div className="w-10 h-10 bg-[#0f0f0f]/50 rounded-lg flex items-center justify-center mb-2">
-            <div className="text-neutral-500 scale-75">
+          <div className="w-10 h-10 bg-[#1a1500] rounded-lg flex items-center justify-center mb-2">
+            <div className="text-yellow-400/60 scale-75">
               <StepIcon stepType={step.stepType} />
             </div>
           </div>
