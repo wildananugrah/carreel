@@ -39,6 +39,7 @@ export interface SpeedometerResult {
 }
 
 export interface BodyInspectionResult {
+  cameraPath: string;
   overallCondition: "GOOD" | "FAIR" | "POOR";
   confidence: number;
   screenRecaptureDetected: boolean;
@@ -445,11 +446,37 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-- SPATIAL ORIENTATION (CRITICAL LEFT vs RIGHT RULES):
-  Do NOT rely on the steering wheel, as it may not be visible. You MUST use these exact visual rules:
-  1. REAR VIEW (Bagian Belakang): When looking at the back of the vehicle (seeing taillights, rear bumper, trunk), the vehicle's LEFT is on the LEFT side of your screen. The vehicle's RIGHT is on the RIGHT side of your screen.
-  2. FRONT VIEW (Bagian Depan): When looking at the front of the vehicle (seeing headlights, front grille), the orientation is REVERSED. The vehicle's LEFT is on the RIGHT side of your screen. The vehicle's RIGHT is on the LEFT side of your screen.
-  3. SIDE VIEW (Bagian Samping): When looking at the side profile, find the front end (headlights/hood). If the front points LEFT on screen, you are looking at the RIGHT side. If the front points RIGHT on screen, you are looking at the LEFT side.
+- SPATIAL ORIENTATION (EXTERIOR ANCHOR RULES - CRITICAL):
+  Do NOT attempt to look for the steering wheel or interior cabin, as dark window tints will make them invisible. You MUST determine Left and Right using ONLY the exterior anatomy of the vehicle:
+
+  1. IDENTIFY THE ANCHORS FIRST:
+     - Front Anchor: Headlights, Front Grille, Front Brand Logo.
+     - Rear Anchor: Red Taillights, Rear License Plate, Trunk/Tailgate.
+
+  2. REAR-FACING LOGIC (Melihat dari Belakang):
+     If you are looking at the Rear Anchor (Taillights/Rear Plate):
+     - The side on the LEFT of your screen is the LEFT side (Kiri).
+     - The side on the RIGHT of your screen is the RIGHT side (Kanan).
+
+  3. FRONT-FACING LOGIC (Melihat dari Depan):
+     If you are looking at the Front Anchor (Headlights/Grille):
+     - The orientation is REVERSED.
+     - The side on the RIGHT of your screen is the LEFT side (Kiri).
+     - The side on the LEFT of your screen is the RIGHT side (Kanan).
+
+  4. SIDE-PROFILE LOGIC (Melihat dari Samping):
+     If you are looking at the side doors/fenders, find the Front Anchor (Headlights):
+     - If headlights point towards the LEFT edge of your screen, you are looking at the RIGHT side (Kanan).
+     - If headlights point towards the RIGHT edge of your screen, you are looking at the LEFT side (Kiri).
+
+  5. CORNER LOGIC (Melihat dari Sudut 45 Derajat):
+     When the camera is at a corner, you will see a Front/Rear anchor AND the side body at the same time. Use the direction of the side body:
+     - FRONT CORNERS:
+       * If the side body extends towards the RIGHT edge of your screen -> FRONT LEFT corner (Bumper/Fender Depan Kiri).
+       * If the side body extends towards the LEFT edge of your screen -> FRONT RIGHT corner (Bumper/Fender Depan Kanan).
+     - REAR CORNERS:
+       * If the side body extends towards the RIGHT edge of your screen -> REAR LEFT corner (Bumper/Bodi Belakang Kiri).
+       * If the side body extends towards the LEFT edge of your screen -> REAR RIGHT corner (Bumper/Bodi Belakang Kanan).
 
 - EXHAUSTIVE SCANNING (PEMINDAIAN MENYELURUH):
   * You MUST analyze the entire video from start to finish (0:00 to end).
@@ -555,10 +582,15 @@ All other types (Kaca Retak, Bagian Pecah, Panel Bengkok, Bagian Hilang):
 - MODERATE = Moderate, affects appearance significantly
 - MAJOR = Severe, affects safety or structural integrity
 
+CAMERA PATH TRACKING:
+Before listing damages, you MUST first trace the camera's movement path through the video using the exterior anchors to confirm your left/right orientation. Record this in the "cameraPath" field.
+Example: "Kamera mulai dari Sisi Kanan, menuju Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang, lalu berpindah ke Bumper Belakang Kiri."
+
 ## Response Format
 Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
 
 {
+  "cameraPath": "Deskripsi singkat jalur perekaman kamera dalam Bahasa Indonesia",
   "overallCondition": "GOOD",
   "confidence": 0.0,
   "screenRecaptureDetected": false,
