@@ -150,6 +150,29 @@ export class StepAnalysisJob {
         processingTimeMs,
       });
 
+      // Log body inspection reasoning process
+      if (stepType === "BODY_INSPECTION") {
+        log.info("AI reasoning - Jalur Perekaman", {
+          cameraPath: parsed.cameraPath ?? "N/A",
+        });
+        log.info("AI reasoning - Analisis Visual", {
+          visualAnalysis: parsed.visualAnalysis ?? "N/A",
+        });
+        log.info(`AI reasoning - Condition: ${parsed.overallCondition}, Damages found: ${parsed.damages?.length ?? 0}`);
+        if (parsed.damages?.length > 0) {
+          for (const [i, d] of parsed.damages.entries()) {
+            log.info(`AI damage #${i + 1}`, {
+              location: d.location,
+              type: d.damageType,
+              severity: d.severity,
+              description: d.description,
+              orientationReason: d.orientationReason ?? "N/A",
+              videoTimestamp: d.videoTimestamp,
+            });
+          }
+        }
+      }
+
       // 5. Save AIAnalysis record
       const analysis = await this.aiAnalysisRepository.createAnalysis({
         stepId,

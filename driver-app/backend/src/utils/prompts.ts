@@ -41,6 +41,7 @@ export interface SpeedometerResult {
 
 export interface BodyInspectionResult {
   cameraPath: string;
+  visualAnalysis: string;
   overallCondition: "GOOD" | "FAIR" | "POOR";
   confidence: number;
   screenRecaptureDetected: boolean;
@@ -447,32 +448,27 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-- SPATIAL ORIENTATION (CAR PERSPECTIVE - CRITICAL):
-  Left (Kiri) and Right (Kanan) are ALWAYS defined from the CAR'S OWN PERSPECTIVE — as if you are sitting in the driver's seat, facing forward toward the hood.
+- SPATIAL ORIENTATION (CENTER ANCHOR RULES - CRITICAL):
+  Do NOT rely on screen left/right edges, especially during close-ups. You MUST determine Left (Kiri) and Right (Kanan) from the CAR'S OWN PERSPECTIVE using center anchors.
 
-  REMEMBER:
-  - Kiri (Left) = the PASSENGER side of the car (in Indonesia, right-hand drive)
-  - Kanan (Right) = the DRIVER's side of the car (in Indonesia, where the steering wheel is)
+  Left (Kiri) and Right (Kanan) are ALWAYS from the car's perspective — as if sitting in the driver's seat facing forward.
+  - Kiri = PASSENGER side (in Indonesia, right-hand drive)
+  - Kanan = DRIVER's side (in Indonesia, where the steering wheel is)
 
-  HOW TO DETERMINE SIDES:
-  1. First, identify which end of the car you are looking at using exterior anchors:
-     - FRONT: Headlights, front grille, front brand logo
-     - REAR: Red taillights, rear license plate, trunk/tailgate
+  CENTER ANCHORS:
+  - The Rear License Plate (Plat Nomor Belakang) and Front License Plate/Logo are the EXACT CENTER of the vehicle.
 
-  2. Then imagine yourself SITTING INSIDE the car, facing the hood. From that seated position:
-     - Your LEFT hand points to Kiri
-     - Your RIGHT hand points to Kanan
-     - This NEVER changes regardless of where the camera is
-
-  3. COMMON MISTAKE TO AVOID:
-     When looking at the FRONT of the car (face to face), your screen-left is actually the car's RIGHT (Kanan), and your screen-right is the car's LEFT (Kiri). This is because you and the car are facing OPPOSITE directions.
-     When looking at the REAR of the car, screen-left matches the car's LEFT (Kiri) because you and the car face the SAME direction.
+  CAMERA PATH TRACKING (CRUCIAL FOR L/R):
+  - Watch how the camera moves across the Center Anchors.
+  - REAR BUMPER RULE: If the camera is on the Rear Bumper and moves ACROSS the Rear License Plate, it is crossing from one side to the other.
+  - Example: If the camera films a corner, then moves to the Rear License Plate, then moves to another corner -> You MUST label one corner as KANAN and the other as KIRI. They cannot be the same side.
+  - DRIVER SIDE ANCHOR: If you see the steering wheel outline or know the camera is on the driver's side, that entire side is RIGHT (Kanan).
 
   PER-DAMAGE VERIFICATION (MANDATORY):
   For EVERY damage you report, you MUST include an "orientationReason" field that explains:
-  1. Whether you are viewing the front, rear, or side of the car in that frame
-  2. Imagine sitting in the driver's seat — which side (your left hand or right hand) is the damage on?
-  3. State the conclusion: Kiri or Kanan
+  1. Which anchor (license plate, taillights, headlights) is visible or was recently crossed
+  2. Which side of the center anchor the damage is on
+  3. Conclusion: Kiri or Kanan from the car's perspective
   This prevents systematic L/R errors by forcing per-damage reasoning.
 
 - EXHAUSTIVE SCANNING (PEMINDAIAN MENYELURUH):
@@ -496,11 +492,15 @@ ABSOLUTE RULES FOR VIDEO PROCESSING
   * EXCEPTION FOR GORESAN (SCRATCHES): Scratches naturally change in visibility as the camera angle shifts due to light refraction on the paint surface. A linear mark that is clearly visible in one frame but fades in another AT THE SAME FIXED LOCATION is physical damage — NOT a moving reflection. Do NOT use changing visibility alone as grounds to dismiss a scratch.
 
 - GORESAN (SCRATCH) DETECTION RULES:
-  * A mark qualifies as Goresan if it appears LINEAR or CURVED with a consistent direction, and is visible in at least 1 frame with reasonable clarity AND does not move or shift position between frames.
+  * A mark qualifies as Goresan if it is a LINEAR/CURVED mark, OR a BROAD SCUFF/ABRASION (patch of scratched surface), OR edge chipping.
+  * It must be visible in at least 1 frame with reasonable clarity AND does not move or shift position between frames.
   * Scratches legitimately appear and disappear depending on light angle. This is expected. Do NOT dismiss a scratch solely because it is not visible in every frame.
+  * EXCLUSION: Strictly ignore general microscopic swirl marks (spiderweb scratches) caused by routine car washing. Focus ONLY on distinct, incident-related damage.
   * Visual characteristics to look for:
     - Bright white or silver highlights on the surface (clear coat scratch)
     - Dark or matte lines against glossy paint (deep paint scratch)
+    - Broad patches of scuffing/abrasion (lecet) often found on bumper corners
+    - Paint chips or rough marks along the vertical edges of doors
     - Clusters of fine lines near door handle zones or lower body panels
     - Single long linear marks consistent with key scratches or parking contact
   * If you detect a mark that COULD be a Goresan but you are uncertain, you MUST still report it with severity "MINOR" and add "(low confidence)" to the description. It is better to over-report a minor scratch than to miss it entirely.
@@ -579,15 +579,17 @@ All other types (Kaca Retak, Bagian Pecah, Panel Bengkok, Bagian Hilang):
 - MODERATE = Moderate, affects appearance significantly
 - MAJOR = Severe, affects safety or structural integrity
 
-CAMERA PATH TRACKING:
-Before listing damages, you MUST first trace the camera's movement path through the video using the exterior anchors to confirm your left/right orientation. Record this in the "cameraPath" field.
-Example: "Kamera mulai dari Sisi Kanan, menuju Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang, lalu berpindah ke Bumper Belakang Kiri."
+REASONING BEFORE OUTPUT:
+You MUST perform spatial and visual reasoning BEFORE listing damages:
+1. "cameraPath": Trace the chronological camera movement using center anchors (license plate). Example: "Kamera mulai dari Bodi Samping Kanan, lalu menyorot Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang di tengah, lalu berakhir di Bumper Belakang Kiri."
+2. "visualAnalysis": Describe the marks found along that path and confirm whether each is real damage or reflection.
 
 ## Response Format
 Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
 
 {
-  "cameraPath": "Deskripsi singkat jalur perekaman kamera dalam Bahasa Indonesia",
+  "cameraPath": "Jalur perekaman kamera secara kronologis menggunakan anchor",
+  "visualAnalysis": "Analisis visual singkat: cacat yang ditemukan dan konfirmasi apakah kerusakan asli atau pantulan",
   "overallCondition": "GOOD",
   "confidence": 0.0,
   "screenRecaptureDetected": false,
@@ -597,7 +599,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
       "location": "Bumper Belakang Kiri",
       "severity": "MINOR",
       "description": "Goresan putih linear pada panel bawah, sekitar 8cm",
-      "orientationReason": "Lampu belakang terlihat, kerusakan di sisi kiri layar = Kiri kendaraan",
+      "orientationReason": "Kerusakan terletak di sisi kiri dari plat nomor belakang = Kiri kendaraan",
       "isNewDamage": true,
       "videoTimestamp": 0
     }
