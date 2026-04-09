@@ -1,0 +1,22 @@
+                                        Table "public.ai_analyses"
+      Column      |              Type              | Collation | Nullable |            Default            
+------------------+--------------------------------+-----------+----------+-------------------------------
+ id               | text                           |           | not null | 
+ stepId           | text                           |           | not null | 
+ aiModel          | text                           |           | not null | 
+ promptUsed       | text                           |           | not null | 
+ rawResponse      | text                           |           | not null | 
+ structuredData   | jsonb                          |           |          | 
+ confidenceScore  | double precision               |           |          | 
+ processingTimeMs | integer                        |           | not null | 
+ status           | "AIAnalysisStatus"             |           | not null | 'SUCCESS'::"AIAnalysisStatus"
+ errorMessage     | text                           |           |          | 
+ createdAt        | timestamp(3) without time zone |           | not null | CURRENT_TIMESTAMP
+ mediaFileId      | text                           |           |          | 
+Indexes:
+    "ai_analyses_pkey" PRIMARY KEY, btree (id)
+    "ai_analyses_stepId_key" UNIQUE, btree ("stepId")
+Foreign-key constraints:
+    "ai_analyses_mediaFileId_fkey" FOREIGN KEY ("mediaFileId") REFERENCES media_files(id) ON UPDATE CASCADE ON DELETE SET NULL
+    "ai_analyses_stepId_fkey" FOREIGN KEY ("stepId") REFERENCES inspection_steps(id) ON UPDATE CASCADE ON DELETE CASCADE
+

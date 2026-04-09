@@ -260,7 +260,7 @@ export type MediaFileGroupByOutputType = {
   _max: MediaFileMaxAggregateOutputType | null
 }
 
-export type GetMediaFileGroupByPayload<T extends MediaFileGroupByArgs> = Prisma.PrismaPromise<
+type GetMediaFileGroupByPayload<T extends MediaFileGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<MediaFileGroupByOutputType, T['by']> &
       {

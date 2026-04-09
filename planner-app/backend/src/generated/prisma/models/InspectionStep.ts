@@ -165,7 +165,7 @@ export type InspectionStepGroupByOutputType = {
   _max: InspectionStepMaxAggregateOutputType | null
 }
 
-export type GetInspectionStepGroupByPayload<T extends InspectionStepGroupByArgs> = Prisma.PrismaPromise<
+type GetInspectionStepGroupByPayload<T extends InspectionStepGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<InspectionStepGroupByOutputType, T['by']> &
       {

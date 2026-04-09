@@ -241,7 +241,7 @@ export type AIAnalysisGroupByOutputType = {
   _max: AIAnalysisMaxAggregateOutputType | null
 }
 
-export type GetAIAnalysisGroupByPayload<T extends AIAnalysisGroupByArgs> = Prisma.PrismaPromise<
+type GetAIAnalysisGroupByPayload<T extends AIAnalysisGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AIAnalysisGroupByOutputType, T['by']> &
       {

@@ -203,7 +203,7 @@ export type UploadedPartGroupByOutputType = {
   _max: UploadedPartMaxAggregateOutputType | null
 }
 
-export type GetUploadedPartGroupByPayload<T extends UploadedPartGroupByArgs> = Prisma.PrismaPromise<
+type GetUploadedPartGroupByPayload<T extends UploadedPartGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UploadedPartGroupByOutputType, T['by']> &
       {

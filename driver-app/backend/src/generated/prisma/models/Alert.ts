@@ -165,7 +165,7 @@ export type AlertGroupByOutputType = {
   _max: AlertMaxAggregateOutputType | null
 }
 
-export type GetAlertGroupByPayload<T extends AlertGroupByArgs> = Prisma.PrismaPromise<
+type GetAlertGroupByPayload<T extends AlertGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AlertGroupByOutputType, T['by']> &
       {

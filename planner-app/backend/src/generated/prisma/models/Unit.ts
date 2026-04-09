@@ -241,7 +241,7 @@ export type UnitGroupByOutputType = {
   _max: UnitMaxAggregateOutputType | null
 }
 
-export type GetUnitGroupByPayload<T extends UnitGroupByArgs> = Prisma.PrismaPromise<
+type GetUnitGroupByPayload<T extends UnitGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UnitGroupByOutputType, T['by']> &
       {

@@ -310,7 +310,7 @@ export type UploadSessionGroupByOutputType = {
   _max: UploadSessionMaxAggregateOutputType | null
 }
 
-export type GetUploadSessionGroupByPayload<T extends UploadSessionGroupByArgs> = Prisma.PrismaPromise<
+type GetUploadSessionGroupByPayload<T extends UploadSessionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UploadSessionGroupByOutputType, T['by']> &
       {
