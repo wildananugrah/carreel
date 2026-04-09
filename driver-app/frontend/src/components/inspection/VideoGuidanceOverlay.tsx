@@ -6,10 +6,10 @@ interface VideoGuidanceOverlayProps {
 }
 
 const STAGES = [
-  { label: "Body", icon: "↑" },
-  { label: "Kanan", icon: "→" },
+  { label: "Depan", icon: "↑" },
+  { label: "Samping Kanan", icon: "→" },
   { label: "Belakang", icon: "↓" },
-  { label: "Kiri", icon: "←" },
+  { label: "Samping Kiri", icon: "←" },
 ];
 
 function formatTime(seconds: number): string {
