@@ -8,6 +8,7 @@ import type { InspectionDetail as InspectionDetailType } from "../lib/types";
 type Tab = "pre" | "post" | "ai-alert";
 
 const KM_TOLERANCE = Number(import.meta.env.VITE_KM_TOLERANCE ?? 20);
+const DAMAGE_SEEK_ENABLED = import.meta.env.VITE_DAMAGE_SEEK_ENABLED === "true";
 
 interface DamageFlag {
   damageType: string;
@@ -16,6 +17,8 @@ interface DamageFlag {
   location?: string;
   isNewDamage?: boolean;
   confidence?: number;
+  videoTimestamp?: number | null;
+  videoMediaId?: string | null;
 }
 
 interface BodyInspectionData {
@@ -87,6 +90,13 @@ function formatDate(dateStr: string | null): string {
 function formatKm(km: number | null | undefined): string {
   if (km == null) return "-";
   return km.toLocaleString("id-ID");
+}
+
+function formatVideoTimestamp(seconds: number): string {
+  const safe = Math.max(0, Math.floor(seconds));
+  const m = Math.floor(safe / 60);
+  const s = safe % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function damageEmoji(type: string): string {
@@ -303,12 +313,21 @@ export function InspectionDetail() {
   const preSpeedoAI = preInspection ? getSpeedoAI(preInspection) : null;
   const postSpeedoAI = postInspection ? getSpeedoAI(postInspection) : null;
 
-  const preFlags = [
-    ...(preBodyAI?.damages ?? []),
+  const preBodyVideoId = preInspection ? getVideoMediaId(preInspection) : null;
+  const postBodyVideoId = postInspection ? getVideoMediaId(postInspection) : null;
+
+  const preFlags: DamageFlag[] = [
+    ...(preBodyAI?.damages ?? []).map((d) => ({
+      ...d,
+      videoMediaId: preBodyVideoId,
+    })),
     ...(preInspection ? (getUnitAI(preInspection)?.damages ?? []) : []),
   ];
-  const postFlags = [
-    ...(postBodyAI?.damages ?? []),
+  const postFlags: DamageFlag[] = [
+    ...(postBodyAI?.damages ?? []).map((d) => ({
+      ...d,
+      videoMediaId: postBodyVideoId,
+    })),
     ...(postInspection ? (getUnitAI(postInspection)?.damages ?? []) : []),
   ];
   const totalAlerts = preFlags.length + postFlags.length;
@@ -675,6 +694,11 @@ function AIAlertPanel({
   const postKm = postSpeedoAI?.odometerKm ?? postInspection?.unit?.lastKnownKm;
   const kmDelta = preKm != null && postKm != null ? postKm - preKm : null;
 
+  const [seekLightbox, setSeekLightbox] = useState<{
+    src: string;
+    startTime: number;
+  } | null>(null);
+
   return (
     <>
       {/* KM Summary */}
@@ -720,6 +744,14 @@ function AIAlertPanel({
         comment={preInspection?.driverComment}
         borderColor="border-[#3a2800]"
         labelColor="text-[#F5C842]"
+        onSeek={(flag) => {
+          if (flag.videoMediaId != null && typeof flag.videoTimestamp === "number") {
+            setSeekLightbox({
+              src: `/api/media/${flag.videoMediaId}/stream`,
+              startTime: flag.videoTimestamp,
+            });
+          }
+        }}
       />
 
       {/* POST-CHECK AI FLAGS */}
@@ -730,6 +762,14 @@ function AIAlertPanel({
           comment={postInspection?.driverComment}
           borderColor="border-[#2a2a2a]"
           labelColor="text-[#C0C0C0]"
+          onSeek={(flag) => {
+            if (flag.videoMediaId != null && typeof flag.videoTimestamp === "number") {
+              setSeekLightbox({
+                src: `/api/media/${flag.videoMediaId}/stream`,
+                startTime: flag.videoTimestamp,
+              });
+            }
+          }}
         />
       )}
 
@@ -755,6 +795,16 @@ function AIAlertPanel({
           </p>
         </div>
       )}
+
+      {seekLightbox && (
+        <MediaLightbox
+          src={seekLightbox.src}
+          type="video"
+          alt="Body inspection video"
+          startTime={seekLightbox.startTime}
+          onClose={() => setSeekLightbox(null)}
+        />
+      )}
     </>
   );
 }
@@ -766,12 +816,14 @@ function FlagSection({
   comment,
   borderColor,
   labelColor,
+  onSeek,
 }: {
   label: string;
   flags: DamageFlag[];
   comment: string | null | undefined;
   borderColor: string;
   labelColor: string;
+  onSeek?: (flag: DamageFlag) => void;
 }) {
   return (
     <div className="mb-3">
@@ -782,31 +834,64 @@ function FlagSection({
             <p className="text-xs text-[#555]">Tidak ada flag terdeteksi</p>
           </div>
         ) : (
-          flags.map((flag, i) => (
-            <div
-              key={`${flag.damageType}-${flag.severity}-${flag.description}`}
-              className={`flex items-center gap-3 px-3.5 py-3 bg-[#141414] ${
-                i < flags.length - 1 ? "border-b border-[#1a1a1a]" : ""
-              }`}
-            >
-              <div className="w-[52px] h-[52px] bg-[#0A0A0A] rounded-[10px] flex items-center justify-center text-[28px] shrink-0">
-                {damageEmoji(flag.damageType)}
+          flags.map((flag, i) => {
+            const canSeek =
+              DAMAGE_SEEK_ENABLED &&
+              onSeek != null &&
+              flag.videoMediaId != null &&
+              typeof flag.videoTimestamp === "number";
+
+            const rowContent = (
+              <>
+                <div className="w-[52px] h-[52px] bg-[#0A0A0A] rounded-[10px] flex items-center justify-center text-[28px] shrink-0">
+                  {damageEmoji(flag.damageType)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white mb-0.5">
+                    {damageLabel(flag.damageType)}
+                  </p>
+                  <p className="text-[11px] text-[#888] truncate">
+                    {flag.location ? `${flag.location} — ${flag.description}` : flag.description}
+                  </p>
+                </div>
+                {canSeek && (
+                  <span className="text-[10px] px-2 py-1 rounded-lg bg-yellow-400 text-black font-bold shrink-0">
+                    ▶ {formatVideoTimestamp(flag.videoTimestamp as number)}
+                  </span>
+                )}
+                {!canSeek && flag.confidence != null && (
+                  <span className="text-xs px-2.5 py-1 rounded-lg bg-[#1a1a1a] text-[#C0C0C0] font-bold shrink-0">
+                    {Math.round(flag.confidence * 100)}%
+                  </span>
+                )}
+              </>
+            );
+
+            const rowClasses = `flex items-center gap-3 px-3.5 py-3 bg-[#141414] ${
+              i < flags.length - 1 ? "border-b border-[#1a1a1a]" : ""
+            } ${canSeek ? "cursor-pointer hover:bg-[#1a1a1a] transition-colors active:bg-[#222222]" : ""}`;
+
+            const rowKey = `${flag.videoMediaId ?? "no-vid"}-${flag.damageType}-${flag.severity}-${flag.description}`;
+
+            if (canSeek) {
+              return (
+                <button
+                  key={rowKey}
+                  type="button"
+                  onClick={() => onSeek?.(flag)}
+                  className={`${rowClasses} text-left w-full`}
+                >
+                  {rowContent}
+                </button>
+              );
+            }
+
+            return (
+              <div key={rowKey} className={rowClasses}>
+                {rowContent}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white mb-0.5">
-                  {damageLabel(flag.damageType)}
-                </p>
-                <p className="text-[11px] text-[#888] truncate">
-                  {flag.location ? `${flag.location} — ${flag.description}` : flag.description}
-                </p>
-              </div>
-              {flag.confidence != null && (
-                <span className="text-xs px-2.5 py-1 rounded-lg bg-[#1a1a1a] text-[#C0C0C0] font-bold shrink-0">
-                  {Math.round(flag.confidence * 100)}%
-                </span>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* Driver comment */}
