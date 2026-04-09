@@ -871,12 +871,11 @@ function FlagSection({
               i < flags.length - 1 ? "border-b border-[#1a1a1a]" : ""
             } ${canSeek ? "cursor-pointer hover:bg-[#1a1a1a] transition-colors active:bg-[#222222]" : ""}`;
 
-            const rowKey = `${flag.videoMediaId ?? "no-vid"}-${flag.damageType}-${flag.severity}-${flag.description}`;
-
             if (canSeek) {
               return (
                 <button
-                  key={rowKey}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: position disambiguates flags with identical damageType/severity/description
+                  key={`${flag.damageType}-${flag.severity}-${flag.description}-${i}`}
                   type="button"
                   onClick={() => onSeek?.(flag)}
                   className={`${rowClasses} text-left w-full`}
@@ -887,7 +886,11 @@ function FlagSection({
             }
 
             return (
-              <div key={rowKey} className={rowClasses}>
+              <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: position disambiguates flags with identical damageType/severity/description
+                key={`${flag.damageType}-${flag.severity}-${flag.description}-${i}`}
+                className={rowClasses}
+              >
                 {rowContent}
               </div>
             );
