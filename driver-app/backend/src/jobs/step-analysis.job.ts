@@ -421,11 +421,12 @@ export class StepAnalysisJob {
       );
     }
 
-    if (result.fuelLevelPct != null && result.fuelLevelPct < 15) {
+    const fuelThreshold = Number(process.env.LOW_FUEL_THRESHOLD_PCT) || 15;
+    if (result.fuelLevelPct != null && result.fuelLevelPct < fuelThreshold) {
       await this.createAlert(
         inspectionId,
         "LOW_FUEL",
-        `Low fuel level: ${result.fuelLevelPct}%`,
+        `Low fuel level: ${result.fuelLevelPct}% (threshold: ${fuelThreshold}%)`,
       );
     }
   }
