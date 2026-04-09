@@ -448,21 +448,31 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-- SPATIAL ORIENTATION (CENTER ANCHOR RULES - CRITICAL):
-  Do NOT rely on screen left/right edges, especially during close-ups. You MUST determine Left (Kiri) and Right (Kanan) from the CAR'S OWN PERSPECTIVE using center anchors.
+- SPATIAL ORIENTATION (EXTERIOR ANCHOR RULES - CRITICAL):
+  Do NOT rely on the screen's left/right edges, especially during close-ups. You MUST determine Left (Kiri) and Right (Kanan) from the CAR'S OWN PERSPECTIVE using center anchors.
 
   Left (Kiri) and Right (Kanan) are ALWAYS from the car's perspective — as if sitting in the driver's seat facing forward.
   - Kiri = PASSENGER side (in Indonesia, right-hand drive)
   - Kanan = DRIVER's side (in Indonesia, where the steering wheel is)
 
-  CENTER ANCHORS:
-  - The Rear License Plate (Plat Nomor Belakang) and Front License Plate/Logo are the EXACT CENTER of the vehicle.
+  1. THE CENTER ANCHORS: The Rear License Plate (Plat Nomor Belakang) and Front License Plate/Logo are the EXACT CENTER of the vehicle.
 
-  CAMERA PATH TRACKING (CRUCIAL FOR L/R):
-  - Watch how the camera moves across the Center Anchors.
-  - REAR BUMPER RULE: If the camera is on the Rear Bumper and moves ACROSS the Rear License Plate, it is crossing from one side to the other.
-  - Example: If the camera films a corner, then moves to the Rear License Plate, then moves to another corner -> You MUST label one corner as KANAN and the other as KIRI. They cannot be the same side.
-  - DRIVER SIDE ANCHOR: If you see the steering wheel outline or know the camera is on the driver's side, that entire side is RIGHT (Kanan).
+  2. TRACKING THE CAMERA PATH (Crucial):
+     - Watch how the camera moves across the Center Anchors.
+     - REAR BUMPER RULE: If the camera is on the Rear Bumper and moves ACROSS the Rear License Plate, it is crossing from one side to the other.
+     - For example: If the camera films a corner, then moves to the Rear License Plate, then moves to another corner -> You MUST label one corner as KANAN and the other as KIRI. They cannot be the same side.
+
+  3. DRIVER vs PASSENGER SIDE: Indonesia is Right-Hand Drive.
+     - Assume standard anatomy: If you see the steering wheel outline or know the camera is on the driver's side, that entire side is RIGHT (Kanan).
+
+  4. CLOSE-UP CORNER LOGIC (Jebakan Zoom-In):
+     - If the camera zooms in on a corner and the License Plate is NOT visible, DO NOT guess based on the left/right of the screen. Look at the relationship between the Taillight/Headlight and the Side Body (doors/wheels).
+     - REAR CORNER (Melihat Lampu Merah Belakang + Bodi Samping):
+       * If the side body of the car is on the RIGHT side of the taillight in your screen -> It is the RIGHT side of the car (Bumper/Bodi Belakang Kanan).
+       * If the side body of the car is on the LEFT side of the taillight in your screen -> It is the LEFT side of the car (Bumper/Bodi Belakang Kiri).
+     - FRONT CORNER (Melihat Lampu Putih Depan + Bodi Samping):
+       * If the side body of the car is on the RIGHT side of the headlight in your screen -> It is the LEFT side of the car (Bumper/Bodi Depan Kiri).
+       * If the side body of the car is on the LEFT side of the headlight in your screen -> It is the RIGHT side of the car (Bumper/Bodi Depan Kanan).
 
   PER-DAMAGE VERIFICATION (MANDATORY):
   For EVERY damage you report, you MUST include an "orientationReason" field that explains:
