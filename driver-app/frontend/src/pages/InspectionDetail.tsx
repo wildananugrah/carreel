@@ -850,7 +850,7 @@ function FlagSection({
                   <p className="text-sm font-bold text-white mb-0.5">
                     {damageLabel(flag.damageType)}
                   </p>
-                  <p className="text-[11px] text-[#888] truncate">
+                  <p className="text-[11px] text-[#888] leading-relaxed break-words">
                     {flag.location ? `${flag.location} — ${flag.description}` : flag.description}
                   </p>
                 </div>
