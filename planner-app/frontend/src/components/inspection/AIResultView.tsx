@@ -1,10 +1,15 @@
 import type { AIAnalysis } from "../../lib/types";
+import { DamageList, type DamageItem } from "./DamageList";
+
+const DAMAGE_SEEK_ENABLED = import.meta.env.VITE_DAMAGE_SEEK_ENABLED === "true";
 
 interface AIResultViewProps {
   analysis: AIAnalysis;
+  stepType?: string;
+  videoMediaId?: string | null;
 }
 
-export function AIResultView({ analysis }: AIResultViewProps) {
+export function AIResultView({ analysis, stepType, videoMediaId }: AIResultViewProps) {
   const data = analysis.structuredData as Record<string, unknown> | null;
 
   return (
@@ -34,7 +39,28 @@ export function AIResultView({ analysis }: AIResultViewProps) {
           {Object.entries(data).map(([key, value]) => {
             const label = key.replace(/([A-Z])/g, " $1").trim();
 
-            if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object") {
+            if (Array.isArray(value) && typeof value[0] === "object") {
+              if (DAMAGE_SEEK_ENABLED && stepType === "BODY_INSPECTION" && key === "damages") {
+                return (
+                  <div key={key} className="pt-1">
+                    <p className="text-sm text-neutral-500 capitalize mb-2">{label}</p>
+                    <DamageList
+                      damages={value as DamageItem[]}
+                      videoMediaId={videoMediaId}
+                    />
+                  </div>
+                );
+              }
+
+              if (value.length === 0) {
+                return (
+                  <div key={key} className="flex justify-between text-sm">
+                    <span className="text-neutral-500 capitalize">{label}</span>
+                    <span className="text-white font-medium text-right max-w-[60%]">None</span>
+                  </div>
+                );
+              }
+
               return (
                 <div key={key} className="pt-1">
                   <p className="text-sm text-neutral-500 capitalize mb-1">{label}</p>
