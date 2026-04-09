@@ -4,11 +4,21 @@ interface MediaLightboxProps {
   src: string;
   type: "image" | "video";
   alt?: string;
+  startTime?: number;
   onClose: () => void;
 }
 
-export function MediaLightbox({ src, type, alt, onClose }: MediaLightboxProps) {
+export function MediaLightbox({ src, type, alt, startTime, onClose }: MediaLightboxProps) {
   const scrollY = useRef(0);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleLoadedMetadata = () => {
+    if (startTime != null && videoRef.current) {
+      videoRef.current.currentTime = startTime;
+      videoRef.current.pause();
+    }
+  };
 
   useEffect(() => {
     scrollY.current = window.scrollY;
@@ -68,11 +78,13 @@ export function MediaLightbox({ src, type, alt, onClose }: MediaLightboxProps) {
         />
       ) : (
         <video
+          ref={videoRef}
           src={src}
           className="max-h-[90vh] max-w-[95vw]"
           controls
-          autoPlay
+          autoPlay={startTime == null}
           playsInline
+          onLoadedMetadata={handleLoadedMetadata}
           onClick={(e) => e.stopPropagation()}
         >
           <track kind="captions" />
