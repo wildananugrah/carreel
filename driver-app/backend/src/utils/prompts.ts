@@ -448,37 +448,90 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-- SPATIAL ORIENTATION (EXTERIOR ANCHOR RULES - CRITICAL):
-  Do NOT rely on the screen's left/right edges, especially during close-ups. You MUST determine Left (Kiri) and Right (Kanan) from the CAR'S OWN PERSPECTIVE using center anchors.
+SPATIAL ORIENTATION RULES FOR VEHICLE DAMAGE ANALYSIS (STRICT, HIGH-ACCURACY, ANCHOR-BASED):
 
-  Left (Kiri) and Right (Kanan) are ALWAYS from the car's perspective — as if sitting in the driver's seat facing forward.
-  - Kiri = PASSENGER side (in Indonesia, right-hand drive)
-  - Kanan = DRIVER's side (in Indonesia, where the steering wheel is)
+  Your most important orientation task is to determine the correct LEFT (Kiri) / RIGHT (Kanan) side of the vehicle with high accuracy.
 
-  1. THE CENTER ANCHORS: The Rear License Plate (Plat Nomor Belakang) and Front License Plate/Logo are the EXACT CENTER of the vehicle.
+  Do NOT rely on the screen's left/right position alone.
+  Do NOT guess based only on camera framing.
+  Do NOT confuse the viewer's perspective with the vehicle's perspective.
+  Do NOT label a side unless the visual evidence supports it.
 
-  2. TRACKING THE CAMERA PATH (Crucial):
-     - Watch how the camera moves across the Center Anchors.
-     - REAR BUMPER RULE: If the camera is on the Rear Bumper and moves ACROSS the Rear License Plate, it is crossing from one side to the other.
-     - For example: If the camera films a corner, then moves to the Rear License Plate, then moves to another corner -> You MUST label one corner as KANAN and the other as KIRI. They cannot be the same side.
+  LEFT (Kiri) and RIGHT (Kanan) ALWAYS mean the vehicle's own left and right sides — as if sitting in the driver's seat facing forward.
+  They do NOT mean the left/right side of the screen, the viewer, or the camera direction.
+  Always ask: "From the vehicle's perspective, which side is this?"
 
-  3. DRIVER vs PASSENGER SIDE: Indonesia is Right-Hand Drive.
-     - Assume standard anatomy: If you see the steering wheel outline or know the camera is on the driver's side, that entire side is RIGHT (Kanan).
+  CORE PRINCIPLE — VEHICLE ANCHORS:
+  The vehicle's true center anchors are:
+  1. Rear license plate (Plat Nomor Belakang) = exact center of the rear.
+  2. Front license plate / front logo = exact center of the front.
+  When the center anchor is visible, use it first.
+  When the center anchor is not visible, infer orientation using body continuity: headlights, taillights, side body panels, wheel arches, doors, fenders, bumper shape.
+  Never use screen position as the primary rule.
 
-  4. CLOSE-UP CORNER LOGIC (Jebakan Zoom-In):
-     - If the camera zooms in on a corner and the License Plate is NOT visible, DO NOT guess based on the left/right of the screen. Look at the relationship between the Taillight/Headlight and the Side Body (doors/wheels).
-     - REAR CORNER (Melihat Lampu Merah Belakang + Bodi Samping):
-       * If the side body of the car is on the RIGHT side of the taillight in your screen -> It is the RIGHT side of the car (Bumper/Bodi Belakang Kanan).
-       * If the side body of the car is on the LEFT side of the taillight in your screen -> It is the LEFT side of the car (Bumper/Bodi Belakang Kiri).
-     - FRONT CORNER (Melihat Lampu Putih Depan + Bodi Samping):
-       * If the side body of the car is on the RIGHT side of the headlight in your screen -> It is the LEFT side of the car (Bumper/Bodi Depan Kiri).
-       * If the side body of the car is on the LEFT side of the headlight in your screen -> It is the RIGHT side of the car (Bumper/Bodi Depan Kanan).
+  ABSOLUTE PRIORITY ORDER for determining KANAN / KIRI:
+  1. Vehicle anchor visibility (rear plate, front plate, front logo)
+  2. Vehicle structure and continuity (taillight-to-side-body, headlight-to-side-body, wheel arch, door line, bumper corner continuity)
+  3. Camera movement across the vehicle center anchor
+  4. Screen position — ONLY as a last resort, and ONLY if fully consistent with higher-priority cues
+  If any lower-priority cue conflicts with a higher-priority cue, always follow the higher-priority cue.
+
+  CAMERA PATH LOGIC:
+  - If the camera moves across the rear license plate or front logo, that is strong evidence of crossing the vehicle's centerline.
+  - If the camera films one rear corner, passes the rear plate, then films the opposite rear corner -> the two corners MUST be labeled as different sides (one KANAN, one KIRI).
+  - The camera path is useful ONLY when tied to a center anchor. Never infer left/right solely from the apparent direction of camera motion on screen.
+
+  REAR VIEW RULES:
+  - The rear license plate is the central rear anchor.
+  - If the side body panel appears on the RIGHT side of the rear plate in the frame -> vehicle's RIGHT rear side (Kanan).
+  - If the side body panel appears on the LEFT side of the rear plate in the frame -> vehicle's LEFT rear side (Kiri).
+  - REAR CORNER CLOSE-UP: If a taillight is visible with adjoining side body:
+    * Side body on the RIGHT side of the taillight -> vehicle's RIGHT rear corner (Belakang Kanan).
+    * Side body on the LEFT side of the taillight -> vehicle's LEFT rear corner (Belakang Kiri).
+
+  FRONT VIEW RULES:
+  - The front license plate or front logo is the central front anchor.
+  - Front view is MIRROR-SENSITIVE: do NOT assume screen-right equals vehicle-right.
+  - FRONT CORNER CLOSE-UP: If a headlight is visible with adjoining side body:
+    * Side body on the RIGHT side of the headlight -> vehicle's LEFT front corner (Depan Kiri).
+    * Side body on the LEFT side of the headlight -> vehicle's RIGHT front corner (Depan Kanan).
+
+  SIDE VIEW RULES:
+  - When the camera shows a clear side profile, determine left/right using multiple cues together: fuel cap position, door handle layout, wheel arch alignment, mirror position, window line continuity, front-to-rear body proportions, and any visible front/rear anchor clues.
+  - Do NOT rely on a single cue alone. Use multiple cues together.
+  - If side identity cannot be proven, mark it as uncertain.
+
+  CLOSE-UP CORNER TRAP RULES:
+  - Close-up shots are dangerous because screen position becomes misleading.
+  - If the camera zooms into a corner and the rear plate / front logo is NOT visible:
+    1. Do NOT guess from the screen's left/right position.
+    2. Use ONLY the relationship between headlight/taillight, adjoining side body, wheel arch, bumper edge, and fender line.
+    3. Determine the corner's side by body continuity.
+  - If the visible portion is too cropped, blurred, or reflective to apply these rules confidently, do NOT guess — mark as uncertain.
+
+  INDONESIA / RIGHT-HAND-DRIVE CONTEXT:
+  - The vehicle is assumed to be right-hand drive (steering wheel on the RIGHT/Kanan side).
+  - If the steering wheel or driver position is visible, use it only as supporting evidence, not as the sole basis.
+
+  CONFLICT RESOLUTION:
+  When clues conflict, resolve in priority order (anchor > body continuity > camera path > side geometry > screen position). Higher-priority cue always wins.
+
+  UNCERTAINTY RULE:
+  Never force a left/right label when evidence is insufficient. If the orientation cannot be established with confidence, use "Eksterior Tidak Jelas" as the location. It is better to be uncertain than wrong.
+
+  STRICT FORBIDDEN HABITS:
+  - Do NOT use screen left/right as the main rule.
+  - Do NOT guess left/right from intuition.
+  - Do NOT rely on a single cue when multiple cues are available.
+  - Do NOT label both rear corners as the same side if the camera clearly crosses the rear plate.
+  - Do NOT ignore the vehicle center anchor when it is visible.
+  - Do NOT force certainty when the geometry is unclear.
 
   PER-DAMAGE VERIFICATION (MANDATORY):
   For EVERY damage you report, you MUST include an "orientationReason" field that explains:
   1. Which anchor (license plate, taillights, headlights) is visible or was recently crossed
-  2. Which side of the center anchor the damage is on
-  3. Conclusion: Kiri or Kanan from the car's perspective
+  2. Which side of the center anchor the damage is on, using the priority order above
+  3. Conclusion: Kiri or Kanan from the car's perspective (or uncertain if evidence is insufficient)
   This prevents systematic L/R errors by forcing per-damage reasoning.
 
 - EXHAUSTIVE SCANNING (PEMINDAIAN MENYELURUH):
