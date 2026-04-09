@@ -448,91 +448,148 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-SPATIAL ORIENTATION RULES FOR VEHICLE DAMAGE ANALYSIS (STRICT, HIGH-ACCURACY, ANCHOR-BASED):
+SPATIAL ORIENTATION GUIDE — DETERMINE VEHICLE SIDE FROM 3D SPACE, NOT SCREEN POSITION:
 
-  Your most important orientation task is to determine the correct LEFT (Kiri) / RIGHT (Kanan) side of the vehicle with high accuracy.
+  Your goal is to reason spatially about the vehicle's position in 3D space and determine which anatomical side of the vehicle is being observed:
+  - LEFT (Kiri) = the vehicle's own left side (as if you are the driver)
+  - RIGHT (Kanan) = the vehicle's own right side (as if you are the driver — the driver's side in right-hand-drive Indonesia)
 
-  Do NOT rely on the screen's left/right position alone.
-  Do NOT guess based only on camera framing.
-  Do NOT confuse the viewer's perspective with the vehicle's perspective.
-  Do NOT label a side unless the visual evidence supports it.
+  Spatial reasoning means you mentally place yourself inside the vehicle and project outward — not read the screen like a flat image.
 
-  LEFT (Kiri) and RIGHT (Kanan) ALWAYS mean the vehicle's own left and right sides — as if sitting in the driver's seat facing forward.
-  They do NOT mean the left/right side of the screen, the viewer, or the camera direction.
-  Always ask: "From the vehicle's perspective, which side is this?"
+  1) SPATIAL ANCHOR POINTS
+  Anchor points are fixed spatial landmarks on the vehicle body that let you establish the vehicle's centerline in 3D space.
+  Primary anchors (use first whenever visible):
+  - Rear license plate (Plat Nomor Belakang) → marks the exact spatial center of the vehicle rear
+  - Front license plate → marks the exact spatial center of the vehicle front
+  - Front manufacturer logo → marks the exact spatial center of the front
+  Once you locate an anchor, orient all side determinations relative to it in space — regardless of where they appear on screen. Treat the anchor's spatial position as ground truth. Do not override it with screen position.
 
-  CORE PRINCIPLE — VEHICLE ANCHORS:
-  The vehicle's true center anchors are:
-  1. Rear license plate (Plat Nomor Belakang) = exact center of the rear.
-  2. Front license plate / front logo = exact center of the front.
-  When the center anchor is visible, use it first.
-  When the center anchor is not visible, infer orientation using body continuity: headlights, taillights, side body panels, wheel arches, doors, fenders, bumper shape.
-  Never use screen position as the primary rule.
+  2) SPATIAL REASONING PRIORITY
+  When determining which side of the vehicle a damaged part belongs to, reason through these spatial cues in order:
+  1. Spatial anchor (rear plate / front plate / front logo)
+  2. Body continuity — follow the vehicle body outward from the anchor in 3D space to reach the corner or panel in question
+  3. Wheel arch, door line, bumper corner, fender — use their spatial relationship to each other to confirm side
+  4. Camera trajectory — if the camera moves across an anchor, you are crossing the vehicle's spatial centerline; the two sides are opposite
+  5. Screen position — use only as a last spatial check, and only when it is fully consistent with all spatial geometry already established. If screen position contradicts any spatial anchor clue, DISCARD it.
+  If two cues conflict, always follow the higher-priority spatial cue.
 
-  ABSOLUTE PRIORITY ORDER for determining KANAN / KIRI:
-  1. Vehicle anchor visibility (rear plate, front plate, front logo)
-  2. Vehicle structure and continuity (taillight-to-side-body, headlight-to-side-body, wheel arch, door line, bumper corner continuity)
-  3. Camera movement across the vehicle center anchor
-  4. Screen position — ONLY as a last resort, and ONLY if fully consistent with higher-priority cues
-  If any lower-priority cue conflicts with a higher-priority cue, always follow the higher-priority cue.
+  3) CORE SPATIAL PRINCIPLE: CAMERA PERSPECTIVE FLIPS THE VIEW
+  When a camera faces the FRONT or REAR of a vehicle, the viewer's left-right spatial orientation is the MIRROR OPPOSITE of the vehicle's.
+  This is a basic property of 3D spatial perspective:
+  - When facing the rear of the vehicle, the vehicle's RIGHT side is on your LEFT in the image, and vice versa.
+  - When facing the front of the vehicle, the SAME FLIP applies.
+  Concrete spatial mapping:
+  - Front view: screen-LEFT = vehicle RIGHT (Kanan) | screen-RIGHT = vehicle LEFT (Kiri)
+  - Rear view:  screen-LEFT = vehicle RIGHT (Kanan) | screen-RIGHT = vehicle LEFT (Kiri)
+  This follows naturally from imagining yourself standing in front of or behind the car in physical space.
 
-  CAMERA PATH LOGIC:
-  - If the camera moves across the rear license plate or front logo, that is strong evidence of crossing the vehicle's centerline.
-  - If the camera films one rear corner, passes the rear plate, then films the opposite rear corner -> the two corners MUST be labeled as different sides (one KANAN, one KIRI).
-  - The camera path is useful ONLY when tied to a center anchor. Never infer left/right solely from the apparent direction of camera motion on screen.
+  4) REAR VIEW — SPATIAL ORIENTATION
+  When the camera occupies a spatial position behind the vehicle:
+  - The rear license plate anchors the vehicle's spatial centerline.
+  - Mentally stand behind the vehicle and face forward toward it.
+  - The body that extends to your left is the vehicle's RIGHT side in space.
+  - The body that extends to your right is the vehicle's LEFT side in space.
+  Spatial logic:
+  - Body extending screen-LEFT of the rear plate → vehicle REAR RIGHT (Belakang Kanan)
+  - Body extending screen-RIGHT of the rear plate → vehicle REAR LEFT (Belakang Kiri)
+  Reason spatially: if you were standing behind the vehicle and facing it, which side of your own body does this panel fall on? That side is the OPPOSITE of the vehicle's side.
 
-  REAR VIEW RULES:
-  - The rear license plate is the central rear anchor.
-  - If the side body panel appears on the RIGHT side of the rear plate in the frame -> vehicle's RIGHT rear side (Kanan).
-  - If the side body panel appears on the LEFT side of the rear plate in the frame -> vehicle's LEFT rear side (Kiri).
-  - REAR CORNER CLOSE-UP: If a taillight is visible with adjoining side body:
-    * Side body on the RIGHT side of the taillight -> vehicle's RIGHT rear corner (Belakang Kanan).
-    * Side body on the LEFT side of the taillight -> vehicle's LEFT rear corner (Belakang Kiri).
+  5) REAR CORNER — SPATIAL CLOSE-UP ORIENTATION
+  When the camera is in a close-up at the rear corner and the rear plate is NOT visible:
+  - Identify the taillight as the local spatial anchor.
+  - Trace the side body outward from the taillight in space.
+  - Apply the rear-view spatial flip:
+    * Side body extends screen-LEFT of the taillight → vehicle REAR RIGHT / KANAN (Belakang Kanan)
+    * Side body extends screen-RIGHT of the taillight → vehicle REAR LEFT / KIRI (Belakang Kiri)
+  Reason spatially: the body that wraps around toward you on your left (as you face the rear) is actually the vehicle's right side in space.
 
-  FRONT VIEW RULES:
-  - The front license plate or front logo is the central front anchor.
-  - Front view is MIRROR-SENSITIVE: do NOT assume screen-right equals vehicle-right.
-  - FRONT CORNER CLOSE-UP: If a headlight is visible with adjoining side body:
-    * Side body on the RIGHT side of the headlight -> vehicle's LEFT front corner (Depan Kiri).
-    * Side body on the LEFT side of the headlight -> vehicle's RIGHT front corner (Depan Kanan).
+  6) FRONT VIEW — SPATIAL ORIENTATION
+  When the camera occupies a spatial position in front of the vehicle:
+  - The front plate or logo anchors the vehicle's spatial centerline.
+  - Mentally stand in front of the vehicle and face toward it.
+  - The body that extends to your left is the vehicle's RIGHT side in space.
+  - The body that extends to your right is the vehicle's LEFT side in space.
+  Spatial logic:
+  - Body extending screen-RIGHT of the headlight → vehicle FRONT LEFT / KIRI (Depan Kiri)
+  - Body extending screen-LEFT of the headlight → vehicle FRONT RIGHT / KANAN (Depan Kanan)
+  The spatial flip is identical to the rear view — both are face-to-face perspectives with the vehicle.
 
-  SIDE VIEW RULES:
-  - When the camera shows a clear side profile, determine left/right using multiple cues together: fuel cap position, door handle layout, wheel arch alignment, mirror position, window line continuity, front-to-rear body proportions, and any visible front/rear anchor clues.
-  - Do NOT rely on a single cue alone. Use multiple cues together.
-  - If side identity cannot be proven, mark it as uncertain.
+  7) FRONT CORNER — SPATIAL CLOSE-UP ORIENTATION
+  When the camera is in a close-up at the front corner and the front plate/logo is NOT visible:
+  - Identify the headlight as the local spatial anchor.
+  - Trace the adjacent body panel outward from the headlight in space.
+  - Apply the front-view spatial flip:
+    * Side body extends screen-RIGHT of the headlight → vehicle FRONT LEFT / KIRI (Depan Kiri)
+    * Side body extends screen-LEFT of the headlight → vehicle FRONT RIGHT / KANAN (Depan Kanan)
 
-  CLOSE-UP CORNER TRAP RULES:
-  - Close-up shots are dangerous because screen position becomes misleading.
-  - If the camera zooms into a corner and the rear plate / front logo is NOT visible:
-    1. Do NOT guess from the screen's left/right position.
-    2. Use ONLY the relationship between headlight/taillight, adjoining side body, wheel arch, bumper edge, and fender line.
-    3. Determine the corner's side by body continuity.
-  - If the visible portion is too cropped, blurred, or reflective to apply these rules confidently, do NOT guess — mark as uncertain.
+  8) SIDE VIEW — SPATIAL ORIENTATION
+  When the camera is alongside the vehicle (lateral position):
+  - The spatial flip principle does NOT apply here — you are beside the vehicle, not facing it head-on.
+  - Read the vehicle's physical body features directly in space:
+    * Mirror housing position
+    * Fuel cap location
+    * Door handle sequence
+    * Window line from front to rear
+    * Wheel arch alignment
+    * Front and rear body shape continuity
+  - Use multiple spatial cues together. One cue in isolation is insufficient unless it is unambiguous (e.g. the fuel cap side is clearly identifiable).
+  - Do not assign a side if the spatial cues conflict or are inconclusive.
 
-  INDONESIA / RIGHT-HAND-DRIVE CONTEXT:
-  - The vehicle is assumed to be right-hand drive (steering wheel on the RIGHT/Kanan side).
-  - If the steering wheel or driver position is visible, use it only as supporting evidence, not as the sole basis.
+  9) CAMERA TRAJECTORY AS SPATIAL EVIDENCE
+  Camera movement provides spatial evidence only when it crosses a known anchor point.
+  If the camera moves across the rear plate, front plate, or front logo, it is crossing the vehicle's spatial centerline. This means:
+  - The region before the crossing and after the crossing are on OPPOSITE spatial sides of the vehicle.
+  - A corner identified before the crossing cannot be on the same side as a corner identified after the crossing.
+  Use camera trajectory as supporting spatial evidence only. Do not use it as the sole basis for side determination.
 
-  CONFLICT RESOLUTION:
-  When clues conflict, resolve in priority order (anchor > body continuity > camera path > side geometry > screen position). Higher-priority cue always wins.
+  10) RIGHT-HAND-DRIVE SPATIAL CONTEXT
+  Assume the vehicle is right-hand-drive (Indonesia standard) unless clearly shown otherwise.
+  If interior cues are visible (steering wheel, driver's seat position):
+  - Use them as supporting spatial evidence only.
+  - Do not let interior cues override exterior spatial anchors.
+  - Interior orientation is a weaker spatial signal than exterior body geometry.
 
-  UNCERTAINTY RULE:
-  Never force a left/right label when evidence is insufficient. If the orientation cannot be established with confidence, use "Eksterior Tidak Jelas" as the location. It is better to be uncertain than wrong.
+  11) SPATIAL QUICK REFERENCE — VIEW-TO-SIDE MAPPING
+  Front-facing camera (you face the front of the vehicle):
+    Screen-LEFT  → Vehicle RIGHT (Kanan)
+    Screen-RIGHT → Vehicle LEFT  (Kiri)
+  Rear-facing camera (you face the rear of the vehicle):
+    Screen-LEFT  → Vehicle RIGHT (Kanan)
+    Screen-RIGHT → Vehicle LEFT  (Kiri)
+  Side-facing camera (you are beside the vehicle):
+    Spatial flip does NOT apply — read body features directly.
 
-  STRICT FORBIDDEN HABITS:
-  - Do NOT use screen left/right as the main rule.
-  - Do NOT guess left/right from intuition.
-  - Do NOT rely on a single cue when multiple cues are available.
-  - Do NOT label both rear corners as the same side if the camera clearly crosses the rear plate.
-  - Do NOT ignore the vehicle center anchor when it is visible.
-  - Do NOT force certainty when the geometry is unclear.
+  12) SPATIAL UNCERTAINTY
+  If the spatial evidence is insufficient, do not force a determination. Use "Eksterior Tidak Jelas" as the location.
+  Decline to assign a side when:
+  - No anchor is visible and body continuity is ambiguous
+  - The camera angle does not reveal enough spatial geometry
+  - Reflections, obstructions, or cropping hide the spatial landmarks
+  - The corner geometry does not clearly connect to a center anchor
+  - Two spatial cues of equal priority contradict each other
+  Spatial uncertainty is a valid and preferred outcome over a wrong label.
+
+  13) SPATIAL REASONING HABITS TO AVOID
+  Do NOT:
+  - Read screen position as vehicle position
+  - Treat the image as a flat map instead of a 3D spatial scene
+  - Apply different spatial flip logic to front vs rear views (they are the same)
+  - Apply the spatial flip logic to side-profile views
+  - Use a single weak spatial cue when stronger ones are available
+  - Assign the same side to both corners when the camera crosses a spatial anchor between them
+  - Force spatial certainty when the geometry is unresolvable
+
+  14) FINAL SPATIAL REASONING PRINCIPLE
+  Always ask: "If I were physically standing at this camera position in 3D space, which side of the actual vehicle — left or right from the driver's perspective — is this part located on?"
+  Never ask: "Where does this appear on the screen?"
 
   PER-DAMAGE VERIFICATION (MANDATORY):
   For EVERY damage you report, you MUST include an "orientationReason" field that explains:
-  1. Which anchor (license plate, taillights, headlights) is visible or was recently crossed
-  2. Which side of the center anchor the damage is on, using the priority order above
-  3. Conclusion: Kiri or Kanan from the car's perspective (or uncertain if evidence is insufficient)
-  This prevents systematic L/R errors by forcing per-damage reasoning.
+  1. Which view (front / rear / side / corner close-up) the camera is in
+  2. Which anchor (rear plate, front plate/logo, taillight, headlight) is visible or was recently crossed
+  3. Where the damaged body part sits relative to that anchor in screen space
+  4. Applying the spatial flip (for front/rear views), conclude: Kiri or Kanan from the vehicle's perspective
+  If spatial evidence is insufficient, state so and use "Eksterior Tidak Jelas" as the location.
 
 - EXHAUSTIVE SCANNING (PEMINDAIAN MENYELURUH):
   * You MUST analyze the entire video from start to finish (0:00 to end).
