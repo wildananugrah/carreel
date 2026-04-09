@@ -5,11 +5,17 @@ interface VideoGuidanceOverlayProps {
   isRecording: boolean;
 }
 
+const DEFAULT_HINT = "Pastikan Posisi HP Vertikal dan Rekam perlahan untuk menjaga kualitas video.";
+
 const STAGES = [
-  { label: "Depan", icon: "↑" },
-  { label: "Samping Kanan", icon: "→" },
-  { label: "Belakang", icon: "↓" },
-  { label: "Samping Kiri", icon: "←" },
+  {
+    label: "Depan",
+    icon: "↑",
+    hint: "Rekam bagian tengah terlebih dahulu, lalu geser kamera perlahan ke area lainnya.",
+  },
+  { label: "Samping Kanan", icon: "→", hint: DEFAULT_HINT },
+  { label: "Belakang", icon: "↓", hint: DEFAULT_HINT },
+  { label: "Samping Kiri", icon: "←", hint: DEFAULT_HINT },
 ];
 
 function formatTime(seconds: number): string {
@@ -40,12 +46,15 @@ export function VideoGuidanceOverlay({
       <div className="p-4 pt-6">
         <div className="bg-black/60 backdrop-blur-sm rounded-xl px-4 py-3">
           {/* Stage name */}
-          <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
             <span className="text-2xl">{currentStage.icon}</span>
-            <span className="text-white text-lg font-bold">
-              {currentStage.label}
-            </span>
+            <span className="text-white text-lg font-bold">{currentStage.label}</span>
           </div>
+
+          {/* Stage hint */}
+          <p className="text-white/70 text-xs text-center mb-2 px-1 leading-snug">
+            {currentStage.hint}
+          </p>
 
           {/* Timer */}
           <div className="flex items-center justify-center gap-3 text-sm">
@@ -53,9 +62,7 @@ export function VideoGuidanceOverlay({
               {formatTime(elapsedSeconds)}
             </span>
             <span className="text-white/50">/</span>
-            <span className="text-white/50 font-mono">
-              {formatTime(maxDuration)}
-            </span>
+            <span className="text-white/50 font-mono">{formatTime(maxDuration)}</span>
           </div>
         </div>
       </div>
