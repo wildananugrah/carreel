@@ -246,7 +246,17 @@ export function InspectionDetail() {
                     )}
 
                     {/* AI Analysis */}
-                    {step.aiAnalysis && <AIResultView analysis={step.aiAnalysis} />}
+                    {step.aiAnalysis && (
+                      <AIResultView
+                        analysis={step.aiAnalysis}
+                        stepType={step.stepType}
+                        videoMediaId={
+                          step.stepType === "BODY_INSPECTION"
+                            ? (step.mediaFiles.find((m) => m.mimeType.startsWith("video/"))?.id ?? null)
+                            : null
+                        }
+                      />
+                    )}
                   </Card>
                 ))}
               </div>
