@@ -43,20 +43,11 @@ export function AIResultView({ analysis, stepType, videoMediaId }: AIResultViewP
               if (DAMAGE_SEEK_ENABLED && stepType === "BODY_INSPECTION" && key === "damages") {
                 return (
                   <div key={key} className="pt-1">
-                    <p className="text-sm text-neutral-500 capitalize mb-2">{label}</p>
+                    <p className="text-sm text-neutral-500 capitalize mb-1">{label}</p>
                     <DamageList
                       damages={value as DamageItem[]}
                       videoMediaId={videoMediaId}
                     />
-                  </div>
-                );
-              }
-
-              if (value.length === 0) {
-                return (
-                  <div key={key} className="flex justify-between text-sm">
-                    <span className="text-neutral-500 capitalize">{label}</span>
-                    <span className="text-white font-medium text-right max-w-[60%]">None</span>
                   </div>
                 );
               }
