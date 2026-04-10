@@ -15,6 +15,8 @@ import type { IInspectionRepository } from "../interfaces/repositories/inspectio
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import {
   type BodyInspectionResult,
+  type BodyVerificationResult,
+  buildBodyVerificationPrompt,
   buildStepPrompt,
   type SpeedometerResult,
   type UnitIdentificationResult,
@@ -84,9 +86,10 @@ export class StepAnalysisJob {
 
       // 3. Analyze with Gemini
       let rawResponse: string;
+      let fileUri: string | undefined;
 
       if (isVideo) {
-        // Download → temp file → upload to Gemini Files API → analyze
+        // Download → temp file → upload to Gemini Files API
         const buffer = await this.storageProvider.download(
           primaryMedia.minioBucket,
           primaryMedia.minioKey,
@@ -95,10 +98,84 @@ export class StepAnalysisJob {
         await writeFile(tempPath, buffer);
 
         try {
-          const fileUri = await this.aiProvider.uploadVideoFile(
+          fileUri = await this.aiProvider.uploadVideoFile(
             tempPath,
             primaryMedia.mimeType,
           );
+
+          // --- BODY_INSPECTION: two-pass pipeline ---
+          if (stepType === "BODY_INSPECTION") {
+            // Pass 1: Vehicle verification
+            const verificationPrompt =
+              buildBodyVerificationPrompt(vehicleContext);
+            const verificationRaw = await this.aiProvider.analyzeVideo(
+              fileUri,
+              primaryMedia.mimeType,
+              verificationPrompt,
+            );
+
+            const verificationCleaned = verificationRaw
+              .replace(/```(?:json)?\s*/g, "")
+              .replace(/```\s*/g, "")
+              .trim();
+            const verification = JSON.parse(
+              verificationCleaned,
+            ) as BodyVerificationResult;
+
+            log.info("AI body verification result", {
+              statusVerifikasi: verification.statusVerifikasi,
+              analisisVerifikasi: verification.analisisVerifikasi,
+              confidence: verification.confidence,
+            });
+
+            // Mismatch → alert, save analysis, mark FAILED, return
+            if (verification.statusVerifikasi === "Mismatch") {
+              const processingTimeMs = Date.now() - startTime;
+
+              await this.aiAnalysisRepository.createAnalysis({
+                stepId,
+                mediaFileId: primaryMedia.id,
+                aiModel: "gemini",
+                promptUsed: verificationPrompt,
+                rawResponse: verificationRaw,
+                structuredData: verification,
+                confidenceScore: verification.confidence ?? null,
+                processingTimeMs,
+                status: "SUCCESS",
+              });
+
+              await this.createAlert(
+                inspectionId,
+                "VEHICLE_MISMATCH",
+                `Video body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
+              );
+
+              log.warn(
+                "Vehicle verification MISMATCH — skipping damage detection",
+                {
+                  stepType,
+                  statusVerifikasi: verification.statusVerifikasi,
+                },
+              );
+
+              await this.inspectionRepository.updateStepStatus(
+                stepId,
+                "FAILED",
+              );
+              await this.checkInspectionCompletion(inspectionId, driverId);
+              return;
+            }
+
+            // Match or Uncertain → proceed to Pass 2 (damage detection)
+            log.info(
+              "Vehicle verification passed, proceeding to damage detection",
+              {
+                statusVerifikasi: verification.statusVerifikasi,
+              },
+            );
+          }
+
+          // Run the main analysis prompt (damage detection for BODY, or the only prompt for other video steps)
           rawResponse = await this.aiProvider.analyzeVideo(
             fileUri,
             primaryMedia.mimeType,
@@ -108,7 +185,7 @@ export class StepAnalysisJob {
           await unlink(tempPath).catch(() => {});
         }
       } else {
-        // Download → base64 → analyze inline
+        // Image analysis (non-video) — unchanged
         const buffer = await this.storageProvider.download(
           primaryMedia.minioBucket,
           primaryMedia.minioKey,
@@ -152,13 +229,6 @@ export class StepAnalysisJob {
 
       // Log body inspection reasoning process
       if (stepType === "BODY_INSPECTION") {
-        log.info("AI reasoning - Verifikasi Identitas", {
-          verificationStatus: parsed.verificationStatus ?? "N/A",
-          verificationAnalysis: parsed.verificationAnalysis ?? "N/A",
-          brandMatchDetected: parsed.brandMatchDetected,
-          modelMatchDetected: parsed.modelMatchDetected,
-          vehicleMismatchDetected: parsed.vehicleMismatchDetected,
-        });
         log.info("AI reasoning - Jalur Perekaman", {
           cameraPath: parsed.cameraPath ?? "N/A",
         });
@@ -277,24 +347,6 @@ export class StepAnalysisJob {
           result.damages ?? [],
           "Body Inspection",
         );
-
-        // Vehicle identity mismatch — treat as AI error, step must be re-done
-        if (result.vehicleMismatchDetected) {
-          await this.createAlert(
-            inspectionId,
-            "VEHICLE_MISMATCH",
-            "Body inspection video does not match the expected vehicle merk/tipe",
-          );
-          log.warn("Vehicle mismatch detected — marking step as FAILED", {
-            stepType,
-            verificationStatus: result.verificationStatus,
-            brandMatchDetected: result.brandMatchDetected,
-            modelMatchDetected: result.modelMatchDetected,
-          });
-          await this.inspectionRepository.updateStepStatus(stepId, "FAILED");
-          await this.checkInspectionCompletion(inspectionId, driverId);
-          return;
-        }
       }
 
       // Log the AI response details for observability

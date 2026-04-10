@@ -42,11 +42,6 @@ export interface SpeedometerResult {
 export interface BodyInspectionResult {
   cameraPath: string;
   visualAnalysis: string;
-  verificationAnalysis?: string;
-  verificationStatus?: "MATCH" | "MISMATCH" | "UNCERTAIN";
-  vehicleMismatchDetected?: boolean;
-  brandMatchDetected?: boolean;
-  modelMatchDetected?: boolean;
   overallCondition: "GOOD" | "FAIR" | "POOR";
   confidence: number;
   screenRecaptureDetected: boolean;
