@@ -152,6 +152,13 @@ export class StepAnalysisJob {
 
       // Log body inspection reasoning process
       if (stepType === "BODY_INSPECTION") {
+        log.info("AI reasoning - Verifikasi Identitas", {
+          verificationStatus: parsed.verificationStatus ?? "N/A",
+          verificationAnalysis: parsed.verificationAnalysis ?? "N/A",
+          brandMatchDetected: parsed.brandMatchDetected,
+          modelMatchDetected: parsed.modelMatchDetected,
+          vehicleMismatchDetected: parsed.vehicleMismatchDetected,
+        });
         log.info("AI reasoning - Jalur Perekaman", {
           cameraPath: parsed.cameraPath ?? "N/A",
         });
@@ -263,6 +270,21 @@ export class StepAnalysisJob {
           result.damages ?? [],
           "Body Inspection",
         );
+
+        // Vehicle identity mismatch alert (merk/tipe mismatch in body video)
+        if (result.vehicleMismatchDetected) {
+          await this.createAlert(
+            inspectionId,
+            "VEHICLE_MISMATCH",
+            "Body inspection video does not match the expected vehicle merk/tipe",
+          );
+          log.warn("Vehicle mismatch detected", {
+            stepType,
+            verificationStatus: result.verificationStatus,
+            brandMatchDetected: result.brandMatchDetected,
+            modelMatchDetected: result.modelMatchDetected,
+          });
+        }
       }
 
       // Log the AI response details for observability

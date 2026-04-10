@@ -42,6 +42,11 @@ export interface SpeedometerResult {
 export interface BodyInspectionResult {
   cameraPath: string;
   visualAnalysis: string;
+  verificationAnalysis?: string;
+  verificationStatus?: "MATCH" | "MISMATCH" | "UNCERTAIN";
+  vehicleMismatchDetected?: boolean;
+  brandMatchDetected?: boolean;
+  modelMatchDetected?: boolean;
   overallCondition: "GOOD" | "FAIR" | "POOR";
   confidence: number;
   screenRecaptureDetected: boolean;
@@ -431,19 +436,60 @@ Be strict - this is an anti-fraud verification measure.`;
 }
 
 function buildBodyInspectionPrompt(vehicle?: VehicleContext | null): string {
-  const vehicleContext =
-    vehicle?.make || vehicle?.model
-      ? `\nVEHICLE BEING INSPECTED: ${[vehicle.make, vehicle.model, vehicle.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
-      : "";
+  const hasVehicle = Boolean(vehicle?.make || vehicle?.model);
+  const targetMerk = vehicle?.make ?? "";
+  const targetTipe = vehicle?.model ?? "";
 
-  return `You are an Expert Automotive Exterior Damage Appraiser AI for a fleet management anti-fraud system, optimized for HIGH RECALL.
+  const vehicleContext = hasVehicle
+    ? `\nVEHICLE BEING INSPECTED: ${[vehicle?.make, vehicle?.model, vehicle?.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
+    : "";
+
+  const vehicleVerificationSection = hasVehicle
+    ? `
+VEHICLE IDENTITY VERIFICATION (MERK + TIPE MATCH — MANDATORY FIRST STEP)
+
+Before analyzing damage, you MUST verify that the vehicle physically shown in the VIDEO matches the claimed TARGET VEHICLE below. This is a strict anti-fraud check.
+
+TARGET VEHICLE TO VERIFY:
+- Merk (Make): ${targetMerk || "UNKNOWN"}
+- Tipe (Model): ${targetTipe || "UNKNOWN"}
+
+ABSOLUTE RULES FOR VERIFICATION:
+
+1. VISUAL EVIDENCE HIERARCHY
+   Establish vehicle identity using this hierarchy of visual evidence:
+   - PRIMARY EVIDENCE (Highest Confidence): Manufacturer logos/emblems on the front grille, rear tailgate, or wheel center caps. Text badges spelling out the model name.
+   - SECONDARY EVIDENCE (High Confidence): Distinctive anatomical signatures — headlight (DRL) shape, taillight cluster shape, front grille design, and unique body silhouette (e.g., the microcar shape of a Wuling Air EV, the boxy SUV profile of a Toyota Fortuner).
+
+2. ZOOM-IN FAIL-SAFE (CRITICAL)
+   If the video consists entirely of close-up shots of panels (zoomed-in bumper or door) and LACKS any Primary or Secondary identifying evidence, you CANNOT guess the car from paint color or generic panel curves. You MUST set verificationStatus = "UNCERTAIN".
+
+3. STRICT MISMATCH PROTOCOL
+   If you clearly identify anatomical features or logos that belong to a DIFFERENT brand or entirely different vehicle class (e.g., target is a small hatchback but the video shows a large SUV, or target is Toyota but logo is Honda), you MUST set verificationStatus = "MISMATCH" and vehicleMismatchDetected = true.
+
+4. MATCH CRITERIA
+   Set verificationStatus = "MATCH" only when both:
+   - Brand (merk) is confirmed via logo/badge OR an unambiguous anatomical signature
+   - Body type/model family (tipe) is consistent with the target — not just "similar class"
+
+5. OUTPUT FIELD MAPPING
+   - brandMatchDetected = true only if the target brand is visually confirmed
+   - modelMatchDetected = true only if the target model/body family is visually confirmed
+   - vehicleMismatchDetected = true if verificationStatus = "MISMATCH"
+   - verificationAnalysis = Chain-of-thought in Bahasa Indonesia explaining exactly what badges/anatomical features you saw (or failed to see) and how they led to your conclusion. Example: "Logo Wuling terlihat jelas di bagian depan. Bentuk lampu belakang memanjang horizontal dan rasio bodi microcar identik dengan Wuling Air EV." OR "Video terlalu zoom-in pada area pintu, tidak ada logo atau bentuk lampu yang bisa dijadikan acuan identifikasi."
+
+Perform this verification FIRST. A MISMATCH does NOT stop the damage analysis — continue reporting damage as usual so planners can still review the footage.
+`
+    : "";
+
+  return `You are an Expert Automotive Verification + Exterior Damage Appraiser AI for a fleet management anti-fraud system, optimized for HIGH RECALL.
 
 Your primary failure mode to avoid is MISSING damage. Over-reporting a minor scratch is acceptable. Missing a real scratch is not.
 
-Your job is to inspect the vehicle's exterior in the provided VIDEO and report all physical damage that is visible across frames.
+Your job is to (1) VERIFY that the vehicle shown in the video matches the expected merk/tipe, and (2) inspect the vehicle's exterior and report all physical damage visible across frames.
 
 Do NOT dismiss marks as dirt, glare, or reflection without multi-frame confirmation. High-contrast marks (e.g., black scuffs on light paint, white scratches on dark paint) in typical impact zones MUST be reported unless you can confirm across multiple frames that it is not fixed to the surface.
-${vehicleContext}
+${vehicleContext}${vehicleVerificationSection}
 ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
@@ -701,13 +747,19 @@ All other types (Kaca Retak, Bagian Pecah, Panel Bengkok, Bagian Hilang):
 
 REASONING BEFORE OUTPUT:
 You MUST perform spatial and visual reasoning BEFORE listing damages:
-1. "cameraPath": Trace the chronological camera movement using center anchors (license plate). Example: "Kamera mulai dari Bodi Samping Kanan, lalu menyorot Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang di tengah, lalu berakhir di Bumper Belakang Kiri."
-2. "visualAnalysis": Describe the marks found along that path and confirm whether each is real damage or reflection.
+1. "verificationAnalysis": Chain-of-thought identity verification in Bahasa Indonesia — what badges/anatomical features you saw (or failed to see) and how they led to your match/mismatch/uncertain conclusion. Only required when a target merk/tipe is provided.
+2. "cameraPath": Trace the chronological camera movement using center anchors (license plate). Example: "Kamera mulai dari Bodi Samping Kanan, lalu menyorot Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang di tengah, lalu berakhir di Bumper Belakang Kiri."
+3. "visualAnalysis": Describe the marks found along that path and confirm whether each is real damage or reflection.
 
 ## Response Format
 Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
 
 {
+  "verificationAnalysis": "${hasVehicle ? "Analisis verifikasi merk/tipe berdasarkan bukti visual (logo, bentuk lampu, siluet bodi)" : ""}",
+  "verificationStatus": "${hasVehicle ? "MATCH" : ""}",
+  "vehicleMismatchDetected": false,
+  "brandMatchDetected": ${hasVehicle ? "true" : "null"},
+  "modelMatchDetected": ${hasVehicle ? "true" : "null"},
   "cameraPath": "Jalur perekaman kamera secara kronologis menggunakan anchor",
   "visualAnalysis": "Analisis visual singkat: cacat yang ditemukan dan konfirmasi apakah kerusakan asli atau pantulan",
   "overallCondition": "GOOD",
