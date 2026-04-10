@@ -478,7 +478,7 @@ ABSOLUTE RULES FOR VERIFICATION:
    - vehicleMismatchDetected = true if verificationStatus = "MISMATCH"
    - verificationAnalysis = Chain-of-thought in Bahasa Indonesia explaining exactly what badges/anatomical features you saw (or failed to see) and how they led to your conclusion. Example: "Logo Wuling terlihat jelas di bagian depan. Bentuk lampu belakang memanjang horizontal dan rasio bodi microcar identik dengan Wuling Air EV." OR "Video terlalu zoom-in pada area pintu, tidak ada logo atau bentuk lampu yang bisa dijadikan acuan identifikasi."
 
-Perform this verification FIRST. A MISMATCH does NOT stop the damage analysis — continue reporting damage as usual so planners can still review the footage.
+Perform this verification FIRST. If verificationStatus = "MISMATCH", STOP all further analysis. Set the damages array to empty ([]) and set overallCondition to "POOR", confidence to 0. The driver must re-record the video with the correct vehicle.
 `
     : "";
 

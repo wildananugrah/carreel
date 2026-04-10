@@ -165,7 +165,9 @@ export class StepAnalysisJob {
         log.info("AI reasoning - Analisis Visual", {
           visualAnalysis: parsed.visualAnalysis ?? "N/A",
         });
-        log.info(`AI reasoning - Condition: ${parsed.overallCondition}, Damages found: ${parsed.damages?.length ?? 0}`);
+        log.info(
+          `AI reasoning - Condition: ${parsed.overallCondition}, Damages found: ${parsed.damages?.length ?? 0}`,
+        );
         if (parsed.damages?.length > 0) {
           for (const [i, d] of parsed.damages.entries()) {
             log.info(`AI damage #${i + 1}`, {
@@ -251,7 +253,12 @@ export class StepAnalysisJob {
           result,
           unit,
         );
-        await this.generateSpeedometerAlerts(inspectionId, result, telemetry, tripType);
+        await this.generateSpeedometerAlerts(
+          inspectionId,
+          result,
+          telemetry,
+          tripType,
+        );
 
         // Vehicle identity mismatch alert
         if (result.vehicleMismatchDetected) {
@@ -271,19 +278,22 @@ export class StepAnalysisJob {
           "Body Inspection",
         );
 
-        // Vehicle identity mismatch alert (merk/tipe mismatch in body video)
+        // Vehicle identity mismatch — treat as AI error, step must be re-done
         if (result.vehicleMismatchDetected) {
           await this.createAlert(
             inspectionId,
             "VEHICLE_MISMATCH",
             "Body inspection video does not match the expected vehicle merk/tipe",
           );
-          log.warn("Vehicle mismatch detected", {
+          log.warn("Vehicle mismatch detected — marking step as FAILED", {
             stepType,
             verificationStatus: result.verificationStatus,
             brandMatchDetected: result.brandMatchDetected,
             modelMatchDetected: result.modelMatchDetected,
           });
+          await this.inspectionRepository.updateStepStatus(stepId, "FAILED");
+          await this.checkInspectionCompletion(inspectionId, driverId);
+          return;
         }
       }
 
@@ -419,7 +429,11 @@ export class StepAnalysisJob {
   private async generateSpeedometerAlerts(
     inspectionId: string,
     result: SpeedometerResult,
-    telemetry: { kmReasonable?: boolean; kmDelta?: number; fuelLevelPct?: number },
+    telemetry: {
+      kmReasonable?: boolean;
+      kmDelta?: number;
+      fuelLevelPct?: number;
+    },
     tripType?: string,
   ): Promise<void> {
     if (telemetry.kmReasonable === false) {
