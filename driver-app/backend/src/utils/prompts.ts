@@ -53,6 +53,12 @@ export interface BodyInspectionResult {
   damages: DamageResult[];
 }
 
+export interface BodyVerificationResult {
+  analisisVerifikasi: string;
+  statusVerifikasi: "Match" | "Mismatch" | "Uncertain";
+  confidence: number;
+}
+
 /** Vehicle context passed to prompt builders when unit data is available */
 export interface VehicleContext {
   make?: string | null;
@@ -270,6 +276,45 @@ This is a strict identity verification task, not a similarity task.
 If the dashboard is not a strong match to the expected brand/model/generation, reject it.
 If brand and model match, but year is unknown because it cannot be verified from the photo alone, do not reject solely for that reason unless an exact year is explicitly required and the visible evidence contradicts it.
 `;
+}
+
+export function buildBodyVerificationPrompt(
+  vehicle?: VehicleContext | null,
+): string {
+  const make = vehicle?.make ?? "UNKNOWN";
+  const model = vehicle?.model ?? "UNKNOWN";
+
+  return `You are a strict and highly precise Automotive Verification AI.
+Your primary task is to verify if the vehicle shown in the provided VIDEO physically matches the claimed TARGET VEHICLE.
+
+TARGET VEHICLE TO VERIFY:
+Merk (Make): ${make}
+Tipe (Model): ${model}
+
+ABSOLUTE RULES FOR VERIFICATION:
+
+1. VISUAL EVIDENCE HIERARCHY:
+   You must establish the vehicle's identity using the following hierarchy of visual evidence:
+   - PRIMARY EVIDENCE (Highest Confidence): Manufacturer logos (emblem) on the front grille, rear tailgate, or wheel center caps. Text badges spelling out the model name.
+   - SECONDARY EVIDENCE (High Confidence): Distinctive anatomical signatures, such as the specific shape of the headlights (DRL), taillight clusters, front grille design, and unique body silhouettes (e.g., the distinct microcar shape of a Wuling Air EV).
+
+2. THE "ZOOM-IN" FAIL-SAFE (CRITICAL):
+   If the video consists entirely of close-up shots of panels (e.g., just a zoomed-in bumper or door) and LACKS any identifying Primary or Secondary evidence, you CANNOT guess the car based on paint color or generic panel curves. You MUST declare the status as "Uncertain".
+
+3. STRICT MISMATCH PROTOCOL:
+   If you clearly identify anatomical features or logos that belong to a DIFFERENT brand or entirely different vehicle class (e.g., Target is a small hatchback, but the video shows a large SUV), you must immediately flag it as a Mismatch.
+
+REASONING:
+You MUST perform a Chain-of-Thought reasoning process before concluding. Detail exactly what anatomical features or badges you saw (or failed to see) that led to your conclusion. Write this analysis in Bahasa Indonesia.
+
+## Response Format
+Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks. Do not add any conversational text.
+
+{
+  "analisisVerifikasi": "Jelaskan bukti visual yang Anda temukan secara spesifik.",
+  "statusVerifikasi": "Match",
+  "confidence": 0.0
+}`;
 }
 
 // ========================
