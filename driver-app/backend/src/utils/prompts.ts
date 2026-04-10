@@ -481,60 +481,19 @@ Be strict - this is an anti-fraud verification measure.`;
 }
 
 function buildBodyInspectionPrompt(vehicle?: VehicleContext | null): string {
-  const hasVehicle = Boolean(vehicle?.make || vehicle?.model);
-  const targetMerk = vehicle?.make ?? "";
-  const targetTipe = vehicle?.model ?? "";
+  const vehicleContext =
+    vehicle?.make || vehicle?.model
+      ? `\nVEHICLE BEING INSPECTED: ${[vehicle.make, vehicle.model, vehicle.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
+      : "";
 
-  const vehicleContext = hasVehicle
-    ? `\nVEHICLE BEING INSPECTED: ${[vehicle?.make, vehicle?.model, vehicle?.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
-    : "";
-
-  const vehicleVerificationSection = hasVehicle
-    ? `
-VEHICLE IDENTITY VERIFICATION (MERK + TIPE MATCH — MANDATORY FIRST STEP)
-
-Before analyzing damage, you MUST verify that the vehicle physically shown in the VIDEO matches the claimed TARGET VEHICLE below. This is a strict anti-fraud check.
-
-TARGET VEHICLE TO VERIFY:
-- Merk (Make): ${targetMerk || "UNKNOWN"}
-- Tipe (Model): ${targetTipe || "UNKNOWN"}
-
-ABSOLUTE RULES FOR VERIFICATION:
-
-1. VISUAL EVIDENCE HIERARCHY
-   Establish vehicle identity using this hierarchy of visual evidence:
-   - PRIMARY EVIDENCE (Highest Confidence): Manufacturer logos/emblems on the front grille, rear tailgate, or wheel center caps. Text badges spelling out the model name.
-   - SECONDARY EVIDENCE (High Confidence): Distinctive anatomical signatures — headlight (DRL) shape, taillight cluster shape, front grille design, and unique body silhouette (e.g., the microcar shape of a Wuling Air EV, the boxy SUV profile of a Toyota Fortuner).
-
-2. ZOOM-IN FAIL-SAFE (CRITICAL)
-   If the video consists entirely of close-up shots of panels (zoomed-in bumper or door) and LACKS any Primary or Secondary identifying evidence, you CANNOT guess the car from paint color or generic panel curves. You MUST set verificationStatus = "UNCERTAIN".
-
-3. STRICT MISMATCH PROTOCOL
-   If you clearly identify anatomical features or logos that belong to a DIFFERENT brand or entirely different vehicle class (e.g., target is a small hatchback but the video shows a large SUV, or target is Toyota but logo is Honda), you MUST set verificationStatus = "MISMATCH" and vehicleMismatchDetected = true.
-
-4. MATCH CRITERIA
-   Set verificationStatus = "MATCH" only when both:
-   - Brand (merk) is confirmed via logo/badge OR an unambiguous anatomical signature
-   - Body type/model family (tipe) is consistent with the target — not just "similar class"
-
-5. OUTPUT FIELD MAPPING
-   - brandMatchDetected = true only if the target brand is visually confirmed
-   - modelMatchDetected = true only if the target model/body family is visually confirmed
-   - vehicleMismatchDetected = true if verificationStatus = "MISMATCH"
-   - verificationAnalysis = Chain-of-thought in Bahasa Indonesia explaining exactly what badges/anatomical features you saw (or failed to see) and how they led to your conclusion. Example: "Logo Wuling terlihat jelas di bagian depan. Bentuk lampu belakang memanjang horizontal dan rasio bodi microcar identik dengan Wuling Air EV." OR "Video terlalu zoom-in pada area pintu, tidak ada logo atau bentuk lampu yang bisa dijadikan acuan identifikasi."
-
-Perform this verification FIRST. If verificationStatus = "MISMATCH", STOP all further analysis. Set the damages array to empty ([]) and set overallCondition to "POOR", confidence to 0. The driver must re-record the video with the correct vehicle.
-`
-    : "";
-
-  return `You are an Expert Automotive Verification + Exterior Damage Appraiser AI optimized for HIGH RECALL.
+  return `You are an Expert Automotive Exterior Damage Appraiser AI optimized for HIGH RECALL.
 
 Your primary failure mode to avoid is MISSING damage. Over-reporting a minor scratch is acceptable. Missing a real scratch is not.
 
 Your job is to inspect the vehicle's exterior in the provided VIDEO and report all physical damage that is visible across frames.
 
 Do NOT dismiss marks as dirt, glare, or reflection without multi-frame confirmation. High-contrast marks (e.g., black scuffs on light paint, white scratches on dark paint) in typical impact zones MUST be reported unless you can confirm across multiple frames that it is not fixed to the surface.
-${vehicleContext}${vehicleVerificationSection}
+${vehicleContext}
 ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
@@ -571,7 +530,7 @@ MANDATORY SEQUENCE:
    - If visual evidence is insufficient to determine the side, use "Eksterior Tidak Jelas" as the location.
 
 5. Mandatory Output Structure (Chain of Thought):
-   To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields in the final output to explicitly state your Camera View Orientation, Vehicle Side, and Visual Reasoning before listing any damage.
+   You MUST use the "cameraPath" and "visualAnalysis" fields in your output to explicitly state your Camera View Orientation, Vehicle Side, and Visual Reasoning before listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
 For EVERY damage you report, you MUST include an "orientationReason" field that explains:
@@ -582,50 +541,47 @@ For EVERY damage you report, you MUST include an "orientationReason" field that 
 If spatial evidence is insufficient, state so and use "Eksterior Tidak Jelas" as the location.
 
 EXHAUSTIVE SCANNING:
-  * You MUST analyze the entire video from start to finish (0:00 to end).
-  * Do NOT reduce attention after finding the first damage instance.
-  * The vehicle may have multiple damages on different sides (e.g., both left and right bumpers, multiple door panels). You are required to find and list ALL distinct damages that are physically fixed to the vehicle surface and visible in at least ONE frame with reasonable clarity. There is no minimum severity threshold — report all findings including MINOR.
-  * Apply frame-by-frame attention to the following HIGH-PRIORITY SCRATCH ZONES:
-    - All 4 door panels (especially lower panels and edges near door handles)
-    - Front left and right fenders
-    - All bumper corners
-    - Both side mirrors (housing and cap)
-    - Lower body panels along the full length of the vehicle
+- You MUST analyze the entire video from start to finish (0:00 to end).
+- Do NOT reduce attention after finding the first damage instance.
+- The vehicle may have multiple damages on different sides. You are required to find and list ALL distinct damages that are physically fixed to the vehicle surface and visible in at least ONE frame with reasonable clarity. There is no minimum severity threshold — report all findings including MINOR.
+- Apply frame-by-frame attention to the following HIGH-PRIORITY SCRATCH ZONES:
+  - All 4 door panels (especially lower panels and edges near door handles)
+  - Front left and right fenders
+  - All bumper corners
+  - Both side mirrors (housing and cap)
+  - Lower body panels along the full length of the vehicle
 
-DEDUPLICATION:
-  * You are analyzing a multi-frame video of a single vehicle. Track damage across frames.
-  * Do NOT report the same damage in the same location multiple times.
-  * If the same mark appears in multiple frames from different angles, count it as ONE damage item.
-  * CRITICAL: If there are multiple DISTINCT and SEPARATE damages on the same panel (e.g., two different scratches on 'Bumper Depan Kiri'), you MUST report them as separate entries. Do NOT merge separate damages just because they share a location.
+DEDUPLICATION & MULTIPLE DAMAGES:
+- Track damage across frames. Do NOT report the exact same physical damage multiple times from different angles.
+- If the same mark appears in multiple frames from different angles, count it as ONE damage item.
+- CRITICAL: If there are multiple DISTINCT and SEPARATE damages on the same panel (e.g., two different scratches on 'Bumper Depan Kiri'), you MUST report them as separate entries. Do NOT merge separate damages just because they share a location.
 
 MOTION vs DAMAGE:
-  * Moving reflections, glare, or shifting shadows as the camera pans are NOT damage. Real physical damage (dents, scratches) will remain fixed on the vehicle's surface regardless of camera angle.
-  * EXCEPTION FOR GORESAN (SCRATCHES): Scratches naturally change in visibility as the camera angle shifts due to light refraction on the paint surface. A linear mark that is clearly visible in one frame but fades in another AT THE SAME FIXED LOCATION is physical damage — NOT a moving reflection. Do NOT use changing visibility alone as grounds to dismiss a scratch.
+- Moving reflections, glare, or shifting shadows as the camera pans are NOT damage. Real physical damage (dents, scratches) will remain fixed on the vehicle's surface regardless of camera angle.
+- EXCEPTION FOR GORESAN (SCRATCHES): Scratches naturally change in visibility as the camera angle shifts due to light refraction on the paint surface. A linear mark that is clearly visible in one frame but fades in another AT THE SAME FIXED LOCATION is physical damage — NOT a moving reflection. Do NOT use changing visibility alone as grounds to dismiss a scratch.
 
 GORESAN (SCRATCH) DETECTION RULES:
-  * A mark qualifies as Goresan if it is a LINEAR/CURVED mark, OR a BROAD SCUFF/ABRASION (patch of scratched surface), OR edge chipping.
-  * It must be visible in at least 1 frame with reasonable clarity AND does not move or shift position between frames (confirming it is fixed to the panel surface, not a reflection).
-  * Scratches legitimately appear and disappear depending on light angle. This is expected behavior. Do NOT dismiss a scratch solely because it is not visible in every frame.
-  * EXCLUSION (DO NOT REPORT): Strictly ignore general microscopic swirl marks (spiderweb scratches) caused by routine car washing. Focus ONLY on distinct, incident-related damage.
-  * Visual characteristics to look for:
-    - Bright white or silver highlights on the surface (clear coat scratch)
-    - Dark or matte lines against glossy paint (deep paint scratch)
-    - Broad patches of scuffing/abrasion (lecet) often found on bumper corners
-    - Paint chips or rough marks strictly along the vertical edges of doors
-    - Clusters of fine lines near door handle zones or lower body panels
-    - Single long linear marks consistent with key scratches or parking contact
-  * If you detect a mark that COULD be a Goresan but you are uncertain, you MUST still report it with severity "MINOR" and add "(low confidence)" to the description. It is better to over-report a minor scratch than to miss it entirely.
+- A mark qualifies as goresan if it is a LINEAR/CURVED mark, OR a BROAD SCUFF/ABRASION (patch of scratched surface), OR edge chipping.
+- It must be visible in at least 1 frame with reasonable clarity AND does not move or shift position between frames.
+- Scratches legitimately appear and disappear depending on light angle. This is expected. Do NOT dismiss a scratch solely because it is not visible in every frame.
+- EXCLUSION: Strictly ignore general microscopic swirl marks (spiderweb scratches) caused by routine car washing. Focus ONLY on distinct, incident-related damage.
+- Visual characteristics to look for:
+  - Bright white or silver highlights on the surface (clear coat scratch)
+  - Dark or matte lines against glossy paint (deep paint scratch)
+  - Broad patches of scuffing/abrasion (lecet) often found on bumper corners
+  - Paint chips or rough marks along the vertical edges of doors
+  - Clusters of fine lines near door handle zones or lower body panels
+  - Single long linear marks consistent with key scratches or parking contact
+- If you detect a mark that COULD be a goresan but you are uncertain, you MUST still report it with severity "MINOR" and add "(low confidence)" to the description. It is better to over-report a minor scratch than to miss it entirely.
 
 VIDEO ARTIFACTS:
-  * Do not confuse motion blur, lens flares, or video compression artifacts with physical damage.
-  * Do not guess or infer hidden damage.
-  * Assess ONLY the primary subject vehicle. Strictly ignore any vehicles, objects, or reflections visible in the background.
-
-LOW QUALITY VIDEO (FAIL-SAFE):
-  * If the overall video quality is too low, consistently blurry, or too dark to make an accurate assessment across frames, set overallCondition to "POOR", confidence to 0, and return an empty damages array.
+- Do not confuse motion blur, lens flares, or video compression artifacts with physical damage.
+- Do not guess or infer hidden damage.
+- Assess ONLY the primary subject vehicle. Strictly ignore any vehicles, objects, or reflections in the background.
+- If the overall video quality is too low, consistently blurry, or too dark to make an accurate assessment, set overallCondition to "POOR", confidence to 0, and return an empty damages array.
 
 STRICT DICTIONARY (ENUMS)
-You MUST select damageType and location EXCLUSIVELY from the exact lists below. DO NOT use any other words, synonyms, or extra descriptions.
+You MUST select damageType and location EXCLUSIVELY from the exact lists below. DO NOT use any other words, synonyms, English terms, or extra descriptions.
 
 ALLOWED TYPES (damageType):
 - goresan
@@ -664,44 +620,46 @@ ALLOWED LOCATIONS (location):
 SEVERITY DEFINITIONS (apply per damage type):
 
 Goresan:
-- MINOR = Surface-level scratch, clear coat only, paint color still intact
-- MODERATE = Scratch reaches base paint layer, color disrupted or exposed
-- MAJOR = Scratch reaches bare metal, OR scratch length exceeds 15cm, OR cluster of multiple scratches in same zone
+- MINOR = Surface-level scratch, clear coat only, paint color still intact (Ringan)
+- MODERATE = Scratch reaches base paint layer, color disrupted or exposed (Sedang)
+- MAJOR = Scratch reaches bare metal, OR scratch length exceeds 15cm, OR cluster of multiple scratches in same zone (Berat)
 
 Penyok:
-- MINOR = Minor depression, no paint damage, not visible from 1 meter
-- MODERATE = Clearly visible depression with possible paint cracking
-- MAJOR = Large or deep deformation, structural panel shape compromised
+- MINOR = Minor depression, no paint damage, not visible from 1 meter (Ringan)
+- MODERATE = Clearly visible depression with possible paint cracking (Sedang)
+- MAJOR = Large or deep deformation, structural panel shape compromised (Berat)
 
 Transfer Cat:
-- MINOR = Small paint transfer, surface only, under 5cm
-- MODERATE = Visible transfer with underlying paint disruption
-- MAJOR = Large transfer area or combined with underlying dent or scratch
+- MINOR = Small paint transfer, surface only, under 5cm (Ringan)
+- MODERATE = Visible transfer with underlying paint disruption (Sedang)
+- MAJOR = Large transfer area or combined with underlying dent or scratch (Berat)
 
-All other types (Kaca Retak, Bagian Pecah, Panel Bengkok, Bagian Hilang):
-- MINOR = Minor, localized, does not affect function
-- MODERATE = Moderate, affects appearance significantly
-- MAJOR = Severe, affects safety or structural integrity
+All other types (kaca_retak, bagian_pecah, panel_bengkok, bagian_hilang):
+- MINOR = Minor, localized, does not affect function (Ringan)
+- MODERATE = Moderate, affects appearance significantly (Sedang)
+- MAJOR = Severe, affects safety or structural integrity (Berat)
+
+MANDATORY VISUAL SCAN ORDER
+Analyze the video in sequence but ensure the final deduplicated report accounts for all zones:
+1. Front exterior (bumper, hood, headlights surround, front fenders)
+2. Rear exterior — pay close attention to lower bumper corners
+3. Left side (all doors, fender, rear quarter panel, mirror)
+4. Right side (all doors, fender, rear quarter panel, mirror)
+5. Roof
+6. Glass and mirrors
+7. Wheels and tires
 
 REASONING BEFORE OUTPUT:
-You MUST perform a spatial and visual reasoning process BEFORE stating if damage is detected.
-1. "cameraPath" (Jalur Perekaman): Map the chronological path of the camera using center anchors (like the License Plate). Example: "Kamera mulai dari Bodi Samping Kanan, lalu menyorot Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang di tengah, lalu berakhir di Bumper Belakang Kiri."
-2. "visualAnalysis" (Analisis Visual): Detail the marks found along that path and confirm whether each is real damage or reflection.
-3. "verificationAnalysis": Chain-of-thought identity verification in Bahasa Indonesia — what badges/anatomical features you saw (or failed to see) and how they led to your match/mismatch/uncertain conclusion. Only required when a target merk/tipe is provided.
-
-All description and orientationReason fields MUST be written in Bahasa Indonesia only. Do NOT use English words in these output fields.
+You MUST perform spatial and visual reasoning BEFORE listing damages:
+1. "cameraPath": Trace the chronological camera movement using center anchors (license plate). Example: "Kamera mulai dari Bodi Samping Kanan, lalu menyorot Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang di tengah, lalu berakhir di Bumper Belakang Kiri."
+2. "visualAnalysis": Describe the marks found along that path and confirm whether each is real damage or reflection.
 
 ## Response Format
-Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. Do NOT add timestamps (e.g., [0:15]) to descriptions. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
+Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
 
 {
-  "verificationAnalysis": "${hasVehicle ? "Analisis verifikasi merk/tipe berdasarkan bukti visual (logo, bentuk lampu, siluet bodi)" : ""}",
-  "verificationStatus": "${hasVehicle ? "MATCH" : ""}",
-  "vehicleMismatchDetected": false,
-  "brandMatchDetected": ${hasVehicle ? "true" : "null"},
-  "modelMatchDetected": ${hasVehicle ? "true" : "null"},
   "cameraPath": "Jalur perekaman kamera secara kronologis menggunakan anchor",
-  "visualAnalysis": "Analisis visual: cacat yang ditemukan dan konfirmasi apakah kerusakan asli atau pantulan",
+  "visualAnalysis": "Analisis visual singkat: cacat yang ditemukan dan konfirmasi apakah kerusakan asli atau pantulan",
   "overallCondition": "GOOD",
   "confidence": 0.0,
   "screenRecaptureDetected": false,
@@ -710,7 +668,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
       "damageType": "goresan",
       "location": "Bumper Belakang Kiri",
       "severity": "MINOR",
-      "description": "Goresan linear putih, kira-kira 8cm",
+      "description": "Goresan putih linear pada panel bawah, sekitar 8cm",
       "orientationReason": "Kerusakan terletak di sisi kiri dari plat nomor belakang = Kiri kendaraan",
       "isNewDamage": true,
       "videoTimestamp": 0
@@ -718,7 +676,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   ]
 }
 
-This is a high-recall system. When in doubt, report.`;
+This is a high-recall inspection system. When in doubt, report.`;
 }
 
 /**
