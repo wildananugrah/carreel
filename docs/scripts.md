@@ -157,6 +157,29 @@ docker exec carreel-driver-db psql -U carreel carreel_driver -c 'select * from a
 docker exec carreel-driver-db psql -U carreel carreel_driver -c '\d ai_analyses'
 ```
 
+```sql
+SELECT u."fullName", u.email,
+         i.id AS inspection_id, i."tripType", i.status AS inspection_status,
+         s."stepType", s.status AS step_status,
+         a."structuredData" as structured_data,
+         a.id AS analysis_id, a."aiModel", a.status AS ai_status,
+         a."confidenceScore", a."processingTimeMs",
+         a."errorMessage",
+         a."createdAt" AS analyzed_at
+  FROM users u
+  JOIN inspections i ON i."driverId" = u.id
+  JOIN inspection_steps s ON s."inspectionId" = i.id
+  JOIN ai_analyses a ON a."stepId" = s.id
+  WHERE u.email = 'wildananugrah@gmail.com'
+  ORDER BY a."createdAt" DESC;
+
+
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name = 'ai_analyses'
+ORDER BY ordinal_position;
+```
+
 ```bash
 curl http://localhost:3001/api/media/b6501217-adb5-49b9-9218-8f6faca344ea/url
 
