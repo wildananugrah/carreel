@@ -175,9 +175,9 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
   const postDone = vehicle.postTrip != null && doneStatuses.includes(vehicle.postTrip.status);
   const statusLabel =
     preDone && postDone
-      ? "Selesai \u2713"
+      ? "Completed \u2713"
       : preDone
-        ? "Pre-Check \u2713"
+        ? "On Going"
         : "On Going";
 
   return (
