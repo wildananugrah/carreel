@@ -98,7 +98,12 @@ describe("StepAnalysisJob", () => {
     mockUnit = null;
 
     mockAI = {
-      analyzeImage: async () =>
+      analyzeImage: async (
+        _base64: string,
+        _mimeType: string,
+        _prompt: string,
+        _systemInstruction?: string,
+      ) =>
         JSON.stringify({
           licensePlate: "ABC-123",
           make: "Toyota",
@@ -115,7 +120,12 @@ describe("StepAnalysisJob", () => {
             },
           ],
         }),
-      analyzeVideo: async () =>
+      analyzeVideo: async (
+        _fileUri: string,
+        _mimeType: string,
+        _prompt: string,
+        _systemInstruction?: string,
+      ) =>
         JSON.stringify({
           overallCondition: "GOOD",
           confidence: 0.88,
@@ -329,7 +339,12 @@ describe("StepAnalysisJob", () => {
   });
 
   test("speedometer analysis saves TelemetryData", async () => {
-    mockAI.analyzeImage = async () =>
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) =>
       JSON.stringify({
         odometerKm: 45230,
         fuelLevelPct: 72,
@@ -373,7 +388,12 @@ describe("StepAnalysisJob", () => {
   });
 
   test("AI failure → FAILED AIAnalysis, step FAILED, completion still checked", async () => {
-    mockAI.analyzeImage = async () => {
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) => {
       throw new Error("Gemini API error");
     };
     stepStatuses.set("step-2", "COMPLETED");
@@ -424,7 +444,12 @@ describe("StepAnalysisJob", () => {
   });
 
   test("handles markdown-wrapped JSON response from Gemini", async () => {
-    mockAI.analyzeImage = async () =>
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) =>
       '```json\n{"licensePlate":"XYZ-789","make":null,"model":null,"color":"Red","vin":null,"confidence":0.8,"damages":[]}\n```';
 
     stepStatuses.set("step-2", "COMPLETED");
@@ -461,7 +486,12 @@ describe("StepAnalysisJob", () => {
   });
 
   test("major damage → generates HIGH_SEVERITY_DAMAGE alert", async () => {
-    mockAI.analyzeImage = async () =>
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) =>
       JSON.stringify({
         licensePlate: "ABC-123",
         confidence: 0.9,
@@ -491,7 +521,12 @@ describe("StepAnalysisJob", () => {
   });
 
   test("low fuel → generates LOW_FUEL alert", async () => {
-    mockAI.analyzeImage = async () =>
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) =>
       JSON.stringify({
         odometerKm: 45230,
         fuelLevelPct: 8,
@@ -514,7 +549,12 @@ describe("StepAnalysisJob", () => {
   });
 
   test("AI failure → generates AI_FAILURE alert", async () => {
-    mockAI.analyzeImage = async () => {
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) => {
       throw new Error("Gemini API error");
     };
     stepStatuses.set("step-2", "COMPLETED");
@@ -540,7 +580,12 @@ describe("StepAnalysisJob", () => {
       lastKnownKm: 40000,
     } as Unit;
 
-    mockAI.analyzeImage = async () =>
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) =>
       JSON.stringify({
         odometerKm: 40500,
         fuelLevelPct: 60,
@@ -574,7 +619,12 @@ describe("StepAnalysisJob", () => {
       lastKnownKm: 40000,
     } as Unit;
 
-    mockAI.analyzeImage = async () =>
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) =>
       JSON.stringify({
         odometerKm: 10000,
         fuelLevelPct: 60,
@@ -602,7 +652,12 @@ describe("StepAnalysisJob", () => {
   test("speedometer without unit: no KM validation", async () => {
     mockUnit = null;
 
-    mockAI.analyzeImage = async () =>
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+    ) =>
       JSON.stringify({
         odometerKm: 45230,
         fuelLevelPct: 60,
