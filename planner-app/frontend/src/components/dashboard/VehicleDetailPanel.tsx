@@ -754,6 +754,32 @@ function AIAlertTab({
         </div>
       )}
 
+      {/* Comparison banner — only when both pre and post have data */}
+      {postDetail && preFlags.length > 0 && postFlags.length > 0 && (
+        <div
+          className={`rounded-[10px] p-3 mb-3 text-center border ${
+            postFlags.some((f) => f.isNewDamage)
+              ? "bg-[#181818] border-[#282828]"
+              : "bg-[#141200] border-[#282000]"
+          }`}
+        >
+          <p
+            className={`text-xs font-bold ${
+              postFlags.some((f) => f.isNewDamage) ? "text-[#D4A800]" : "text-[#F5C518]"
+            }`}
+          >
+            {postFlags.some((f) => f.isNewDamage)
+              ? "\u26A0\uFE0F Kerusakan baru terdeteksi"
+              : "\u2705 Tidak ada kerusakan baru"}
+          </p>
+          <p className="text-[10px] text-[#555] mt-1">
+            {postFlags.some((f) => f.isNewDamage)
+              ? "AI mendeteksi kerusakan baru pada Post-Check"
+              : "Kondisi flag Pre dan Post konsisten \u2014 tidak ada perubahan terdeteksi"}
+          </p>
+        </div>
+      )}
+
       {/* AI Disclaimer */}
       <p className="text-[10px] text-[#444] italic p-2.5 bg-[#0f0f0f] rounded-lg">
         {"\u26A0\uFE0F"} Hasil AI bersifat panduan awal. Konfirmasi dengan inspeksi fisik.
