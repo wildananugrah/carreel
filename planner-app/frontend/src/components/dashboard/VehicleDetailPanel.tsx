@@ -174,7 +174,7 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
       ? "Selesai \u2713"
       : preApproved
         ? "Pre-Check \u2713"
-        : "In Progress";
+        : "On Going";
 
   return (
     <div className="bg-[#0f0f0f] border border-[#222] rounded-xl overflow-hidden">

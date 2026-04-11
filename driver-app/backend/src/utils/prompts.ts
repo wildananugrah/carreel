@@ -555,29 +555,28 @@ ALLOWED TYPES (damageType):
 - bagian_hilang
 
 ALLOWED LOCATIONS (location):
-- Bumper Depan Kiri
-- Bumper Depan Tengah
-- Bumper Depan Kanan
-- Bumper Belakang Kiri
-- Bumper Belakang Tengah
-- Bumper Belakang Kanan
-- Pintu Depan Kiri
-- Pintu Belakang Kiri
-- Pintu Depan Kanan
-- Pintu Belakang Kanan
-- Fender Depan Kiri
-- Panel Bodi Belakang Kiri
-- Fender Depan Kanan
-- Panel Bodi Belakang Kanan
-- Atap
-- Kap Mesin
-- Bagasi
-- Spion Kiri
-- Spion Kanan
-- Kaca Depan
-- Kaca Belakang
-- Roda / Ban
-- Eksterior Tidak Jelas
+- ⁠Bumper Depan Kiri
+- ⁠Bumper Depan Tengah
+- ⁠Bumper Depan Kanan
+- ⁠Bumper / Panel Belakang Kiri 
+- ⁠Bumper Belakang Tengah
+- ⁠Bumper / Panel Belakang Kanan
+- ⁠Pintu Depan Kiri
+- ⁠Pintu Belakang Kiri
+- ⁠Pintu Depan Kanan
+- ⁠Pintu Belakang Kanan
+- ⁠Fender Depan Kiri
+- ⁠Fender Depan Kanan
+- ⁠Atap
+- ⁠Kap Mesin
+- ⁠Bagasi
+- ⁠Spion Kiri
+- ⁠Spion Kanan
+- ⁠Kaca Depan
+- ⁠Kaca Belakang
+- ⁠Roda / Ban
+- ⁠Eksterior Tidak Jelas
+
 
 SEVERITY DEFINITIONS (apply per damage type):
 
