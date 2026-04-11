@@ -16,7 +16,6 @@ import type { IMediaFileRepository } from "../interfaces/repositories/media-file
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
-  type PromptPair,
   buildBodyVerificationPrompt,
   buildStepPrompt,
   type SpeedometerResult,
@@ -83,7 +82,10 @@ export class StepAnalysisJob {
           }
         : null;
 
-      const { systemInstruction, userPrompt } = buildStepPrompt(stepType, vehicleContext);
+      const { systemInstruction, userPrompt } = buildStepPrompt(
+        stepType,
+        vehicleContext,
+      );
 
       // 3. Analyze with Gemini
       let rawResponse: string;

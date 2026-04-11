@@ -359,9 +359,7 @@ Be strict - this is an anti-fraud verification measure.`;
   return { systemInstruction, userPrompt };
 }
 
-function buildSpeedometerPrompt(
-  vehicle?: VehicleContext | null,
-): PromptPair {
+function buildSpeedometerPrompt(vehicle?: VehicleContext | null): PromptPair {
   const hasVehicle = vehicle?.make || vehicle?.model;
   const vehicleIdentityRulesSection = hasVehicle ? VEHICLE_IDENTITY_RULES : "";
   const vehicleMatchFields = hasVehicle
@@ -651,7 +649,8 @@ This is a high-recall inspection system. When in doubt, report.`;
     ? `\nVEHICLE BEING INSPECTED: ${[vehicle?.make, vehicle?.model, vehicle?.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
     : "";
 
-  const userPrompt = `${vehicleInfo}Analyze this vehicle exterior inspection video. Report all visible physical damage.`.trim();
+  const userPrompt =
+    `${vehicleInfo}Analyze this vehicle exterior inspection video. Report all visible physical damage.`.trim();
 
   return { systemInstruction, userPrompt };
 }
