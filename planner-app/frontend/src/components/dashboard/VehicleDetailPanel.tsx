@@ -166,13 +166,17 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
 
   const lowFuel = vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 25;
 
-  // Status badge
-  const preApproved = vehicle.preTrip?.status === "APPROVED";
-  const postApproved = vehicle.postTrip?.status === "APPROVED";
+  // Status badge — "Selesai" when both trips are past PENDING_AI
+  const doneStatuses = ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED", "REJECTED", "FLAGGED"];
+  const preDone =
+    vehicle.preTrip != null &&
+    vehicle.preTrip.status !== "DRAFT" &&
+    vehicle.preTrip.status !== "PENDING_AI";
+  const postDone = vehicle.postTrip != null && doneStatuses.includes(vehicle.postTrip.status);
   const statusLabel =
-    preApproved && postApproved
+    preDone && postDone
       ? "Selesai \u2713"
-      : preApproved
+      : preDone
         ? "Pre-Check \u2713"
         : "On Going";
 
