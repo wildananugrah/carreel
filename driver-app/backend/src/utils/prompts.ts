@@ -62,6 +62,12 @@ export interface VehicleContext {
   licensePlate?: string | null;
 }
 
+/** Pair of system instruction (static rules) and user prompt (dynamic per-request content) */
+export interface PromptPair {
+  systemInstruction: string;
+  userPrompt: string;
+}
+
 // ========================
 // SCREEN-CAPTURE DETECTION (image vs video variants)
 // ========================
@@ -170,17 +176,10 @@ DO NOT REQUIRE any of these to flag as recapture:
 `;
 
 // ========================
-// VEHICLE IDENTITY MATCHING
+// VEHICLE IDENTITY MATCHING (rules only, no values)
 // ========================
 
-function buildVehicleIdentityPrompt(vehicle: VehicleContext): string {
-  const brand = vehicle.make ?? "";
-  const model = vehicle.model ?? "";
-  const licensePlate = vehicle.licensePlate ?? "";
-
-  if (!brand && !model) return "";
-
-  return `
+const VEHICLE_IDENTITY_RULES = `
 FOCUS STEP — STRICT VEHICLE IDENTITY MATCHING (PHOTO ONLY, FAIL-CLOSED)
 
 TASK:
@@ -190,13 +189,6 @@ Your job is to verify whether the visible dashboard matches the EXPECTED VEHICLE
 CONTEXT:
 The expected vehicle data below was extracted by AI from a separate Unit Identification photo (exterior photo showing the vehicle's brand badge, license plate, body shape, etc.) taken earlier in the same inspection session.
 Your job is to cross-verify: does the dashboard in THIS photo belong to the same vehicle identified in that Unit Identification step?
-
-EXPECTED VEHICLE (from Unit Identification AI result):
-- Brand: ${brand || "UNKNOWN"}
-- Model: ${model || "UNKNOWN"}${licensePlate ? `\n- License Plate: ${licensePlate}` : ""}
-- Generation: UNKNOWN
-- Trim/Variant: NOT PROVIDED
-- Year: NOT PROVIDED
 
 SCOPE:
 - PHOTO ONLY.
@@ -271,46 +263,6 @@ This is a strict identity verification task, not a similarity task.
 If the dashboard is not a strong match to the expected brand/model/generation, reject it.
 If brand and model match, but year is unknown because it cannot be verified from the photo alone, do not reject solely for that reason unless an exact year is explicitly required and the visible evidence contradicts it.
 `;
-}
-
-export function buildBodyVerificationPrompt(
-  vehicle?: VehicleContext | null,
-): string {
-  const make = vehicle?.make ?? "UNKNOWN";
-  const model = vehicle?.model ?? "UNKNOWN";
-
-  return `You are a strict and highly precise Automotive Verification AI.
-Your primary task is to verify if the vehicle shown in the provided VIDEO physically matches the claimed TARGET VEHICLE.
-
-TARGET VEHICLE TO VERIFY:
-Merk (Make): ${make}
-Tipe (Model): ${model}
-
-ABSOLUTE RULES FOR VERIFICATION:
-
-1. VISUAL EVIDENCE HIERARCHY:
-   You must establish the vehicle's identity using the following hierarchy of visual evidence:
-   - PRIMARY EVIDENCE (Highest Confidence): Manufacturer logos (emblem) on the front grille, rear tailgate, or wheel center caps. Text badges spelling out the model name.
-   - SECONDARY EVIDENCE (High Confidence): Distinctive anatomical signatures, such as the specific shape of the headlights (DRL), taillight clusters, front grille design, and unique body silhouettes (e.g., the distinct microcar shape of a Wuling Air EV).
-
-2. THE "ZOOM-IN" FAIL-SAFE (CRITICAL):
-   If the video consists entirely of close-up shots of panels (e.g., just a zoomed-in bumper or door) and LACKS any identifying Primary or Secondary evidence, you CANNOT guess the car based on paint color or generic panel curves. You MUST declare the status as "Uncertain".
-
-3. STRICT MISMATCH PROTOCOL:
-   If you clearly identify anatomical features or logos that belong to a DIFFERENT brand or entirely different vehicle class (e.g., Target is a small hatchback, but the video shows a large SUV), you must immediately flag it as a Mismatch.
-
-REASONING:
-You MUST perform a Chain-of-Thought reasoning process before concluding. Detail exactly what anatomical features or badges you saw (or failed to see) that led to your conclusion. Write this analysis in Bahasa Indonesia.
-
-## Response Format
-Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks. Do not add any conversational text.
-
-{
-  "analisisVerifikasi": "Jelaskan bukti visual yang Anda temukan secara spesifik.",
-  "statusVerifikasi": "Match",
-  "confidence": 0.0
-}`;
-}
 
 // ========================
 // PROMPT BUILDERS (dynamic, vehicle-aware)
@@ -319,7 +271,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
 export function buildStepPrompt(
   stepType: StepType,
   vehicle?: VehicleContext | null,
-): string {
+): PromptPair {
   switch (stepType) {
     case "UNIT_IDENTIFICATION":
       return buildUnitIdentificationPrompt();
@@ -332,8 +284,8 @@ export function buildStepPrompt(
   }
 }
 
-function buildUnitIdentificationPrompt(): string {
-  return `You are a strict Vehicle Identification AI for a fleet management anti-fraud system.
+function buildUnitIdentificationPrompt(): PromptPair {
+  const systemInstruction = `You are a strict Vehicle Identification AI for a fleet management anti-fraud system.
 
 Your task is to extract vehicle identification details that are directly visible in the image.
 If there are multiple vehicles in the image, strictly focus ONLY on the primary, largest, or most centered vehicle.
@@ -400,13 +352,18 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
 }
 
 Be strict - this is an anti-fraud verification measure.`;
+
+  const userPrompt =
+    "Analyze this vehicle image. Extract identification details and assess any visible damage.";
+
+  return { systemInstruction, userPrompt };
 }
 
-function buildSpeedometerPrompt(vehicle?: VehicleContext | null): string {
+function buildSpeedometerPrompt(
+  vehicle?: VehicleContext | null,
+): PromptPair {
   const hasVehicle = vehicle?.make || vehicle?.model;
-  const vehicleIdentitySection = hasVehicle
-    ? buildVehicleIdentityPrompt(vehicle)
-    : "";
+  const vehicleIdentityRulesSection = hasVehicle ? VEHICLE_IDENTITY_RULES : "";
   const vehicleMatchFields = hasVehicle
     ? `  "vehicleMismatchDetected": false,
   "brandMatchDetected": true,
@@ -415,13 +372,13 @@ function buildSpeedometerPrompt(vehicle?: VehicleContext | null): string {
   "trimMatchDetected": true,`
     : `  "vehicleMismatchDetected": false,`;
 
-  return `Act as a highly conservative vehicle dashboard OCR and indicator detection AI for a fleet management anti-fraud system.
+  const systemInstruction = `Act as a highly conservative vehicle dashboard OCR and indicator detection AI for a fleet management anti-fraud system.
 
 Your only job is to extract information that is directly and clearly visible in the dashboard image.
 Do not guess. Do not infer. Do not estimate from memory. Do not complete missing digits.
 If any value is not fully legible, output null for that field.
 
-${vehicleIdentitySection}
+${vehicleIdentityRulesSection}
 ${SCREEN_CAPTURE_IMAGE}
 
 ## TASKS
@@ -473,22 +430,34 @@ ${vehicleMatchFields}
 }
 
 Be strict - this is an anti-fraud verification measure.`;
+
+  let userPrompt = "Analyze this dashboard image.";
+  if (hasVehicle) {
+    const brand = vehicle?.make ?? "UNKNOWN";
+    const model = vehicle?.model ?? "UNKNOWN";
+    const licensePlate = vehicle?.licensePlate ?? "";
+    userPrompt += `\n\nEXPECTED VEHICLE (from Unit Identification AI result):
+- Brand: ${brand}
+- Model: ${model}${licensePlate ? `\n- License Plate: ${licensePlate}` : ""}
+- Generation: UNKNOWN
+- Trim/Variant: NOT PROVIDED
+- Year: NOT PROVIDED`;
+  }
+
+  return { systemInstruction, userPrompt };
 }
 
-function buildBodyInspectionPrompt(vehicle?: VehicleContext | null): string {
-  const vehicleContext =
-    vehicle?.make || vehicle?.model
-      ? `\nVEHICLE BEING INSPECTED: ${[vehicle.make, vehicle.model, vehicle.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
-      : "";
-
-  return `You are an Expert Automotive Exterior Damage Appraiser AI optimized for HIGH RECALL.
+function buildBodyInspectionPrompt(
+  vehicle?: VehicleContext | null,
+): PromptPair {
+  const systemInstruction = `You are an Expert Automotive Exterior Damage Appraiser AI optimized for HIGH RECALL.
 
 Your primary failure mode to avoid is MISSING damage. Over-reporting a minor scratch is acceptable. Missing a real scratch is not.
 
 Your job is to inspect the vehicle's exterior in the provided VIDEO and report all physical damage that is visible across frames.
 
 Do NOT dismiss marks as dirt, glare, or reflection without multi-frame confirmation. High-contrast marks (e.g., black scuffs on light paint, white scratches on dark paint) in typical impact zones MUST be reported unless you can confirm across multiple frames that it is not fixed to the surface.
-${vehicleContext}
+
 ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
@@ -650,7 +619,7 @@ You MUST perform spatial and visual reasoning BEFORE listing damages:
 2. "visualAnalysis": Describe the marks found along that path and confirm whether each is real damage or reflection.
 
 CRITICAL RULE FOR JSON GENERATION (STRICT KEY ORDERING):
-You MUST generate the JSON keys in the EXACT sequential order shown in the template below. 
+You MUST generate the JSON keys in the EXACT sequential order shown in the template below.
 You are STRICTLY FORBIDDEN from outputting the "damages" array until you have fully generated the reasoning fields: "verificationAnalysis", "cameraPath", and "visualAnalysis". This guarantees your spatial reasoning is established before you classify any damage locations.
 
 ## Response Format
@@ -676,13 +645,56 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
 }
 
 This is a high-recall inspection system. When in doubt, report.`;
+
+  const hasVehicle = vehicle?.make || vehicle?.model;
+  const vehicleInfo = hasVehicle
+    ? `\nVEHICLE BEING INSPECTED: ${[vehicle?.make, vehicle?.model, vehicle?.color ? `(${vehicle.color})` : ""].filter(Boolean).join(" ")}\n`
+    : "";
+
+  const userPrompt = `${vehicleInfo}Analyze this vehicle exterior inspection video. Report all visible physical damage.`.trim();
+
+  return { systemInstruction, userPrompt };
 }
 
-/**
- * @deprecated Use buildStepPrompt() instead. Kept for backward compatibility.
- */
-export const STEP_PROMPTS: Record<StepType, string> = {
-  UNIT_IDENTIFICATION: buildUnitIdentificationPrompt(),
-  SPEEDOMETER: buildSpeedometerPrompt(),
-  BODY_INSPECTION: buildBodyInspectionPrompt(),
-};
+export function buildBodyVerificationPrompt(
+  vehicle?: VehicleContext | null,
+): PromptPair {
+  const make = vehicle?.make ?? "UNKNOWN";
+  const model = vehicle?.model ?? "UNKNOWN";
+
+  const systemInstruction = `You are a strict and highly precise Automotive Verification AI.
+Your primary task is to verify if the vehicle shown in the provided VIDEO physically matches the claimed TARGET VEHICLE.
+
+ABSOLUTE RULES FOR VERIFICATION:
+
+1. VISUAL EVIDENCE HIERARCHY:
+   You must establish the vehicle's identity using the following hierarchy of visual evidence:
+   - PRIMARY EVIDENCE (Highest Confidence): Manufacturer logos (emblem) on the front grille, rear tailgate, or wheel center caps. Text badges spelling out the model name.
+   - SECONDARY EVIDENCE (High Confidence): Distinctive anatomical signatures, such as the specific shape of the headlights (DRL), taillight clusters, front grille design, and unique body silhouettes (e.g., the distinct microcar shape of a Wuling Air EV).
+
+2. THE "ZOOM-IN" FAIL-SAFE (CRITICAL):
+   If the video consists entirely of close-up shots of panels (e.g., just a zoomed-in bumper or door) and LACKS any identifying Primary or Secondary evidence, you CANNOT guess the car based on paint color or generic panel curves. You MUST declare the status as "Uncertain".
+
+3. STRICT MISMATCH PROTOCOL:
+   If you clearly identify anatomical features or logos that belong to a DIFFERENT brand or entirely different vehicle class (e.g., Target is a small hatchback, but the video shows a large SUV), you must immediately flag it as a Mismatch.
+
+REASONING:
+You MUST perform a Chain-of-Thought reasoning process before concluding. Detail exactly what anatomical features or badges you saw (or failed to see) that led to your conclusion. Write this analysis in Bahasa Indonesia.
+
+## Response Format
+Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks. Do not add any conversational text.
+
+{
+  "analisisVerifikasi": "Jelaskan bukti visual yang Anda temukan secara spesifik.",
+  "statusVerifikasi": "Match",
+  "confidence": 0.0
+}`;
+
+  const userPrompt = `Verify if this vehicle matches the target.
+
+TARGET VEHICLE TO VERIFY:
+Merk (Make): ${make}
+Tipe (Model): ${model}`;
+
+  return { systemInstruction, userPrompt };
+}
