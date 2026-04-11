@@ -16,6 +16,7 @@ import type { IMediaFileRepository } from "../interfaces/repositories/media-file
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
+  type PromptPair,
   buildBodyVerificationPrompt,
   buildStepPrompt,
   type SpeedometerResult,
@@ -82,7 +83,7 @@ export class StepAnalysisJob {
           }
         : null;
 
-      const prompt = buildStepPrompt(stepType, vehicleContext);
+      const { systemInstruction, userPrompt } = buildStepPrompt(stepType, vehicleContext);
 
       // 3. Analyze with Gemini
       let rawResponse: string;
@@ -106,12 +107,13 @@ export class StepAnalysisJob {
           // --- BODY_INSPECTION: two-pass pipeline ---
           if (stepType === "BODY_INSPECTION") {
             // Pass 1: Vehicle verification
-            const verificationPrompt =
+            const verificationPair =
               buildBodyVerificationPrompt(vehicleContext);
             const verificationRaw = await this.aiProvider.analyzeVideo(
               fileUri,
               primaryMedia.mimeType,
-              verificationPrompt,
+              verificationPair.userPrompt,
+              verificationPair.systemInstruction,
             );
 
             const verificationCleaned = verificationRaw
@@ -136,7 +138,7 @@ export class StepAnalysisJob {
                 stepId,
                 mediaFileId: primaryMedia.id,
                 aiModel: "gemini",
-                promptUsed: verificationPrompt,
+                promptUsed: `[SYSTEM]\n${verificationPair.systemInstruction}\n\n[USER]\n${verificationPair.userPrompt}`,
                 rawResponse: verificationRaw,
                 structuredData: verification,
                 confidenceScore: verification.confidence ?? null,
@@ -179,7 +181,8 @@ export class StepAnalysisJob {
           rawResponse = await this.aiProvider.analyzeVideo(
             fileUri,
             primaryMedia.mimeType,
-            prompt,
+            userPrompt,
+            systemInstruction,
           );
         } finally {
           await unlink(tempPath).catch(() => {});
@@ -194,7 +197,8 @@ export class StepAnalysisJob {
         rawResponse = await this.aiProvider.analyzeImage(
           base64,
           primaryMedia.mimeType,
-          prompt,
+          userPrompt,
+          systemInstruction,
         );
       }
 
@@ -257,7 +261,7 @@ export class StepAnalysisJob {
         stepId,
         mediaFileId: primaryMedia.id,
         aiModel: "gemini",
-        promptUsed: prompt,
+        promptUsed: `[SYSTEM]\n${systemInstruction}\n\n[USER]\n${userPrompt}`,
         rawResponse,
         structuredData: parsed,
         confidenceScore: parsed.confidence ?? null,
@@ -378,7 +382,10 @@ export class StepAnalysisJob {
         .createAnalysis({
           stepId,
           aiModel: "gemini",
-          promptUsed: buildStepPrompt(stepType),
+          promptUsed: (() => {
+            const fallbackPair = buildStepPrompt(stepType);
+            return `[SYSTEM]\n${fallbackPair.systemInstruction}\n\n[USER]\n${fallbackPair.userPrompt}`;
+          })(),
           rawResponse: "",
           processingTimeMs,
           status: "FAILED",
