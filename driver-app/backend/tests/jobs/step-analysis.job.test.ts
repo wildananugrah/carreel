@@ -682,4 +682,167 @@ describe("StepAnalysisJob", () => {
       savedAlerts.find((a) => a.alertType === "KM_ANOMALY"),
     ).toBeUndefined();
   });
+
+  // --- isNewDamage override tests ---
+
+  test("POST_TRIP body inspection: overrides isNewDamage when same damage exists in pre-trip", async () => {
+    // Setup: post-trip inspection linked to pre-trip
+    mockInspectionRepo.findById = async (id: string) => {
+      if (id === "insp-post") {
+        return {
+          id: "insp-post",
+          driverId: "driver-1",
+          unitId: null,
+          tripType: "POST_TRIP",
+          status: inspectionStatuses.get(id) ?? "PENDING_AI",
+          linkedInspectionId: "insp-pre",
+          startedAt: new Date(),
+          completedAt: null,
+          latitude: null,
+          longitude: null,
+          signatureKey: null,
+          signerName: null,
+          driverComment: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          unit: null,
+          linkedInspection: null,
+          linkedFrom: null,
+          steps: [
+            {
+              ...createMockStep({
+                id: "step-body",
+                stepType: "BODY_INSPECTION",
+              }),
+              status: stepStatuses.get("step-body") ?? "UPLOADED",
+              mediaFiles: [],
+              aiAnalysis: null,
+            },
+            {
+              ...createMockStep({ id: "step-speedo", stepType: "SPEEDOMETER" }),
+              status: "COMPLETED",
+              mediaFiles: [],
+              aiAnalysis: null,
+            },
+          ],
+        } as any;
+      }
+      // Pre-trip with existing body damage
+      if (id === "insp-pre") {
+        return {
+          id: "insp-pre",
+          driverId: "driver-1",
+          unitId: null,
+          tripType: "PRE_TRIP",
+          status: "AI_COMPLETE",
+          linkedInspectionId: null,
+          startedAt: new Date(),
+          completedAt: new Date(),
+          latitude: null,
+          longitude: null,
+          signatureKey: null,
+          signerName: null,
+          driverComment: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          unit: null,
+          linkedInspection: null,
+          linkedFrom: null,
+          steps: [
+            {
+              ...createMockStep({
+                id: "pre-body",
+                stepType: "BODY_INSPECTION",
+              }),
+              status: "COMPLETED",
+              mediaFiles: [],
+              aiAnalysis: {
+                id: "analysis-pre",
+                status: "SUCCESS",
+                structuredData: {
+                  damages: [
+                    {
+                      damageType: "goresan",
+                      location: "Bumper Belakang Kanan",
+                      severity: "MINOR",
+                      description: "Existing scratch",
+                      isNewDamage: true,
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        } as any;
+      }
+      return null;
+    };
+
+    // Post-trip AI returns same damage + one new damage, both with isNewDamage: true (AI guess)
+    mockMediaRepo.findByStepId = async () => [
+      createMockMediaFile({
+        mimeType: "video/mp4",
+        minioBucket: "carreel-videos",
+        minioKey: "inspections/video.mp4",
+      }),
+    ];
+
+    mockAI.analyzeVideo = async (
+      _uri: string,
+      _mime: string,
+      _prompt: string,
+      _sys?: string,
+    ) =>
+      JSON.stringify({
+        cameraPath: "test",
+        visualAnalysis: "test",
+        overallCondition: "FAIR",
+        confidence: 0.9,
+        screenRecaptureDetected: false,
+        damages: [
+          {
+            damageType: "goresan",
+            location: "Bumper Belakang Kanan",
+            severity: "MINOR",
+            description: "Same scratch as pre-trip",
+            isNewDamage: true,
+          },
+          {
+            damageType: "penyok",
+            location: "Pintu Depan Kiri",
+            severity: "MODERATE",
+            description: "New dent not in pre-trip",
+            isNewDamage: true,
+          },
+        ],
+      });
+
+    await job.handle({
+      inspectionId: "insp-post",
+      stepId: "step-body",
+      stepType: "BODY_INSPECTION",
+      driverId: "driver-1",
+      tripType: "POST_TRIP",
+    });
+
+    // Check saved damage markers: goresan should be isNewDamage=false, penyok should be true
+    expect(savedDamageMarkers.length).toBe(1);
+    const markers = savedDamageMarkers[0] as any[];
+    expect(markers.length).toBe(2);
+
+    const existingDamage = markers.find(
+      (m: any) => m.damageType === "goresan",
+    );
+    const newDamage = markers.find((m: any) => m.damageType === "penyok");
+
+    expect(existingDamage.isNewDamage).toBe(false); // overridden: same as pre-trip
+    expect(newDamage.isNewDamage).toBe(true); // genuinely new
+
+    // Alert should only mention 1 new damage (not 2)
+    const newDamageAlert = savedAlerts.find(
+      (a) => a.alertType === "NEW_DAMAGE_DETECTED",
+    );
+    expect(newDamageAlert).toBeDefined();
+    expect(newDamageAlert!.message).toContain("1 new damage");
+  });
 });

@@ -258,6 +258,25 @@ export class StepAnalysisJob {
         }
       }
 
+      // 4b. POST_TRIP body inspection: override AI-guessed isNewDamage
+      if (
+        stepType === "BODY_INSPECTION" &&
+        tripType === "POST_TRIP" &&
+        parsed.damages?.length > 0
+      ) {
+        const preDamages = await this.getPreTripDamages(inspectionId);
+        if (preDamages) {
+          this.overrideIsNewDamage(parsed.damages, preDamages);
+          log.info("Overrode isNewDamage flags via pre/post comparison", {
+            postCount: parsed.damages.length,
+            preCount: preDamages.length,
+            newCount: parsed.damages.filter(
+              (d: { isNewDamage: boolean }) => d.isNewDamage,
+            ).length,
+          });
+        }
+      }
+
       // 5. Save AIAnalysis record
       const analysis = await this.aiAnalysisRepository.createAnalysis({
         stepId,
@@ -574,6 +593,58 @@ export class StepAnalysisJob {
     }));
 
     await this.aiAnalysisRepository.createDamageMarkers(markers);
+  }
+
+  /**
+   * Fetch body inspection damages from the linked pre-trip inspection.
+   * Returns null if no linked pre-trip or no body AI analysis exists.
+   */
+  private async getPreTripDamages(
+    postTripInspectionId: string,
+  ): Promise<Array<{ damageType: string; location: string }> | null> {
+    const postInspection =
+      await this.inspectionRepository.findById(postTripInspectionId);
+    if (!postInspection?.linkedInspectionId) return null;
+
+    const preInspection = await this.inspectionRepository.findById(
+      postInspection.linkedInspectionId,
+    );
+    if (!preInspection) return null;
+
+    const preBodyStep = preInspection.steps.find(
+      (s) => s.stepType === "BODY_INSPECTION",
+    );
+    if (!preBodyStep?.aiAnalysis?.structuredData) return null;
+
+    const preData = preBodyStep.aiAnalysis.structuredData as {
+      damages?: Array<{ damageType?: string; location?: string }>;
+    };
+    return (preData.damages ?? []).map((d) => ({
+      damageType: (d.damageType ?? "").toLowerCase().trim(),
+      location: (d.location ?? "").toLowerCase().trim(),
+    }));
+  }
+
+  /**
+   * Override AI-guessed isNewDamage by comparing post-trip damages against
+   * pre-trip damages. A damage is "new" only if no pre-trip damage has
+   * the same damageType AND location.
+   */
+  private overrideIsNewDamage(
+    postDamages: Array<{
+      damageType: string;
+      location?: string;
+      isNewDamage: boolean;
+    }>,
+    preDamages: Array<{ damageType: string; location: string }>,
+  ): void {
+    const preKeys = new Set(
+      preDamages.map((d) => `${d.damageType}|${d.location}`),
+    );
+    for (const damage of postDamages) {
+      const key = `${damage.damageType.toLowerCase().trim()}|${(damage.location ?? "").toLowerCase().trim()}`;
+      damage.isNewDamage = !preKeys.has(key);
+    }
   }
 
   private async checkInspectionCompletion(
