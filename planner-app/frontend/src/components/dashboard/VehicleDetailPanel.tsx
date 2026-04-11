@@ -14,6 +14,7 @@ interface DamageFlag {
   location?: string;
   isNewDamage?: boolean;
   confidence?: number;
+  videoTimestamp?: number;
 }
 
 interface BodyInspectionData {
@@ -278,6 +279,8 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
             postDetail={postDetail}
             preFlags={preFlags}
             postFlags={postFlags}
+            preVideoMediaId={preDetail ? getVideoMediaId(preDetail) : null}
+            postVideoMediaId={postDetail ? getVideoMediaId(postDetail) : null}
           />
         )}
       </div>
@@ -709,11 +712,15 @@ function AIAlertTab({
   postDetail,
   preFlags,
   postFlags,
+  preVideoMediaId,
+  postVideoMediaId,
 }: {
   preDetail: InspectionDetail | null;
   postDetail: InspectionDetail | null;
   preFlags: DamageFlag[];
   postFlags: DamageFlag[];
+  preVideoMediaId: string | null;
+  postVideoMediaId: string | null;
 }) {
   return (
     <>
@@ -724,6 +731,7 @@ function AIAlertTab({
         flags={preFlags}
         comment={preDetail?.driverComment ?? null}
         commentLabel="Catatan Driver (Pre)"
+        videoMediaId={preVideoMediaId}
       />
 
       {/* POST section */}
@@ -734,6 +742,7 @@ function AIAlertTab({
           flags={postFlags}
           comment={postDetail.driverComment ?? null}
           commentLabel="Catatan Driver (Post)"
+          videoMediaId={postVideoMediaId}
         />
       ) : (
         <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-xl p-3 mb-3">
@@ -753,21 +762,36 @@ function AIAlertTab({
   );
 }
 
+const DAMAGE_SEEK_ENABLED = import.meta.env.VITE_DAMAGE_SEEK_ENABLED === "true";
+
+function formatVideoTimestamp(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 function AIFlagSection({
   label,
   color,
   flags,
   comment,
   commentLabel,
+  videoMediaId,
 }: {
   label: string;
   color: string;
   flags: DamageFlag[];
   comment: string | null | undefined;
   commentLabel: string;
+  videoMediaId: string | null;
 }) {
   const bgColor = label === "PRE-CHECK" ? "#141200" : "#141414";
   const borderColor = label === "PRE-CHECK" ? "#282000" : "#282828";
+  const canSeek = DAMAGE_SEEK_ENABLED && videoMediaId != null;
+  const [seekLightbox, setSeekLightbox] = useState<{
+    src: string;
+    startTime: number;
+  } | null>(null);
 
   return (
     <div className="rounded-xl p-3 mb-3 border" style={{ background: bgColor, borderColor }}>
@@ -777,51 +801,82 @@ function AIFlagSection({
         <p className="text-[11px] text-[#555] py-2">Tidak ada flag terdeteksi</p>
       ) : (
         <div className="space-y-2">
-          {flags.map((flag) => (
-            <div
-              key={`${flag.damageType}-${flag.severity}-${flag.description}`}
-              className="bg-[#111] rounded-[10px] p-3 border"
-              style={{
-                borderColor: flag.isNewDamage ? "#F5C51833" : "#252525",
-              }}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs font-bold text-[#D0D0D0]">
-                  {flag.location
-                    ? `${flag.location} — ${flag.description || damageLabel(flag.damageType)}`
-                    : flag.description || damageLabel(flag.damageType)}
-                </p>
-                {flag.confidence != null && (
+          {flags.map((flag) => {
+            const hasTimestamp = typeof flag.videoTimestamp === "number";
+            const showSeek = canSeek && hasTimestamp;
+
+            return (
+              <div
+                key={`${flag.damageType}-${flag.severity}-${flag.description}`}
+                className="bg-[#111] rounded-[10px] p-3 border"
+                style={{
+                  borderColor: flag.isNewDamage ? "#F5C51833" : "#252525",
+                }}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs font-bold text-[#D0D0D0]">
+                    {flag.location
+                      ? `${flag.location} — ${flag.description || damageLabel(flag.damageType)}`
+                      : flag.description || damageLabel(flag.damageType)}
+                  </p>
+                  {showSeek ? (
+                    <button
+                      type="button"
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1a1600] text-[#F5C518] hover:bg-[#2a2200] transition-colors"
+                      onClick={() =>
+                        setSeekLightbox({
+                          src: `/api/media/${videoMediaId}/stream`,
+                          startTime: flag.videoTimestamp!,
+                        })
+                      }
+                    >
+                      {"\u25B6"} {formatVideoTimestamp(flag.videoTimestamp!)}
+                    </button>
+                  ) : (
+                    flag.confidence != null && (
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{
+                          background: flag.confidence > 0.75 ? "#181818" : "#1a1600",
+                          color: flag.confidence > 0.75 ? "#D4A800" : "#F5C518",
+                        }}
+                      >
+                        {Math.round(flag.confidence * 100)}%
+                      </span>
+                    )
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
                   <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    className="w-2 h-2 rounded-full shrink-0"
                     style={{
-                      background: flag.confidence > 0.75 ? "#181818" : "#1a1600",
-                      color: flag.confidence > 0.75 ? "#D4A800" : "#F5C518",
+                      background: flag.isNewDamage ? "#F5C518" : "#444",
+                      boxShadow: flag.isNewDamage ? "0 0 6px #F5C518" : "none",
                     }}
+                  />
+                  <span
+                    className="text-[10px] font-semibold"
+                    style={{ color: flag.isNewDamage ? "#D4A800" : "#777" }}
                   >
-                    {Math.round(flag.confidence * 100)}%
+                    {flag.isNewDamage ? "Baru terdeteksi" : "Sudah ada sejak Pre-Check"}
                   </span>
-                )}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{
-                    background: flag.isNewDamage ? "#F5C518" : "#444",
-                    boxShadow: flag.isNewDamage ? "0 0 6px #F5C518" : "none",
-                  }}
-                />
-                <span
-                  className="text-[10px] font-semibold"
-                  style={{ color: flag.isNewDamage ? "#D4A800" : "#777" }}
-                >
-                  {flag.isNewDamage ? "Baru terdeteksi" : "Sudah ada sejak Pre-Check"}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      {seekLightbox &&
+        createPortal(
+          <MediaLightbox
+            src={seekLightbox.src}
+            type="video"
+            startTime={seekLightbox.startTime}
+            onClose={() => setSeekLightbox(null)}
+          />,
+          document.body,
+        )}
 
       {/* Driver notes */}
       <div className="mt-2.5 bg-[#111] border border-[#1e1e1e] rounded-lg p-2.5">
