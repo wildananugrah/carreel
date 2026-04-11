@@ -649,6 +649,10 @@ You MUST perform spatial and visual reasoning BEFORE listing damages:
 1. "cameraPath": Trace the chronological camera movement using center anchors (license plate). Example: "Kamera mulai dari Bodi Samping Kanan, lalu menyorot Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang di tengah, lalu berakhir di Bumper Belakang Kiri."
 2. "visualAnalysis": Describe the marks found along that path and confirm whether each is real damage or reflection.
 
+CRITICAL RULE FOR JSON GENERATION (STRICT KEY ORDERING):
+You MUST generate the JSON keys in the EXACT sequential order shown in the template below. 
+You are STRICTLY FORBIDDEN from outputting the "damages" array until you have fully generated the reasoning fields: "verificationAnalysis", "cameraPath", and "visualAnalysis". This guarantees your spatial reasoning is established before you classify any damage locations.
+
 ## Response Format
 Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
 
