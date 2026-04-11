@@ -19,11 +19,15 @@ export class GeminiProvider implements IAIProvider {
     base64: string,
     mimeType: string,
     prompt: string,
+    systemInstruction?: string,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
       model: this.model,
       contents: [{ inlineData: { mimeType, data: base64 } }, { text: prompt }],
-      config: { temperature: 0.0 },
+      config: {
+        temperature: 0.0,
+        ...(systemInstruction && { systemInstruction }),
+      },
     });
     return response.text ?? "";
   }
@@ -32,6 +36,7 @@ export class GeminiProvider implements IAIProvider {
     fileUri: string,
     mimeType: string,
     prompt: string,
+    systemInstruction?: string,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
       model: this.model,
@@ -39,7 +44,10 @@ export class GeminiProvider implements IAIProvider {
         createPartFromUri(fileUri, mimeType),
         prompt,
       ]),
-      config: { temperature: 0.0 },
+      config: {
+        temperature: 0.0,
+        ...(systemInstruction && { systemInstruction }),
+      },
     });
     return response.text ?? "";
   }
@@ -68,6 +76,7 @@ export class GeminiStubProvider implements IAIProvider {
     _base64: string,
     _mimeType: string,
     _prompt: string,
+    _systemInstruction?: string,
   ): Promise<string> {
     return JSON.stringify({
       licensePlate: "ABC-1234",
@@ -84,6 +93,7 @@ export class GeminiStubProvider implements IAIProvider {
     _fileUri: string,
     _mimeType: string,
     _prompt: string,
+    _systemInstruction?: string,
   ): Promise<string> {
     return JSON.stringify({
       overallCondition: "GOOD",
