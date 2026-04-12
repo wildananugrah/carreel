@@ -477,11 +477,18 @@ MANDATORY SEQUENCE:
    - Lights, Wheels/Tires, Doors, and Fenders = Side determiners.
 
 3. Inference Rules (Logic Core):
-   - REAR VIEW: The body side extending to the right of the rear license plate = RIGHT side of the vehicle.
-   - FRONT VIEW (Face-to-face): The body side extending to the right of the front plate/logo = LEFT side of the vehicle.
+   - REAR VIEW (Face-to-face with the rear):
+     - The body side extending to the RIGHT of the rear license plate = RIGHT side of the vehicle.
+     - The body side extending to the LEFT of the rear license plate = LEFT side of the vehicle.
+
+   - FRONT VIEW (Face-to-face with the front):
+     - The body side extending to the RIGHT of the front plate/logo = LEFT side of the vehicle.
+     - The body side extending to the LEFT of the front plate/logo = RIGHT side of the vehicle.
+
    - REAR CORNER (Close-up near red taillights):
      - Side Body / Wheel / Door to the RIGHT of the taillight = RIGHT side of the vehicle.
      - Side Body / Wheel / Door to the LEFT of the taillight = LEFT side of the vehicle.
+
    - FRONT CORNER (Close-up near white headlights):
      - Side Body / Wheel / Door to the RIGHT of the headlight = LEFT side of the vehicle.
      - Side Body / Wheel / Door to the LEFT of the headlight = RIGHT side of the vehicle.
@@ -492,7 +499,7 @@ MANDATORY SEQUENCE:
    - If visual evidence is insufficient to determine the side, use "Eksterior Tidak Jelas" as the location.
 
 5. Mandatory Output Structure (Chain of Thought):
-   You MUST use the "cameraPath" and "visualAnalysis" fields in your output to explicitly state your Camera View Orientation, Vehicle Side, and Visual Reasoning before listing any damage.
+   You MUST use the "cameraPath" (Jalur Perekaman) and "visualAnalysis" (Analisis Visual) fields in your output to explicitly state your Camera View Orientation, Vehicle Side, and Visual Reasoning before listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
 For EVERY damage you report, you MUST include an "orientationReason" field that explains:
