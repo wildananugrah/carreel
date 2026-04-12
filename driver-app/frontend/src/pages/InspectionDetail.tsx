@@ -3,7 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
-import type { InspectionDetail as InspectionDetailType } from "../lib/types";
+import type {
+  InspectionDetail as InspectionDetailType,
+  InspectionStatus,
+} from "../lib/types";
 
 type Tab = "pre" | "post" | "ai-alert";
 
@@ -694,6 +697,18 @@ function AIAlertPanel({
   const postKm = postSpeedoAI?.odometerKm ?? postInspection?.unit?.lastKnownKm;
   const kmDelta = preKm != null && postKm != null ? postKm - preKm : null;
 
+  // Hide KM tolerance warning once the post-trip inspection is complete —
+  // the warning is only actionable during/before submission, not after.
+  const postTripDoneStatuses: InspectionStatus[] = [
+    "AI_COMPLETE",
+    "UNDER_REVIEW",
+    "APPROVED",
+    "REJECTED",
+    "FLAGGED",
+  ];
+  const postTripCompleted =
+    postInspection != null && postTripDoneStatuses.includes(postInspection.status);
+
   const [seekLightbox, setSeekLightbox] = useState<{
     src: string;
     startTime: number;
@@ -726,7 +741,7 @@ function AIAlertPanel({
         </div>
       )}
 
-      {kmDelta != null && kmDelta > KM_TOLERANCE && (
+      {kmDelta != null && kmDelta > KM_TOLERANCE && !postTripCompleted && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-center mb-4">
           <p className="text-[11px] font-bold text-red-400">
             {"\u26A0\uFE0F"} KM delta melebihi toleransi ({KM_TOLERANCE} KM)
