@@ -4,9 +4,18 @@ import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
 import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
 import { TopBar } from "../components/layout/TopBar";
 import { Button } from "../components/ui/Button";
+import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
 import type { InspectionDetail } from "../lib/types";
+
+const DAMAGE_SEEK_ENABLED = import.meta.env.VITE_DAMAGE_SEEK_ENABLED === "true";
+
+function formatVideoTimestamp(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 const MIN_DURATION = Number(import.meta.env.VITE_VIDEO_MIN_DURATION) || 30;
 const MAX_DURATION = Number(import.meta.env.VITE_VIDEO_MAX_DURATION) || 180;
@@ -180,6 +189,10 @@ export function VideoReview() {
   const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
   const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
   const [showRecorder, setShowRecorder] = useState(false);
+  const [seekLightbox, setSeekLightbox] = useState<{
+    src: string;
+    startTime: number;
+  } | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -690,52 +703,78 @@ export function VideoReview() {
               {/* Pre-trip damages */}
               {unitData.damages.length > 0 && (
                 <div className="divide-y divide-[#2a2a2a]">
-                  {unitData.damages.map((d, idx) => (
-                    <div
-                      key={`pre-${d.area}-${d.location}-${idx}`}
-                      className="flex items-start gap-3 px-4 py-3"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
-                        <span className="text-lg">
-                          {d.severity === "MAJOR"
-                            ? "\u26A0\uFE0F"
-                            : d.severity === "MODERATE"
-                              ? "\uD83D\uDFE1"
-                              : "\uD83D\uDD35"}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-sm font-bold text-white">{damageLabel(d.area)}</p>
-                          <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                              d.severity === "MAJOR"
-                                ? "bg-red-500/20 text-red-400"
-                                : d.severity === "MODERATE"
-                                  ? "bg-yellow-500/20 text-yellow-400"
-                                  : "bg-blue-500/20 text-blue-400"
-                            }`}
-                          >
+                  {unitData.damages.map((d, idx) => {
+                    const canSeek =
+                      DAMAGE_SEEK_ENABLED &&
+                      unitData.bodyVideoMediaId != null &&
+                      typeof d.videoTimestamp === "number" &&
+                      d.videoTimestamp > 0;
+                    return (
+                      <div
+                        key={`pre-${d.area}-${d.location}-${idx}`}
+                        className="flex items-start gap-3 px-4 py-3"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
+                          <span className="text-lg">
                             {d.severity === "MAJOR"
-                              ? "Berat"
+                              ? "\u26A0\uFE0F"
                               : d.severity === "MODERATE"
-                                ? "Sedang"
-                                : "Ringan"}
+                                ? "\uD83D\uDFE1"
+                                : "\uD83D\uDD35"}
                           </span>
                         </div>
-                        {d.location && (
-                          <p className="text-[10px] text-neutral-400 mb-0.5">{d.location}</p>
-                        )}
-                        <p className="text-xs text-neutral-500">{d.description}</p>
-                        {d.videoTimestamp != null && d.videoTimestamp > 0 && (
-                          <p className="text-[10px] text-neutral-600 mt-0.5">
-                            {"\u23F1"} {Math.floor(d.videoTimestamp / 60)}:
-                            {String(Math.floor(d.videoTimestamp % 60)).padStart(2, "0")}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-bold text-white">
+                              {damageLabel(d.area)}
+                            </p>
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                d.severity === "MAJOR"
+                                  ? "bg-red-500/20 text-red-400"
+                                  : d.severity === "MODERATE"
+                                    ? "bg-yellow-500/20 text-yellow-400"
+                                    : "bg-blue-500/20 text-blue-400"
+                              }`}
+                            >
+                              {d.severity === "MAJOR"
+                                ? "Berat"
+                                : d.severity === "MODERATE"
+                                  ? "Sedang"
+                                  : "Ringan"}
+                            </span>
+                          </div>
+                          {d.location && (
+                            <p className="text-[10px] text-neutral-400 mb-0.5">
+                              {d.location}
+                            </p>
+                          )}
+                          <p className="text-xs text-neutral-500">{d.description}</p>
+                          {!canSeek &&
+                            d.videoTimestamp != null &&
+                            d.videoTimestamp > 0 && (
+                              <p className="text-[10px] text-neutral-600 mt-0.5">
+                                {"\u23F1"} {formatVideoTimestamp(d.videoTimestamp)}
+                              </p>
+                            )}
+                        </div>
+                        {canSeek && (
+                          <button
+                            type="button"
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center"
+                            onClick={() =>
+                              setSeekLightbox({
+                                src: `/api/media/${unitData.bodyVideoMediaId}/stream`,
+                                startTime: d.videoTimestamp as number,
+                              })
+                            }
+                          >
+                            {"\u25B6"} {formatVideoTimestamp(d.videoTimestamp as number)}
+                          </button>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -936,52 +975,79 @@ export function VideoReview() {
                   </div>
                 ) : aiFlags.length > 0 ? (
                   <div className="divide-y divide-[#2a2a2a]">
-                    {aiFlags.map((flag, idx) => (
-                      <div
-                        key={`${flag.area}-${flag.location}-${idx}`}
-                        className="flex items-start gap-3 px-4 py-3"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
-                          <span className="text-lg">
-                            {flag.severity === "MAJOR"
-                              ? "\u26A0\uFE0F"
-                              : flag.severity === "MODERATE"
-                                ? "\uD83D\uDFE1"
-                                : "\uD83D\uDD35"}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <p className="text-sm font-bold text-white">{damageLabel(flag.area)}</p>
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                                flag.severity === "MAJOR"
-                                  ? "bg-red-500/20 text-red-400"
-                                  : flag.severity === "MODERATE"
-                                    ? "bg-yellow-500/20 text-yellow-400"
-                                    : "bg-blue-500/20 text-blue-400"
-                              }`}
-                            >
+                    {aiFlags.map((flag, idx) => {
+                      const postVideoMediaId = bodyStep.mediaFiles[0]?.id;
+                      const canSeek =
+                        DAMAGE_SEEK_ENABLED &&
+                        postVideoMediaId != null &&
+                        typeof flag.videoTimestamp === "number" &&
+                        flag.videoTimestamp > 0;
+                      return (
+                        <div
+                          key={`${flag.area}-${flag.location}-${idx}`}
+                          className="flex items-start gap-3 px-4 py-3"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
+                            <span className="text-lg">
                               {flag.severity === "MAJOR"
-                                ? "Berat"
+                                ? "\u26A0\uFE0F"
                                 : flag.severity === "MODERATE"
-                                  ? "Sedang"
-                                  : "Ringan"}
+                                  ? "\uD83D\uDFE1"
+                                  : "\uD83D\uDD35"}
                             </span>
                           </div>
-                          {flag.location && (
-                            <p className="text-[10px] text-neutral-400 mb-0.5">{flag.location}</p>
-                          )}
-                          <p className="text-xs text-neutral-500">{flag.description}</p>
-                          {flag.videoTimestamp != null && flag.videoTimestamp > 0 && (
-                            <p className="text-[10px] text-neutral-600 mt-0.5">
-                              {"\u23F1"} {Math.floor(flag.videoTimestamp / 60)}:
-                              {String(Math.floor(flag.videoTimestamp % 60)).padStart(2, "0")}
-                            </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <p className="text-sm font-bold text-white">
+                                {damageLabel(flag.area)}
+                              </p>
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                  flag.severity === "MAJOR"
+                                    ? "bg-red-500/20 text-red-400"
+                                    : flag.severity === "MODERATE"
+                                      ? "bg-yellow-500/20 text-yellow-400"
+                                      : "bg-blue-500/20 text-blue-400"
+                                }`}
+                              >
+                                {flag.severity === "MAJOR"
+                                  ? "Berat"
+                                  : flag.severity === "MODERATE"
+                                    ? "Sedang"
+                                    : "Ringan"}
+                              </span>
+                            </div>
+                            {flag.location && (
+                              <p className="text-[10px] text-neutral-400 mb-0.5">
+                                {flag.location}
+                              </p>
+                            )}
+                            <p className="text-xs text-neutral-500">{flag.description}</p>
+                            {!canSeek &&
+                              flag.videoTimestamp != null &&
+                              flag.videoTimestamp > 0 && (
+                                <p className="text-[10px] text-neutral-600 mt-0.5">
+                                  {"\u23F1"} {formatVideoTimestamp(flag.videoTimestamp)}
+                                </p>
+                              )}
+                          </div>
+                          {canSeek && (
+                            <button
+                              type="button"
+                              className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center"
+                              onClick={() =>
+                                setSeekLightbox({
+                                  src: `/api/media/${postVideoMediaId}/stream`,
+                                  startTime: flag.videoTimestamp as number,
+                                })
+                              }
+                            >
+                              {"\u25B6"} {formatVideoTimestamp(flag.videoTimestamp as number)}
+                            </button>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="px-4 py-3 border-t border-[#2a2a2a]">
@@ -1173,6 +1239,16 @@ export function VideoReview() {
           unitName={unitName}
           onConfirm={handleSignatureConfirm}
           onCancel={() => setShowSignature(false)}
+        />
+      )}
+
+      {/* Damage seek video lightbox */}
+      {seekLightbox && (
+        <MediaLightbox
+          src={seekLightbox.src}
+          type="video"
+          startTime={seekLightbox.startTime}
+          onClose={() => setSeekLightbox(null)}
         />
       )}
 

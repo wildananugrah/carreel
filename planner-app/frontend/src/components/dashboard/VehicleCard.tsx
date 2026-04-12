@@ -92,87 +92,106 @@ export function VehicleCard({ vehicle, selected, onSelect }: VehicleCardProps) {
       }`}
       onClick={() => onSelect?.(vehicle)}
     >
-      {/* Row 1: name + plate | status badges */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-extrabold text-[#F0F0F0] mb-0.5 truncate">
-            {vehicle.unitName}
-          </p>
-          <p className="text-[11px] text-[#666]">{vehicle.licensePlate}</p>
-        </div>
-        <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
-          <span
-            className="text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap"
-            style={{
-              background: status.bg,
-              color: status.color,
-              border: `1px solid ${status.color}33`,
-            }}
-          >
-            {status.label}
-          </span>
-          {lowFuel && (
-            <span
-              className="text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap animate-pulse"
-              style={{
-                background: "#181200",
-                color: "#D4A800",
-                border: "1px solid #D4A80033",
-              }}
-            >
-              {"\u26FD"} {Math.round(vehicle.latestFuelLevelPct ?? 0)}% — Perlu Isi
-            </span>
+      <div className="flex gap-3">
+        {/* Thumbnail */}
+        <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center">
+          {vehicle.thumbnailMediaId ? (
+            <img
+              src={`/api/media/${vehicle.thumbnailMediaId}/url`}
+              alt={vehicle.unitName}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <span className="text-2xl opacity-30">{"\uD83D\uDE97"}</span>
           )}
         </div>
-      </div>
 
-      {/* Row 2: company + driver + km */}
-      <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-        {vehicle.company && (
-          <span
-            className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-            style={{
-              background: "#1a1a1a",
-              color: getCompanyStyle(vehicle.company).color,
-              border: `1px solid ${getCompanyStyle(vehicle.company).border}33`,
-            }}
-          >
-            {vehicle.company}
-          </span>
-        )}
-        <span className="text-[10px] text-[#666]">Driver: {vehicle.driverName ?? "--"}</span>
-        <span className="text-[10px] text-[#666]">
-          {"\u00B7"} KM {formatKm(vehicle.lastKnownKm)}
-        </span>
-      </div>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Row 1: name + plate | status badges */}
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-extrabold text-[#F0F0F0] mb-0.5 truncate">
+                {vehicle.unitName}
+              </p>
+              <p className="text-[11px] text-[#666]">{vehicle.licensePlate}</p>
+            </div>
+            <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
+              <span
+                className="text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap"
+                style={{
+                  background: status.bg,
+                  color: status.color,
+                  border: `1px solid ${status.color}33`,
+                }}
+              >
+                {status.label}
+              </span>
+              {lowFuel && (
+                <span
+                  className="text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap animate-pulse"
+                  style={{
+                    background: "#181200",
+                    color: "#D4A800",
+                    border: "1px solid #D4A80033",
+                  }}
+                >
+                  {"\u26FD"} {Math.round(vehicle.latestFuelLevelPct ?? 0)}% — Perlu Isi
+                </span>
+              )}
+            </div>
+          </div>
 
-      {/* Row 3: timestamps + TTD + alerts */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {vehicle.preTrip && (
-          <span className="text-[10px] text-[#F5C518]">
-            {"\uD83D\uDCF7"} {formatDate(vehicle.preTrip.startedAt)}
-          </span>
-        )}
-        {vehicle.postTrip && (
-          <span className="text-[10px] text-[#A8A8A8]">
-            {"\uD83C\uDFA5"} {formatDate(vehicle.postTrip.startedAt)}
-          </span>
-        )}
-        {ttdDone && (
-          <span className="text-[10px] text-[#F5C518]">
-            {"\u270D\uFE0F"} TTD {"\u2713"}
-          </span>
-        )}
-        {ttdPending && !ttdDone && (
-          <span className="text-[10px] text-[#D4A800] animate-pulse">
-            {"\u270D\uFE0F"} TTD Pending
-          </span>
-        )}
-        {vehicle.hasAlerts && vehicle.alertCount > 0 && (
-          <span className="text-[10px] text-[#D4A800] font-bold animate-pulse">
-            {"\u26A0\uFE0F"} {vehicle.alertCount} Alert
-          </span>
-        )}
+          {/* Row 2: company + driver + km */}
+          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+            {vehicle.company && (
+              <span
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                style={{
+                  background: "#1a1a1a",
+                  color: getCompanyStyle(vehicle.company).color,
+                  border: `1px solid ${getCompanyStyle(vehicle.company).border}33`,
+                }}
+              >
+                {vehicle.company}
+              </span>
+            )}
+            <span className="text-[10px] text-[#666]">Driver: {vehicle.driverName ?? "--"}</span>
+            <span className="text-[10px] text-[#666]">
+              {"\u00B7"} KM {formatKm(vehicle.lastKnownKm)}
+            </span>
+          </div>
+
+          {/* Row 3: timestamps + TTD + alerts */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {vehicle.preTrip && (
+              <span className="text-[10px] text-[#F5C518]">
+                {"\uD83D\uDCF7"} {formatDate(vehicle.preTrip.startedAt)}
+              </span>
+            )}
+            {vehicle.postTrip && (
+              <span className="text-[10px] text-[#A8A8A8]">
+                {"\uD83C\uDFA5"} {formatDate(vehicle.postTrip.startedAt)}
+              </span>
+            )}
+            {ttdDone && (
+              <span className="text-[10px] text-[#F5C518]">
+                {"\u270D\uFE0F"} TTD {"\u2713"}
+              </span>
+            )}
+            {ttdPending && !ttdDone && (
+              <span className="text-[10px] text-[#D4A800] animate-pulse">
+                {"\u270D\uFE0F"} TTD Pending
+              </span>
+            )}
+            {vehicle.hasAlerts && vehicle.alertCount > 0 && (
+              <span className="text-[10px] text-[#D4A800] font-bold animate-pulse">
+                {"\u26A0\uFE0F"} {vehicle.alertCount} Alert
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </button>
   );

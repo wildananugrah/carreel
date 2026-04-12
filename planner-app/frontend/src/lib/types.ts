@@ -207,6 +207,7 @@ export interface DashboardVehicleCard {
   alertCount: number;
   hasDamageAlerts: boolean;
   damageAlertCount: number;
+  thumbnailMediaId: string | null;
 }
 
 export interface DashboardOverviewResponse {

@@ -126,9 +126,27 @@ export class DashboardRepository implements IDashboardRepository {
       include: {
         driver: { select: { fullName: true } },
         unit: true,
+        steps: {
+          where: { stepType: "UNIT_IDENTIFICATION" },
+          select: {
+            mediaFiles: {
+              select: { id: true },
+              orderBy: { createdAt: "asc" as const },
+              take: 1,
+            },
+          },
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" as const },
     });
+
+    // Build inspectionId -> thumbnailMediaId lookup
+    const thumbnailByInspectionId = new Map<string, string>();
+    for (const insp of inspections) {
+      const mediaId = insp.steps[0]?.mediaFiles[0]?.id;
+      if (mediaId) thumbnailByInspectionId.set(insp.id, mediaId);
+    }
 
     const allInspectionIds = inspections.map((i) => i.id);
 
@@ -241,6 +259,7 @@ export class DashboardRepository implements IDashboardRepository {
         alertCount: pairAlertCount,
         hasDamageAlerts: pairDamageAlertCount > 0,
         damageAlertCount: pairDamageAlertCount,
+        thumbnailMediaId: thumbnailByInspectionId.get(insp.id) ?? null,
       });
     }
 
@@ -272,6 +291,7 @@ export class DashboardRepository implements IDashboardRepository {
         alertCount: alertCountMap.get(insp.id) ?? 0,
         hasDamageAlerts: (damageAlertCountMap.get(insp.id) ?? 0) > 0,
         damageAlertCount: damageAlertCountMap.get(insp.id) ?? 0,
+        thumbnailMediaId: thumbnailByInspectionId.get(insp.id) ?? null,
       });
     }
 
