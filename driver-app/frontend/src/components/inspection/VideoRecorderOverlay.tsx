@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTorch } from "../../hooks/useTorch";
 import { VideoGuidanceOverlay } from "./VideoGuidanceOverlay";
 
 type OverlayStatus = "requesting" | "previewing" | "recording" | "stopped";
@@ -45,6 +46,9 @@ export function VideoRecorderOverlay({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [activeStream, setActiveStream] = useState<MediaStream | null>(null);
+
+  const torch = useTorch(activeStream);
 
   const canStop = elapsedSeconds >= minDuration;
 
@@ -53,6 +57,7 @@ export function VideoRecorderOverlay({
       for (const track of streamRef.current.getTracks()) track.stop();
       streamRef.current = null;
     }
+    setActiveStream(null);
   }, []);
 
   const clearTimer = useCallback(() => {
@@ -73,6 +78,7 @@ export function VideoRecorderOverlay({
         audio: false,
       });
       streamRef.current = stream;
+      setActiveStream(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true;
@@ -198,6 +204,35 @@ export function VideoRecorderOverlay({
           <div className="absolute inset-0 flex items-center justify-center px-8">
             <p className="text-red-400 text-sm text-center">{err}</p>
           </div>
+        )}
+
+        {/* Torch (flashlight) toggle — only shown when supported by device */}
+        {torch.available && status !== "stopped" && (
+          <button
+            type="button"
+            onClick={torch.toggle}
+            className={`absolute top-3 right-3 w-11 h-11 rounded-full flex items-center justify-center transition-colors z-10 ${
+              torch.enabled
+                ? "bg-yellow-400 text-black"
+                : "bg-black/50 text-white border border-white/30"
+            }`}
+            aria-label={torch.enabled ? "Matikan senter" : "Nyalakan senter"}
+          >
+            <svg
+              aria-hidden="true"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </button>
         )}
 
         {/* REC indicator */}

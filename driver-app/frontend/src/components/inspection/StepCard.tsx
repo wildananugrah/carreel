@@ -1,5 +1,6 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTorch } from "../../hooks/useTorch";
 import { api } from "../../lib/api";
 import type { InspectionStep } from "../../lib/types";
 import { MediaLightbox } from "../ui/MediaLightbox";
@@ -79,12 +80,16 @@ function CameraOverlay({
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState("");
+  const [activeStream, setActiveStream] = useState<MediaStream | null>(null);
+
+  const torch = useTorch(activeStream);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) {
       for (const track of streamRef.current.getTracks()) track.stop();
       streamRef.current = null;
     }
+    setActiveStream(null);
   }, []);
 
   const startCamera = useCallback(async () => {
@@ -98,6 +103,7 @@ function CameraOverlay({
         audio: false,
       });
       streamRef.current = stream;
+      setActiveStream(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true;
@@ -150,6 +156,36 @@ function CameraOverlay({
       {/* Camera preview */}
       <div className="flex-1 relative overflow-hidden">
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+
+        {/* Torch (flashlight) toggle — only shown when supported by device */}
+        {torch.available && (
+          <button
+            type="button"
+            onClick={torch.toggle}
+            className={`absolute top-3 right-3 w-11 h-11 rounded-full flex items-center justify-center transition-colors z-10 ${
+              torch.enabled
+                ? "bg-yellow-400 text-black"
+                : "bg-black/50 text-white border border-white/30"
+            }`}
+            aria-label={torch.enabled ? "Matikan senter" : "Nyalakan senter"}
+          >
+            <svg
+              aria-hidden="true"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </button>
+        )}
+
         {!ready && !err && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-spin w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full" />
