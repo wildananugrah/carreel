@@ -170,8 +170,19 @@ External APIs (Gemini, MinIO, etc.) are wrapped in a **provider** behind an inte
 ```typescript
 // interfaces/providers/ai.provider.interface.ts
 export interface IAIProvider {
-  analyzeImage(base64: string, mimeType: string, prompt: string): Promise<string>;
-  analyzeVideo(fileUri: string, mimeType: string, prompt: string): Promise<string>;
+  analyzeImage(
+    base64: string,
+    mimeType: string,
+    prompt: string,
+    systemInstruction?: string,
+  ): Promise<string>;
+  analyzeVideo(
+    fileUri: string,
+    mimeType: string,
+    prompt: string,
+    systemInstruction?: string,
+  ): Promise<string>;
+  uploadVideoFile(filePath: string, mimeType: string): Promise<string>;
 }
 ```
 
@@ -187,29 +198,98 @@ export class GeminiProvider implements IAIProvider {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
-  async analyzeImage(base64: string, mimeType: string, prompt: string) {
+  async analyzeImage(
+    base64: string,
+    mimeType: string,
+    prompt: string,
+    systemInstruction?: string,
+  ) {
     const response = await this.ai.models.generateContent({
       model: this.model,
       contents: [
         { inlineData: { mimeType, data: base64 } },
         { text: prompt },
       ],
+      config: {
+        temperature: 0.0,
+        ...(systemInstruction && { systemInstruction }),
+      },
     });
     return response.text ?? "";
   }
 
-  async analyzeVideo(fileUri: string, mimeType: string, prompt: string) {
+  async analyzeVideo(
+    fileUri: string,
+    mimeType: string,
+    prompt: string,
+    systemInstruction?: string,
+  ) {
     const response = await this.ai.models.generateContent({
       model: this.model,
       contents: createUserContent([
         createPartFromUri(fileUri, mimeType),
         prompt,
       ]),
+      config: {
+        temperature: 0.0,
+        ...(systemInstruction && { systemInstruction }),
+      },
     });
     return response.text ?? "";
   }
 }
 ```
+
+### System Instruction vs User Prompt (AI Prompt Split)
+
+All AI prompts are split into **two parts** and passed separately to the provider:
+
+| Part | Contents | Where it goes |
+|------|----------|---------------|
+| `systemInstruction` | Static rules: role definition, detection protocols, enum dictionaries, severity definitions, response format templates, scanning rules | Gemini SDK's `config.systemInstruction` — treated as foundational behavior |
+| `userPrompt` | Dynamic per-request data: vehicle context (make/model/color/plate), action trigger ("Analyze this image") | Gemini SDK's `contents` field alongside the image/video |
+
+**Why this split matters:**
+- Stronger rule adherence — system instructions are processed at the model level, not competing with media in the user context
+- Cleaner audit trail — vehicle data is visible in `userPrompt`, rules are stable in `systemInstruction`
+- Potential caching benefits — Gemini can cache repeated system instructions
+- Easier to reason about — rules and data don't mix
+
+**Prompt builders return `PromptPair`:**
+
+```typescript
+// utils/prompts.ts
+export interface PromptPair {
+  systemInstruction: string;
+  userPrompt: string;
+}
+
+export function buildStepPrompt(
+  stepType: StepType,
+  vehicle?: VehicleContext | null,
+): PromptPair {
+  // ...
+}
+```
+
+**Job handlers destructure and pass both parts:**
+
+```typescript
+const { systemInstruction, userPrompt } = buildStepPrompt(stepType, vehicleContext);
+
+const rawResponse = await this.aiProvider.analyzeImage(
+  base64,
+  primaryMedia.mimeType,
+  userPrompt,         // dynamic per-request content
+  systemInstruction,  // static rules (goes to config.systemInstruction)
+);
+```
+
+**Rules:**
+- **Never put vehicle-specific values (make/model/color/plate) in `systemInstruction`** — these are dynamic and belong in `userPrompt`.
+- **Never put static rules/protocols/enums in `userPrompt`** — these belong in `systemInstruction` so they don't bloat per-request payloads.
+- **When persisting the prompt** for audit (`promptUsed` in `AIAnalysis`), concatenate both parts as `[SYSTEM]\n${systemInstruction}\n\n[USER]\n${userPrompt}` so the full context is recoverable.
+- **The `systemInstruction` parameter is optional on the interface** for backward compatibility, but all current prompt builders return a `PromptPair` and all callers pass both parts.
 
 ### Async Processing Pattern (pgboss + WebSocket)
 
@@ -246,10 +326,17 @@ export class ValidationJob {
     const inspection = await this.inspectionRepository.findById(jobData.inspectionId);
     if (!inspection) return;
 
+    // Prompts are split into system instruction (static rules) + user prompt (dynamic data)
+    const { systemInstruction, userPrompt } = buildStepPrompt(
+      inspection.stepType,
+      inspection.vehicleContext,
+    );
+
     const result = await this.aiProvider.analyzeImage(
       inspection.imageBase64,
       inspection.mimeType,
-      "Inspect this car for damage. List all visible damage with severity.",
+      userPrompt,
+      systemInstruction,
     );
 
     await this.inspectionRepository.updateStatus(inspection.id, "completed", result);
