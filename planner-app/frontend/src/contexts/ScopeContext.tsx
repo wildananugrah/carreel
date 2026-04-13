@@ -1,17 +1,26 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
-import { api } from "../lib/api";
-import type { UserScope } from "../lib/types";
+import { api, getToken } from "../lib/api";
+import { useAuth } from "../lib/auth";
+import type { User, UserScope } from "../lib/types";
 
 /**
  * ScopeContext provides the current user's UserScope to all components.
- * Fetches GET /api/auth/me on mount and extracts scope from the response.
  *
- * The /me endpoint returns { ...profile, scope } — we keep only the scope.
- * Profile data is handled by the existing AuthProvider.
+ * Reads scope from the authenticated user (AuthProvider already fetches
+ * /api/auth/me which returns { ...profile, scope }). Exposes refreshScope()
+ * for components that need to re-fetch after admin mutations (e.g. when
+ * a new project membership is added).
  *
- * Call refreshScope() after admin mutations (e.g. adding a member to a
- * project) to reflect the change in the current user's permissions.
+ * IMPORTANT: This provider does NOT fetch /me on its own — that would
+ * trigger an auth redirect loop on the login page. It waits for
+ * AuthProvider to provide the authenticated user.
  */
 
 interface ScopeContextValue {
@@ -26,32 +35,37 @@ const ScopeContext = createContext<ScopeContextValue>({
   refreshScope: async () => {},
 });
 
-interface MeResponse {
-  scope?: UserScope;
-  // other fields ignored — handled by AuthProvider
-}
-
 export function ScopeProvider({ children }: { children: ReactNode }) {
+  const { user, isLoading: authLoading, updateUser } = useAuth();
   const [scope, setScope] = useState<UserScope | null>(null);
-  const [loading, setLoading] = useState(true);
 
+  // Derive scope from the authenticated user
+  useEffect(() => {
+    if (user?.scope) {
+      setScope(user.scope);
+    } else {
+      setScope(null);
+    }
+  }, [user]);
+
+  // Re-fetch /me when an admin action changes permissions. Only safe to call
+  // when the user is authenticated (guarded by getToken check).
   const refreshScope = useCallback(async () => {
+    if (!getToken()) return;
     try {
-      const response = await api.get<MeResponse>("/api/auth/me");
+      const response = await api.get<User>("/api/auth/me");
+      updateUser(response);
       setScope(response.scope ?? null);
     } catch {
-      setScope(null);
-    } finally {
-      setLoading(false);
+      // Fail silently — if the refresh fails (e.g. token expired),
+      // the next authenticated request will trigger a 401 redirect.
     }
-  }, []);
-
-  useEffect(() => {
-    refreshScope();
-  }, [refreshScope]);
+  }, [updateUser]);
 
   return (
-    <ScopeContext.Provider value={{ scope, loading, refreshScope }}>
+    <ScopeContext.Provider
+      value={{ scope, loading: authLoading, refreshScope }}
+    >
       {children}
     </ScopeContext.Provider>
   );
