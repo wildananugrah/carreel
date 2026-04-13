@@ -1,8 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AppLayout } from "./components/layout/AppLayout";
+import { RequireSuperAdmin } from "./components/route-guards/RequireSuperAdmin";
 import { ScopeProvider } from "./contexts/ScopeContext";
 import { AuthProvider } from "./lib/auth";
+import { WorkspaceDetail } from "./pages/admin/WorkspaceDetail";
+import { WorkspaceList } from "./pages/admin/WorkspaceList";
 import { AlertList } from "./pages/AlertList";
 import { Dashboard } from "./pages/Dashboard";
 import { DriverList } from "./pages/DriverList";
@@ -27,6 +30,14 @@ export default function App() {
                 <Route path="/alerts" element={<AlertList />} />
                 <Route path="/drivers" element={<DriverList />} />
                 <Route path="/profile" element={<Profile />} />
+
+                <Route element={<RequireSuperAdmin />}>
+                  <Route path="/admin/workspaces" element={<WorkspaceList />} />
+                  <Route
+                    path="/admin/workspaces/:id"
+                    element={<WorkspaceDetail />}
+                  />
+                </Route>
               </Route>
             </Route>
 
