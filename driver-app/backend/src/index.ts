@@ -11,7 +11,6 @@ import { StepAnalysisJob } from "./jobs/step-analysis.job";
 // Middlewares
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
-import { HttpError } from "./utils/http-error";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import {
   GeminiProvider,
@@ -44,6 +43,7 @@ import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
 import { UploadService } from "./services/upload.service";
 import type { AppEnv } from "./types/dto";
+import { HttpError } from "./utils/http-error";
 
 // ========================
 // Wire Dependencies

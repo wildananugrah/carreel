@@ -9,7 +9,12 @@ import type {
   UpdateProfileDTO,
   UserResponse,
 } from "../types/dto";
-import { badRequest, conflict, notFound, unauthorized } from "../utils/http-error";
+import {
+  badRequest,
+  conflict,
+  notFound,
+  unauthorized,
+} from "../utils/http-error";
 import { signToken } from "../utils/jwt";
 
 export class AuthService implements IAuthService {

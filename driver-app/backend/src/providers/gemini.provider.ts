@@ -25,7 +25,6 @@ export class GeminiProvider implements IAIProvider {
       model: this.model,
       contents: [{ inlineData: { mimeType, data: base64 } }, { text: prompt }],
       config: {
-    
         ...(systemInstruction && { systemInstruction }),
       },
     });

@@ -7,7 +7,6 @@ import { PrismaClient } from "./generated/prisma";
 // Middlewares
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
-import { HttpError } from "./utils/http-error";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import { MinIOProvider } from "./providers/minio.provider";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
@@ -55,6 +54,7 @@ import { ProjectService } from "./services/project.service";
 import { ProjectMemberService } from "./services/project-member.service";
 import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
+import { HttpError } from "./utils/http-error";
 
 // ========================
 // Wire Dependencies
