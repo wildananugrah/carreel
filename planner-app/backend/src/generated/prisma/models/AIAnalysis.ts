@@ -48,6 +48,7 @@ export type AIAnalysisMinAggregateOutputType = {
   status: $Enums.AIAnalysisStatus | null
   errorMessage: string | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type AIAnalysisMaxAggregateOutputType = {
@@ -62,6 +63,7 @@ export type AIAnalysisMaxAggregateOutputType = {
   status: $Enums.AIAnalysisStatus | null
   errorMessage: string | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type AIAnalysisCountAggregateOutputType = {
@@ -77,6 +79,7 @@ export type AIAnalysisCountAggregateOutputType = {
   status: number
   errorMessage: number
   createdAt: number
+  projectId: number
   _all: number
 }
 
@@ -103,6 +106,7 @@ export type AIAnalysisMinAggregateInputType = {
   status?: true
   errorMessage?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type AIAnalysisMaxAggregateInputType = {
@@ -117,6 +121,7 @@ export type AIAnalysisMaxAggregateInputType = {
   status?: true
   errorMessage?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type AIAnalysisCountAggregateInputType = {
@@ -132,6 +137,7 @@ export type AIAnalysisCountAggregateInputType = {
   status?: true
   errorMessage?: true
   createdAt?: true
+  projectId?: true
   _all?: true
 }
 
@@ -234,6 +240,7 @@ export type AIAnalysisGroupByOutputType = {
   status: $Enums.AIAnalysisStatus
   errorMessage: string | null
   createdAt: Date
+  projectId: string
   _count: AIAnalysisCountAggregateOutputType | null
   _avg: AIAnalysisAvgAggregateOutputType | null
   _sum: AIAnalysisSumAggregateOutputType | null
@@ -272,6 +279,7 @@ export type AIAnalysisWhereInput = {
   status?: Prisma.EnumAIAnalysisStatusFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
+  projectId?: Prisma.StringFilter<"AIAnalysis"> | string
   step?: Prisma.XOR<Prisma.InspectionStepScalarRelationFilter, Prisma.InspectionStepWhereInput>
   mediaFile?: Prisma.XOR<Prisma.MediaFileNullableScalarRelationFilter, Prisma.MediaFileWhereInput> | null
 }
@@ -289,6 +297,7 @@ export type AIAnalysisOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   step?: Prisma.InspectionStepOrderByWithRelationInput
   mediaFile?: Prisma.MediaFileOrderByWithRelationInput
 }
@@ -309,6 +318,7 @@ export type AIAnalysisWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumAIAnalysisStatusFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
+  projectId?: Prisma.StringFilter<"AIAnalysis"> | string
   step?: Prisma.XOR<Prisma.InspectionStepScalarRelationFilter, Prisma.InspectionStepWhereInput>
   mediaFile?: Prisma.XOR<Prisma.MediaFileNullableScalarRelationFilter, Prisma.MediaFileWhereInput> | null
 }, "id" | "stepId">
@@ -326,6 +336,7 @@ export type AIAnalysisOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   _count?: Prisma.AIAnalysisCountOrderByAggregateInput
   _avg?: Prisma.AIAnalysisAvgOrderByAggregateInput
   _max?: Prisma.AIAnalysisMaxOrderByAggregateInput
@@ -349,6 +360,7 @@ export type AIAnalysisScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumAIAnalysisStatusWithAggregatesFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableWithAggregatesFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AIAnalysis"> | Date | string
+  projectId?: Prisma.StringWithAggregatesFilter<"AIAnalysis"> | string
 }
 
 export type AIAnalysisCreateInput = {
@@ -362,6 +374,7 @@ export type AIAnalysisCreateInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
   step: Prisma.InspectionStepCreateNestedOneWithoutAiAnalysisInput
   mediaFile?: Prisma.MediaFileCreateNestedOneWithoutAiAnalysesInput
 }
@@ -379,6 +392,7 @@ export type AIAnalysisUncheckedCreateInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type AIAnalysisUpdateInput = {
@@ -392,6 +406,7 @@ export type AIAnalysisUpdateInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   step?: Prisma.InspectionStepUpdateOneRequiredWithoutAiAnalysisNestedInput
   mediaFile?: Prisma.MediaFileUpdateOneWithoutAiAnalysesNestedInput
 }
@@ -409,6 +424,7 @@ export type AIAnalysisUncheckedUpdateInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type AIAnalysisCreateManyInput = {
@@ -424,6 +440,7 @@ export type AIAnalysisCreateManyInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type AIAnalysisUpdateManyMutationInput = {
@@ -437,6 +454,7 @@ export type AIAnalysisUpdateManyMutationInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type AIAnalysisUncheckedUpdateManyInput = {
@@ -452,6 +470,7 @@ export type AIAnalysisUncheckedUpdateManyInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type AIAnalysisNullableScalarRelationFilter = {
@@ -482,6 +501,7 @@ export type AIAnalysisCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type AIAnalysisAvgOrderByAggregateInput = {
@@ -501,6 +521,7 @@ export type AIAnalysisMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type AIAnalysisMinOrderByAggregateInput = {
@@ -515,6 +536,7 @@ export type AIAnalysisMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type AIAnalysisSumOrderByAggregateInput = {
@@ -611,6 +633,7 @@ export type AIAnalysisCreateWithoutStepInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
   mediaFile?: Prisma.MediaFileCreateNestedOneWithoutAiAnalysesInput
 }
 
@@ -626,6 +649,7 @@ export type AIAnalysisUncheckedCreateWithoutStepInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type AIAnalysisCreateOrConnectWithoutStepInput = {
@@ -655,6 +679,7 @@ export type AIAnalysisUpdateWithoutStepInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaFile?: Prisma.MediaFileUpdateOneWithoutAiAnalysesNestedInput
 }
 
@@ -670,6 +695,7 @@ export type AIAnalysisUncheckedUpdateWithoutStepInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type AIAnalysisCreateWithoutMediaFileInput = {
@@ -683,6 +709,7 @@ export type AIAnalysisCreateWithoutMediaFileInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
   step: Prisma.InspectionStepCreateNestedOneWithoutAiAnalysisInput
 }
 
@@ -698,6 +725,7 @@ export type AIAnalysisUncheckedCreateWithoutMediaFileInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type AIAnalysisCreateOrConnectWithoutMediaFileInput = {
@@ -742,6 +770,7 @@ export type AIAnalysisScalarWhereInput = {
   status?: Prisma.EnumAIAnalysisStatusFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
+  projectId?: Prisma.StringFilter<"AIAnalysis"> | string
 }
 
 export type AIAnalysisCreateManyMediaFileInput = {
@@ -756,6 +785,7 @@ export type AIAnalysisCreateManyMediaFileInput = {
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type AIAnalysisUpdateWithoutMediaFileInput = {
@@ -769,6 +799,7 @@ export type AIAnalysisUpdateWithoutMediaFileInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   step?: Prisma.InspectionStepUpdateOneRequiredWithoutAiAnalysisNestedInput
 }
 
@@ -784,6 +815,7 @@ export type AIAnalysisUncheckedUpdateWithoutMediaFileInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type AIAnalysisUncheckedUpdateManyWithoutMediaFileInput = {
@@ -798,6 +830,7 @@ export type AIAnalysisUncheckedUpdateManyWithoutMediaFileInput = {
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -815,6 +848,7 @@ export type AIAnalysisSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
+  projectId?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }, ExtArgs["result"]["aIAnalysis"]>
@@ -832,6 +866,7 @@ export type AIAnalysisSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
+  projectId?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }, ExtArgs["result"]["aIAnalysis"]>
@@ -849,6 +884,7 @@ export type AIAnalysisSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
+  projectId?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
 }, ExtArgs["result"]["aIAnalysis"]>
@@ -866,9 +902,10 @@ export type AIAnalysisSelectScalar = {
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }
 
-export type AIAnalysisOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "mediaFileId" | "aiModel" | "promptUsed" | "rawResponse" | "structuredData" | "confidenceScore" | "processingTimeMs" | "status" | "errorMessage" | "createdAt", ExtArgs["result"]["aIAnalysis"]>
+export type AIAnalysisOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "mediaFileId" | "aiModel" | "promptUsed" | "rawResponse" | "structuredData" | "confidenceScore" | "processingTimeMs" | "status" | "errorMessage" | "createdAt" | "projectId", ExtArgs["result"]["aIAnalysis"]>
 export type AIAnalysisInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
@@ -901,6 +938,7 @@ export type $AIAnalysisPayload<ExtArgs extends runtime.Types.Extensions.Internal
     status: $Enums.AIAnalysisStatus
     errorMessage: string | null
     createdAt: Date
+    projectId: string
   }, ExtArgs["result"]["aIAnalysis"]>
   composites: {}
 }
@@ -1338,6 +1376,7 @@ export interface AIAnalysisFieldRefs {
   readonly status: Prisma.FieldRef<"AIAnalysis", 'AIAnalysisStatus'>
   readonly errorMessage: Prisma.FieldRef<"AIAnalysis", 'String'>
   readonly createdAt: Prisma.FieldRef<"AIAnalysis", 'DateTime'>
+  readonly projectId: Prisma.FieldRef<"AIAnalysis", 'String'>
 }
     
 

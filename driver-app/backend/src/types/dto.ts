@@ -4,6 +4,7 @@ import type {
   StepType,
   TripType,
 } from "../generated/prisma";
+import type { UserScope } from "./scope";
 
 // ========================
 // HONO APP ENV
@@ -13,6 +14,7 @@ export type AppEnv = {
   Variables: {
     userId: string;
     userRole: string;
+    scope?: UserScope;
   };
 };
 

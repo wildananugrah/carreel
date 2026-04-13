@@ -8,6 +8,7 @@ import type {
   InspectionSummary,
   PaginatedResponse,
 } from "../../types/dto";
+import type { UserScope } from "../../types/scope";
 
 export interface LinkedInspectionSummary {
   id: string;
@@ -57,12 +58,21 @@ export interface InspectionDetailWithRelations extends Inspection {
 }
 
 export interface IInspectionRepository {
-  findById(id: string): Promise<InspectionDetailWithRelations | null>;
+  findById(
+    scope: UserScope,
+    id: string,
+  ): Promise<InspectionDetailWithRelations | null>;
   findAll(
+    scope: UserScope,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionSummary>>;
-  updateStatus(id: string, status: InspectionStatus): Promise<Inspection>;
+  updateStatus(
+    scope: UserScope,
+    id: string,
+    status: InspectionStatus,
+  ): Promise<Inspection>;
   findCounterpart(
+    scope: UserScope,
     unitId: string,
     tripType: string,
     excludeId: string,

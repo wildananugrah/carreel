@@ -6,20 +6,34 @@ import type {
   MediaFileResponse,
   UploadStatusResponse,
 } from "../../types/dto";
+import type { UserScope } from "../../types/scope";
 
 export interface IChunkedUploadService {
   initiate(
+    scope: UserScope,
     driverId: string,
     dto: ChunkedUploadInitDTO,
   ): Promise<ChunkedUploadInitResponse>;
   uploadChunk(
+    scope: UserScope,
     sessionId: string,
     driverId: string,
     partNumber: number,
     data: Buffer,
   ): Promise<ChunkUploadResult>;
-  complete(sessionId: string, driverId: string): Promise<MediaFileResponse>;
-  cancel(sessionId: string, driverId: string): Promise<void>;
-  getStatus(sessionId: string, driverId: string): Promise<UploadStatusResponse>;
-  getActiveUploads(driverId: string): Promise<UploadSession[]>;
+  complete(
+    scope: UserScope,
+    sessionId: string,
+    driverId: string,
+  ): Promise<MediaFileResponse>;
+  cancel(scope: UserScope, sessionId: string, driverId: string): Promise<void>;
+  getStatus(
+    scope: UserScope,
+    sessionId: string,
+    driverId: string,
+  ): Promise<UploadStatusResponse>;
+  getActiveUploads(
+    scope: UserScope,
+    driverId: string,
+  ): Promise<UploadSession[]>;
 }

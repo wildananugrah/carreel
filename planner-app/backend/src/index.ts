@@ -7,19 +7,34 @@ import { PrismaClient } from "./generated/prisma";
 // Middlewares
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
+import { HttpError } from "./utils/http-error";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import { MinIOProvider } from "./providers/minio.provider";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
 // Providers
 import { WinstonLogger } from "./providers/winston-logger.provider";
+import { AdminUserRepository } from "./repositories/admin-user.repository";
 import { AlertRepository } from "./repositories/alert.repository";
 import { AuditLogRepository } from "./repositories/audit-log.repository";
 import { DashboardRepository } from "./repositories/dashboard.repository";
+import { DriverAssignmentRepository } from "./repositories/driver-assignment.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
+import { ProjectRepository } from "./repositories/project.repository";
+import { ProjectMemberRepository } from "./repositories/project-member.repository";
 import { ReviewRepository } from "./repositories/review.repository";
+import { ScopeRepository } from "./repositories/scope.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
+import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
+import { createDriverAssignmentRoutes } from "./routes/admin/assignment.route";
+import { createProjectMemberRoutes } from "./routes/admin/member.route";
+import {
+  createProjectRoutes,
+  createWorkspaceProjectRoutes,
+} from "./routes/admin/project.route";
+import { createAdminUserRoutes } from "./routes/admin/user.route";
+import { createWorkspaceRoutes } from "./routes/admin/workspace.route";
 import { createAlertRoutes } from "./routes/alert.route";
 import { createAuthRoutes } from "./routes/auth.route";
 import { createDashboardRoutes } from "./routes/dashboard.route";
@@ -29,11 +44,16 @@ import { createInspectionRoutes } from "./routes/inspection.route";
 import { createMediaRoutes } from "./routes/media.route";
 import { createUploadRoutes } from "./routes/upload.route";
 // Services
+import { AdminUserService } from "./services/admin-user.service";
 import { AlertService } from "./services/alert.service";
 import { AuthService } from "./services/auth.service";
 import { DashboardService } from "./services/dashboard.service";
+import { DriverAssignmentService } from "./services/driver-assignment.service";
 import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
+import { ProjectService } from "./services/project.service";
+import { ProjectMemberService } from "./services/project-member.service";
+import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
 
 // ========================
@@ -69,6 +89,12 @@ const inspectionRepository = new InspectionRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
 const auditLogRepository = new AuditLogRepository(prisma);
+const scopeRepository = new ScopeRepository(prisma);
+const workspaceRepository = new WorkspaceRepository(prisma);
+const projectRepository = new ProjectRepository(prisma);
+const projectMemberRepository = new ProjectMemberRepository(prisma);
+const driverAssignmentRepository = new DriverAssignmentRepository(prisma);
+const adminUserRepository = new AdminUserRepository(prisma);
 
 // Services
 const authService = new AuthService(
@@ -93,9 +119,18 @@ const dashboardService = new DashboardService(prisma, dashboardRepository);
 
 const mediaStreamService = new MediaStreamService(prisma, storageProvider);
 
+const workspaceService = new WorkspaceService(workspaceRepository);
+const projectService = new ProjectService(projectRepository);
+const projectMemberService = new ProjectMemberService(projectMemberRepository);
+const driverAssignmentService = new DriverAssignmentService(
+  driverAssignmentRepository,
+);
+const adminUserService = new AdminUserService(adminUserRepository);
+
 // Middlewares
 const authMiddleware = createAuthMiddleware(
   process.env.JWT_SECRET ?? "dev-jwt-secret",
+  scopeRepository,
 );
 
 // ========================
@@ -115,6 +150,35 @@ app.use(
 );
 app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
+// Note: scope is loaded INSIDE authMiddleware (per route) — not as a separate
+// global middleware — because Hono runs global middlewares before per-route
+// auth, so a global scope middleware would see no userId yet.
+
+// Hono's official error boundary — catches any error thrown from routes/middlewares.
+// HttpError instances become JSON responses with their status + message.
+// Everything else becomes a 500 "Internal server error".
+app.onError((err, c) => {
+  // HttpError → use its status and message
+  if (err instanceof HttpError) {
+    logger.warn("HTTP error", {
+      error: err.message,
+      status: err.status,
+      path: c.req.path,
+    });
+    return c.json(
+      { error: err.message },
+      err.status as 400 | 401 | 403 | 404 | 409,
+    );
+  }
+
+  // Unknown error → 500 with a generic message, log the stack for debugging
+  logger.error("Unhandled exception", {
+    error: err.message,
+    stack: err.stack,
+    path: c.req.path,
+  });
+  return c.json({ error: "Internal server error" }, 500);
+});
 
 // Routes
 app.route("/health", createHealthRoutes(prisma, storageProvider));
@@ -131,6 +195,30 @@ app.route(
 app.route("/api/drivers", createDriverRoutes(userRepository, authMiddleware));
 app.route("/api/upload", createUploadRoutes(storageProvider, authMiddleware));
 app.route("/api/media", createMediaRoutes(mediaStreamService));
+app.route(
+  "/api/admin/workspaces",
+  createWorkspaceRoutes(workspaceService, authMiddleware),
+);
+app.route(
+  "/api/admin/workspaces/:workspaceId/projects",
+  createWorkspaceProjectRoutes(projectService, authMiddleware),
+);
+app.route(
+  "/api/admin/projects",
+  createProjectRoutes(projectService, authMiddleware),
+);
+app.route(
+  "/api/admin/projects/:projectId/members",
+  createProjectMemberRoutes(projectMemberService, authMiddleware),
+);
+app.route(
+  "/api/admin/projects/:projectId/assignments",
+  createDriverAssignmentRoutes(driverAssignmentService, authMiddleware),
+);
+app.route(
+  "/api/admin/users",
+  createAdminUserRoutes(adminUserService, authMiddleware),
+);
 
 // ========================
 // Start Server

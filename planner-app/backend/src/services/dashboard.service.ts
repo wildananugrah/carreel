@@ -6,6 +6,8 @@ import type {
   DashboardOverviewQuery,
   DashboardOverviewResponse,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
+import { buildScopeFilter } from "../utils/scope-filter";
 
 export class DashboardService implements IDashboardService {
   constructor(
@@ -13,9 +15,40 @@ export class DashboardService implements IDashboardService {
     private dashboardRepository: IDashboardRepository,
   ) {}
 
-  async getKPIs(): Promise<DashboardKPIs> {
+  async getKPIs(scope: UserScope): Promise<DashboardKPIs> {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const inspectionScope = buildScopeFilter(scope, {
+      includeDriverFilter: true,
+    });
+
+    // Pre-fetch allowed inspection IDs for alert queries
+    // (Alert has no `inspection` relation in the Prisma client — filter via inspectionId).
+    let allowedAlertInspectionIds: string[] | null;
+    if (scope.systemRole === "SUPER_ADMIN") {
+      allowedAlertInspectionIds = null;
+    } else {
+      const inspections = await this.prisma.inspection.findMany({
+        where: inspectionScope as never,
+        select: { id: true },
+      });
+      allowedAlertInspectionIds = inspections.map((i) => i.id);
+    }
+
+    const buildAlertWhere = (extra: Record<string, unknown>) => {
+      if (allowedAlertInspectionIds === null) return extra;
+      if (allowedAlertInspectionIds.length === 0) {
+        return { ...extra, id: "__scope-empty__" };
+      }
+      return { ...extra, inspectionId: { in: allowedAlertInspectionIds } };
+    };
+
+    // AI analyses also need scope filtering — they have projectId but no driverId,
+    // so we use includeDriverFilter: false.
+    const aiAnalysisScope = buildScopeFilter(scope, {
+      includeDriverFilter: false,
+    });
 
     const [
       statusGroups,
@@ -28,24 +61,36 @@ export class DashboardService implements IDashboardService {
     ] = await Promise.all([
       this.prisma.inspection.groupBy({
         by: ["status"],
+        where: inspectionScope as never,
         _count: { id: true },
       }),
-      this.prisma.inspection.count(),
+      this.prisma.inspection.count({
+        where: inspectionScope as never,
+      }),
       this.prisma.aIAnalysis.aggregate({
         _avg: { confidenceScore: true },
-        where: { status: "SUCCESS" },
+        where: {
+          AND: [aiAnalysisScope, { status: "SUCCESS" }],
+        } as never,
       }),
       this.prisma.inspection.count({
-        where: { createdAt: { gte: oneDayAgo } },
+        where: {
+          AND: [inspectionScope, { createdAt: { gte: oneDayAgo } }],
+        } as never,
       }),
       this.prisma.inspection.count({
-        where: { status: "AI_COMPLETE" },
+        where: {
+          AND: [inspectionScope, { status: "AI_COMPLETE" }],
+        } as never,
       }),
       this.prisma.alert.groupBy({
         by: ["alertType"],
+        where: buildAlertWhere({}) as never,
         _count: { id: true },
       }),
-      this.prisma.alert.count({ where: { isRead: false } }),
+      this.prisma.alert.count({
+        where: buildAlertWhere({ isRead: false }) as never,
+      }),
     ]);
 
     const inspectionsByStatus: Record<string, number> = {};
@@ -70,12 +115,13 @@ export class DashboardService implements IDashboardService {
   }
 
   async getOverview(
+    scope: UserScope,
     query: DashboardOverviewQuery,
   ): Promise<DashboardOverviewResponse> {
     const [kpis, alertBanners, vehicles] = await Promise.all([
-      this.dashboardRepository.getOverviewKPIs(),
-      this.dashboardRepository.getAlertBanners(),
-      this.dashboardRepository.getVehicleCards(query),
+      this.dashboardRepository.getOverviewKPIs(scope),
+      this.dashboardRepository.getAlertBanners(scope),
+      this.dashboardRepository.getVehicleCards(scope, query),
     ]);
     return { kpis, alertBanners, vehicles };
   }

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { IMediaStreamService } from "../interfaces/services/media-stream.service.interface";
 import type { IUploadService } from "../interfaces/services/upload.service.interface";
+import { SYSTEM_SCOPE } from "../utils/system-scope";
 
 export function createMediaRoutes(
   uploadService: IUploadService,
@@ -29,6 +30,7 @@ export function createMediaRoutes(
   // No auth required: used by <img src="/api/media/:id/url"> tags.
   app.get("/:id/url", async (c) => {
     const { buffer, mimeType } = await uploadService.getMediaData(
+      SYSTEM_SCOPE,
       c.req.param("id"),
     );
     return new Response(buffer as unknown as BodyInit, {
@@ -44,6 +46,7 @@ export function createMediaRoutes(
   app.get("/:id/stream", async (c) => {
     const rangeHeader = c.req.header("range");
     const info = await mediaStreamService.getVideoStream(
+      SYSTEM_SCOPE,
       c.req.param("id"),
       rangeHeader,
     );

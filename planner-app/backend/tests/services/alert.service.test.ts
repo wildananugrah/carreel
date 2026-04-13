@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import type { Alert } from "../../src/generated/prisma";
 import type { IAlertRepository } from "../../src/interfaces/repositories/alert.repository.interface";
 import { AlertService } from "../../src/services/alert.service";
+import type { UserScope } from "../../src/types/scope";
+import { makeSuperAdminScope } from "../helpers/test-scope";
 
 function createMockAlert(overrides: Partial<Alert> = {}): Alert {
   return {
@@ -12,12 +14,13 @@ function createMockAlert(overrides: Partial<Alert> = {}): Alert {
     isRead: false,
     createdAt: new Date(),
     ...overrides,
-  };
+  } as Alert;
 }
 
 describe("AlertService", () => {
   let alertService: AlertService;
   let alerts: Map<string, Alert>;
+  const scope: UserScope = makeSuperAdminScope();
 
   beforeEach(() => {
     alerts = new Map();
@@ -41,7 +44,7 @@ describe("AlertService", () => {
     );
 
     const mockAlertRepo: IAlertRepository = {
-      findAll: async (query) => {
+      findAll: async (_scope: UserScope, query) => {
         let filtered = [...alerts.values()];
         if (query.isRead !== undefined) {
           filtered = filtered.filter((a) => a.isRead === query.isRead);
@@ -56,13 +59,13 @@ describe("AlertService", () => {
           limit: query.limit ?? 20,
         };
       },
-      markAsRead: async (id: string) => {
+      markAsRead: async (_scope: UserScope, id: string) => {
         const alert = alerts.get(id)!;
         const updated = { ...alert, isRead: true };
         alerts.set(id, updated);
         return updated;
       },
-      markAllAsRead: async () => {
+      markAllAsRead: async (_scope: UserScope) => {
         let count = 0;
         for (const [id, alert] of alerts) {
           if (!alert.isRead) {
@@ -72,7 +75,7 @@ describe("AlertService", () => {
         }
         return count;
       },
-      countUnread: async () => {
+      countUnread: async (_scope: UserScope) => {
         return [...alerts.values()].filter((a) => !a.isRead).length;
       },
     };
@@ -81,34 +84,34 @@ describe("AlertService", () => {
   });
 
   test("list returns all alerts", async () => {
-    const result = await alertService.list({});
+    const result = await alertService.list(scope, {});
     expect(result.data).toHaveLength(3);
     expect(result.total).toBe(3);
   });
 
   test("list filters by isRead", async () => {
-    const unread = await alertService.list({ isRead: false });
+    const unread = await alertService.list(scope, { isRead: false });
     expect(unread.data).toHaveLength(2);
 
-    const read = await alertService.list({ isRead: true });
+    const read = await alertService.list(scope, { isRead: true });
     expect(read.data).toHaveLength(1);
   });
 
   test("markAsRead marks a single alert", async () => {
-    const updated = await alertService.markAsRead("alert-1");
+    const updated = await alertService.markAsRead(scope, "alert-1");
     expect(updated.isRead).toBe(true);
   });
 
   test("markAllAsRead marks all unread alerts", async () => {
-    const count = await alertService.markAllAsRead();
+    const count = await alertService.markAllAsRead(scope);
     expect(count).toBe(2);
 
-    const unread = await alertService.countUnread();
+    const unread = await alertService.countUnread(scope);
     expect(unread).toBe(0);
   });
 
   test("countUnread returns correct count", async () => {
-    const count = await alertService.countUnread();
+    const count = await alertService.countUnread(scope);
     expect(count).toBe(2);
   });
 });

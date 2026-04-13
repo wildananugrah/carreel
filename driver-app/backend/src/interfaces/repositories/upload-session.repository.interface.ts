@@ -3,6 +3,7 @@ import type {
   UploadSession,
   UploadSessionStatus,
 } from "../../generated/prisma";
+import type { UserScope } from "../../types/scope";
 
 export interface UploadSessionWithParts extends UploadSession {
   parts: UploadedPart[];
@@ -27,15 +28,33 @@ export interface CreateUploadSessionData {
 }
 
 export interface IUploadSessionRepository {
-  create(data: CreateUploadSessionData): Promise<UploadSession>;
-  findById(id: string): Promise<UploadSessionWithParts | null>;
-  findActiveByDriverId(driverId: string): Promise<UploadSession[]>;
+  create(
+    scope: UserScope,
+    data: CreateUploadSessionData,
+  ): Promise<UploadSession>;
+  findById(
+    scope: UserScope,
+    id: string,
+  ): Promise<UploadSessionWithParts | null>;
+  findActiveByDriverId(
+    scope: UserScope,
+    driverId: string,
+  ): Promise<UploadSession[]>;
   addPart(
+    scope: UserScope,
     sessionId: string,
     partNumber: number,
     etag: string,
     size: number,
   ): Promise<void>;
-  partExists(sessionId: string, partNumber: number): Promise<boolean>;
-  updateStatus(id: string, status: UploadSessionStatus): Promise<void>;
+  partExists(
+    scope: UserScope,
+    sessionId: string,
+    partNumber: number,
+  ): Promise<boolean>;
+  updateStatus(
+    scope: UserScope,
+    id: string,
+    status: UploadSessionStatus,
+  ): Promise<void>;
 }

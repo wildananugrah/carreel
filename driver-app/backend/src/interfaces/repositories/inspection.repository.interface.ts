@@ -14,6 +14,7 @@ import type {
   TripListQuery,
   UpdateInspectionDTO,
 } from "../../types/dto";
+import type { UserScope } from "../../types/scope";
 
 export interface LinkedInspectionSummary {
   id: string;
@@ -67,46 +68,78 @@ export interface InspectionListItem extends Inspection {
 }
 
 export interface IInspectionRepository {
-  create(driverId: string, data: CreateInspectionDTO): Promise<Inspection>;
+  create(scope: UserScope, data: CreateInspectionDTO): Promise<Inspection>;
   createWithSteps(
-    driverId: string,
+    scope: UserScope,
     data: CreateInspectionDTO,
   ): Promise<Inspection>;
-  findById(id: string): Promise<InspectionWithRelations | null>;
+  findById(
+    scope: UserScope,
+    id: string,
+  ): Promise<InspectionWithRelations | null>;
   findByDriverId(
+    scope: UserScope,
     driverId: string,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionListItem>>;
-  update(id: string, data: UpdateInspectionDTO): Promise<Inspection>;
-  updateStatus(id: string, status: InspectionStatus): Promise<Inspection>;
+  update(
+    scope: UserScope,
+    id: string,
+    data: UpdateInspectionDTO,
+  ): Promise<Inspection>;
+  updateStatus(
+    scope: UserScope,
+    id: string,
+    status: InspectionStatus,
+  ): Promise<Inspection>;
 
   createStep(
+    scope: UserScope,
     inspectionId: string,
     data: CreateStepDTO,
   ): Promise<InspectionStep>;
-  findStepById(stepId: string): Promise<InspectionStep | null>;
-  updateStepStatus(stepId: string, status: StepStatus): Promise<InspectionStep>;
+  findStepById(
+    scope: UserScope,
+    stepId: string,
+  ): Promise<InspectionStep | null>;
+  updateStepStatus(
+    scope: UserScope,
+    stepId: string,
+    status: StepStatus,
+  ): Promise<InspectionStep>;
 
-  delete(id: string): Promise<void>;
+  delete(scope: UserScope, id: string): Promise<void>;
 
-  findUnitByInspectionId(inspectionId: string): Promise<Unit | null>;
-  updateUnitKm(unitId: string, km: number): Promise<void>;
+  findUnitByInspectionId(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<Unit | null>;
+  updateUnitKm(scope: UserScope, unitId: string, km: number): Promise<void>;
   updateSignatureKey(
+    scope: UserScope,
     id: string,
     signatureKey: string,
     signerName: string,
   ): Promise<void>;
-  findOrCreateUnit(data: {
-    licensePlate: string;
-    make?: string | null;
-    model?: string | null;
-    color?: string | null;
-    vin?: string | null;
-    type?: string | null;
-  }): Promise<Unit>;
-  linkUnitToInspection(inspectionId: string, unitId: string): Promise<void>;
+  findOrCreateUnit(
+    scope: UserScope,
+    data: {
+      licensePlate: string;
+      make?: string | null;
+      model?: string | null;
+      color?: string | null;
+      vin?: string | null;
+      type?: string | null;
+    },
+  ): Promise<Unit>;
+  linkUnitToInspection(
+    scope: UserScope,
+    inspectionId: string,
+    unitId: string,
+  ): Promise<void>;
 
   findTripsByDriverId(
+    scope: UserScope,
     driverId: string,
     query: TripListQuery,
   ): Promise<TripGroupCard[]>;

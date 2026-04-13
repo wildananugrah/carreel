@@ -13,17 +13,21 @@ export function createDashboardRoutes(
 
   // GET /api/dashboard/kpis
   app.get("/kpis", async (c) => {
-    const kpis = await dashboardService.getKPIs();
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const kpis = await dashboardService.getKPIs(scope);
     return c.json(kpis);
   });
 
   // GET /api/dashboard/overview
   app.get("/overview", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const query = {
       tab: (c.req.query("tab") as DashboardTab | undefined) ?? "all",
       search: c.req.query("search") || undefined,
     };
-    const overview = await dashboardService.getOverview(query);
+    const overview = await dashboardService.getOverview(scope, query);
     return c.json(overview);
   });
 

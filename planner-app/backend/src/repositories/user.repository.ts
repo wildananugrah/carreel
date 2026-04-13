@@ -5,6 +5,7 @@ import type {
   IUserRepository,
 } from "../interfaces/repositories/user.repository.interface";
 import type { DriverListQuery, PaginatedResponse } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 export class UserRepository implements IUserRepository {
   constructor(private prisma: PrismaClient) {}
@@ -29,19 +30,50 @@ export class UserRepository implements IUserRepository {
   }
 
   async findDrivers(
+    scope: UserScope,
     query: DriverListQuery,
   ): Promise<PaginatedResponse<DriverWithInspectionCount>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = { role: "DRIVER" as const };
-    if (query.search) {
-      where.OR = [
-        { fullName: { contains: query.search, mode: "insensitive" } },
-        { email: { contains: query.search, mode: "insensitive" } },
-      ];
+    // Compute the set of visible driver IDs from the scope.
+    // SUPER_ADMIN has no restriction.
+    let visibleDriverIds: string[] | null = null;
+
+    if (scope.systemRole !== "SUPER_ADMIN") {
+      const ids = new Set<string>();
+      for (const p of scope.projects) {
+        if (p.projectRole === "PROJECT_ADMIN") {
+          const members = await this.prisma.projectMember.findMany({
+            where: { projectId: p.projectId, role: "DRIVER" },
+            select: { userId: true },
+          });
+          for (const m of members) ids.add(m.userId);
+        } else if (p.projectRole === "PLANNER") {
+          for (const id of p.assignedDriverIds) ids.add(id);
+        }
+      }
+      visibleDriverIds = [...ids];
+      if (visibleDriverIds.length === 0) {
+        return { data: [], total: 0, page, limit };
+      }
     }
+
+    const conditions: Record<string, unknown>[] = [{ role: "DRIVER" as const }];
+    if (visibleDriverIds !== null) {
+      conditions.push({ id: { in: visibleDriverIds } });
+    }
+    if (query.search) {
+      conditions.push({
+        OR: [
+          { fullName: { contains: query.search, mode: "insensitive" } },
+          { email: { contains: query.search, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    const where = { AND: conditions };
 
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({

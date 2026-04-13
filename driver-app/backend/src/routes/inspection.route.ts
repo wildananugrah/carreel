@@ -18,19 +18,23 @@ export function createInspectionRoutes(
   // POST /api/inspections
   app.post("/", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const body = await c.req.json();
-    const inspection = await inspectionService.create(userId, body);
+    const inspection = await inspectionService.create(scope, userId, body);
     return c.json(inspection, 201);
   });
 
   // GET /api/inspections
   app.get("/", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const status = c.req.query("status") as InspectionStatus | undefined;
     const search = c.req.query("search") || undefined;
     const page = Number(c.req.query("page")) || 1;
     const limit = Number(c.req.query("limit")) || 20;
-    const result = await inspectionService.list(userId, {
+    const result = await inspectionService.list(scope, userId, {
       status,
       search,
       page,
@@ -42,10 +46,12 @@ export function createInspectionRoutes(
   // GET /api/inspections/trips (grouped trip cards)
   app.get("/trips", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const tab = (c.req.query("tab") as TripTab | undefined) ?? "ALL";
     const search = c.req.query("search") || undefined;
     const limit = Number(c.req.query("limit")) || 50;
-    const trips = await inspectionService.listTrips(userId, {
+    const trips = await inspectionService.listTrips(scope, userId, {
       tab,
       search,
       limit,
@@ -56,7 +62,10 @@ export function createInspectionRoutes(
   // GET /api/inspections/:id
   app.get("/:id", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const inspection = await inspectionService.getById(
+      scope,
       c.req.param("id"),
       userId,
     );
@@ -66,8 +75,11 @@ export function createInspectionRoutes(
   // PATCH /api/inspections/:id
   app.patch("/:id", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const body = await c.req.json();
     const inspection = await inspectionService.update(
+      scope,
       c.req.param("id"),
       userId,
       body,
@@ -78,7 +90,10 @@ export function createInspectionRoutes(
   // POST /api/inspections/:id/analyze-photos (Phase 1: early AI for photo steps)
   app.post("/:id/analyze-photos", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const result = await inspectionService.analyzePhotos(
+      scope,
       c.req.param("id"),
       userId,
     );
@@ -88,7 +103,10 @@ export function createInspectionRoutes(
   // POST /api/inspections/:id/submit
   app.post("/:id/submit", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const inspection = await inspectionService.submit(
+      scope,
       c.req.param("id"),
       userId,
     );
@@ -98,14 +116,19 @@ export function createInspectionRoutes(
   // DELETE /api/inspections/:id
   app.delete("/:id", async (c) => {
     const userId = c.get("userId") as string;
-    await inspectionService.delete(c.req.param("id"), userId);
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    await inspectionService.delete(scope, c.req.param("id"), userId);
     return c.json({ success: true });
   });
 
   // GET /api/inspections/:id/pre-trip-data
   app.get("/:id/pre-trip-data", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const data = await inspectionService.getPreTripUnitData(
+      scope,
       c.req.param("id"),
       userId,
     );
@@ -115,6 +138,8 @@ export function createInspectionRoutes(
   // POST /api/inspections/:id/signature
   app.post("/:id/signature", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const formData = await c.req.formData();
 
     const file = formData.get("file") as File | null;
@@ -129,6 +154,7 @@ export function createInspectionRoutes(
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const result = await uploadService.uploadSignature(
+      scope,
       c.req.param("id"),
       userId,
       fileBuffer,
@@ -142,8 +168,11 @@ export function createInspectionRoutes(
   // POST /api/inspections/:id/end-trip
   app.post("/:id/end-trip", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const body = await c.req.json().catch(() => ({}));
     const postTrip = await inspectionService.createPostTrip(
+      scope,
       userId,
       c.req.param("id"),
       { latitude: body.latitude, longitude: body.longitude },
@@ -154,8 +183,11 @@ export function createInspectionRoutes(
   // PATCH /api/inspections/:id/steps/:stepId
   app.patch("/:id/steps/:stepId", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const { status } = await c.req.json();
     const step = await inspectionService.updateStepStatus(
+      scope,
       c.req.param("id"),
       c.req.param("stepId"),
       userId,
@@ -167,6 +199,8 @@ export function createInspectionRoutes(
   // POST /api/inspections/:id/steps/:stepId/media
   app.post("/:id/steps/:stepId/media", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const formData = await c.req.formData();
 
     const file = formData.get("file") as File | null;
@@ -194,6 +228,7 @@ export function createInspectionRoutes(
     };
 
     const result = await uploadService.uploadMedia(
+      scope,
       c.req.param("id"),
       c.req.param("stepId"),
       userId,
@@ -207,7 +242,10 @@ export function createInspectionRoutes(
   // DELETE /api/inspections/:id/steps/:stepId/media/:mediaId
   app.delete("/:id/steps/:stepId/media/:mediaId", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     await uploadService.deleteMedia(
+      scope,
       c.req.param("id"),
       c.req.param("stepId"),
       c.req.param("mediaId"),

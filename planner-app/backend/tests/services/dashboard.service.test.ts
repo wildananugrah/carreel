@@ -1,17 +1,36 @@
 import { describe, expect, test } from "bun:test";
 import type { IDashboardService } from "../../src/interfaces/services/dashboard.service.interface";
-import type { DashboardKPIs } from "../../src/types/dto";
+import type {
+  DashboardKPIs,
+  DashboardOverviewResponse,
+} from "../../src/types/dto";
+import type { UserScope } from "../../src/types/scope";
+import { makeSuperAdminScope } from "../helpers/test-scope";
 
 // DashboardService depends on PrismaClient directly for aggregation queries.
 // We test via a mock that implements the interface.
 
 function createMockDashboardService(kpis: DashboardKPIs): IDashboardService {
   return {
-    getKPIs: async () => kpis,
+    getKPIs: async (_scope: UserScope) => kpis,
+    getOverview: async (_scope: UserScope) =>
+      ({
+        kpis: {
+          activeUnits: 0,
+          preCheckComplete: 0,
+          postCheckComplete: 0,
+          aiAlerts: 0,
+          lowFuelCount: 0,
+        },
+        alertBanners: [],
+        vehicles: [],
+      }) as DashboardOverviewResponse,
   };
 }
 
 describe("DashboardService", () => {
+  const scope: UserScope = makeSuperAdminScope();
+
   test("getKPIs returns aggregated data", async () => {
     const mockKPIs: DashboardKPIs = {
       inspectionsByStatus: {
@@ -34,7 +53,7 @@ describe("DashboardService", () => {
     };
 
     const service = createMockDashboardService(mockKPIs);
-    const result = await service.getKPIs();
+    const result = await service.getKPIs(scope);
 
     expect(result.totalInspections).toBe(45);
     expect(result.avgConfidenceScore).toBe(0.87);
@@ -56,7 +75,7 @@ describe("DashboardService", () => {
     };
 
     const service = createMockDashboardService(emptyKPIs);
-    const result = await service.getKPIs();
+    const result = await service.getKPIs(scope);
 
     expect(result.totalInspections).toBe(0);
     expect(result.avgConfidenceScore).toBeNull();

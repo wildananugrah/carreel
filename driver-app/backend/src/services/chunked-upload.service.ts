@@ -12,6 +12,7 @@ import type {
   MediaFileResponse,
   UploadStatusResponse,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 const BUCKET_MAP: Record<string, string> = {
   IMAGE: "carreel-images",
@@ -36,11 +37,13 @@ export class ChunkedUploadService implements IChunkedUploadService {
   }
 
   async initiate(
+    scope: UserScope,
     driverId: string,
     dto: ChunkedUploadInitDTO,
   ): Promise<ChunkedUploadInitResponse> {
     // Verify ownership
     const inspection = await this.inspectionRepository.findById(
+      scope,
       dto.inspectionId,
     );
     if (!inspection) {
@@ -51,7 +54,10 @@ export class ChunkedUploadService implements IChunkedUploadService {
     }
 
     // Verify step exists
-    const step = await this.inspectionRepository.findStepById(dto.stepId);
+    const step = await this.inspectionRepository.findStepById(
+      scope,
+      dto.stepId,
+    );
     if (!step || step.inspectionId !== dto.inspectionId) {
       throw new Error("Step not found");
     }
@@ -77,7 +83,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
     const totalChunks = Math.ceil(dto.fileSize / this.chunkSize);
 
     // Create DB session
-    const session = await this.uploadSessionRepository.create({
+    const session = await this.uploadSessionRepository.create(scope, {
       driverId,
       inspectionId: dto.inspectionId,
       stepId: dto.stepId,
@@ -112,12 +118,16 @@ export class ChunkedUploadService implements IChunkedUploadService {
   }
 
   async uploadChunk(
+    scope: UserScope,
     sessionId: string,
     driverId: string,
     partNumber: number,
     data: Buffer,
   ): Promise<ChunkUploadResult> {
-    const session = await this.uploadSessionRepository.findById(sessionId);
+    const session = await this.uploadSessionRepository.findById(
+      scope,
+      sessionId,
+    );
     if (!session) {
       throw new Error("Upload session not found");
     }
@@ -130,6 +140,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
 
     // Idempotent: skip if part already uploaded
     const exists = await this.uploadSessionRepository.partExists(
+      scope,
       sessionId,
       partNumber,
     );
@@ -156,6 +167,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
 
     // Save part to DB
     await this.uploadSessionRepository.addPart(
+      scope,
       sessionId,
       partNumber,
       result.etag,
@@ -180,10 +192,14 @@ export class ChunkedUploadService implements IChunkedUploadService {
   }
 
   async complete(
+    scope: UserScope,
     sessionId: string,
     driverId: string,
   ): Promise<MediaFileResponse> {
-    const session = await this.uploadSessionRepository.findById(sessionId);
+    const session = await this.uploadSessionRepository.findById(
+      scope,
+      sessionId,
+    );
     if (!session) {
       throw new Error("Upload session not found");
     }
@@ -212,27 +228,36 @@ export class ChunkedUploadService implements IChunkedUploadService {
     );
 
     // Create MediaFile record
-    const mediaFile = await this.mediaFileRepository.create(session.stepId, {
-      fileName: session.fileName,
-      mimeType: session.mimeType,
-      fileSize: session.fileSize,
-      mediaType: "VIDEO",
-      minioKey: session.minioKey,
-      minioBucket: session.minioBucket,
-      latitude: session.latitude ?? undefined,
-      longitude: session.longitude ?? undefined,
-      capturedAt: session.capturedAt.toISOString(),
-      durationSeconds: session.durationSeconds ?? undefined,
-    });
+    const mediaFile = await this.mediaFileRepository.create(
+      scope,
+      session.stepId,
+      {
+        fileName: session.fileName,
+        mimeType: session.mimeType,
+        fileSize: session.fileSize,
+        mediaType: "VIDEO",
+        minioKey: session.minioKey,
+        minioBucket: session.minioBucket,
+        latitude: session.latitude ?? undefined,
+        longitude: session.longitude ?? undefined,
+        capturedAt: session.capturedAt.toISOString(),
+        durationSeconds: session.durationSeconds ?? undefined,
+      },
+    );
 
     // Update step status
     await this.inspectionRepository.updateStepStatus(
+      scope,
       session.stepId,
       "UPLOADED",
     );
 
     // Mark session as completed
-    await this.uploadSessionRepository.updateStatus(sessionId, "COMPLETED");
+    await this.uploadSessionRepository.updateStatus(
+      scope,
+      sessionId,
+      "COMPLETED",
+    );
 
     // Get presigned URL
     const presignedUrl = await this.storageProvider.getPresignedUrl(
@@ -259,8 +284,15 @@ export class ChunkedUploadService implements IChunkedUploadService {
     };
   }
 
-  async cancel(sessionId: string, driverId: string): Promise<void> {
-    const session = await this.uploadSessionRepository.findById(sessionId);
+  async cancel(
+    scope: UserScope,
+    sessionId: string,
+    driverId: string,
+  ): Promise<void> {
+    const session = await this.uploadSessionRepository.findById(
+      scope,
+      sessionId,
+    );
     if (!session) {
       throw new Error("Upload session not found");
     }
@@ -279,16 +311,24 @@ export class ChunkedUploadService implements IChunkedUploadService {
       // Ignore MinIO errors on abort — upload may already be gone
     }
 
-    await this.uploadSessionRepository.updateStatus(sessionId, "CANCELLED");
+    await this.uploadSessionRepository.updateStatus(
+      scope,
+      sessionId,
+      "CANCELLED",
+    );
 
     this.logger.info("Chunked upload cancelled", { sessionId });
   }
 
   async getStatus(
+    scope: UserScope,
     sessionId: string,
     driverId: string,
   ): Promise<UploadStatusResponse> {
-    const session = await this.uploadSessionRepository.findById(sessionId);
+    const session = await this.uploadSessionRepository.findById(
+      scope,
+      sessionId,
+    );
     if (!session) {
       throw new Error("Upload session not found");
     }
@@ -307,7 +347,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
     };
   }
 
-  async getActiveUploads(driverId: string) {
-    return this.uploadSessionRepository.findActiveByDriverId(driverId);
+  async getActiveUploads(scope: UserScope, driverId: string) {
+    return this.uploadSessionRepository.findActiveByDriverId(scope, driverId);
   }
 }

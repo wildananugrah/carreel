@@ -14,8 +14,10 @@ export function createUploadRoutes(
   // GET /api/upload/presigned/:key
   app.get("/presigned/*", async (c) => {
     const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const key = c.req.path.replace("/presigned/", "");
-    const url = await uploadService.getPresignedUrl(key, userId);
+    const url = await uploadService.getPresignedUrl(scope, key, userId);
     return c.json({ url });
   });
 

@@ -47,6 +47,13 @@ export type DateTimeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedDateTimeFilter<$PrismaModel> | Date | string
 }
 
+export type EnumSystemRoleFilter<$PrismaModel = never> = {
+  equals?: $Enums.SystemRole | Prisma.EnumSystemRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSystemRoleFilter<$PrismaModel> | $Enums.SystemRole
+}
+
 export type StringWithAggregatesFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -87,6 +94,16 @@ export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
+}
+
+export type EnumSystemRoleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SystemRole | Prisma.EnumSystemRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSystemRoleWithAggregatesFilter<$PrismaModel> | $Enums.SystemRole
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSystemRoleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSystemRoleFilter<$PrismaModel>
 }
 
 export type StringNullableFilter<$PrismaModel = never> = {
@@ -565,6 +582,23 @@ export type EnumOutboxEventStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumOutboxEventStatusFilter<$PrismaModel>
 }
 
+export type EnumProjectRoleFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectRole | Prisma.EnumProjectRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectRoleFilter<$PrismaModel> | $Enums.ProjectRole
+}
+
+export type EnumProjectRoleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectRole | Prisma.EnumProjectRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectRoleWithAggregatesFilter<$PrismaModel> | $Enums.ProjectRole
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProjectRoleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProjectRoleFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -595,6 +629,13 @@ export type NestedDateTimeFilter<$PrismaModel = never> = {
   gt?: Date | string | Prisma.DateTimeFieldRefInput<$PrismaModel>
   gte?: Date | string | Prisma.DateTimeFieldRefInput<$PrismaModel>
   not?: Prisma.NestedDateTimeFilter<$PrismaModel> | Date | string
+}
+
+export type NestedEnumSystemRoleFilter<$PrismaModel = never> = {
+  equals?: $Enums.SystemRole | Prisma.EnumSystemRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSystemRoleFilter<$PrismaModel> | $Enums.SystemRole
 }
 
 export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
@@ -647,6 +688,16 @@ export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
+}
+
+export type NestedEnumSystemRoleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SystemRole | Prisma.EnumSystemRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SystemRole[] | Prisma.ListEnumSystemRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSystemRoleWithAggregatesFilter<$PrismaModel> | $Enums.SystemRole
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSystemRoleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSystemRoleFilter<$PrismaModel>
 }
 
 export type NestedStringNullableFilter<$PrismaModel = never> = {
@@ -1062,6 +1113,23 @@ export type NestedEnumOutboxEventStatusWithAggregatesFilter<$PrismaModel = never
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumOutboxEventStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumOutboxEventStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumProjectRoleFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectRole | Prisma.EnumProjectRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectRoleFilter<$PrismaModel> | $Enums.ProjectRole
+}
+
+export type NestedEnumProjectRoleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectRole | Prisma.EnumProjectRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectRole[] | Prisma.ListEnumProjectRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectRoleWithAggregatesFilter<$PrismaModel> | $Enums.ProjectRole
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProjectRoleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProjectRoleFilter<$PrismaModel>
 }
 
 

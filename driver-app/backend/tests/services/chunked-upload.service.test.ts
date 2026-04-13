@@ -15,6 +15,8 @@ import type {
   UploadSessionWithParts,
 } from "../../src/interfaces/repositories/upload-session.repository.interface";
 import { ChunkedUploadService } from "../../src/services/chunked-upload.service";
+import type { UserScope } from "../../src/types/scope";
+import { makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -27,6 +29,7 @@ const mockLogger: ILogger = {
 const mockStep: InspectionStep = {
   id: "step-1",
   inspectionId: "insp-1",
+  projectId: "test-project",
   stepType: "BODY_INSPECTION",
   status: "PENDING",
   createdAt: new Date(),
@@ -36,6 +39,7 @@ const mockStep: InspectionStep = {
 const mockInspection: InspectionWithRelations = {
   id: "insp-1",
   driverId: "driver-1",
+  projectId: "test-project",
   unitId: null,
   tripType: "PRE_TRIP",
   status: "DRAFT",
@@ -46,6 +50,7 @@ const mockInspection: InspectionWithRelations = {
   longitude: null,
   signatureKey: null,
   signerName: null,
+  signedAt: null,
   driverComment: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -108,7 +113,7 @@ describe("ChunkedUploadService", () => {
     const sessions = new Map<string, UploadSessionWithParts>();
 
     mockSessionRepo = {
-      create: async (data) => {
+      create: async (_scope: UserScope, data) => {
         const session: UploadSessionWithParts = {
           id: "session-1",
           driverId: data.driverId,
@@ -134,9 +139,16 @@ describe("ChunkedUploadService", () => {
         sessions.set(session.id, session);
         return session;
       },
-      findById: async (id) => sessions.get(id) ?? null,
+      findById: async (_scope: UserScope, id: string) =>
+        sessions.get(id) ?? null,
       findActiveByDriverId: async () => [],
-      addPart: async (sessionId, partNumber, etag, size) => {
+      addPart: async (
+        _scope: UserScope,
+        sessionId: string,
+        partNumber: number,
+        etag: string,
+        size: number,
+      ) => {
         const session = sessions.get(sessionId);
         if (session) {
           session.parts.push({
@@ -149,11 +161,15 @@ describe("ChunkedUploadService", () => {
           });
         }
       },
-      partExists: async (sessionId, partNumber) => {
+      partExists: async (
+        _scope: UserScope,
+        sessionId: string,
+        partNumber: number,
+      ) => {
         const session = sessions.get(sessionId);
         return session?.parts.some((p) => p.partNumber === partNumber) ?? false;
       },
-      updateStatus: async (id, status) => {
+      updateStatus: async (_scope: UserScope, id: string, status) => {
         updatedStatuses.push({ id, status });
         const session = sessions.get(id);
         if (session) {
@@ -163,9 +179,10 @@ describe("ChunkedUploadService", () => {
     };
 
     mockMediaFileRepo = {
-      create: async (stepId, data) => ({
+      create: async (_scope: UserScope, stepId: string, data) => ({
         id: "media-1",
         stepId,
+        projectId: "test-project",
         fileName: data.fileName,
         mimeType: data.mimeType,
         fileSize: data.fileSize,
@@ -186,15 +203,19 @@ describe("ChunkedUploadService", () => {
     const updatedSteps: { stepId: string; status: string }[] = [];
 
     mockInspectionRepo = {
-      findById: async (id: string) => {
+      findById: async (_scope: UserScope, id: string) => {
         if (id === "insp-1") return mockInspection;
         return null;
       },
-      findStepById: async (stepId: string) => {
+      findStepById: async (_scope: UserScope, stepId: string) => {
         if (stepId === "step-1") return mockStep;
         return null;
       },
-      updateStepStatus: async (stepId: string, status: string) => {
+      updateStepStatus: async (
+        _scope: UserScope,
+        stepId: string,
+        status: string,
+      ) => {
         updatedSteps.push({ stepId, status });
         return { ...mockStep, status };
       },
@@ -211,7 +232,7 @@ describe("ChunkedUploadService", () => {
 
   describe("initiate", () => {
     test("creates session and returns init response", async () => {
-      const result = await service.initiate("driver-1", {
+      const result = await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -230,7 +251,7 @@ describe("ChunkedUploadService", () => {
 
     test("throws for non-existent inspection", async () => {
       expect(
-        service.initiate("driver-1", {
+        service.initiate(makeSuperAdminScope(), "driver-1", {
           inspectionId: "non-existent",
           stepId: "step-1",
           fileName: "video.mp4",
@@ -243,7 +264,7 @@ describe("ChunkedUploadService", () => {
 
     test("throws for wrong driver", async () => {
       expect(
-        service.initiate("driver-2", {
+        service.initiate(makeSuperAdminScope(), "driver-2", {
           inspectionId: "insp-1",
           stepId: "step-1",
           fileName: "video.mp4",
@@ -256,7 +277,7 @@ describe("ChunkedUploadService", () => {
 
     test("throws for non-existent step", async () => {
       expect(
-        service.initiate("driver-1", {
+        service.initiate(makeSuperAdminScope(), "driver-1", {
           inspectionId: "insp-1",
           stepId: "non-existent",
           fileName: "video.mp4",
@@ -268,7 +289,7 @@ describe("ChunkedUploadService", () => {
     });
 
     test("calculates correct totalChunks", async () => {
-      const result = await service.initiate("driver-1", {
+      const result = await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -283,7 +304,7 @@ describe("ChunkedUploadService", () => {
 
   describe("uploadChunk", () => {
     test("uploads chunk and saves part", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -293,6 +314,7 @@ describe("ChunkedUploadService", () => {
       });
 
       const result = await service.uploadChunk(
+        makeSuperAdminScope(),
         "session-1",
         "driver-1",
         1,
@@ -308,7 +330,7 @@ describe("ChunkedUploadService", () => {
     });
 
     test("is idempotent for already-uploaded parts", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -318,10 +340,17 @@ describe("ChunkedUploadService", () => {
       });
 
       // Upload chunk 1
-      await service.uploadChunk("session-1", "driver-1", 1, Buffer.alloc(1024));
+      await service.uploadChunk(
+        makeSuperAdminScope(),
+        "session-1",
+        "driver-1",
+        1,
+        Buffer.alloc(1024),
+      );
 
       // Upload chunk 1 again
       const result = await service.uploadChunk(
+        makeSuperAdminScope(),
         "session-1",
         "driver-1",
         1,
@@ -335,12 +364,18 @@ describe("ChunkedUploadService", () => {
 
     test("throws for non-existent session", async () => {
       expect(
-        service.uploadChunk("non-existent", "driver-1", 1, Buffer.alloc(1024)),
+        service.uploadChunk(
+          makeSuperAdminScope(),
+          "non-existent",
+          "driver-1",
+          1,
+          Buffer.alloc(1024),
+        ),
       ).rejects.toThrow("Upload session not found");
     });
 
     test("throws for wrong driver", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -350,14 +385,20 @@ describe("ChunkedUploadService", () => {
       });
 
       expect(
-        service.uploadChunk("session-1", "driver-2", 1, Buffer.alloc(1024)),
+        service.uploadChunk(
+          makeSuperAdminScope(),
+          "session-1",
+          "driver-2",
+          1,
+          Buffer.alloc(1024),
+        ),
       ).rejects.toThrow("Unauthorized");
     });
   });
 
   describe("complete", () => {
     test("completes upload and creates media file", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -367,19 +408,25 @@ describe("ChunkedUploadService", () => {
       });
 
       await service.uploadChunk(
+        makeSuperAdminScope(),
         "session-1",
         "driver-1",
         1,
         Buffer.alloc(5 * 1024 * 1024),
       );
       await service.uploadChunk(
+        makeSuperAdminScope(),
         "session-1",
         "driver-1",
         2,
         Buffer.alloc(5 * 1024 * 1024),
       );
 
-      const result = await service.complete("session-1", "driver-1");
+      const result = await service.complete(
+        makeSuperAdminScope(),
+        "session-1",
+        "driver-1",
+      );
 
       expect(result.id).toBe("media-1");
       expect(result.fileName).toBe("video.mp4");
@@ -393,7 +440,7 @@ describe("ChunkedUploadService", () => {
     });
 
     test("throws if not all chunks uploaded", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -404,27 +451,28 @@ describe("ChunkedUploadService", () => {
 
       // Only upload 1 of 2 chunks
       await service.uploadChunk(
+        makeSuperAdminScope(),
         "session-1",
         "driver-1",
         1,
         Buffer.alloc(5 * 1024 * 1024),
       );
 
-      expect(service.complete("session-1", "driver-1")).rejects.toThrow(
-        "Not all chunks uploaded",
-      );
+      expect(
+        service.complete(makeSuperAdminScope(), "session-1", "driver-1"),
+      ).rejects.toThrow("Not all chunks uploaded");
     });
 
     test("throws for non-existent session", async () => {
-      expect(service.complete("non-existent", "driver-1")).rejects.toThrow(
-        "Upload session not found",
-      );
+      expect(
+        service.complete(makeSuperAdminScope(), "non-existent", "driver-1"),
+      ).rejects.toThrow("Upload session not found");
     });
   });
 
   describe("cancel", () => {
     test("aborts MinIO upload and marks session cancelled", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -433,7 +481,7 @@ describe("ChunkedUploadService", () => {
         capturedAt: "2026-03-13T10:00:00.000Z",
       });
 
-      await service.cancel("session-1", "driver-1");
+      await service.cancel(makeSuperAdminScope(), "session-1", "driver-1");
 
       expect(abortedUploads.length).toBe(1);
       expect(updatedStatuses).toContainEqual({
@@ -443,7 +491,7 @@ describe("ChunkedUploadService", () => {
     });
 
     test("throws for wrong driver", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -452,15 +500,15 @@ describe("ChunkedUploadService", () => {
         capturedAt: "2026-03-13T10:00:00.000Z",
       });
 
-      expect(service.cancel("session-1", "driver-2")).rejects.toThrow(
-        "Unauthorized",
-      );
+      expect(
+        service.cancel(makeSuperAdminScope(), "session-1", "driver-2"),
+      ).rejects.toThrow("Unauthorized");
     });
   });
 
   describe("getStatus", () => {
     test("returns correct status info", async () => {
-      await service.initiate("driver-1", {
+      await service.initiate(makeSuperAdminScope(), "driver-1", {
         inspectionId: "insp-1",
         stepId: "step-1",
         fileName: "video.mp4",
@@ -470,13 +518,18 @@ describe("ChunkedUploadService", () => {
       });
 
       await service.uploadChunk(
+        makeSuperAdminScope(),
         "session-1",
         "driver-1",
         1,
         Buffer.alloc(5 * 1024 * 1024),
       );
 
-      const status = await service.getStatus("session-1", "driver-1");
+      const status = await service.getStatus(
+        makeSuperAdminScope(),
+        "session-1",
+        "driver-1",
+      );
 
       expect(status.sessionId).toBe("session-1");
       expect(status.status).toBe("IN_PROGRESS");

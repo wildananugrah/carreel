@@ -5,6 +5,7 @@ import type {
   InspectionSummary,
   PaginatedResponse,
 } from "../../types/dto";
+import type { UserScope } from "../../types/scope";
 import type { InspectionDetailWithRelations } from "../repositories/inspection.repository.interface";
 
 export interface InspectionComparison {
@@ -14,13 +15,18 @@ export interface InspectionComparison {
 
 export interface IInspectionService {
   list(
+    scope: UserScope,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionSummary>>;
-  getById(id: string): Promise<InspectionDetailWithRelations>;
+  getById(scope: UserScope, id: string): Promise<InspectionDetailWithRelations>;
   review(
+    scope: UserScope,
     inspectionId: string,
     reviewerId: string,
     data: CreateReviewDTO,
   ): Promise<InspectionReview>;
-  getComparison(inspectionId: string): Promise<InspectionComparison | null>;
+  getComparison(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<InspectionComparison | null>;
 }

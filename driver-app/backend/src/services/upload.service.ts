@@ -7,6 +7,7 @@ import type { IInspectionRepository } from "../interfaces/repositories/inspectio
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import type { IUploadService } from "../interfaces/services/upload.service.interface";
 import type { MediaFileResponse, UploadMediaDTO } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 const BUCKET_MAP: Record<string, string> = {
   IMAGE: "carreel-images",
@@ -26,6 +27,7 @@ export class UploadService implements IUploadService {
   ) {}
 
   async uploadMedia(
+    scope: UserScope,
     inspectionId: string,
     stepId: string,
     driverId: string,
@@ -33,7 +35,10 @@ export class UploadService implements IUploadService {
     meta: UploadMediaDTO,
   ): Promise<MediaFileResponse> {
     // Verify ownership
-    const inspection = await this.inspectionRepository.findById(inspectionId);
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -41,14 +46,17 @@ export class UploadService implements IUploadService {
       throw new Error("Unauthorized access to inspection");
     }
 
-    const step = await this.inspectionRepository.findStepById(stepId);
+    const step = await this.inspectionRepository.findStepById(scope, stepId);
     if (!step || step.inspectionId !== inspectionId) {
       throw new Error("Step not found");
     }
 
     // Unit Identification and Speedometer only accept images
     const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
-    if (IMAGE_ONLY_STEPS.includes(step.stepType) && meta.mimeType.startsWith("video/")) {
+    if (
+      IMAGE_ONLY_STEPS.includes(step.stepType) &&
+      meta.mimeType.startsWith("video/")
+    ) {
       throw new Error(`${step.stepType} only accepts image uploads, not video`);
     }
 
@@ -61,14 +69,14 @@ export class UploadService implements IUploadService {
     await this.storageProvider.upload(bucket, key, file, meta.mimeType);
 
     // Save to DB
-    const mediaFile = await this.mediaFileRepository.create(stepId, {
+    const mediaFile = await this.mediaFileRepository.create(scope, stepId, {
       ...meta,
       minioKey: key,
       minioBucket: bucket,
     });
 
     // Update step status to UPLOADED
-    await this.inspectionRepository.updateStepStatus(stepId, "UPLOADED");
+    await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
 
     this.logger.info("Media file uploaded", {
       mediaFileId: mediaFile.id,
@@ -116,14 +124,18 @@ export class UploadService implements IUploadService {
     };
   }
 
-  async getPresignedUrl(key: string, _driverId: string): Promise<string> {
+  async getPresignedUrl(
+    _scope: UserScope,
+    key: string,
+    _driverId: string,
+  ): Promise<string> {
     // Determine bucket from key path or default
     const bucket = key.includes("video") ? "carreel-videos" : "carreel-images";
     return this.storageProvider.getPresignedUrl(bucket, key);
   }
 
-  async getMediaUrl(mediaId: string): Promise<string> {
-    const media = await this.mediaFileRepository.findById(mediaId);
+  async getMediaUrl(scope: UserScope, mediaId: string): Promise<string> {
+    const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media) {
       throw new Error("Media file not found");
     }
@@ -134,9 +146,10 @@ export class UploadService implements IUploadService {
   }
 
   async getMediaData(
+    scope: UserScope,
     mediaId: string,
   ): Promise<{ buffer: Buffer; mimeType: string }> {
-    const media = await this.mediaFileRepository.findById(mediaId);
+    const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media) {
       throw new Error("Media file not found");
     }
@@ -156,24 +169,28 @@ export class UploadService implements IUploadService {
   }
 
   async deleteMedia(
+    scope: UserScope,
     inspectionId: string,
     stepId: string,
     mediaId: string,
     driverId: string,
   ): Promise<void> {
     // Verify ownership
-    const inspection = await this.inspectionRepository.findById(inspectionId);
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
     if (!inspection) throw new Error("Inspection not found");
     if (inspection.driverId !== driverId)
       throw new Error("Unauthorized access to inspection");
     if (inspection.status !== "DRAFT")
       throw new Error("Can only delete media from draft inspections");
 
-    const step = await this.inspectionRepository.findStepById(stepId);
+    const step = await this.inspectionRepository.findStepById(scope, stepId);
     if (!step || step.inspectionId !== inspectionId)
       throw new Error("Step not found");
 
-    const media = await this.mediaFileRepository.findById(mediaId);
+    const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media || media.stepId !== stepId)
       throw new Error("Media file not found");
 
@@ -189,34 +206,47 @@ export class UploadService implements IUploadService {
 
     // Delete AI analysis for this step (allows re-analysis on re-upload)
     if (this.aiAnalysisRepository) {
-      await this.aiAnalysisRepository.deleteByStepId(stepId).catch((e) => {
-        this.logger.warn("Failed to delete AI analysis", {
-          error: String(e),
-          stepId,
+      await this.aiAnalysisRepository
+        .deleteByStepId(scope, stepId)
+        .catch((e) => {
+          this.logger.warn("Failed to delete AI analysis", {
+            error: String(e),
+            stepId,
+          });
         });
-      });
     }
 
     // Delete DB record
-    await this.mediaFileRepository.deleteById(mediaId);
+    await this.mediaFileRepository.deleteById(scope, mediaId);
 
     // Reset step status to PENDING if no media left
-    const remaining = await this.mediaFileRepository.findByStepId(stepId);
+    const remaining = await this.mediaFileRepository.findByStepId(
+      scope,
+      stepId,
+    );
     if (remaining.length === 0) {
-      await this.inspectionRepository.updateStepStatus(stepId, "PENDING");
+      await this.inspectionRepository.updateStepStatus(
+        scope,
+        stepId,
+        "PENDING",
+      );
     }
 
     this.logger.info("Media file deleted", { mediaId, inspectionId, stepId });
   }
 
   async uploadSignature(
+    scope: UserScope,
     inspectionId: string,
     driverId: string,
     file: Buffer,
     mimeType: string,
     signerName: string,
   ): Promise<{ signatureKey: string }> {
-    const inspection = await this.inspectionRepository.findById(inspectionId);
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
     if (!inspection) throw new Error("Inspection not found");
     if (inspection.driverId !== driverId)
       throw new Error("Unauthorized access to inspection");
@@ -228,6 +258,7 @@ export class UploadService implements IUploadService {
 
     await this.storageProvider.upload(bucket, key, file, mimeType);
     await this.inspectionRepository.updateSignatureKey(
+      scope,
       inspectionId,
       key,
       signerName,

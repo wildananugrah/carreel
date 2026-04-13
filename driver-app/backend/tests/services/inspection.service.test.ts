@@ -7,6 +7,8 @@ import type {
   InspectionWithRelations,
 } from "../../src/interfaces/repositories/inspection.repository.interface";
 import { InspectionService } from "../../src/services/inspection.service";
+import type { UserScope } from "../../src/types/scope";
+import { makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -20,6 +22,7 @@ function createMockInspection(overrides: Partial<Inspection> = {}): Inspection {
   return {
     id: "insp-1",
     driverId: "driver-1",
+    projectId: "test-project",
     unitId: null,
     tripType: "PRE_TRIP",
     status: "DRAFT",
@@ -30,6 +33,7 @@ function createMockInspection(overrides: Partial<Inspection> = {}): Inspection {
     longitude: null,
     signatureKey: null,
     signerName: null,
+    signedAt: null,
     driverComment: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -50,6 +54,7 @@ function createMockSteps(
   return stepTypes.map((stepType, i) => ({
     id: `${inspectionId}-step-${i + 1}`,
     inspectionId,
+    projectId: "test-project",
     stepType,
     status: statusOverride ?? "PENDING",
     createdAt: new Date(),
@@ -82,10 +87,10 @@ describe("InspectionService", () => {
     steps = new Map();
 
     const mockRepo: IInspectionRepository = {
-      create: async (driverId, data) => {
+      create: async (scope: UserScope, data) => {
         const insp = createMockInspectionWithRelations({
           id: `insp-${inspections.size + 1}`,
-          driverId,
+          driverId: scope.userId,
           tripType: data.tripType,
           linkedInspectionId: data.linkedInspectionId ?? null,
           latitude: data.latitude ?? null,
@@ -94,8 +99,9 @@ describe("InspectionService", () => {
         inspections.set(insp.id, insp);
         return insp;
       },
-      createWithSteps: async (driverId, data) => {
+      createWithSteps: async (scope: UserScope, data) => {
         const id = `insp-${inspections.size + 1}`;
+        const driverId = scope.userId;
         const insp = createMockInspectionWithRelations({
           id,
           driverId,
@@ -119,8 +125,9 @@ describe("InspectionService", () => {
         }
         return insp;
       },
-      findById: async (id) => inspections.get(id) ?? null,
-      findByDriverId: async (driverId, query) => {
+      findById: async (_scope: UserScope, id: string) =>
+        inspections.get(id) ?? null,
+      findByDriverId: async (_scope: UserScope, driverId: string, query) => {
         const all = [...inspections.values()].filter(
           (i) => i.driverId === driverId,
         );
@@ -131,22 +138,23 @@ describe("InspectionService", () => {
           limit: query.limit ?? 20,
         };
       },
-      update: async (id, data) => {
+      update: async (_scope: UserScope, id: string, data) => {
         const insp = inspections.get(id)!;
         if (data.unitId !== undefined) insp.unitId = data.unitId!;
         if (data.driverComment !== undefined)
           (insp as any).driverComment = data.driverComment!;
         return insp;
       },
-      updateStatus: async (id, status) => {
+      updateStatus: async (_scope: UserScope, id: string, status) => {
         const insp = inspections.get(id)!;
         (insp as any).status = status;
         return insp;
       },
-      createStep: async (inspectionId, data) => {
+      createStep: async (_scope: UserScope, inspectionId: string, data) => {
         const step: InspectionStep = {
           id: `step-${steps.size + 1}`,
           inspectionId,
+          projectId: "test-project",
           stepType: data.stepType,
           status: "PENDING",
           createdAt: new Date(),
@@ -155,19 +163,20 @@ describe("InspectionService", () => {
         steps.set(step.id, step);
         return step;
       },
-      findStepById: async (stepId) => steps.get(stepId) ?? null,
-      updateStepStatus: async (stepId, status) => {
+      findStepById: async (_scope: UserScope, stepId: string) =>
+        steps.get(stepId) ?? null,
+      updateStepStatus: async (_scope: UserScope, stepId: string, status) => {
         const step = steps.get(stepId)!;
         (step as any).status = status;
         return step;
       },
-      delete: async (id) => {
+      delete: async (_scope: UserScope, id: string) => {
         inspections.delete(id);
       },
       findUnitByInspectionId: async () => null,
       updateUnitKm: async () => {},
       updateSignatureKey: async () => {},
-      findOrCreateUnit: async (data) =>
+      findOrCreateUnit: async (_scope: UserScope, data) =>
         ({
           id: "unit-1",
           ...data,
@@ -187,11 +196,19 @@ describe("InspectionService", () => {
   });
 
   test("create inspection auto-creates 3 steps", async () => {
-    const result = await service.create("driver-1", { tripType: "PRE_TRIP" });
+    const result = await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     expect(result.id).toBe("insp-1");
     expect(result.driverId).toBe("driver-1");
     expect(result.status).toBe("DRAFT");
-    const detail = await service.getById(result.id, "driver-1");
+    const detail = await service.getById(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      result.id,
+      "driver-1",
+    );
     expect(detail.steps.length).toBe(3);
     expect(detail.steps.map((s) => s.stepType)).toEqual([
       "UNIT_IDENTIFICATION",
@@ -201,82 +218,166 @@ describe("InspectionService", () => {
   });
 
   test("getById returns inspection for correct driver", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    const result = await service.getById("insp-1", "driver-1");
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
+    const result = await service.getById(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
     expect(result.id).toBe("insp-1");
   });
 
   test("getById throws for wrong driver", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    expect(service.getById("insp-1", "driver-2")).rejects.toThrow(
-      "Unauthorized",
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
     );
+    expect(
+      service.getById(
+        makeSuperAdminScope({ userId: "driver-2" }),
+        "insp-1",
+        "driver-2",
+      ),
+    ).rejects.toThrow("Unauthorized");
   });
 
   test("getById throws for non-existent inspection", async () => {
-    expect(service.getById("non-existent", "driver-1")).rejects.toThrow(
-      "not found",
-    );
+    expect(
+      service.getById(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "non-existent",
+        "driver-1",
+      ),
+    ).rejects.toThrow("not found");
   });
 
   test("list returns paginated results", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    const result = await service.list("driver-1", { page: 1, limit: 10 });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
+    const result = await service.list(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { page: 1, limit: 10 },
+    );
     expect(result.total).toBe(2);
     expect(result.data.length).toBe(2);
   });
 
   test("update inspection", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    const result = await service.update("insp-1", "driver-1", {
-      unitId: "unit-1",
-    });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
+    const result = await service.update(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+      {
+        unitId: "unit-1",
+      },
+    );
     expect(result.unitId).toBe("unit-1");
   });
 
   test("update throws for non-DRAFT inspection", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     // Mark steps as UPLOADED and set signature so submit passes
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
     expect(
-      service.update("insp-1", "driver-1", { unitId: "unit-1" }),
+      service.update(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+        { unitId: "unit-1" },
+      ),
     ).rejects.toThrow("Only DRAFT");
   });
 
   test("submit changes status to PENDING_AI when all steps uploaded", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     // Mark all steps as UPLOADED and set signature
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    const result = await service.submit("insp-1", "driver-1");
+    const result = await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
     expect(result.status).toBe("PENDING_AI");
   });
 
   test("submit throws when steps are still PENDING", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    expect(service.submit("insp-1", "driver-1")).rejects.toThrow(
-      "All steps must have media uploaded",
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
     );
+    expect(
+      service.submit(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("All steps must have media uploaded");
   });
 
   test("submit throws for already submitted inspection", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
-    expect(service.submit("insp-1", "driver-1")).rejects.toThrow("Only DRAFT");
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
+    expect(
+      service.submit(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("Only DRAFT");
   });
 
   test("submit enqueues jobs for UPLOADED steps when jobQueue provided", async () => {
@@ -337,7 +438,7 @@ describe("InspectionService", () => {
         limit: 20,
       }),
       update: async () => inspWithSteps,
-      updateStatus: async (_id, status) => {
+      updateStatus: async (_scope: UserScope, _id: string, status) => {
         (inspWithSteps as any).status = status;
         return inspWithSteps;
       },
@@ -348,7 +449,7 @@ describe("InspectionService", () => {
       findUnitByInspectionId: async () => null,
       updateUnitKm: async () => {},
       updateSignatureKey: async () => {},
-      findOrCreateUnit: async (data) =>
+      findOrCreateUnit: async (_scope: UserScope, data) =>
         ({
           id: "unit-1",
           ...data,
@@ -369,7 +470,11 @@ describe("InspectionService", () => {
       mockLogger,
       mockJobQueue,
     );
-    await svcWithQueue.submit("insp-jobs", "driver-1");
+    await svcWithQueue.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-jobs",
+      "driver-1",
+    );
 
     expect(enqueuedJobs.length).toBe(3);
     expect(enqueuedJobs[0].queue).toBe("step-analysis");
@@ -379,100 +484,214 @@ describe("InspectionService", () => {
   });
 
   test("createPostTrip creates linked POST_TRIP", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     // Mark steps as UPLOADED, set signature, submit
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
 
-    const postTrip = await service.createPostTrip("driver-1", "insp-1", {});
+    const postTrip = await service.createPostTrip(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      "insp-1",
+      {},
+    );
     expect(postTrip.tripType).toBe("POST_TRIP");
     expect(postTrip.linkedInspectionId).toBe("insp-1");
   });
 
   test("createPostTrip throws if pre-trip not submitted", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    expect(service.createPostTrip("driver-1", "insp-1", {})).rejects.toThrow(
-      "must be submitted",
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
     );
+    expect(
+      service.createPostTrip(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "driver-1",
+        "insp-1",
+        {},
+      ),
+    ).rejects.toThrow("must be submitted");
   });
 
   test("createPostTrip throws if already has post-trip", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
-    await service.createPostTrip("driver-1", "insp-1", {});
-    expect(service.createPostTrip("driver-1", "insp-1", {})).rejects.toThrow(
-      "already exists",
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
     );
+    await service.createPostTrip(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      "insp-1",
+      {},
+    );
+    expect(
+      service.createPostTrip(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "driver-1",
+        "insp-1",
+        {},
+      ),
+    ).rejects.toThrow("already exists");
   });
 
   test("createPostTrip throws for wrong driver", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
-    expect(service.createPostTrip("driver-2", "insp-1", {})).rejects.toThrow(
-      "Unauthorized",
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
     );
+    expect(
+      service.createPostTrip(
+        makeSuperAdminScope({ userId: "driver-2" }),
+        "driver-2",
+        "insp-1",
+        {},
+      ),
+    ).rejects.toThrow("Unauthorized");
   });
 
   test("createPostTrip throws for non-PRE_TRIP", async () => {
-    await service.create("driver-1", { tripType: "POST_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "POST_TRIP" },
+    );
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
-    expect(service.createPostTrip("driver-1", "insp-1", {})).rejects.toThrow(
-      "only create post-trip from a pre-trip",
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
     );
+    expect(
+      service.createPostTrip(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "driver-1",
+        "insp-1",
+        {},
+      ),
+    ).rejects.toThrow("only create post-trip from a pre-trip");
   });
 
   test("delete DRAFT inspection succeeds", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    await service.delete("insp-1", "driver-1");
-    expect(service.getById("insp-1", "driver-1")).rejects.toThrow("not found");
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
+    await service.delete(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
+    expect(
+      service.getById(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("not found");
   });
 
   test("delete non-DRAFT inspection throws", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
-    expect(service.delete("insp-1", "driver-1")).rejects.toThrow("Only DRAFT");
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
+    expect(
+      service.delete(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("Only DRAFT");
   });
 
   test("delete inspection by wrong driver throws", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    expect(service.delete("insp-1", "driver-2")).rejects.toThrow(
-      "Unauthorized",
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
     );
+    expect(
+      service.delete(
+        makeSuperAdminScope({ userId: "driver-2" }),
+        "insp-1",
+        "driver-2",
+      ),
+    ).rejects.toThrow("Unauthorized");
   });
 
   test("delete non-existent inspection throws", async () => {
-    expect(service.delete("non-existent", "driver-1")).rejects.toThrow(
-      "not found",
-    );
+    expect(
+      service.delete(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "non-existent",
+        "driver-1",
+      ),
+    ).rejects.toThrow("not found");
   });
 
   test("POST_TRIP creates 2 steps (no UNIT_IDENTIFICATION)", async () => {
-    const result = await service.create("driver-1", { tripType: "POST_TRIP" });
-    const detail = await service.getById(result.id, "driver-1");
+    const result = await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "POST_TRIP" },
+    );
+    const detail = await service.getById(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      result.id,
+      "driver-1",
+    );
     expect(detail.steps.length).toBe(2);
     expect(detail.steps.map((s) => s.stepType)).toEqual([
       "SPEEDOMETER",
@@ -481,18 +700,30 @@ describe("InspectionService", () => {
   });
 
   test("submit POST_TRIP succeeds without UNIT_IDENTIFICATION", async () => {
-    await service.create("driver-1", { tripType: "POST_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "POST_TRIP" },
+    );
     const insp = inspections.get("insp-1")!;
     insp.signatureKey = "sig-key";
     for (const step of insp.steps) {
       (step as any).status = "UPLOADED";
     }
-    const result = await service.submit("insp-1", "driver-1");
+    const result = await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
     expect(result.status).toBe("PENDING_AI");
   });
 
   test("submit PRE_TRIP fails when UNIT_IDENTIFICATION is PENDING", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     const insp = inspections.get("insp-1")!;
     // Only upload SPEEDOMETER and BODY_INSPECTION, leave UNIT_IDENTIFICATION pending
     for (const step of insp.steps) {
@@ -500,20 +731,32 @@ describe("InspectionService", () => {
         (step as any).status = "UPLOADED";
       }
     }
-    expect(service.submit("insp-1", "driver-1")).rejects.toThrow(
-      "UNIT_IDENTIFICATION",
-    );
+    expect(
+      service.submit(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("UNIT_IDENTIFICATION");
   });
 
   test("getPreTripUnitData returns data for POST_TRIP with linked PRE_TRIP", async () => {
     // Create PRE_TRIP and submit
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
     const preTrip = inspections.get("insp-1")!;
     preTrip.signatureKey = "sig-key";
     for (const step of preTrip.steps) {
       (step as any).status = "UPLOADED";
     }
-    await service.submit("insp-1", "driver-1");
+    await service.submit(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
 
     // Add AI analysis to UNIT_IDENTIFICATION step
     const unitIdStep = preTrip.steps.find(
@@ -532,9 +775,18 @@ describe("InspectionService", () => {
     };
 
     // Create POST_TRIP
-    const postTrip = await service.createPostTrip("driver-1", "insp-1", {});
+    const postTrip = await service.createPostTrip(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      "insp-1",
+      {},
+    );
 
-    const result = await service.getPreTripUnitData(postTrip.id, "driver-1");
+    const result = await service.getPreTripUnitData(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      postTrip.id,
+      "driver-1",
+    );
     expect(result).not.toBeNull();
     expect(result!.licensePlate).toBe("B 1234 XYZ");
     expect(result!.make).toBe("Toyota");
@@ -542,15 +794,31 @@ describe("InspectionService", () => {
   });
 
   test("getPreTripUnitData returns null for PRE_TRIP", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    const result = await service.getPreTripUnitData("insp-1", "driver-1");
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
+    );
+    const result = await service.getPreTripUnitData(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
     expect(result).toBeNull();
   });
 
   test("getPreTripUnitData throws for wrong driver", async () => {
-    await service.create("driver-1", { tripType: "PRE_TRIP" });
-    expect(service.getPreTripUnitData("insp-1", "driver-2")).rejects.toThrow(
-      "Unauthorized",
+    await service.create(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "driver-1",
+      { tripType: "PRE_TRIP" },
     );
+    expect(
+      service.getPreTripUnitData(
+        makeSuperAdminScope({ userId: "driver-2" }),
+        "insp-1",
+        "driver-2",
+      ),
+    ).rejects.toThrow("Unauthorized");
   });
 });

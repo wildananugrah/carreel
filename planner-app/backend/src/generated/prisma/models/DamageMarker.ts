@@ -43,6 +43,7 @@ export type DamageMarkerMinAggregateOutputType = {
   videoTimestamp: number | null
   isNewDamage: boolean | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type DamageMarkerMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type DamageMarkerMaxAggregateOutputType = {
   videoTimestamp: number | null
   isNewDamage: boolean | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type DamageMarkerCountAggregateOutputType = {
@@ -66,6 +68,7 @@ export type DamageMarkerCountAggregateOutputType = {
   boundingBox: number
   isNewDamage: number
   createdAt: number
+  projectId: number
   _all: number
 }
 
@@ -87,6 +90,7 @@ export type DamageMarkerMinAggregateInputType = {
   videoTimestamp?: true
   isNewDamage?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type DamageMarkerMaxAggregateInputType = {
@@ -98,6 +102,7 @@ export type DamageMarkerMaxAggregateInputType = {
   videoTimestamp?: true
   isNewDamage?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type DamageMarkerCountAggregateInputType = {
@@ -110,6 +115,7 @@ export type DamageMarkerCountAggregateInputType = {
   boundingBox?: true
   isNewDamage?: true
   createdAt?: true
+  projectId?: true
   _all?: true
 }
 
@@ -209,6 +215,7 @@ export type DamageMarkerGroupByOutputType = {
   boundingBox: runtime.JsonValue | null
   isNewDamage: boolean
   createdAt: Date
+  projectId: string
   _count: DamageMarkerCountAggregateOutputType | null
   _avg: DamageMarkerAvgAggregateOutputType | null
   _sum: DamageMarkerSumAggregateOutputType | null
@@ -244,6 +251,7 @@ export type DamageMarkerWhereInput = {
   boundingBox?: Prisma.JsonNullableFilter<"DamageMarker">
   isNewDamage?: Prisma.BoolFilter<"DamageMarker"> | boolean
   createdAt?: Prisma.DateTimeFilter<"DamageMarker"> | Date | string
+  projectId?: Prisma.StringFilter<"DamageMarker"> | string
   mediaFile?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>
 }
 
@@ -257,6 +265,7 @@ export type DamageMarkerOrderByWithRelationInput = {
   boundingBox?: Prisma.SortOrderInput | Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   mediaFile?: Prisma.MediaFileOrderByWithRelationInput
 }
 
@@ -273,6 +282,7 @@ export type DamageMarkerWhereUniqueInput = Prisma.AtLeast<{
   boundingBox?: Prisma.JsonNullableFilter<"DamageMarker">
   isNewDamage?: Prisma.BoolFilter<"DamageMarker"> | boolean
   createdAt?: Prisma.DateTimeFilter<"DamageMarker"> | Date | string
+  projectId?: Prisma.StringFilter<"DamageMarker"> | string
   mediaFile?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>
 }, "id">
 
@@ -286,6 +296,7 @@ export type DamageMarkerOrderByWithAggregationInput = {
   boundingBox?: Prisma.SortOrderInput | Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   _count?: Prisma.DamageMarkerCountOrderByAggregateInput
   _avg?: Prisma.DamageMarkerAvgOrderByAggregateInput
   _max?: Prisma.DamageMarkerMaxOrderByAggregateInput
@@ -306,6 +317,7 @@ export type DamageMarkerScalarWhereWithAggregatesInput = {
   boundingBox?: Prisma.JsonNullableWithAggregatesFilter<"DamageMarker">
   isNewDamage?: Prisma.BoolWithAggregatesFilter<"DamageMarker"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DamageMarker"> | Date | string
+  projectId?: Prisma.StringWithAggregatesFilter<"DamageMarker"> | string
 }
 
 export type DamageMarkerCreateInput = {
@@ -317,6 +329,7 @@ export type DamageMarkerCreateInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  projectId: string
   mediaFile: Prisma.MediaFileCreateNestedOneWithoutDamageMarkersInput
 }
 
@@ -330,6 +343,7 @@ export type DamageMarkerUncheckedCreateInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  projectId: string
 }
 
 export type DamageMarkerUpdateInput = {
@@ -341,6 +355,7 @@ export type DamageMarkerUpdateInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaFile?: Prisma.MediaFileUpdateOneRequiredWithoutDamageMarkersNestedInput
 }
 
@@ -354,6 +369,7 @@ export type DamageMarkerUncheckedUpdateInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type DamageMarkerCreateManyInput = {
@@ -366,6 +382,7 @@ export type DamageMarkerCreateManyInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  projectId: string
 }
 
 export type DamageMarkerUpdateManyMutationInput = {
@@ -377,6 +394,7 @@ export type DamageMarkerUpdateManyMutationInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type DamageMarkerUncheckedUpdateManyInput = {
@@ -389,6 +407,7 @@ export type DamageMarkerUncheckedUpdateManyInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type DamageMarkerListRelationFilter = {
@@ -411,6 +430,7 @@ export type DamageMarkerCountOrderByAggregateInput = {
   boundingBox?: Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type DamageMarkerAvgOrderByAggregateInput = {
@@ -426,6 +446,7 @@ export type DamageMarkerMaxOrderByAggregateInput = {
   videoTimestamp?: Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type DamageMarkerMinOrderByAggregateInput = {
@@ -437,6 +458,7 @@ export type DamageMarkerMinOrderByAggregateInput = {
   videoTimestamp?: Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type DamageMarkerSumOrderByAggregateInput = {
@@ -502,6 +524,7 @@ export type DamageMarkerCreateWithoutMediaFileInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  projectId: string
 }
 
 export type DamageMarkerUncheckedCreateWithoutMediaFileInput = {
@@ -513,6 +536,7 @@ export type DamageMarkerUncheckedCreateWithoutMediaFileInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  projectId: string
 }
 
 export type DamageMarkerCreateOrConnectWithoutMediaFileInput = {
@@ -554,6 +578,7 @@ export type DamageMarkerScalarWhereInput = {
   boundingBox?: Prisma.JsonNullableFilter<"DamageMarker">
   isNewDamage?: Prisma.BoolFilter<"DamageMarker"> | boolean
   createdAt?: Prisma.DateTimeFilter<"DamageMarker"> | Date | string
+  projectId?: Prisma.StringFilter<"DamageMarker"> | string
 }
 
 export type DamageMarkerCreateManyMediaFileInput = {
@@ -565,6 +590,7 @@ export type DamageMarkerCreateManyMediaFileInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  projectId: string
 }
 
 export type DamageMarkerUpdateWithoutMediaFileInput = {
@@ -576,6 +602,7 @@ export type DamageMarkerUpdateWithoutMediaFileInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type DamageMarkerUncheckedUpdateWithoutMediaFileInput = {
@@ -587,6 +614,7 @@ export type DamageMarkerUncheckedUpdateWithoutMediaFileInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type DamageMarkerUncheckedUpdateManyWithoutMediaFileInput = {
@@ -598,6 +626,7 @@ export type DamageMarkerUncheckedUpdateManyWithoutMediaFileInput = {
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -612,6 +641,7 @@ export type DamageMarkerSelect<ExtArgs extends runtime.Types.Extensions.Internal
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  projectId?: boolean
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["damageMarker"]>
 
@@ -625,6 +655,7 @@ export type DamageMarkerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  projectId?: boolean
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["damageMarker"]>
 
@@ -638,6 +669,7 @@ export type DamageMarkerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  projectId?: boolean
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["damageMarker"]>
 
@@ -651,9 +683,10 @@ export type DamageMarkerSelectScalar = {
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }
 
-export type DamageMarkerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mediaFileId" | "damageType" | "severity" | "description" | "videoTimestamp" | "boundingBox" | "isNewDamage" | "createdAt", ExtArgs["result"]["damageMarker"]>
+export type DamageMarkerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mediaFileId" | "damageType" | "severity" | "description" | "videoTimestamp" | "boundingBox" | "isNewDamage" | "createdAt" | "projectId", ExtArgs["result"]["damageMarker"]>
 export type DamageMarkerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
 }
@@ -679,6 +712,7 @@ export type $DamageMarkerPayload<ExtArgs extends runtime.Types.Extensions.Intern
     boundingBox: runtime.JsonValue | null
     isNewDamage: boolean
     createdAt: Date
+    projectId: string
   }, ExtArgs["result"]["damageMarker"]>
   composites: {}
 }
@@ -1112,6 +1146,7 @@ export interface DamageMarkerFieldRefs {
   readonly boundingBox: Prisma.FieldRef<"DamageMarker", 'Json'>
   readonly isNewDamage: Prisma.FieldRef<"DamageMarker", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"DamageMarker", 'DateTime'>
+  readonly projectId: Prisma.FieldRef<"DamageMarker", 'String'>
 }
     
 

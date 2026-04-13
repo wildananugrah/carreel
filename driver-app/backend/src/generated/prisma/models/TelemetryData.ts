@@ -50,6 +50,7 @@ export type TelemetryDataMinAggregateOutputType = {
   previousKm: number | null
   kmDelta: number | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type TelemetryDataMaxAggregateOutputType = {
@@ -62,6 +63,7 @@ export type TelemetryDataMaxAggregateOutputType = {
   previousKm: number | null
   kmDelta: number | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type TelemetryDataCountAggregateOutputType = {
@@ -74,6 +76,7 @@ export type TelemetryDataCountAggregateOutputType = {
   previousKm: number
   kmDelta: number
   createdAt: number
+  projectId: number
   _all: number
 }
 
@@ -102,6 +105,7 @@ export type TelemetryDataMinAggregateInputType = {
   previousKm?: true
   kmDelta?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type TelemetryDataMaxAggregateInputType = {
@@ -114,6 +118,7 @@ export type TelemetryDataMaxAggregateInputType = {
   previousKm?: true
   kmDelta?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type TelemetryDataCountAggregateInputType = {
@@ -126,6 +131,7 @@ export type TelemetryDataCountAggregateInputType = {
   previousKm?: true
   kmDelta?: true
   createdAt?: true
+  projectId?: true
   _all?: true
 }
 
@@ -225,6 +231,7 @@ export type TelemetryDataGroupByOutputType = {
   previousKm: number | null
   kmDelta: number | null
   createdAt: Date
+  projectId: string
   _count: TelemetryDataCountAggregateOutputType | null
   _avg: TelemetryDataAvgAggregateOutputType | null
   _sum: TelemetryDataSumAggregateOutputType | null
@@ -260,6 +267,7 @@ export type TelemetryDataWhereInput = {
   previousKm?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
   kmDelta?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
   createdAt?: Prisma.DateTimeFilter<"TelemetryData"> | Date | string
+  projectId?: Prisma.StringFilter<"TelemetryData"> | string
 }
 
 export type TelemetryDataOrderByWithRelationInput = {
@@ -272,6 +280,7 @@ export type TelemetryDataOrderByWithRelationInput = {
   previousKm?: Prisma.SortOrderInput | Prisma.SortOrder
   kmDelta?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type TelemetryDataWhereUniqueInput = Prisma.AtLeast<{
@@ -287,6 +296,7 @@ export type TelemetryDataWhereUniqueInput = Prisma.AtLeast<{
   previousKm?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
   kmDelta?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
   createdAt?: Prisma.DateTimeFilter<"TelemetryData"> | Date | string
+  projectId?: Prisma.StringFilter<"TelemetryData"> | string
 }, "id">
 
 export type TelemetryDataOrderByWithAggregationInput = {
@@ -299,6 +309,7 @@ export type TelemetryDataOrderByWithAggregationInput = {
   previousKm?: Prisma.SortOrderInput | Prisma.SortOrder
   kmDelta?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   _count?: Prisma.TelemetryDataCountOrderByAggregateInput
   _avg?: Prisma.TelemetryDataAvgOrderByAggregateInput
   _max?: Prisma.TelemetryDataMaxOrderByAggregateInput
@@ -319,6 +330,7 @@ export type TelemetryDataScalarWhereWithAggregatesInput = {
   previousKm?: Prisma.IntNullableWithAggregatesFilter<"TelemetryData"> | number | null
   kmDelta?: Prisma.IntNullableWithAggregatesFilter<"TelemetryData"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TelemetryData"> | Date | string
+  projectId?: Prisma.StringWithAggregatesFilter<"TelemetryData"> | string
 }
 
 export type TelemetryDataCreateInput = {
@@ -331,6 +343,7 @@ export type TelemetryDataCreateInput = {
   previousKm?: number | null
   kmDelta?: number | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type TelemetryDataUncheckedCreateInput = {
@@ -343,6 +356,7 @@ export type TelemetryDataUncheckedCreateInput = {
   previousKm?: number | null
   kmDelta?: number | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type TelemetryDataUpdateInput = {
@@ -355,6 +369,7 @@ export type TelemetryDataUpdateInput = {
   previousKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type TelemetryDataUncheckedUpdateInput = {
@@ -367,6 +382,7 @@ export type TelemetryDataUncheckedUpdateInput = {
   previousKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type TelemetryDataCreateManyInput = {
@@ -379,6 +395,7 @@ export type TelemetryDataCreateManyInput = {
   previousKm?: number | null
   kmDelta?: number | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type TelemetryDataUpdateManyMutationInput = {
@@ -391,6 +408,7 @@ export type TelemetryDataUpdateManyMutationInput = {
   previousKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type TelemetryDataUncheckedUpdateManyInput = {
@@ -403,6 +421,7 @@ export type TelemetryDataUncheckedUpdateManyInput = {
   previousKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type TelemetryDataCountOrderByAggregateInput = {
@@ -415,6 +434,7 @@ export type TelemetryDataCountOrderByAggregateInput = {
   previousKm?: Prisma.SortOrder
   kmDelta?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type TelemetryDataAvgOrderByAggregateInput = {
@@ -434,6 +454,7 @@ export type TelemetryDataMaxOrderByAggregateInput = {
   previousKm?: Prisma.SortOrder
   kmDelta?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type TelemetryDataMinOrderByAggregateInput = {
@@ -446,6 +467,7 @@ export type TelemetryDataMinOrderByAggregateInput = {
   previousKm?: Prisma.SortOrder
   kmDelta?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type TelemetryDataSumOrderByAggregateInput = {
@@ -471,6 +493,7 @@ export type TelemetryDataSelect<ExtArgs extends runtime.Types.Extensions.Interna
   previousKm?: boolean
   kmDelta?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }, ExtArgs["result"]["telemetryData"]>
 
 export type TelemetryDataSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -483,6 +506,7 @@ export type TelemetryDataSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   previousKm?: boolean
   kmDelta?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }, ExtArgs["result"]["telemetryData"]>
 
 export type TelemetryDataSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -495,6 +519,7 @@ export type TelemetryDataSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   previousKm?: boolean
   kmDelta?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }, ExtArgs["result"]["telemetryData"]>
 
 export type TelemetryDataSelectScalar = {
@@ -507,9 +532,10 @@ export type TelemetryDataSelectScalar = {
   previousKm?: boolean
   kmDelta?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }
 
-export type TelemetryDataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "odometerKm" | "fuelLevelPct" | "dashboardMatch" | "kmReasonable" | "previousKm" | "kmDelta" | "createdAt", ExtArgs["result"]["telemetryData"]>
+export type TelemetryDataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "odometerKm" | "fuelLevelPct" | "dashboardMatch" | "kmReasonable" | "previousKm" | "kmDelta" | "createdAt" | "projectId", ExtArgs["result"]["telemetryData"]>
 
 export type $TelemetryDataPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TelemetryData"
@@ -524,6 +550,7 @@ export type $TelemetryDataPayload<ExtArgs extends runtime.Types.Extensions.Inter
     previousKm: number | null
     kmDelta: number | null
     createdAt: Date
+    projectId: string
   }, ExtArgs["result"]["telemetryData"]>
   composites: {}
 }
@@ -956,6 +983,7 @@ export interface TelemetryDataFieldRefs {
   readonly previousKm: Prisma.FieldRef<"TelemetryData", 'Int'>
   readonly kmDelta: Prisma.FieldRef<"TelemetryData", 'Int'>
   readonly createdAt: Prisma.FieldRef<"TelemetryData", 'DateTime'>
+  readonly projectId: Prisma.FieldRef<"TelemetryData", 'String'>
 }
     
 

@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Carreel is a multi-app platform with two main applications (driver-app and planner-app), each following a three-tier architecture with separate frontend, backend, and database layers. The system uses WebSocket for real-time communication and MinIO for object storage.
 
+The platform is **strictly multi-tenant** at the project level. Every authenticated request loads a `UserScope` via middleware, and every repository query is filtered by it so users can only see data from projects they belong to. There are 3 roles: `SUPER_ADMIN` (system-wide bypass), `PROJECT_ADMIN` (per-project admin who bypasses the driver-assignment filter), and `PLANNER`/`DRIVER` (restricted by their project memberships and assignments). See "Multi-Tenancy & Scope Filtering" below for the full pattern.
+
 ## Tech Stack
 
 - **Runtime:** Bun
@@ -162,6 +164,221 @@ app.route("/orders", createOrderRoutes(orderService));
 
 export default app;
 ```
+
+### Multi-Tenancy & Scope Filtering (CRITICAL)
+
+The platform is **strictly multi-tenant** at the project level. Every data-bearing entity belongs to a project, and every query is filtered by the current user's `UserScope` so users can only see data from projects they belong to.
+
+**Three roles:**
+
+| Role | Scope | What they can do |
+|------|-------|------------------|
+| `SUPER_ADMIN` | System-wide | Bypass all filters, manage workspaces and users |
+| `PROJECT_ADMIN` | Per project | Bypass driver-assignment filter within their projects, manage members/assignments |
+| `PLANNER` / `DRIVER` | Per project (membership) | Restricted to drivers assigned to them (planner) or own data (driver) |
+
+A single user can hold different `ProjectMember.role` values in different projects. `SUPER_ADMIN` is a separate `User.systemRole` flag that bypasses everything.
+
+#### The `UserScope` type
+
+`src/types/scope.ts` (identical copy in both backends) defines the authoritative permissions object loaded once per request:
+
+```typescript
+export interface ProjectScope {
+  projectId: string;
+  workspaceId: string;
+  projectRole: "PROJECT_ADMIN" | "PLANNER" | "DRIVER";
+  // For PLANNER role: drivers assigned to this planner in this project.
+  // For PROJECT_ADMIN: empty (admin sees everything via bypass).
+  // For DRIVER: empty (driver uses userId check instead).
+  assignedDriverIds: string[];
+}
+
+export interface UserScope {
+  userId: string;
+  appRole: "DRIVER" | "PLANNER";              // existing User.role — which app
+  systemRole: "SUPER_ADMIN" | "USER";          // bypass flag
+  projects: ProjectScope[];                    // all projects the user belongs to
+}
+```
+
+#### How scope is loaded
+
+A `ScopeRepository.loadScope(userId)` runs ONE indexed Prisma query that joins `User` + `ProjectMember` + `DriverAssignment` and groups assignments per project. The `createScopeMiddleware` runs this on every authenticated `/api/*` request and stores the result in Hono's context as `c.get("scope")`. Public routes (`/health`, `/api/auth/login`, etc.) short-circuit when there's no `userId`.
+
+**The JWT stays minimal** — it only contains `{ userId, role }`. Permissions are loaded fresh on every request so revoking access takes effect immediately. The overhead is ~2-5ms per request.
+
+#### Filter helpers — `buildScopeFilter` and `canWriteToEntity`
+
+`src/utils/scope-filter.ts` exports two helpers used by every repository method:
+
+```typescript
+// READS — spread into any Prisma `where` clause
+const filter = buildScopeFilter(scope, { includeDriverFilter: true });
+return prisma.inspection.findMany({
+  where: { ...filter, status: "PENDING_REVIEW" },
+});
+
+// WRITES — fetch the row first, then check before mutating
+const inspection = await prisma.inspection.findUnique({ where: { id } });
+if (!canWriteToEntity(scope, inspection)) {
+  throw notFound("Inspection not found"); // 404, not 403 — don't reveal existence
+}
+return prisma.inspection.update({ where: { id }, data });
+```
+
+`buildScopeFilter` returns:
+- `{}` for SUPER_ADMIN (no restriction)
+- `{ projectId: { in: [...] }, driverId: scope.userId }` for DRIVER
+- `{ OR: [{ projectId, driverId: { in: [...] } }, ...] }` for PLANNER (per-project clauses with assigned driver filter)
+- `{ OR: [{ projectId }, ...] }` for PROJECT_ADMIN (project bypass)
+- `{ projectId: { in: [] } }` when the user has no relevant access (forces zero results)
+
+The `includeDriverFilter` flag is **required** (TypeScript enforces it) — set `false` for entities like `Unit` that have no `driverId` field. When combining `scopeFilter` with other `where` conditions that contain `OR`, wrap both in `AND`:
+
+```typescript
+where: {
+  AND: [scopeFilter, { OR: [/* search filters */] }],
+}
+```
+
+#### Repository pattern
+
+Every repository method takes `scope: UserScope` as the **first parameter**:
+
+```typescript
+export interface IInspectionRepository {
+  findById(scope: UserScope, id: string): Promise<Inspection | null>;
+  findByDriverId(scope: UserScope, query: ListQuery): Promise<...>;
+  create(scope: UserScope, data: CreateInspectionDTO): Promise<Inspection>;
+  // ... etc
+}
+```
+
+Implementation:
+
+```typescript
+async findById(scope: UserScope, id: string) {
+  const filter = buildScopeFilter(scope, { includeDriverFilter: true });
+  return this.prisma.inspection.findFirst({  // findFirst, not findUnique
+    where: { id, ...filter },
+    include: { /* ... */ },
+  });
+}
+
+async create(scope: UserScope, data: CreateInspectionDTO) {
+  // Drivers create inspections in their primary project
+  const projectId = scope.projects[0]?.projectId;
+  if (!projectId) throw new Error("User has no project membership");
+  return this.prisma.inspection.create({
+    data: { ...data, driverId: scope.userId, projectId },
+  });
+}
+```
+
+**Use `findFirst` instead of `findUnique`** when adding additional `where` conditions. `findUnique` only accepts unique keys.
+
+**Child entities propagate `projectId` from their parent.** When creating an `InspectionStep`, fetch the parent `Inspection` first to get its `projectId`, then write that to the new step. This keeps the denormalized `projectId` columns consistent across `Inspection`, `InspectionStep`, `MediaFile`, `AIAnalysis`, `DamageMarker`, `TelemetryData`, `Alert`, `InspectionReview`.
+
+#### Background jobs use a synthetic `SYSTEM_SCOPE`
+
+Jobs run outside HTTP request context and have no real user. They use a `SYSTEM_SCOPE` (SUPER_ADMIN bypass) defined in `src/utils/system-scope.ts`:
+
+```typescript
+export const SYSTEM_SCOPE: UserScope = {
+  userId: "system-job",
+  appRole: "PLANNER",
+  systemRole: "SUPER_ADMIN",
+  projects: [],
+};
+```
+
+Pass this to every repository call inside a job handler. The `StepAnalysisJob` and the public media proxy routes (which serve `<img>` tags without auth) both use it.
+
+#### Routes pass scope from context
+
+```typescript
+app.get("/:id", async (c) => {
+  const scope = c.get("scope");
+  if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+  const inspection = await inspectionService.getInspection(scope, c.req.param("id"));
+  return c.json(inspection);
+});
+```
+
+#### Admin endpoints use role checks (NOT `buildScopeFilter`)
+
+Admin routes under `/api/admin/*` (workspace/project/member/assignment/user management) are gated by service-level role checks instead of repository filters:
+
+```typescript
+private requireSuperAdmin(scope: UserScope): void {
+  if (scope.systemRole !== "SUPER_ADMIN") {
+    throw new Error("Only SUPER_ADMIN can manage workspaces");
+  }
+}
+
+private requireProjectAdminOrSuperAdmin(scope: UserScope, projectId: string): void {
+  if (scope.systemRole === "SUPER_ADMIN") return;
+  const membership = scope.projects.find((p) => p.projectId === projectId);
+  if (!membership || membership.projectRole !== "PROJECT_ADMIN") {
+    throw notFound("Project not found"); // 404-not-403 to avoid revealing existence
+  }
+}
+```
+
+#### Key invariants enforced in application code
+
+1. A `DriverAssignment` requires both `driverId` and `plannerId` to be `ProjectMember`s of the same project.
+2. The driver in an assignment must have `ProjectMember.role = DRIVER`; the planner must have `PLANNER` or `PROJECT_ADMIN`.
+3. Removing a user from a project cascades `DriverAssignment` rows automatically (FK ON DELETE CASCADE).
+4. `projectId` on a child entity must always match the parent's `projectId`. Enforced when creating children.
+5. `Unit.licensePlate` is currently **globally unique** — a known limitation. Multi-client deployment will need `@@unique([projectId, licensePlate])` to allow the same plate in different workspaces.
+
+### HTTP Error Handling — `HttpError` and `app.onError()`
+
+Both backends use a typed `HttpError` class for known error conditions and Hono's `app.onError()` as the boundary that converts them to JSON responses with the correct status code.
+
+**Throw typed errors from services:**
+
+```typescript
+import { unauthorized, notFound, conflict, badRequest, forbidden } from "../utils/http-error";
+
+async login(data: LoginDTO) {
+  const user = await this.userRepository.findByEmail(data.email);
+  if (!user) {
+    throw unauthorized("Invalid email or password");
+  }
+  // ...
+}
+
+async register(data: RegisterDTO) {
+  const existing = await this.userRepository.findByEmail(data.email);
+  if (existing) {
+    throw conflict("Email already registered");
+  }
+  // ...
+}
+```
+
+**The handler in `index.ts`:**
+
+```typescript
+app.onError((err, c) => {
+  if (err instanceof HttpError) {
+    logger.warn("HTTP error", { error: err.message, status: err.status, path: c.req.path });
+    return c.json({ error: err.message }, err.status);
+  }
+  logger.error("Unhandled exception", { error: err.message, stack: err.stack, path: c.req.path });
+  return c.json({ error: "Internal server error" }, 500);
+});
+```
+
+**Rules:**
+
+- **Never throw `new Error("...")` from services** for known error conditions. Use `HttpError` factories: `badRequest`, `unauthorized`, `forbidden`, `notFound`, `conflict`.
+- **Generic `Error` instances become 500** — that's the catch-all for actual bugs and should rarely happen in service code.
+- **Use `notFound` (404) instead of `forbidden` (403) for write access denials** — don't reveal that an entity exists when the caller can't access it.
+- **The middleware-based `createErrorHandlerMiddleware` is preserved as a fallback safety net** but `app.onError()` is the primary boundary because Hono's `createMiddleware` factory has subtle catch behavior that didn't reliably translate errors to status codes.
 
 ### Providers Layer (External Services)
 
@@ -1303,12 +1520,40 @@ const MAX_DURATION = Number(import.meta.env.VITE_VIDEO_MAX_DURATION) || 180;
 
 Both backends share a **single PostgreSQL instance** and a **single database** (`carreel_driver`). The Prisma schema lives in `driver-app/database/prisma/schema.prisma` with two generators that output clients to both backends. pgboss creates its own `pgboss` schema for job queues within the same database.
 
-#### Table Ownership
+#### Multi-tenancy tables (added in 2026-04 multi-tenancy rollout)
+
+| Table | Purpose |
+|-------|---------|
+| `workspaces` | Top-level tenant boundary (e.g. "OLX Autos"). Has `name` (slug, unique) + `displayName`. |
+| `projects` | A project within a workspace (e.g. "Used Cars"). Unique on `(workspaceId, name)`. |
+| `project_members` | Many-to-many between User and Project with a `ProjectRole` (PROJECT_ADMIN / PLANNER / DRIVER). Unique on `(projectId, userId)`. |
+| `driver_assignments` | Pins a `DRIVER` member to one or more `PLANNER`/`PROJECT_ADMIN` members within a project. Unique on `(projectId, driverId, plannerId)`. Drives the per-driver visibility filter for regular planners. |
+
+#### Denormalized `projectId` columns
+
+Every data-bearing table has a `projectId` foreign key column (NOT NULL except for `audit_logs`). This was added during the multi-tenancy rollout and is denormalized intentionally so `buildScopeFilter` can produce simple `WHERE projectId IN (...)` clauses without joins:
+
+| Table | `projectId` | Notes |
+|-------|-------------|-------|
+| `units` | NOT NULL, ON DELETE RESTRICT | Project relation enforced |
+| `inspections` | NOT NULL, ON DELETE RESTRICT | Project relation enforced |
+| `inspection_steps` | NOT NULL | Inherits from parent inspection |
+| `media_files` | NOT NULL | Inherits from parent step |
+| `ai_analyses` | NOT NULL | Inherits from parent step |
+| `damage_markers` | NOT NULL | Inherits from parent media file |
+| `telemetry_data` | NOT NULL | Inherits from parent inspection |
+| `alerts` | NOT NULL, ON DELETE RESTRICT | Inherits from parent inspection |
+| `inspection_reviews` | NOT NULL | Inherits from parent inspection |
+| `audit_logs` | nullable | System-level audit events have no project |
+
+When creating a child entity, fetch the parent first to get its `projectId`, then write that to the new child row. The application enforces this; the database doesn't have a trigger.
+
+#### Existing tables — ownership and reads/writes
 
 | Table | Driver-App | Planner-App | Notes |
 |-------|-----------|-------------|-------|
-| `users` | Read & Write | Read & Write | Both apps register/login users; planner also lists drivers |
-| `units` | Read & Write | Read only | Driver updates `lastKnownKm`; planner reads unit info via inspection |
+| `users` | Read & Write | Read & Write | Both apps register/login users. Has `systemRole: SUPER_ADMIN \| USER` (default USER). |
+| `units` | Read & Write | Read only | Driver updates `lastKnownKm`; planner reads unit info via inspection. **Note:** `licensePlate @unique` is still global — needs `@@unique([projectId, licensePlate])` for true multi-client isolation. |
 | `inspections` | Read & Write | Read & Write (status only) | Driver creates/updates; planner reads and updates status on review |
 | `inspection_steps` | Read & Write | Read only | Driver creates steps and updates status; planner reads via inspection |
 | `media_files` | Write | Read only | Driver uploads media; planner views via inspection steps |
@@ -1318,15 +1563,30 @@ Both backends share a **single PostgreSQL instance** and a **single database** (
 | `alerts` | Write | Read & Write | Driver creates alerts during AI analysis; planner reads & marks as read |
 | `inspection_reviews` | — | Read & Write | Planner-only; planners create reviews for inspections |
 | `audit_logs` | — | Write | Planner-only; audit trail for review actions |
+| `workspaces` | — | Read & Write (admin only) | SUPER_ADMIN manages via `/api/admin/workspaces/*` |
+| `projects` | Read | Read & Write (admin only) | Driver reads via scope; planner SUPER_ADMIN/PROJECT_ADMIN manages |
+| `project_members` | Read | Read & Write (admin only) | Read by both for scope loading; written by PROJECT_ADMIN |
+| `driver_assignments` | Read | Read & Write (admin only) | Read by both for scope loading; written by PROJECT_ADMIN |
 | `outbox_events` | — | — | Reserved for future event-driven sync (not yet implemented) |
 | `pgboss.*` | Read & Write | — | Driver-only; pgboss auto-manages its schema for job queues |
 
 #### Key Patterns
 
 - **Driver-App is write-heavy**: Creates inspections, uploads media, runs AI jobs, generates alerts and telemetry.
-- **Planner-App is read-heavy**: Reads all driver-generated data; only writes reviews, audit logs, and alert read-status.
-- **No cross-app write conflicts**: Driver never writes to reviews/audit logs; planner never writes to inspections/media/AI data.
-- **Isolated tables**: `audit_logs` and `inspection_reviews` are planner-only. `telemetry_data` and `damage_markers` are driver-only (write).
+- **Planner-App is read-heavy plus admin-write**: Reads all driver-generated data; writes reviews, audit logs, alert read-status, and all admin entities (workspaces, projects, members, assignments, users).
+- **Every non-admin query goes through `buildScopeFilter`**: A regular planner cannot see data from drivers they aren't assigned to, even via direct ID lookup.
+- **Admin endpoints use role checks instead of scope filters**: `requireSuperAdmin(scope)` and `requireProjectAdminOrSuperAdmin(scope, projectId)` at the service layer.
+- **Background jobs use `SYSTEM_SCOPE`** (SUPER_ADMIN bypass) from `src/utils/system-scope.ts`.
+
+#### Migration scripts in `scripts/`
+
+| Script | Purpose |
+|--------|---------|
+| `migrate-to-workspaces.ts` | One-time backfill — creates a default workspace + project, populates `projectId` on existing rows, creates `ProjectMember` and `DriverAssignment` rows. Idempotent. |
+| `create-admin-user.ts` | Create or update the bootstrap `admin@carreel.id` user as `SUPER_ADMIN` + `PROJECT_ADMIN` of the default project. Idempotent. |
+| `backfill-is-new-damage.ts` | Fix `isNewDamage` flags on existing post-trip inspections by comparing pre vs post damages. |
+| `backfill-unit-data.ts` | Backfill `Unit.lastKnownKm` and unit metadata from existing AI analyses. |
+| `seed.ts` | Seed test data (drivers, planners, etc.) for local development. |
 
 ### Deployment & Runtime
 
@@ -1396,6 +1656,7 @@ server {
 
 ### Rules
 
+**DI and structure:**
 - **Never import concrete implementations in routes, services, or jobs** — only import interfaces/types.
 - **All dependency wiring happens in `index.ts`** (the composition root) — nowhere else.
 - **Routes must be thin** — no business logic, just parse request → call service → return response.
@@ -1405,7 +1666,27 @@ server {
 - **Long-running operations (AI calls, video processing) must be async** — enqueue via pgboss, notify via WebSocket.
 - **One file = one class/function with one purpose.**
 - **Use `type` imports** (`import type { ... }`) for interfaces to ensure they are erased at compile time.
+
+**Multi-tenancy and scope (CRITICAL):**
+- **Every repository method that returns or mutates tenant data takes `scope: UserScope` as the first parameter.** No exceptions for non-admin endpoints.
+- **Every read uses `buildScopeFilter(scope, options)`** spread into the Prisma `where` clause. The `includeDriverFilter` option is required.
+- **Every write fetches the target row first, then calls `canWriteToEntity(scope, row)`** and throws `notFound("...")` (404, not 403) if denied.
+- **When creating child entities** (InspectionStep, MediaFile, AIAnalysis, etc.), fetch the parent first to inherit its `projectId`. Never trust client-provided `projectId`.
+- **When combining `buildScopeFilter` with other `where` conditions that contain `OR`**, wrap both in `AND` to avoid clause conflicts.
+- **Use `findFirst` instead of `findUnique`** when you need to add a scope filter — `findUnique` only accepts unique keys.
+- **Background jobs use `SYSTEM_SCOPE` from `src/utils/system-scope.ts`** — never invent ad-hoc scope objects.
+- **Admin endpoints under `/api/admin/*` use service-level role checks** (`requireSuperAdmin`, `requireProjectAdminOrSuperAdmin`) — NOT `buildScopeFilter`.
+- **Never embed scope in the JWT** — load it fresh from the DB on every request via `ScopeRepository.loadScope`. The middleware is already wired.
+
+**Error handling:**
+- **Throw `HttpError` instances from services** for known error conditions, using the factory helpers: `badRequest`, `unauthorized`, `forbidden`, `notFound`, `conflict`. Never throw `new Error("...")` for expected failures.
+- **Generic `Error` instances become 500** — that's the catch-all for actual bugs.
+- **Use `notFound` (404) instead of `forbidden` (403) for write access denials** to avoid revealing entity existence.
+- **The `app.onError()` handler in `index.ts` is the primary error boundary** — it catches `HttpError` and converts to JSON. Do not bypass it with manual try/catch in route handlers.
+
+**Validation:**
 - **All code must pass TypeScript strict checking** — run `bunx tsc --noEmit` before considering work complete. Zero errors required.
 - **All code must pass linting** — run `bun run lint` (Biome) before considering work complete. Zero warnings/errors required.
 - **All tests must pass** — run `bun test` before considering work complete. Zero failures required.
+- **Cross-project leak integration tests** (`tests/integration/cross-project-leak.test.ts`) are the go/no-go gate for any change that touches scope filtering. Run them locally against a real DB before deploying.
 - **Validation order: types → lint → tests.** Fix type errors first, then lint issues, then test failures. Each layer depends on the previous one being clean.

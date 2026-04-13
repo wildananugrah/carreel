@@ -12,13 +12,19 @@ import type {
   InspectionSummary,
   PaginatedResponse,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
+import { buildScopeFilter, canWriteToEntity } from "../utils/scope-filter";
 
 export class InspectionRepository implements IInspectionRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async findById(id: string): Promise<InspectionDetailWithRelations | null> {
-    const result = await this.prisma.inspection.findUnique({
-      where: { id },
+  async findById(
+    scope: UserScope,
+    id: string,
+  ): Promise<InspectionDetailWithRelations | null> {
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+    const result = await this.prisma.inspection.findFirst({
+      where: { id, ...scopeFilter } as never,
       include: {
         driver: {
           select: { id: true, fullName: true, email: true },
@@ -77,21 +83,28 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async findAll(
+    scope: UserScope,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionSummary>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
-    if (query.status) where.status = query.status;
-    if (query.driverId) where.driverId = query.driverId;
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+    const conditions: Record<string, unknown>[] = [scopeFilter];
+
+    if (query.status) conditions.push({ status: query.status });
+    if (query.driverId) conditions.push({ driverId: query.driverId });
     if (query.dateFrom || query.dateTo) {
-      where.createdAt = {
-        ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
-        ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
-      };
+      conditions.push({
+        createdAt: {
+          ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
+          ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
+        },
+      });
     }
+
+    const where = { AND: conditions };
 
     const [data, total] = await Promise.all([
       this.prisma.inspection.findMany({
@@ -122,9 +135,23 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async updateStatus(
+    scope: UserScope,
     id: string,
     status: InspectionStatus,
   ): Promise<Inspection> {
+    const inspection = await this.prisma.inspection.findUnique({
+      where: { id },
+      select: { projectId: true, driverId: true },
+    });
+    if (!inspection?.projectId) throw new Error("Inspection not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: inspection.projectId,
+        driverId: inspection.driverId,
+      })
+    ) {
+      throw new Error("Inspection not found");
+    }
     return this.prisma.inspection.update({
       where: { id },
       data: { status },
@@ -132,6 +159,7 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async findCounterpart(
+    scope: UserScope,
     unitId: string,
     tripType: string,
     excludeId: string,
@@ -139,12 +167,19 @@ export class InspectionRepository implements IInspectionRepository {
     const counterpartTripType =
       tripType === "PRE_TRIP" ? "POST_TRIP" : "PRE_TRIP";
 
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+
     const result = await this.prisma.inspection.findFirst({
       where: {
-        unitId,
-        tripType: counterpartTripType as never,
-        id: { not: excludeId },
-      },
+        AND: [
+          scopeFilter,
+          {
+            unitId,
+            tripType: counterpartTripType as never,
+            id: { not: excludeId },
+          },
+        ],
+      } as never,
       orderBy: { createdAt: "desc" },
       include: {
         driver: { select: { id: true, fullName: true, email: true } },

@@ -13,12 +13,14 @@ export function createDriverRoutes(
 
   // GET /api/drivers
   app.get("/", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const query = {
       page: c.req.query("page") ? Number(c.req.query("page")) : undefined,
       limit: c.req.query("limit") ? Number(c.req.query("limit")) : undefined,
       search: c.req.query("search"),
     };
-    const result = await userRepository.findDrivers(query);
+    const result = await userRepository.findDrivers(scope, query);
     return c.json(result);
   });
 

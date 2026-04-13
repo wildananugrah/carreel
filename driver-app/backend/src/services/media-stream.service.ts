@@ -4,6 +4,7 @@ import type {
   IMediaStreamService,
   StreamInfo,
 } from "../interfaces/services/media-stream.service.interface";
+import type { UserScope } from "../types/scope";
 
 export class MediaStreamService implements IMediaStreamService {
   constructor(
@@ -12,10 +13,11 @@ export class MediaStreamService implements IMediaStreamService {
   ) {}
 
   async getVideoStream(
+    scope: UserScope,
     mediaId: string,
     rangeHeader?: string,
   ): Promise<StreamInfo> {
-    const media = await this.mediaFileRepository.findById(mediaId);
+    const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media) {
       throw new Error("Media file not found");
     }

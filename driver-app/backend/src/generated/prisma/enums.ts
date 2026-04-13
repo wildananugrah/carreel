@@ -35,6 +35,23 @@ export const TripType = {
 export type TripType = (typeof TripType)[keyof typeof TripType]
 
 
+export const ProjectRole = {
+  PROJECT_ADMIN: 'PROJECT_ADMIN',
+  PLANNER: 'PLANNER',
+  DRIVER: 'DRIVER'
+} as const
+
+export type ProjectRole = (typeof ProjectRole)[keyof typeof ProjectRole]
+
+
+export const SystemRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  USER: 'USER'
+} as const
+
+export type SystemRole = (typeof SystemRole)[keyof typeof SystemRole]
+
+
 export const InspectionStatus = {
   DRAFT: 'DRAFT',
   PENDING_AI: 'PENDING_AI',

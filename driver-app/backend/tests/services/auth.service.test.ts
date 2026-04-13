@@ -20,6 +20,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
     passwordHash: "",
     fullName: "Test User",
     role: "DRIVER",
+    systemRole: "USER",
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

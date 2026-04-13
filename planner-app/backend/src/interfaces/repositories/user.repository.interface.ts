@@ -1,5 +1,6 @@
 import type { User } from "../../generated/prisma";
 import type { DriverListQuery, PaginatedResponse } from "../../types/dto";
+import type { UserScope } from "../../types/scope";
 
 export interface CreateUserDTO {
   email: string;
@@ -21,6 +22,7 @@ export interface IUserRepository {
     data: { fullName?: string; email?: string; passwordHash?: string },
   ): Promise<User>;
   findDrivers(
+    scope: UserScope,
     query: DriverListQuery,
   ): Promise<PaginatedResponse<DriverWithInspectionCount>>;
 }

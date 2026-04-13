@@ -21,6 +21,7 @@ import type {
   TripListQuery,
   UpdateInspectionDTO,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 export class InspectionService implements IInspectionService {
   constructor(
@@ -31,11 +32,12 @@ export class InspectionService implements IInspectionService {
   ) {}
 
   async create(
+    scope: UserScope,
     driverId: string,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
     const inspection = await this.inspectionRepository.createWithSteps(
-      driverId,
+      scope,
       data,
     );
     this.logger.info("Inspection created with steps", {
@@ -47,11 +49,12 @@ export class InspectionService implements IInspectionService {
   }
 
   async createPostTrip(
+    scope: UserScope,
     driverId: string,
     preTripId: string,
     data: { latitude?: number; longitude?: number },
   ): Promise<Inspection> {
-    const preTrip = await this.inspectionRepository.findById(preTripId);
+    const preTrip = await this.inspectionRepository.findById(scope, preTripId);
     if (!preTrip) {
       throw new Error("Pre-trip inspection not found");
     }
@@ -72,7 +75,7 @@ export class InspectionService implements IInspectionService {
       );
     }
 
-    const postTrip = await this.inspectionRepository.createWithSteps(driverId, {
+    const postTrip = await this.inspectionRepository.createWithSteps(scope, {
       tripType: "POST_TRIP",
       linkedInspectionId: preTripId,
       unitId: preTrip.unitId ?? undefined,
@@ -90,10 +93,11 @@ export class InspectionService implements IInspectionService {
   }
 
   async getById(
+    scope: UserScope,
     id: string,
     driverId: string,
   ): Promise<InspectionWithRelations> {
-    const inspection = await this.inspectionRepository.findById(id);
+    const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -104,18 +108,20 @@ export class InspectionService implements IInspectionService {
   }
 
   async list(
+    scope: UserScope,
     driverId: string,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionListItem>> {
-    return this.inspectionRepository.findByDriverId(driverId, query);
+    return this.inspectionRepository.findByDriverId(scope, driverId, query);
   }
 
   async update(
+    scope: UserScope,
     id: string,
     driverId: string,
     data: UpdateInspectionDTO,
   ): Promise<Inspection> {
-    const inspection = await this.inspectionRepository.findById(id);
+    const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -126,24 +132,26 @@ export class InspectionService implements IInspectionService {
       throw new Error("Only DRAFT inspections can be updated");
     }
 
-    const updated = await this.inspectionRepository.update(id, data);
+    const updated = await this.inspectionRepository.update(scope, id, data);
 
     // Handle manual unit info from driver
     if (data.unitLicensePlate) {
-      const unit = await this.inspectionRepository.findOrCreateUnit({
+      const unit = await this.inspectionRepository.findOrCreateUnit(scope, {
         licensePlate: data.unitLicensePlate,
         make: data.unitMake ?? null,
         model: data.unitModel ?? null,
       });
-      await this.inspectionRepository.linkUnitToInspection(id, unit.id);
+      await this.inspectionRepository.linkUnitToInspection(scope, id, unit.id);
       if (data.unitOdometerKm != null) {
         await this.inspectionRepository.updateUnitKm(
+          scope,
           unit.id,
           data.unitOdometerKm,
         );
       }
     } else if (data.unitOdometerKm != null && inspection.unitId) {
       await this.inspectionRepository.updateUnitKm(
+        scope,
         inspection.unitId,
         data.unitOdometerKm,
       );
@@ -153,8 +161,12 @@ export class InspectionService implements IInspectionService {
     return updated;
   }
 
-  async submit(id: string, driverId: string): Promise<Inspection> {
-    const inspection = await this.inspectionRepository.findById(id);
+  async submit(
+    scope: UserScope,
+    id: string,
+    driverId: string,
+  ): Promise<Inspection> {
+    const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -190,9 +202,14 @@ export class InspectionService implements IInspectionService {
         (s) => s.status === "UPLOADED",
       );
       for (const step of uploadedSteps) {
-        await this.inspectionRepository.updateStepStatus(step.id, "COMPLETED");
+        await this.inspectionRepository.updateStepStatus(
+          scope,
+          step.id,
+          "COMPLETED",
+        );
       }
       const submitted = await this.inspectionRepository.updateStatus(
+        scope,
         id,
         "AI_COMPLETE",
       );
@@ -211,6 +228,7 @@ export class InspectionService implements IInspectionService {
     if (uploadedSteps.length === 0) {
       // All steps already completed by early analysis — skip PENDING_AI
       const submitted = await this.inspectionRepository.updateStatus(
+        scope,
         id,
         "AI_COMPLETE",
       );
@@ -222,6 +240,7 @@ export class InspectionService implements IInspectionService {
     }
 
     const submitted = await this.inspectionRepository.updateStatus(
+      scope,
       id,
       "PENDING_AI",
     );
@@ -251,10 +270,11 @@ export class InspectionService implements IInspectionService {
   }
 
   async analyzePhotos(
+    scope: UserScope,
     id: string,
     driverId: string,
   ): Promise<{ enqueuedSteps: string[] }> {
-    const inspection = await this.inspectionRepository.findById(id);
+    const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -300,8 +320,8 @@ export class InspectionService implements IInspectionService {
     return { enqueuedSteps };
   }
 
-  async delete(id: string, driverId: string): Promise<void> {
-    const inspection = await this.inspectionRepository.findById(id);
+  async delete(scope: UserScope, id: string, driverId: string): Promise<void> {
+    const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -312,17 +332,21 @@ export class InspectionService implements IInspectionService {
       throw new Error("Only DRAFT inspections can be deleted");
     }
 
-    await this.inspectionRepository.delete(id);
+    await this.inspectionRepository.delete(scope, id);
     this.logger.info("Inspection deleted", { inspectionId: id, driverId });
   }
 
   async updateStepStatus(
+    scope: UserScope,
     inspectionId: string,
     stepId: string,
     driverId: string,
     status: string,
   ): Promise<InspectionStep> {
-    const inspection = await this.inspectionRepository.findById(inspectionId);
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -330,29 +354,39 @@ export class InspectionService implements IInspectionService {
       throw new Error("Unauthorized access to inspection");
     }
 
-    const step = await this.inspectionRepository.findStepById(stepId);
+    const step = await this.inspectionRepository.findStepById(scope, stepId);
     if (!step || step.inspectionId !== inspectionId) {
       throw new Error("Step not found");
     }
 
     return this.inspectionRepository.updateStepStatus(
+      scope,
       stepId,
       status as StepStatus,
     );
   }
 
   async listTrips(
+    scope: UserScope,
     driverId: string,
     query: TripListQuery,
   ): Promise<TripGroupCard[]> {
-    return this.inspectionRepository.findTripsByDriverId(driverId, query);
+    return this.inspectionRepository.findTripsByDriverId(
+      scope,
+      driverId,
+      query,
+    );
   }
 
   async getPreTripUnitData(
+    scope: UserScope,
     postTripId: string,
     driverId: string,
   ): Promise<PreTripReferenceData | null> {
-    const postTrip = await this.inspectionRepository.findById(postTripId);
+    const postTrip = await this.inspectionRepository.findById(
+      scope,
+      postTripId,
+    );
     if (!postTrip) {
       throw new Error("Inspection not found");
     }
@@ -364,6 +398,7 @@ export class InspectionService implements IInspectionService {
     }
 
     const preTrip = await this.inspectionRepository.findById(
+      scope,
       postTrip.linkedInspectionId,
     );
     if (!preTrip) return null;
@@ -446,9 +481,7 @@ export class InspectionService implements IInspectionService {
 
     const normalize = (s: string) => s.toLowerCase().trim();
     const preKeys = new Set(
-      preDamages.map(
-        (d) => `${normalize(d.area)}|${normalize(d.location)}`,
-      ),
+      preDamages.map((d) => `${normalize(d.area)}|${normalize(d.location)}`),
     );
     const postKeys = postRawDamages.map(
       (d) =>

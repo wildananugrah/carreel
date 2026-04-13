@@ -1,3 +1,5 @@
+import type { UserScope } from "../../types/scope";
+
 export interface StreamInfo {
   stream: ReadableStream;
   mimeType: string;
@@ -8,5 +10,9 @@ export interface StreamInfo {
 }
 
 export interface IMediaStreamService {
-  getVideoStream(mediaId: string, rangeHeader?: string): Promise<StreamInfo>;
+  getVideoStream(
+    scope: UserScope,
+    mediaId: string,
+    rangeHeader?: string,
+  ): Promise<StreamInfo>;
 }

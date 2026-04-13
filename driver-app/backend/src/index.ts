@@ -11,6 +11,7 @@ import { StepAnalysisJob } from "./jobs/step-analysis.job";
 // Middlewares
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
+import { HttpError } from "./utils/http-error";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import {
   GeminiProvider,
@@ -25,6 +26,7 @@ import { AIAnalysisRepository } from "./repositories/ai-analysis.repository";
 import { AlertRepository } from "./repositories/alert.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
 import { MediaFileRepository } from "./repositories/media-file.repository";
+import { ScopeRepository } from "./repositories/scope.repository";
 import { UploadSessionRepository } from "./repositories/upload-session.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
@@ -88,6 +90,7 @@ const mediaFileRepository = new MediaFileRepository(prisma);
 const uploadSessionRepository = new UploadSessionRepository(prisma);
 const aiAnalysisRepository = new AIAnalysisRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
+const scopeRepository = new ScopeRepository(prisma);
 
 // pgboss
 const boss = new PgBoss(databaseUrl);
@@ -147,6 +150,7 @@ const stepAnalysisJob = new StepAnalysisJob(
 // Middlewares
 const authMiddleware = createAuthMiddleware(
   process.env.JWT_SECRET ?? "dev-jwt-secret",
+  scopeRepository,
 );
 
 // ========================
@@ -166,6 +170,33 @@ app.use(
 );
 app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
+// Note: scope is loaded INSIDE authMiddleware (per route) — not as a separate
+// global middleware — because Hono runs global middlewares before per-route
+// auth, so a global scope middleware would see no userId yet.
+
+// Hono's official error boundary — catches any error thrown from routes/middlewares.
+// HttpError instances become JSON responses with their status + message.
+// Everything else becomes a 500 "Internal server error".
+app.onError((err, c) => {
+  if (err instanceof HttpError) {
+    logger.warn("HTTP error", {
+      error: err.message,
+      status: err.status,
+      path: c.req.path,
+    });
+    return c.json(
+      { error: err.message },
+      err.status as 400 | 401 | 403 | 404 | 409,
+    );
+  }
+
+  logger.error("Unhandled exception", {
+    error: err.message,
+    stack: err.stack,
+    path: c.req.path,
+  });
+  return c.json({ error: "Internal server error" }, 500);
+});
 
 // Routes
 app.route("/health", createHealthRoutes(prisma, storageProvider));

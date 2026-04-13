@@ -34,7 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.post<AuthResponse>("/api/auth/login", { email, password });
     setToken(res.token);
-    setUser(res.user);
+    // Re-fetch /me to get the merged profile + scope. The login response
+    // returns a minimal UserResponse without scope (login is a public route
+    // and doesn't load scope), but /me is auth-protected and merges scope
+    // into the response. Without this re-fetch, the Header's role-based
+    // nav dropdowns wouldn't appear until the next page refresh.
+    const me = await api.get<User>("/api/auth/me");
+    setUser(me);
   }, []);
 
   const logout = useCallback(() => {

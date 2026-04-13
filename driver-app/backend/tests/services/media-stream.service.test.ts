@@ -3,10 +3,13 @@ import type { MediaFile } from "../../src/generated/prisma";
 import type { IStorageProvider } from "../../src/interfaces/providers/storage.provider.interface";
 import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
 import { MediaStreamService } from "../../src/services/media-stream.service";
+import type { UserScope } from "../../src/types/scope";
+import { makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockMedia: MediaFile = {
   id: "media-1",
   stepId: "step-1",
+  projectId: "test-project",
   fileName: "video.mp4",
   mimeType: "video/mp4",
   fileSize: 10_000_000,
@@ -51,7 +54,7 @@ describe("MediaStreamService", () => {
 
     const mockMediaFileRepo: IMediaFileRepository = {
       create: async () => mockMedia,
-      findById: async (id) => {
+      findById: async (_scope: UserScope, id: string) => {
         if (id === "media-1") return mockMedia;
         return null;
       },
@@ -63,7 +66,10 @@ describe("MediaStreamService", () => {
   });
 
   test("returns full stream when no range header", async () => {
-    const result = await service.getVideoStream("media-1");
+    const result = await service.getVideoStream(
+      makeSuperAdminScope(),
+      "media-1",
+    );
 
     expect(result.start).toBe(0);
     expect(result.end).toBe(9_999_999);
@@ -76,7 +82,11 @@ describe("MediaStreamService", () => {
   });
 
   test("returns partial stream for range request", async () => {
-    const result = await service.getVideoStream("media-1", "bytes=0-999999");
+    const result = await service.getVideoStream(
+      makeSuperAdminScope(),
+      "media-1",
+      "bytes=0-999999",
+    );
 
     expect(result.start).toBe(0);
     expect(result.end).toBe(999_999);
@@ -87,7 +97,11 @@ describe("MediaStreamService", () => {
   });
 
   test("handles open-ended range request", async () => {
-    const result = await service.getVideoStream("media-1", "bytes=5000000-");
+    const result = await service.getVideoStream(
+      makeSuperAdminScope(),
+      "media-1",
+      "bytes=5000000-",
+    );
 
     expect(result.start).toBe(5_000_000);
     expect(result.end).toBe(9_999_999);
@@ -96,8 +110,8 @@ describe("MediaStreamService", () => {
   });
 
   test("throws for non-existent media", async () => {
-    expect(service.getVideoStream("non-existent")).rejects.toThrow(
-      "Media file not found",
-    );
+    expect(
+      service.getVideoStream(makeSuperAdminScope(), "non-existent"),
+    ).rejects.toThrow("Media file not found");
   });
 });

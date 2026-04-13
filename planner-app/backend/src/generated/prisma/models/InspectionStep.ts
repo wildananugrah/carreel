@@ -31,6 +31,7 @@ export type InspectionStepMinAggregateOutputType = {
   status: $Enums.StepStatus | null
   createdAt: Date | null
   updatedAt: Date | null
+  projectId: string | null
 }
 
 export type InspectionStepMaxAggregateOutputType = {
@@ -40,6 +41,7 @@ export type InspectionStepMaxAggregateOutputType = {
   status: $Enums.StepStatus | null
   createdAt: Date | null
   updatedAt: Date | null
+  projectId: string | null
 }
 
 export type InspectionStepCountAggregateOutputType = {
@@ -49,6 +51,7 @@ export type InspectionStepCountAggregateOutputType = {
   status: number
   createdAt: number
   updatedAt: number
+  projectId: number
   _all: number
 }
 
@@ -60,6 +63,7 @@ export type InspectionStepMinAggregateInputType = {
   status?: true
   createdAt?: true
   updatedAt?: true
+  projectId?: true
 }
 
 export type InspectionStepMaxAggregateInputType = {
@@ -69,6 +73,7 @@ export type InspectionStepMaxAggregateInputType = {
   status?: true
   createdAt?: true
   updatedAt?: true
+  projectId?: true
 }
 
 export type InspectionStepCountAggregateInputType = {
@@ -78,6 +83,7 @@ export type InspectionStepCountAggregateInputType = {
   status?: true
   createdAt?: true
   updatedAt?: true
+  projectId?: true
   _all?: true
 }
 
@@ -160,6 +166,7 @@ export type InspectionStepGroupByOutputType = {
   status: $Enums.StepStatus
   createdAt: Date
   updatedAt: Date
+  projectId: string
   _count: InspectionStepCountAggregateOutputType | null
   _min: InspectionStepMinAggregateOutputType | null
   _max: InspectionStepMaxAggregateOutputType | null
@@ -190,6 +197,7 @@ export type InspectionStepWhereInput = {
   status?: Prisma.EnumStepStatusFilter<"InspectionStep"> | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
+  projectId?: Prisma.StringFilter<"InspectionStep"> | string
   inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   mediaFiles?: Prisma.MediaFileListRelationFilter
   aiAnalysis?: Prisma.XOR<Prisma.AIAnalysisNullableScalarRelationFilter, Prisma.AIAnalysisWhereInput> | null
@@ -202,6 +210,7 @@ export type InspectionStepOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   inspection?: Prisma.InspectionOrderByWithRelationInput
   mediaFiles?: Prisma.MediaFileOrderByRelationAggregateInput
   aiAnalysis?: Prisma.AIAnalysisOrderByWithRelationInput
@@ -218,6 +227,7 @@ export type InspectionStepWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumStepStatusFilter<"InspectionStep"> | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
+  projectId?: Prisma.StringFilter<"InspectionStep"> | string
   inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   mediaFiles?: Prisma.MediaFileListRelationFilter
   aiAnalysis?: Prisma.XOR<Prisma.AIAnalysisNullableScalarRelationFilter, Prisma.AIAnalysisWhereInput> | null
@@ -230,6 +240,7 @@ export type InspectionStepOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   _count?: Prisma.InspectionStepCountOrderByAggregateInput
   _max?: Prisma.InspectionStepMaxOrderByAggregateInput
   _min?: Prisma.InspectionStepMinOrderByAggregateInput
@@ -245,6 +256,7 @@ export type InspectionStepScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumStepStatusWithAggregatesFilter<"InspectionStep"> | $Enums.StepStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"InspectionStep"> | Date | string
+  projectId?: Prisma.StringWithAggregatesFilter<"InspectionStep"> | string
 }
 
 export type InspectionStepCreateInput = {
@@ -253,6 +265,7 @@ export type InspectionStepCreateInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   inspection: Prisma.InspectionCreateNestedOneWithoutStepsInput
   mediaFiles?: Prisma.MediaFileCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisCreateNestedOneWithoutStepInput
@@ -265,6 +278,7 @@ export type InspectionStepUncheckedCreateInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   mediaFiles?: Prisma.MediaFileUncheckedCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedCreateNestedOneWithoutStepInput
 }
@@ -275,6 +289,7 @@ export type InspectionStepUpdateInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutStepsNestedInput
   mediaFiles?: Prisma.MediaFileUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUpdateOneWithoutStepNestedInput
@@ -287,6 +302,7 @@ export type InspectionStepUncheckedUpdateInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaFiles?: Prisma.MediaFileUncheckedUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedUpdateOneWithoutStepNestedInput
 }
@@ -298,6 +314,7 @@ export type InspectionStepCreateManyInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
 }
 
 export type InspectionStepUpdateManyMutationInput = {
@@ -306,6 +323,7 @@ export type InspectionStepUpdateManyMutationInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionStepUncheckedUpdateManyInput = {
@@ -315,6 +333,7 @@ export type InspectionStepUncheckedUpdateManyInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionStepListRelationFilter = {
@@ -339,6 +358,7 @@ export type InspectionStepCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type InspectionStepMaxOrderByAggregateInput = {
@@ -348,6 +368,7 @@ export type InspectionStepMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type InspectionStepMinOrderByAggregateInput = {
@@ -357,6 +378,7 @@ export type InspectionStepMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type InspectionStepScalarRelationFilter = {
@@ -448,6 +470,7 @@ export type InspectionStepCreateWithoutInspectionInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   mediaFiles?: Prisma.MediaFileCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisCreateNestedOneWithoutStepInput
 }
@@ -458,6 +481,7 @@ export type InspectionStepUncheckedCreateWithoutInspectionInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   mediaFiles?: Prisma.MediaFileUncheckedCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedCreateNestedOneWithoutStepInput
 }
@@ -498,6 +522,7 @@ export type InspectionStepScalarWhereInput = {
   status?: Prisma.EnumStepStatusFilter<"InspectionStep"> | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
+  projectId?: Prisma.StringFilter<"InspectionStep"> | string
 }
 
 export type InspectionStepCreateWithoutMediaFilesInput = {
@@ -506,6 +531,7 @@ export type InspectionStepCreateWithoutMediaFilesInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   inspection: Prisma.InspectionCreateNestedOneWithoutStepsInput
   aiAnalysis?: Prisma.AIAnalysisCreateNestedOneWithoutStepInput
 }
@@ -517,6 +543,7 @@ export type InspectionStepUncheckedCreateWithoutMediaFilesInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   aiAnalysis?: Prisma.AIAnalysisUncheckedCreateNestedOneWithoutStepInput
 }
 
@@ -542,6 +569,7 @@ export type InspectionStepUpdateWithoutMediaFilesInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutStepsNestedInput
   aiAnalysis?: Prisma.AIAnalysisUpdateOneWithoutStepNestedInput
 }
@@ -553,6 +581,7 @@ export type InspectionStepUncheckedUpdateWithoutMediaFilesInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   aiAnalysis?: Prisma.AIAnalysisUncheckedUpdateOneWithoutStepNestedInput
 }
 
@@ -562,6 +591,7 @@ export type InspectionStepCreateWithoutAiAnalysisInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   inspection: Prisma.InspectionCreateNestedOneWithoutStepsInput
   mediaFiles?: Prisma.MediaFileCreateNestedManyWithoutStepInput
 }
@@ -573,6 +603,7 @@ export type InspectionStepUncheckedCreateWithoutAiAnalysisInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   mediaFiles?: Prisma.MediaFileUncheckedCreateNestedManyWithoutStepInput
 }
 
@@ -598,6 +629,7 @@ export type InspectionStepUpdateWithoutAiAnalysisInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutStepsNestedInput
   mediaFiles?: Prisma.MediaFileUpdateManyWithoutStepNestedInput
 }
@@ -609,6 +641,7 @@ export type InspectionStepUncheckedUpdateWithoutAiAnalysisInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaFiles?: Prisma.MediaFileUncheckedUpdateManyWithoutStepNestedInput
 }
 
@@ -618,6 +651,7 @@ export type InspectionStepCreateManyInspectionInput = {
   status?: $Enums.StepStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
 }
 
 export type InspectionStepUpdateWithoutInspectionInput = {
@@ -626,6 +660,7 @@ export type InspectionStepUpdateWithoutInspectionInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaFiles?: Prisma.MediaFileUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUpdateOneWithoutStepNestedInput
 }
@@ -636,6 +671,7 @@ export type InspectionStepUncheckedUpdateWithoutInspectionInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaFiles?: Prisma.MediaFileUncheckedUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedUpdateOneWithoutStepNestedInput
 }
@@ -646,6 +682,7 @@ export type InspectionStepUncheckedUpdateManyWithoutInspectionInput = {
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -686,6 +723,7 @@ export type InspectionStepSelect<ExtArgs extends runtime.Types.Extensions.Intern
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   mediaFiles?: boolean | Prisma.InspectionStep$mediaFilesArgs<ExtArgs>
   aiAnalysis?: boolean | Prisma.InspectionStep$aiAnalysisArgs<ExtArgs>
@@ -699,6 +737,7 @@ export type InspectionStepSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspectionStep"]>
 
@@ -709,6 +748,7 @@ export type InspectionStepSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspectionStep"]>
 
@@ -719,9 +759,10 @@ export type InspectionStepSelectScalar = {
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
 }
 
-export type InspectionStepOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "stepType" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["inspectionStep"]>
+export type InspectionStepOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "stepType" | "status" | "createdAt" | "updatedAt" | "projectId", ExtArgs["result"]["inspectionStep"]>
 export type InspectionStepInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   mediaFiles?: boolean | Prisma.InspectionStep$mediaFilesArgs<ExtArgs>
@@ -749,6 +790,7 @@ export type $InspectionStepPayload<ExtArgs extends runtime.Types.Extensions.Inte
     status: $Enums.StepStatus
     createdAt: Date
     updatedAt: Date
+    projectId: string
   }, ExtArgs["result"]["inspectionStep"]>
   composites: {}
 }
@@ -1181,6 +1223,7 @@ export interface InspectionStepFieldRefs {
   readonly status: Prisma.FieldRef<"InspectionStep", 'StepStatus'>
   readonly createdAt: Prisma.FieldRef<"InspectionStep", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"InspectionStep", 'DateTime'>
+  readonly projectId: Prisma.FieldRef<"InspectionStep", 'String'>
 }
     
 

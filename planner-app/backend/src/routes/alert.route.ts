@@ -14,6 +14,8 @@ export function createAlertRoutes(
 
   // GET /api/alerts
   app.get("/", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const query = {
       isRead:
         c.req.query("isRead") === "true"
@@ -25,26 +27,32 @@ export function createAlertRoutes(
       page: c.req.query("page") ? Number(c.req.query("page")) : undefined,
       limit: c.req.query("limit") ? Number(c.req.query("limit")) : undefined,
     };
-    const result = await alertService.list(query);
+    const result = await alertService.list(scope, query);
     return c.json(result);
   });
 
   // GET /api/alerts/unread-count
   app.get("/unread-count", async (c) => {
-    const count = await alertService.countUnread();
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const count = await alertService.countUnread(scope);
     return c.json({ count });
   });
 
   // PATCH /api/alerts/:id/read
   app.patch("/:id/read", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const id = c.req.param("id");
-    const alert = await alertService.markAsRead(id);
+    const alert = await alertService.markAsRead(scope, id);
     return c.json(alert);
   });
 
   // POST /api/alerts/mark-all-read
   app.post("/mark-all-read", async (c) => {
-    const count = await alertService.markAllAsRead();
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const count = await alertService.markAllAsRead(scope);
     return c.json({ count });
   });
 

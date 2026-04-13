@@ -87,3 +87,23 @@ export type UploadedPart = Prisma.UploadedPartModel
  * 
  */
 export type OutboxEvent = Prisma.OutboxEventModel
+/**
+ * Model Workspace
+ * 
+ */
+export type Workspace = Prisma.WorkspaceModel
+/**
+ * Model Project
+ * 
+ */
+export type Project = Prisma.ProjectModel
+/**
+ * Model ProjectMember
+ * 
+ */
+export type ProjectMember = Prisma.ProjectMemberModel
+/**
+ * Model DriverAssignment
+ * 
+ */
+export type DriverAssignment = Prisma.DriverAssignmentModel

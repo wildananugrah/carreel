@@ -32,6 +32,7 @@ export type UserMinAggregateOutputType = {
   role: $Enums.UserRole | null
   createdAt: Date | null
   updatedAt: Date | null
+  systemRole: $Enums.SystemRole | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -42,6 +43,7 @@ export type UserMaxAggregateOutputType = {
   role: $Enums.UserRole | null
   createdAt: Date | null
   updatedAt: Date | null
+  systemRole: $Enums.SystemRole | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -52,6 +54,7 @@ export type UserCountAggregateOutputType = {
   role: number
   createdAt: number
   updatedAt: number
+  systemRole: number
   _all: number
 }
 
@@ -64,6 +67,7 @@ export type UserMinAggregateInputType = {
   role?: true
   createdAt?: true
   updatedAt?: true
+  systemRole?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -74,6 +78,7 @@ export type UserMaxAggregateInputType = {
   role?: true
   createdAt?: true
   updatedAt?: true
+  systemRole?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -84,6 +89,7 @@ export type UserCountAggregateInputType = {
   role?: true
   createdAt?: true
   updatedAt?: true
+  systemRole?: true
   _all?: true
 }
 
@@ -167,6 +173,7 @@ export type UserGroupByOutputType = {
   role: $Enums.UserRole
   createdAt: Date
   updatedAt: Date
+  systemRole: $Enums.SystemRole
   _count: UserCountAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
@@ -198,9 +205,13 @@ export type UserWhereInput = {
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  systemRole?: Prisma.EnumSystemRoleFilter<"User"> | $Enums.SystemRole
   inspections?: Prisma.InspectionListRelationFilter
   reviews?: Prisma.InspectionReviewListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
+  projectMemberships?: Prisma.ProjectMemberListRelationFilter
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentListRelationFilter
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -211,9 +222,13 @@ export type UserOrderByWithRelationInput = {
   role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  systemRole?: Prisma.SortOrder
   inspections?: Prisma.InspectionOrderByRelationAggregateInput
   reviews?: Prisma.InspectionReviewOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
+  projectMemberships?: Prisma.ProjectMemberOrderByRelationAggregateInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentOrderByRelationAggregateInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -227,9 +242,13 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  systemRole?: Prisma.EnumSystemRoleFilter<"User"> | $Enums.SystemRole
   inspections?: Prisma.InspectionListRelationFilter
   reviews?: Prisma.InspectionReviewListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
+  projectMemberships?: Prisma.ProjectMemberListRelationFilter
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentListRelationFilter
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -240,6 +259,7 @@ export type UserOrderByWithAggregationInput = {
   role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  systemRole?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
@@ -256,6 +276,7 @@ export type UserScalarWhereWithAggregatesInput = {
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
+  systemRole?: Prisma.EnumSystemRoleWithAggregatesFilter<"User"> | $Enums.SystemRole
 }
 
 export type UserCreateInput = {
@@ -266,9 +287,13 @@ export type UserCreateInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -279,9 +304,13 @@ export type UserUncheckedCreateInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
 }
 
 export type UserUpdateInput = {
@@ -292,9 +321,13 @@ export type UserUpdateInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -305,9 +338,13 @@ export type UserUncheckedUpdateInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -318,6 +355,7 @@ export type UserCreateManyInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
 }
 
 export type UserUpdateManyMutationInput = {
@@ -328,6 +366,7 @@ export type UserUpdateManyMutationInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -338,6 +377,7 @@ export type UserUncheckedUpdateManyInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -348,6 +388,7 @@ export type UserCountOrderByAggregateInput = {
   role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  systemRole?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -358,6 +399,7 @@ export type UserMaxOrderByAggregateInput = {
   role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  systemRole?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -368,6 +410,7 @@ export type UserMinOrderByAggregateInput = {
   role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  systemRole?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -390,6 +433,10 @@ export type EnumUserRoleFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type EnumSystemRoleFieldUpdateOperationsInput = {
+  set?: $Enums.SystemRole
 }
 
 export type UserCreateNestedOneWithoutInspectionsInput = {
@@ -436,6 +483,48 @@ export type UserUpdateOneWithoutAuditLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.UserUpdateWithoutAuditLogsInput>, Prisma.UserUncheckedUpdateWithoutAuditLogsInput>
 }
 
+export type UserCreateNestedOneWithoutProjectMembershipsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProjectMembershipsInput, Prisma.UserUncheckedCreateWithoutProjectMembershipsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProjectMembershipsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutProjectMembershipsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProjectMembershipsInput, Prisma.UserUncheckedCreateWithoutProjectMembershipsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProjectMembershipsInput
+  upsert?: Prisma.UserUpsertWithoutProjectMembershipsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProjectMembershipsInput, Prisma.UserUpdateWithoutProjectMembershipsInput>, Prisma.UserUncheckedUpdateWithoutProjectMembershipsInput>
+}
+
+export type UserCreateNestedOneWithoutDriverAssignmentsAsDriverInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsDriverInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsDriverInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDriverAssignmentsAsDriverInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutDriverAssignmentsAsPlannerInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsPlannerInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsPlannerInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDriverAssignmentsAsPlannerInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutDriverAssignmentsAsDriverNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsDriverInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsDriverInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDriverAssignmentsAsDriverInput
+  upsert?: Prisma.UserUpsertWithoutDriverAssignmentsAsDriverInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDriverAssignmentsAsDriverInput, Prisma.UserUpdateWithoutDriverAssignmentsAsDriverInput>, Prisma.UserUncheckedUpdateWithoutDriverAssignmentsAsDriverInput>
+}
+
+export type UserUpdateOneRequiredWithoutDriverAssignmentsAsPlannerNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsPlannerInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsPlannerInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDriverAssignmentsAsPlannerInput
+  upsert?: Prisma.UserUpsertWithoutDriverAssignmentsAsPlannerInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDriverAssignmentsAsPlannerInput, Prisma.UserUpdateWithoutDriverAssignmentsAsPlannerInput>, Prisma.UserUncheckedUpdateWithoutDriverAssignmentsAsPlannerInput>
+}
+
 export type UserCreateWithoutInspectionsInput = {
   id?: string
   email: string
@@ -444,8 +533,12 @@ export type UserCreateWithoutInspectionsInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
 }
 
 export type UserUncheckedCreateWithoutInspectionsInput = {
@@ -456,8 +549,12 @@ export type UserUncheckedCreateWithoutInspectionsInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
 }
 
 export type UserCreateOrConnectWithoutInspectionsInput = {
@@ -484,8 +581,12 @@ export type UserUpdateWithoutInspectionsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInspectionsInput = {
@@ -496,8 +597,12 @@ export type UserUncheckedUpdateWithoutInspectionsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -508,8 +613,12 @@ export type UserCreateWithoutReviewsInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -520,8 +629,12 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -548,8 +661,12 @@ export type UserUpdateWithoutReviewsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -560,8 +677,12 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
 }
 
 export type UserCreateWithoutAuditLogsInput = {
@@ -572,8 +693,12 @@ export type UserCreateWithoutAuditLogsInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -584,8 +709,12 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   role: $Enums.UserRole
   createdAt?: Date | string
   updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
   inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -612,8 +741,12 @@ export type UserUpdateWithoutAuditLogsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -624,8 +757,252 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
   inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+}
+
+export type UserCreateWithoutProjectMembershipsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+}
+
+export type UserUncheckedCreateWithoutProjectMembershipsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+}
+
+export type UserCreateOrConnectWithoutProjectMembershipsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutProjectMembershipsInput, Prisma.UserUncheckedCreateWithoutProjectMembershipsInput>
+}
+
+export type UserUpsertWithoutProjectMembershipsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutProjectMembershipsInput, Prisma.UserUncheckedUpdateWithoutProjectMembershipsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutProjectMembershipsInput, Prisma.UserUncheckedCreateWithoutProjectMembershipsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutProjectMembershipsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutProjectMembershipsInput, Prisma.UserUncheckedUpdateWithoutProjectMembershipsInput>
+}
+
+export type UserUpdateWithoutProjectMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutProjectMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+}
+
+export type UserCreateWithoutDriverAssignmentsAsDriverInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+}
+
+export type UserUncheckedCreateWithoutDriverAssignmentsAsDriverInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+}
+
+export type UserCreateOrConnectWithoutDriverAssignmentsAsDriverInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsDriverInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsDriverInput>
+}
+
+export type UserCreateWithoutDriverAssignmentsAsPlannerInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+}
+
+export type UserUncheckedCreateWithoutDriverAssignmentsAsPlannerInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+}
+
+export type UserCreateOrConnectWithoutDriverAssignmentsAsPlannerInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsPlannerInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsPlannerInput>
+}
+
+export type UserUpsertWithoutDriverAssignmentsAsDriverInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDriverAssignmentsAsDriverInput, Prisma.UserUncheckedUpdateWithoutDriverAssignmentsAsDriverInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsDriverInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsDriverInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDriverAssignmentsAsDriverInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDriverAssignmentsAsDriverInput, Prisma.UserUncheckedUpdateWithoutDriverAssignmentsAsDriverInput>
+}
+
+export type UserUpdateWithoutDriverAssignmentsAsDriverInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDriverAssignmentsAsDriverInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+}
+
+export type UserUpsertWithoutDriverAssignmentsAsPlannerInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDriverAssignmentsAsPlannerInput, Prisma.UserUncheckedUpdateWithoutDriverAssignmentsAsPlannerInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDriverAssignmentsAsPlannerInput, Prisma.UserUncheckedCreateWithoutDriverAssignmentsAsPlannerInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDriverAssignmentsAsPlannerInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDriverAssignmentsAsPlannerInput, Prisma.UserUncheckedUpdateWithoutDriverAssignmentsAsPlannerInput>
+}
+
+export type UserUpdateWithoutDriverAssignmentsAsPlannerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDriverAssignmentsAsPlannerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
 }
 
 
@@ -637,12 +1014,18 @@ export type UserCountOutputType = {
   inspections: number
   reviews: number
   auditLogs: number
+  projectMemberships: number
+  driverAssignmentsAsDriver: number
+  driverAssignmentsAsPlanner: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspections?: boolean | UserCountOutputTypeCountInspectionsArgs
   reviews?: boolean | UserCountOutputTypeCountReviewsArgs
   auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
+  projectMemberships?: boolean | UserCountOutputTypeCountProjectMembershipsArgs
+  driverAssignmentsAsDriver?: boolean | UserCountOutputTypeCountDriverAssignmentsAsDriverArgs
+  driverAssignmentsAsPlanner?: boolean | UserCountOutputTypeCountDriverAssignmentsAsPlannerArgs
 }
 
 /**
@@ -676,6 +1059,27 @@ export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.
   where?: Prisma.AuditLogWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountProjectMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProjectMemberWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDriverAssignmentsAsDriverArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DriverAssignmentWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDriverAssignmentsAsPlannerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DriverAssignmentWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -685,9 +1089,13 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  systemRole?: boolean
   inspections?: boolean | Prisma.User$inspectionsArgs<ExtArgs>
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
+  projectMemberships?: boolean | Prisma.User$projectMembershipsArgs<ExtArgs>
+  driverAssignmentsAsDriver?: boolean | Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs>
+  driverAssignmentsAsPlanner?: boolean | Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -699,6 +1107,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  systemRole?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -709,6 +1118,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  systemRole?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -719,13 +1129,17 @@ export type UserSelectScalar = {
   role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  systemRole?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "fullName" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "fullName" | "role" | "createdAt" | "updatedAt" | "systemRole", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspections?: boolean | Prisma.User$inspectionsArgs<ExtArgs>
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
+  projectMemberships?: boolean | Prisma.User$projectMembershipsArgs<ExtArgs>
+  driverAssignmentsAsDriver?: boolean | Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs>
+  driverAssignmentsAsPlanner?: boolean | Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -737,6 +1151,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     inspections: Prisma.$InspectionPayload<ExtArgs>[]
     reviews: Prisma.$InspectionReviewPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
+    projectMemberships: Prisma.$ProjectMemberPayload<ExtArgs>[]
+    driverAssignmentsAsDriver: Prisma.$DriverAssignmentPayload<ExtArgs>[]
+    driverAssignmentsAsPlanner: Prisma.$DriverAssignmentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -746,6 +1163,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     role: $Enums.UserRole
     createdAt: Date
     updatedAt: Date
+    systemRole: $Enums.SystemRole
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1143,6 +1561,9 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   inspections<T extends Prisma.User$inspectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$inspectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InspectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.User$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InspectionReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.User$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  projectMemberships<T extends Prisma.User$projectMembershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$projectMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  driverAssignmentsAsDriver<T extends Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DriverAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  driverAssignmentsAsPlanner<T extends Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DriverAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1179,6 +1600,7 @@ export interface UserFieldRefs {
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly systemRole: Prisma.FieldRef<"User", 'SystemRole'>
 }
     
 
@@ -1641,6 +2063,78 @@ export type User$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
+}
+
+/**
+ * User.projectMemberships
+ */
+export type User$projectMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProjectMember
+   */
+  select?: Prisma.ProjectMemberSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProjectMember
+   */
+  omit?: Prisma.ProjectMemberOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectMemberInclude<ExtArgs> | null
+  where?: Prisma.ProjectMemberWhereInput
+  orderBy?: Prisma.ProjectMemberOrderByWithRelationInput | Prisma.ProjectMemberOrderByWithRelationInput[]
+  cursor?: Prisma.ProjectMemberWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProjectMemberScalarFieldEnum | Prisma.ProjectMemberScalarFieldEnum[]
+}
+
+/**
+ * User.driverAssignmentsAsDriver
+ */
+export type User$driverAssignmentsAsDriverArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DriverAssignment
+   */
+  select?: Prisma.DriverAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DriverAssignment
+   */
+  omit?: Prisma.DriverAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DriverAssignmentInclude<ExtArgs> | null
+  where?: Prisma.DriverAssignmentWhereInput
+  orderBy?: Prisma.DriverAssignmentOrderByWithRelationInput | Prisma.DriverAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.DriverAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DriverAssignmentScalarFieldEnum | Prisma.DriverAssignmentScalarFieldEnum[]
+}
+
+/**
+ * User.driverAssignmentsAsPlanner
+ */
+export type User$driverAssignmentsAsPlannerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DriverAssignment
+   */
+  select?: Prisma.DriverAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DriverAssignment
+   */
+  omit?: Prisma.DriverAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DriverAssignmentInclude<ExtArgs> | null
+  where?: Prisma.DriverAssignmentWhereInput
+  orderBy?: Prisma.DriverAssignmentOrderByWithRelationInput | Prisma.DriverAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.DriverAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DriverAssignmentScalarFieldEnum | Prisma.DriverAssignmentScalarFieldEnum[]
 }
 
 /**

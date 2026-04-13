@@ -4,6 +4,7 @@ import type { InspectionStatus } from "../generated/prisma";
 import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
 import type { AppEnv } from "../types/dto";
+import { SYSTEM_SCOPE } from "../utils/system-scope";
 
 export function createInspectionRoutes(
   inspectionService: IInspectionService,
@@ -15,7 +16,10 @@ export function createInspectionRoutes(
   // GET /api/inspections/:id/signature — proxy signature image from MinIO
   // No auth required: used by <img src> tags (same pattern as media routes).
   app.get("/:id/signature", async (c) => {
-    const inspection = await inspectionService.getById(c.req.param("id"));
+    const inspection = await inspectionService.getById(
+      SYSTEM_SCOPE,
+      c.req.param("id"),
+    );
     if (!inspection?.signatureKey) {
       return c.json({ error: "No signature found" }, 404);
     }
@@ -35,6 +39,8 @@ export function createInspectionRoutes(
 
   // GET /api/inspections
   app.get("/", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const query = {
       status: c.req.query("status") as InspectionStatus | undefined,
       driverId: c.req.query("driverId"),
@@ -43,21 +49,25 @@ export function createInspectionRoutes(
       page: c.req.query("page") ? Number(c.req.query("page")) : undefined,
       limit: c.req.query("limit") ? Number(c.req.query("limit")) : undefined,
     };
-    const result = await inspectionService.list(query);
+    const result = await inspectionService.list(scope, query);
     return c.json(result);
   });
 
   // GET /api/inspections/:id
   app.get("/:id", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const id = c.req.param("id");
-    const inspection = await inspectionService.getById(id);
+    const inspection = await inspectionService.getById(scope, id);
     return c.json(inspection);
   });
 
   // GET /api/inspections/:id/comparison
   app.get("/:id/comparison", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const id = c.req.param("id");
-    const comparison = await inspectionService.getComparison(id);
+    const comparison = await inspectionService.getComparison(scope, id);
     if (!comparison) {
       return c.json({ error: "No comparison available" }, 404);
     }
@@ -66,10 +76,13 @@ export function createInspectionRoutes(
 
   // POST /api/inspections/:id/reviews
   app.post("/:id/reviews", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const inspectionId = c.req.param("id");
     const reviewerId = c.get("userId");
     const body = await c.req.json();
     const review = await inspectionService.review(
+      scope,
       inspectionId,
       reviewerId,
       body,

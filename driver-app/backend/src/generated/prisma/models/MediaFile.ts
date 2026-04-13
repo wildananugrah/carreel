@@ -54,6 +54,7 @@ export type MediaFileMinAggregateOutputType = {
   capturedAt: Date | null
   durationSeconds: number | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type MediaFileMaxAggregateOutputType = {
@@ -70,6 +71,7 @@ export type MediaFileMaxAggregateOutputType = {
   capturedAt: Date | null
   durationSeconds: number | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type MediaFileCountAggregateOutputType = {
@@ -86,6 +88,7 @@ export type MediaFileCountAggregateOutputType = {
   capturedAt: number
   durationSeconds: number
   createdAt: number
+  projectId: number
   _all: number
 }
 
@@ -118,6 +121,7 @@ export type MediaFileMinAggregateInputType = {
   capturedAt?: true
   durationSeconds?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type MediaFileMaxAggregateInputType = {
@@ -134,6 +138,7 @@ export type MediaFileMaxAggregateInputType = {
   capturedAt?: true
   durationSeconds?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type MediaFileCountAggregateInputType = {
@@ -150,6 +155,7 @@ export type MediaFileCountAggregateInputType = {
   capturedAt?: true
   durationSeconds?: true
   createdAt?: true
+  projectId?: true
   _all?: true
 }
 
@@ -253,6 +259,7 @@ export type MediaFileGroupByOutputType = {
   capturedAt: Date
   durationSeconds: number | null
   createdAt: Date
+  projectId: string
   _count: MediaFileCountAggregateOutputType | null
   _avg: MediaFileAvgAggregateOutputType | null
   _sum: MediaFileSumAggregateOutputType | null
@@ -292,6 +299,7 @@ export type MediaFileWhereInput = {
   capturedAt?: Prisma.DateTimeFilter<"MediaFile"> | Date | string
   durationSeconds?: Prisma.FloatNullableFilter<"MediaFile"> | number | null
   createdAt?: Prisma.DateTimeFilter<"MediaFile"> | Date | string
+  projectId?: Prisma.StringFilter<"MediaFile"> | string
   step?: Prisma.XOR<Prisma.InspectionStepScalarRelationFilter, Prisma.InspectionStepWhereInput>
   damageMarkers?: Prisma.DamageMarkerListRelationFilter
   aiAnalyses?: Prisma.AIAnalysisListRelationFilter
@@ -311,6 +319,7 @@ export type MediaFileOrderByWithRelationInput = {
   capturedAt?: Prisma.SortOrder
   durationSeconds?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   step?: Prisma.InspectionStepOrderByWithRelationInput
   damageMarkers?: Prisma.DamageMarkerOrderByRelationAggregateInput
   aiAnalyses?: Prisma.AIAnalysisOrderByRelationAggregateInput
@@ -333,6 +342,7 @@ export type MediaFileWhereUniqueInput = Prisma.AtLeast<{
   capturedAt?: Prisma.DateTimeFilter<"MediaFile"> | Date | string
   durationSeconds?: Prisma.FloatNullableFilter<"MediaFile"> | number | null
   createdAt?: Prisma.DateTimeFilter<"MediaFile"> | Date | string
+  projectId?: Prisma.StringFilter<"MediaFile"> | string
   step?: Prisma.XOR<Prisma.InspectionStepScalarRelationFilter, Prisma.InspectionStepWhereInput>
   damageMarkers?: Prisma.DamageMarkerListRelationFilter
   aiAnalyses?: Prisma.AIAnalysisListRelationFilter
@@ -352,6 +362,7 @@ export type MediaFileOrderByWithAggregationInput = {
   capturedAt?: Prisma.SortOrder
   durationSeconds?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   _count?: Prisma.MediaFileCountOrderByAggregateInput
   _avg?: Prisma.MediaFileAvgOrderByAggregateInput
   _max?: Prisma.MediaFileMaxOrderByAggregateInput
@@ -376,6 +387,7 @@ export type MediaFileScalarWhereWithAggregatesInput = {
   capturedAt?: Prisma.DateTimeWithAggregatesFilter<"MediaFile"> | Date | string
   durationSeconds?: Prisma.FloatNullableWithAggregatesFilter<"MediaFile"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MediaFile"> | Date | string
+  projectId?: Prisma.StringWithAggregatesFilter<"MediaFile"> | string
 }
 
 export type MediaFileCreateInput = {
@@ -391,6 +403,7 @@ export type MediaFileCreateInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   step: Prisma.InspectionStepCreateNestedOneWithoutMediaFilesInput
   damageMarkers?: Prisma.DamageMarkerCreateNestedManyWithoutMediaFileInput
   aiAnalyses?: Prisma.AIAnalysisCreateNestedManyWithoutMediaFileInput
@@ -410,6 +423,7 @@ export type MediaFileUncheckedCreateInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   damageMarkers?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutMediaFileInput
   aiAnalyses?: Prisma.AIAnalysisUncheckedCreateNestedManyWithoutMediaFileInput
 }
@@ -427,6 +441,7 @@ export type MediaFileUpdateInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   step?: Prisma.InspectionStepUpdateOneRequiredWithoutMediaFilesNestedInput
   damageMarkers?: Prisma.DamageMarkerUpdateManyWithoutMediaFileNestedInput
   aiAnalyses?: Prisma.AIAnalysisUpdateManyWithoutMediaFileNestedInput
@@ -446,6 +461,7 @@ export type MediaFileUncheckedUpdateInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   damageMarkers?: Prisma.DamageMarkerUncheckedUpdateManyWithoutMediaFileNestedInput
   aiAnalyses?: Prisma.AIAnalysisUncheckedUpdateManyWithoutMediaFileNestedInput
 }
@@ -464,6 +480,7 @@ export type MediaFileCreateManyInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type MediaFileUpdateManyMutationInput = {
@@ -479,6 +496,7 @@ export type MediaFileUpdateManyMutationInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type MediaFileUncheckedUpdateManyInput = {
@@ -495,6 +513,7 @@ export type MediaFileUncheckedUpdateManyInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type MediaFileListRelationFilter = {
@@ -521,6 +540,7 @@ export type MediaFileCountOrderByAggregateInput = {
   capturedAt?: Prisma.SortOrder
   durationSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type MediaFileAvgOrderByAggregateInput = {
@@ -544,6 +564,7 @@ export type MediaFileMaxOrderByAggregateInput = {
   capturedAt?: Prisma.SortOrder
   durationSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type MediaFileMinOrderByAggregateInput = {
@@ -560,6 +581,7 @@ export type MediaFileMinOrderByAggregateInput = {
   capturedAt?: Prisma.SortOrder
   durationSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type MediaFileSumOrderByAggregateInput = {
@@ -676,6 +698,7 @@ export type MediaFileCreateWithoutStepInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   damageMarkers?: Prisma.DamageMarkerCreateNestedManyWithoutMediaFileInput
   aiAnalyses?: Prisma.AIAnalysisCreateNestedManyWithoutMediaFileInput
 }
@@ -693,6 +716,7 @@ export type MediaFileUncheckedCreateWithoutStepInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   damageMarkers?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutMediaFileInput
   aiAnalyses?: Prisma.AIAnalysisUncheckedCreateNestedManyWithoutMediaFileInput
 }
@@ -740,6 +764,7 @@ export type MediaFileScalarWhereInput = {
   capturedAt?: Prisma.DateTimeFilter<"MediaFile"> | Date | string
   durationSeconds?: Prisma.FloatNullableFilter<"MediaFile"> | number | null
   createdAt?: Prisma.DateTimeFilter<"MediaFile"> | Date | string
+  projectId?: Prisma.StringFilter<"MediaFile"> | string
 }
 
 export type MediaFileCreateWithoutAiAnalysesInput = {
@@ -755,6 +780,7 @@ export type MediaFileCreateWithoutAiAnalysesInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   step: Prisma.InspectionStepCreateNestedOneWithoutMediaFilesInput
   damageMarkers?: Prisma.DamageMarkerCreateNestedManyWithoutMediaFileInput
 }
@@ -773,6 +799,7 @@ export type MediaFileUncheckedCreateWithoutAiAnalysesInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   damageMarkers?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutMediaFileInput
 }
 
@@ -805,6 +832,7 @@ export type MediaFileUpdateWithoutAiAnalysesInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   step?: Prisma.InspectionStepUpdateOneRequiredWithoutMediaFilesNestedInput
   damageMarkers?: Prisma.DamageMarkerUpdateManyWithoutMediaFileNestedInput
 }
@@ -823,6 +851,7 @@ export type MediaFileUncheckedUpdateWithoutAiAnalysesInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   damageMarkers?: Prisma.DamageMarkerUncheckedUpdateManyWithoutMediaFileNestedInput
 }
 
@@ -839,6 +868,7 @@ export type MediaFileCreateWithoutDamageMarkersInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   step: Prisma.InspectionStepCreateNestedOneWithoutMediaFilesInput
   aiAnalyses?: Prisma.AIAnalysisCreateNestedManyWithoutMediaFileInput
 }
@@ -857,6 +887,7 @@ export type MediaFileUncheckedCreateWithoutDamageMarkersInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
   aiAnalyses?: Prisma.AIAnalysisUncheckedCreateNestedManyWithoutMediaFileInput
 }
 
@@ -889,6 +920,7 @@ export type MediaFileUpdateWithoutDamageMarkersInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   step?: Prisma.InspectionStepUpdateOneRequiredWithoutMediaFilesNestedInput
   aiAnalyses?: Prisma.AIAnalysisUpdateManyWithoutMediaFileNestedInput
 }
@@ -907,6 +939,7 @@ export type MediaFileUncheckedUpdateWithoutDamageMarkersInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   aiAnalyses?: Prisma.AIAnalysisUncheckedUpdateManyWithoutMediaFileNestedInput
 }
 
@@ -923,6 +956,7 @@ export type MediaFileCreateManyStepInput = {
   capturedAt: Date | string
   durationSeconds?: number | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type MediaFileUpdateWithoutStepInput = {
@@ -938,6 +972,7 @@ export type MediaFileUpdateWithoutStepInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   damageMarkers?: Prisma.DamageMarkerUpdateManyWithoutMediaFileNestedInput
   aiAnalyses?: Prisma.AIAnalysisUpdateManyWithoutMediaFileNestedInput
 }
@@ -955,6 +990,7 @@ export type MediaFileUncheckedUpdateWithoutStepInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   damageMarkers?: Prisma.DamageMarkerUncheckedUpdateManyWithoutMediaFileNestedInput
   aiAnalyses?: Prisma.AIAnalysisUncheckedUpdateManyWithoutMediaFileNestedInput
 }
@@ -972,6 +1008,7 @@ export type MediaFileUncheckedUpdateManyWithoutStepInput = {
   capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -1028,6 +1065,7 @@ export type MediaFileSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   capturedAt?: boolean
   durationSeconds?: boolean
   createdAt?: boolean
+  projectId?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   damageMarkers?: boolean | Prisma.MediaFile$damageMarkersArgs<ExtArgs>
   aiAnalyses?: boolean | Prisma.MediaFile$aiAnalysesArgs<ExtArgs>
@@ -1048,6 +1086,7 @@ export type MediaFileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   capturedAt?: boolean
   durationSeconds?: boolean
   createdAt?: boolean
+  projectId?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["mediaFile"]>
 
@@ -1065,6 +1104,7 @@ export type MediaFileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   capturedAt?: boolean
   durationSeconds?: boolean
   createdAt?: boolean
+  projectId?: boolean
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["mediaFile"]>
 
@@ -1082,9 +1122,10 @@ export type MediaFileSelectScalar = {
   capturedAt?: boolean
   durationSeconds?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }
 
-export type MediaFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "fileName" | "mimeType" | "fileSize" | "minioKey" | "minioBucket" | "mediaType" | "latitude" | "longitude" | "capturedAt" | "durationSeconds" | "createdAt", ExtArgs["result"]["mediaFile"]>
+export type MediaFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "fileName" | "mimeType" | "fileSize" | "minioKey" | "minioBucket" | "mediaType" | "latitude" | "longitude" | "capturedAt" | "durationSeconds" | "createdAt" | "projectId", ExtArgs["result"]["mediaFile"]>
 export type MediaFileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   damageMarkers?: boolean | Prisma.MediaFile$damageMarkersArgs<ExtArgs>
@@ -1119,6 +1160,7 @@ export type $MediaFilePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     capturedAt: Date
     durationSeconds: number | null
     createdAt: Date
+    projectId: string
   }, ExtArgs["result"]["mediaFile"]>
   composites: {}
 }
@@ -1558,6 +1600,7 @@ export interface MediaFileFieldRefs {
   readonly capturedAt: Prisma.FieldRef<"MediaFile", 'DateTime'>
   readonly durationSeconds: Prisma.FieldRef<"MediaFile", 'Float'>
   readonly createdAt: Prisma.FieldRef<"MediaFile", 'DateTime'>
+  readonly projectId: Prisma.FieldRef<"MediaFile", 'String'>
 }
     
 
