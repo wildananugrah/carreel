@@ -22,12 +22,34 @@ export type AlertType =
   | "AI_FAILURE"
   | "HIGH_SEVERITY_DAMAGE";
 
+// ========================
+// SCOPE (for role-based access)
+// ========================
+
+export type SystemRole = "SUPER_ADMIN" | "USER";
+export type ProjectRole = "PROJECT_ADMIN" | "PLANNER" | "DRIVER";
+
+export interface ProjectScope {
+  projectId: string;
+  workspaceId: string;
+  projectRole: ProjectRole;
+  assignedDriverIds: string[];
+}
+
+export interface UserScope {
+  userId: string;
+  appRole: "DRIVER" | "PLANNER";
+  systemRole: SystemRole;
+  projects: ProjectScope[];
+}
+
 export interface User {
   id: string;
   email: string;
   fullName: string;
   role: string;
   createdAt: string;
+  scope?: UserScope;
 }
 
 export interface AuthResponse {
