@@ -9,7 +9,6 @@ import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { HttpError } from "./utils/http-error";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
-import { createScopeMiddleware } from "./middlewares/scope.middleware";
 import { MinIOProvider } from "./providers/minio.provider";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
 // Providers
@@ -131,6 +130,7 @@ const adminUserService = new AdminUserService(adminUserRepository);
 // Middlewares
 const authMiddleware = createAuthMiddleware(
   process.env.JWT_SECRET ?? "dev-jwt-secret",
+  scopeRepository,
 );
 
 // ========================
@@ -150,7 +150,9 @@ app.use(
 );
 app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
-app.use("/api/*", createScopeMiddleware(scopeRepository));
+// Note: scope is loaded INSIDE authMiddleware (per route) — not as a separate
+// global middleware — because Hono runs global middlewares before per-route
+// auth, so a global scope middleware would see no userId yet.
 
 // Hono's official error boundary — catches any error thrown from routes/middlewares.
 // HttpError instances become JSON responses with their status + message.
