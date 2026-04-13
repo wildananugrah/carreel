@@ -7,6 +7,8 @@ import { ScopeProvider } from "./contexts/ScopeContext";
 import { AuthProvider } from "./lib/auth";
 import { ProjectAssignments } from "./pages/admin/ProjectAssignments";
 import { ProjectMembers } from "./pages/admin/ProjectMembers";
+import { UserDetail } from "./pages/admin/UserDetail";
+import { UserList } from "./pages/admin/UserList";
 import { WorkspaceDetail } from "./pages/admin/WorkspaceDetail";
 import { WorkspaceList } from "./pages/admin/WorkspaceList";
 import { AlertList } from "./pages/AlertList";
@@ -40,6 +42,8 @@ export default function App() {
                     path="/admin/workspaces/:id"
                     element={<WorkspaceDetail />}
                   />
+                  <Route path="/admin/users" element={<UserList />} />
+                  <Route path="/admin/users/:id" element={<UserDetail />} />
                 </Route>
 
                 <Route element={<RequireProjectAdmin />}>
