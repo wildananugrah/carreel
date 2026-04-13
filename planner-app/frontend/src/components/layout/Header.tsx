@@ -90,35 +90,40 @@ export function Header() {
                 >
                   Manage {"\u25BE"}
                 </button>
-                <div className="absolute left-0 top-full mt-1 bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl min-w-[220px] hidden group-hover:block z-50">
-                  {projectAdminProjects.length === 0 ? (
-                    <p className="px-4 py-3 text-xs text-[#666] italic">
-                      No projects you administer
-                    </p>
-                  ) : (
-                    projectAdminProjects.map((p) => (
-                      <div
-                        key={p.projectId}
-                        className="border-b border-[#1a1a1a] last:border-b-0"
-                      >
-                        <p className="px-4 pt-2 pb-0.5 text-[9px] font-bold text-[#666] tracking-[1px] uppercase">
-                          {p.projectId.slice(0, 8)}
-                        </p>
-                        <Link
-                          to={`/admin/projects/${p.projectId}/members`}
-                          className="block px-4 py-1.5 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                {/* Outer wrapper: pt-1 creates a transparent hover bridge between
+                    the button and the panel so the dropdown stays open as the
+                    mouse moves down. Inner div has the actual styling. */}
+                <div className="absolute left-0 top-full pt-1 min-w-[220px] hidden group-hover:block z-50">
+                  <div className="bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl">
+                    {projectAdminProjects.length === 0 ? (
+                      <p className="px-4 py-3 text-xs text-[#666] italic">
+                        No projects you administer
+                      </p>
+                    ) : (
+                      projectAdminProjects.map((p) => (
+                        <div
+                          key={p.projectId}
+                          className="border-b border-[#1a1a1a] last:border-b-0"
                         >
-                          Members
-                        </Link>
-                        <Link
-                          to={`/admin/projects/${p.projectId}/assignments`}
-                          className="block px-4 py-1.5 mb-1 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
-                        >
-                          Driver Assignments
-                        </Link>
-                      </div>
-                    ))
-                  )}
+                          <p className="px-4 pt-2 pb-0.5 text-[9px] font-bold text-[#666] tracking-[1px] uppercase">
+                            {p.projectId.slice(0, 8)}
+                          </p>
+                          <Link
+                            to={`/admin/projects/${p.projectId}/members`}
+                            className="block px-4 py-1.5 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                          >
+                            Members
+                          </Link>
+                          <Link
+                            to={`/admin/projects/${p.projectId}/assignments`}
+                            className="block px-4 py-1.5 mb-1 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                          >
+                            Driver Assignments
+                          </Link>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -132,19 +137,21 @@ export function Header() {
                 >
                   System {"\u25BE"}
                 </button>
-                <div className="absolute left-0 top-full mt-1 bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl min-w-[180px] hidden group-hover:block z-50">
-                  <Link
-                    to="/admin/workspaces"
-                    className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
-                  >
-                    Workspaces
-                  </Link>
-                  <Link
-                    to="/admin/users"
-                    className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
-                  >
-                    All Users
-                  </Link>
+                <div className="absolute left-0 top-full pt-1 min-w-[180px] hidden group-hover:block z-50">
+                  <div className="bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl">
+                    <Link
+                      to="/admin/workspaces"
+                      className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                    >
+                      Workspaces
+                    </Link>
+                    <Link
+                      to="/admin/users"
+                      className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                    >
+                      All Users
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
