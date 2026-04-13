@@ -66,8 +66,10 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Main nav links */}
-          <nav className="flex items-center gap-1">
+          {/* Main nav links — hidden on mobile to avoid overlapping the logo.
+              The planner-app is desktop-first; mobile users can still
+              navigate via the profile dropdown or direct URLs. */}
+          <nav className="hidden md:flex items-center gap-1">
             <NavLink to="/" end className={navLinkClass}>
               Dashboard
             </NavLink>
@@ -159,7 +161,7 @@ export function Header() {
 
           {/* Right: date + live dot + profile */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <span className="text-[10px] text-[#666]">{formatHeaderDate()}</span>
               <span className="w-[7px] h-[7px] rounded-full bg-[#F5C518] shadow-[0_0_6px_#F5C518] animate-pulse" />
             </div>
