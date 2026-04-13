@@ -30,9 +30,6 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isSuperAdmin = scope?.systemRole === "SUPER_ADMIN";
-  const projectAdminProjects =
-    scope?.projects.filter((p) => p.projectRole === "PROJECT_ADMIN") ?? [];
-  const isProjectAdmin = projectAdminProjects.length > 0;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -62,88 +59,6 @@ export function Header() {
               <span className="block text-[10px] text-[#666] leading-tight">PIC Dashboard</span>
             </div>
           </Link>
-
-          {/* Main nav — only the admin Manage / System dropdowns. The
-              top-level Dashboard / Inspections / Alerts / Drivers links
-              were removed because the dashboard's tab bar already covers
-              the daily workflow and the admin actions are the only
-              navigation that needed top-bar placement. */}
-          <nav className="hidden md:flex items-center gap-1">
-            {/* Manage dropdown — visible to PROJECT_ADMIN or SUPER_ADMIN */}
-            {(isProjectAdmin || isSuperAdmin) && (
-              <div className="relative group ml-2">
-                <button
-                  type="button"
-                  className="px-3 py-2 text-sm font-bold text-[#C0C0C0] hover:text-[#F5C518] transition-colors"
-                >
-                  Manage {"\u25BE"}
-                </button>
-                {/* Outer wrapper: pt-1 creates a transparent hover bridge between
-                    the button and the panel so the dropdown stays open as the
-                    mouse moves down. Inner div has the actual styling. */}
-                <div className="absolute left-0 top-full pt-1 min-w-[220px] hidden group-hover:block z-50">
-                  <div className="bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl">
-                    {projectAdminProjects.length === 0 ? (
-                      <p className="px-4 py-3 text-xs text-[#666] italic">
-                        No projects you administer
-                      </p>
-                    ) : (
-                      projectAdminProjects.map((p) => (
-                        <div
-                          key={p.projectId}
-                          className="border-b border-[#1a1a1a] last:border-b-0"
-                        >
-                          <p className="px-4 pt-2 pb-0.5 text-[9px] font-bold text-[#666] tracking-[1px] uppercase">
-                            {p.projectId.slice(0, 8)}
-                          </p>
-                          <Link
-                            to={`/admin/projects/${p.projectId}/members`}
-                            className="block px-4 py-1.5 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
-                          >
-                            Members
-                          </Link>
-                          <Link
-                            to={`/admin/projects/${p.projectId}/assignments`}
-                            className="block px-4 py-1.5 mb-1 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
-                          >
-                            Driver Assignments
-                          </Link>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* System dropdown — visible to SUPER_ADMIN only */}
-            {isSuperAdmin && (
-              <div className="relative group">
-                <button
-                  type="button"
-                  className="px-3 py-2 text-sm font-bold text-[#C0C0C0] hover:text-[#F5C518] transition-colors"
-                >
-                  System {"\u25BE"}
-                </button>
-                <div className="absolute left-0 top-full pt-1 min-w-[180px] hidden group-hover:block z-50">
-                  <div className="bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl">
-                    <Link
-                      to="/admin/workspaces"
-                      className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
-                    >
-                      Workspaces
-                    </Link>
-                    <Link
-                      to="/admin/users"
-                      className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
-                    >
-                      All Users
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-          </nav>
 
           {/* Right: date + live dot + profile */}
           <div className="flex items-center gap-4">
@@ -175,16 +90,44 @@ export function Header() {
                   >
                     Profile
                   </NavLink>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowDropdown(false);
-                      logout();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#222222]"
-                  >
-                    Log out
-                  </button>
+
+                  {/* System section — SUPER_ADMIN only */}
+                  {isSuperAdmin && (
+                    <>
+                      <div className="border-t border-[#2a2a2a] mt-1 pt-1">
+                        <p className="px-4 py-1 text-[9px] font-bold text-[#666] tracking-[1px] uppercase">
+                          System
+                        </p>
+                        <NavLink
+                          to="/admin/workspaces"
+                          onClick={() => setShowDropdown(false)}
+                          className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#222222]"
+                        >
+                          Workspaces
+                        </NavLink>
+                        <NavLink
+                          to="/admin/users"
+                          onClick={() => setShowDropdown(false)}
+                          className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#222222]"
+                        >
+                          All Users
+                        </NavLink>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="border-t border-[#2a2a2a] mt-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDropdown(false);
+                        logout();
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#222222]"
+                    >
+                      Log out
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
