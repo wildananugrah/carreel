@@ -17,12 +17,17 @@ import { AlertRepository } from "./repositories/alert.repository";
 import { AuditLogRepository } from "./repositories/audit-log.repository";
 import { DashboardRepository } from "./repositories/dashboard.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
+import { ProjectRepository } from "./repositories/project.repository";
 import { ReviewRepository } from "./repositories/review.repository";
 import { ScopeRepository } from "./repositories/scope.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
 import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
+import {
+  createProjectRoutes,
+  createWorkspaceProjectRoutes,
+} from "./routes/admin/project.route";
 import { createWorkspaceRoutes } from "./routes/admin/workspace.route";
 import { createAlertRoutes } from "./routes/alert.route";
 import { createAuthRoutes } from "./routes/auth.route";
@@ -38,6 +43,7 @@ import { AuthService } from "./services/auth.service";
 import { DashboardService } from "./services/dashboard.service";
 import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
+import { ProjectService } from "./services/project.service";
 import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
 
@@ -76,6 +82,7 @@ const alertRepository = new AlertRepository(prisma);
 const auditLogRepository = new AuditLogRepository(prisma);
 const scopeRepository = new ScopeRepository(prisma);
 const workspaceRepository = new WorkspaceRepository(prisma);
+const projectRepository = new ProjectRepository(prisma);
 
 // Services
 const authService = new AuthService(
@@ -101,6 +108,7 @@ const dashboardService = new DashboardService(prisma, dashboardRepository);
 const mediaStreamService = new MediaStreamService(prisma, storageProvider);
 
 const workspaceService = new WorkspaceService(workspaceRepository);
+const projectService = new ProjectService(projectRepository);
 
 // Middlewares
 const authMiddleware = createAuthMiddleware(
@@ -144,6 +152,14 @@ app.route("/api/media", createMediaRoutes(mediaStreamService));
 app.route(
   "/api/admin/workspaces",
   createWorkspaceRoutes(workspaceService, authMiddleware),
+);
+app.route(
+  "/api/admin/workspaces/:workspaceId/projects",
+  createWorkspaceProjectRoutes(projectService, authMiddleware),
+);
+app.route(
+  "/api/admin/projects",
+  createProjectRoutes(projectService, authMiddleware),
 );
 
 // ========================
