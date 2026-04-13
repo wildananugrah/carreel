@@ -31,6 +31,7 @@ export type InspectionReviewMinAggregateOutputType = {
   decision: $Enums.ReviewDecision | null
   notes: string | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type InspectionReviewMaxAggregateOutputType = {
@@ -40,6 +41,7 @@ export type InspectionReviewMaxAggregateOutputType = {
   decision: $Enums.ReviewDecision | null
   notes: string | null
   createdAt: Date | null
+  projectId: string | null
 }
 
 export type InspectionReviewCountAggregateOutputType = {
@@ -49,6 +51,7 @@ export type InspectionReviewCountAggregateOutputType = {
   decision: number
   notes: number
   createdAt: number
+  projectId: number
   _all: number
 }
 
@@ -60,6 +63,7 @@ export type InspectionReviewMinAggregateInputType = {
   decision?: true
   notes?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type InspectionReviewMaxAggregateInputType = {
@@ -69,6 +73,7 @@ export type InspectionReviewMaxAggregateInputType = {
   decision?: true
   notes?: true
   createdAt?: true
+  projectId?: true
 }
 
 export type InspectionReviewCountAggregateInputType = {
@@ -78,6 +83,7 @@ export type InspectionReviewCountAggregateInputType = {
   decision?: true
   notes?: true
   createdAt?: true
+  projectId?: true
   _all?: true
 }
 
@@ -160,6 +166,7 @@ export type InspectionReviewGroupByOutputType = {
   decision: $Enums.ReviewDecision
   notes: string | null
   createdAt: Date
+  projectId: string
   _count: InspectionReviewCountAggregateOutputType | null
   _min: InspectionReviewMinAggregateOutputType | null
   _max: InspectionReviewMaxAggregateOutputType | null
@@ -190,6 +197,7 @@ export type InspectionReviewWhereInput = {
   decision?: Prisma.EnumReviewDecisionFilter<"InspectionReview"> | $Enums.ReviewDecision
   notes?: Prisma.StringNullableFilter<"InspectionReview"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InspectionReview"> | Date | string
+  projectId?: Prisma.StringFilter<"InspectionReview"> | string
   inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   reviewer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -201,6 +209,7 @@ export type InspectionReviewOrderByWithRelationInput = {
   decision?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   inspection?: Prisma.InspectionOrderByWithRelationInput
   reviewer?: Prisma.UserOrderByWithRelationInput
 }
@@ -215,6 +224,7 @@ export type InspectionReviewWhereUniqueInput = Prisma.AtLeast<{
   decision?: Prisma.EnumReviewDecisionFilter<"InspectionReview"> | $Enums.ReviewDecision
   notes?: Prisma.StringNullableFilter<"InspectionReview"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InspectionReview"> | Date | string
+  projectId?: Prisma.StringFilter<"InspectionReview"> | string
   inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   reviewer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
@@ -226,6 +236,7 @@ export type InspectionReviewOrderByWithAggregationInput = {
   decision?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   _count?: Prisma.InspectionReviewCountOrderByAggregateInput
   _max?: Prisma.InspectionReviewMaxOrderByAggregateInput
   _min?: Prisma.InspectionReviewMinOrderByAggregateInput
@@ -241,6 +252,7 @@ export type InspectionReviewScalarWhereWithAggregatesInput = {
   decision?: Prisma.EnumReviewDecisionWithAggregatesFilter<"InspectionReview"> | $Enums.ReviewDecision
   notes?: Prisma.StringNullableWithAggregatesFilter<"InspectionReview"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InspectionReview"> | Date | string
+  projectId?: Prisma.StringWithAggregatesFilter<"InspectionReview"> | string
 }
 
 export type InspectionReviewCreateInput = {
@@ -248,6 +260,7 @@ export type InspectionReviewCreateInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
   inspection: Prisma.InspectionCreateNestedOneWithoutReviewsInput
   reviewer: Prisma.UserCreateNestedOneWithoutReviewsInput
 }
@@ -259,6 +272,7 @@ export type InspectionReviewUncheckedCreateInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type InspectionReviewUpdateInput = {
@@ -266,6 +280,7 @@ export type InspectionReviewUpdateInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutReviewsNestedInput
   reviewer?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
 }
@@ -277,6 +292,7 @@ export type InspectionReviewUncheckedUpdateInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionReviewCreateManyInput = {
@@ -286,6 +302,7 @@ export type InspectionReviewCreateManyInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type InspectionReviewUpdateManyMutationInput = {
@@ -293,6 +310,7 @@ export type InspectionReviewUpdateManyMutationInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionReviewUncheckedUpdateManyInput = {
@@ -302,6 +320,7 @@ export type InspectionReviewUncheckedUpdateManyInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionReviewListRelationFilter = {
@@ -321,6 +340,7 @@ export type InspectionReviewCountOrderByAggregateInput = {
   decision?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type InspectionReviewMaxOrderByAggregateInput = {
@@ -330,6 +350,7 @@ export type InspectionReviewMaxOrderByAggregateInput = {
   decision?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type InspectionReviewMinOrderByAggregateInput = {
@@ -339,6 +360,7 @@ export type InspectionReviewMinOrderByAggregateInput = {
   decision?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type InspectionReviewCreateNestedManyWithoutReviewerInput = {
@@ -434,6 +456,7 @@ export type InspectionReviewCreateWithoutReviewerInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
   inspection: Prisma.InspectionCreateNestedOneWithoutReviewsInput
 }
 
@@ -443,6 +466,7 @@ export type InspectionReviewUncheckedCreateWithoutReviewerInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type InspectionReviewCreateOrConnectWithoutReviewerInput = {
@@ -481,6 +505,7 @@ export type InspectionReviewScalarWhereInput = {
   decision?: Prisma.EnumReviewDecisionFilter<"InspectionReview"> | $Enums.ReviewDecision
   notes?: Prisma.StringNullableFilter<"InspectionReview"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InspectionReview"> | Date | string
+  projectId?: Prisma.StringFilter<"InspectionReview"> | string
 }
 
 export type InspectionReviewCreateWithoutInspectionInput = {
@@ -488,6 +513,7 @@ export type InspectionReviewCreateWithoutInspectionInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
   reviewer: Prisma.UserCreateNestedOneWithoutReviewsInput
 }
 
@@ -497,6 +523,7 @@ export type InspectionReviewUncheckedCreateWithoutInspectionInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type InspectionReviewCreateOrConnectWithoutInspectionInput = {
@@ -531,6 +558,7 @@ export type InspectionReviewCreateManyReviewerInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type InspectionReviewUpdateWithoutReviewerInput = {
@@ -538,6 +566,7 @@ export type InspectionReviewUpdateWithoutReviewerInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutReviewsNestedInput
 }
 
@@ -547,6 +576,7 @@ export type InspectionReviewUncheckedUpdateWithoutReviewerInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionReviewUncheckedUpdateManyWithoutReviewerInput = {
@@ -555,6 +585,7 @@ export type InspectionReviewUncheckedUpdateManyWithoutReviewerInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionReviewCreateManyInspectionInput = {
@@ -563,6 +594,7 @@ export type InspectionReviewCreateManyInspectionInput = {
   decision: $Enums.ReviewDecision
   notes?: string | null
   createdAt?: Date | string
+  projectId: string
 }
 
 export type InspectionReviewUpdateWithoutInspectionInput = {
@@ -570,6 +602,7 @@ export type InspectionReviewUpdateWithoutInspectionInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   reviewer?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
 }
 
@@ -579,6 +612,7 @@ export type InspectionReviewUncheckedUpdateWithoutInspectionInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InspectionReviewUncheckedUpdateManyWithoutInspectionInput = {
@@ -587,6 +621,7 @@ export type InspectionReviewUncheckedUpdateManyWithoutInspectionInput = {
   decision?: Prisma.EnumReviewDecisionFieldUpdateOperationsInput | $Enums.ReviewDecision
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -598,6 +633,7 @@ export type InspectionReviewSelect<ExtArgs extends runtime.Types.Extensions.Inte
   decision?: boolean
   notes?: boolean
   createdAt?: boolean
+  projectId?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   reviewer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspectionReview"]>
@@ -609,6 +645,7 @@ export type InspectionReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   decision?: boolean
   notes?: boolean
   createdAt?: boolean
+  projectId?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   reviewer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspectionReview"]>
@@ -620,6 +657,7 @@ export type InspectionReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   decision?: boolean
   notes?: boolean
   createdAt?: boolean
+  projectId?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   reviewer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspectionReview"]>
@@ -631,9 +669,10 @@ export type InspectionReviewSelectScalar = {
   decision?: boolean
   notes?: boolean
   createdAt?: boolean
+  projectId?: boolean
 }
 
-export type InspectionReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "reviewerId" | "decision" | "notes" | "createdAt", ExtArgs["result"]["inspectionReview"]>
+export type InspectionReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "reviewerId" | "decision" | "notes" | "createdAt" | "projectId", ExtArgs["result"]["inspectionReview"]>
 export type InspectionReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   reviewer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -660,6 +699,7 @@ export type $InspectionReviewPayload<ExtArgs extends runtime.Types.Extensions.In
     decision: $Enums.ReviewDecision
     notes: string | null
     createdAt: Date
+    projectId: string
   }, ExtArgs["result"]["inspectionReview"]>
   composites: {}
 }
@@ -1091,6 +1131,7 @@ export interface InspectionReviewFieldRefs {
   readonly decision: Prisma.FieldRef<"InspectionReview", 'ReviewDecision'>
   readonly notes: Prisma.FieldRef<"InspectionReview", 'String'>
   readonly createdAt: Prisma.FieldRef<"InspectionReview", 'DateTime'>
+  readonly projectId: Prisma.FieldRef<"InspectionReview", 'String'>
 }
     
 

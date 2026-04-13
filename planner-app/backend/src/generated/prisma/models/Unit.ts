@@ -47,6 +47,7 @@ export type UnitMinAggregateOutputType = {
   company: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  projectId: string | null
 }
 
 export type UnitMaxAggregateOutputType = {
@@ -62,6 +63,7 @@ export type UnitMaxAggregateOutputType = {
   company: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  projectId: string | null
 }
 
 export type UnitCountAggregateOutputType = {
@@ -77,6 +79,7 @@ export type UnitCountAggregateOutputType = {
   company: number
   createdAt: number
   updatedAt: number
+  projectId: number
   _all: number
 }
 
@@ -102,6 +105,7 @@ export type UnitMinAggregateInputType = {
   company?: true
   createdAt?: true
   updatedAt?: true
+  projectId?: true
 }
 
 export type UnitMaxAggregateInputType = {
@@ -117,6 +121,7 @@ export type UnitMaxAggregateInputType = {
   company?: true
   createdAt?: true
   updatedAt?: true
+  projectId?: true
 }
 
 export type UnitCountAggregateInputType = {
@@ -132,6 +137,7 @@ export type UnitCountAggregateInputType = {
   company?: true
   createdAt?: true
   updatedAt?: true
+  projectId?: true
   _all?: true
 }
 
@@ -234,6 +240,7 @@ export type UnitGroupByOutputType = {
   company: string | null
   createdAt: Date
   updatedAt: Date
+  projectId: string
   _count: UnitCountAggregateOutputType | null
   _avg: UnitAvgAggregateOutputType | null
   _sum: UnitSumAggregateOutputType | null
@@ -272,7 +279,9 @@ export type UnitWhereInput = {
   company?: Prisma.StringNullableFilter<"Unit"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
+  projectId?: Prisma.StringFilter<"Unit"> | string
   inspections?: Prisma.InspectionListRelationFilter
+  project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
 }
 
 export type UnitOrderByWithRelationInput = {
@@ -288,7 +297,9 @@ export type UnitOrderByWithRelationInput = {
   company?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   inspections?: Prisma.InspectionOrderByRelationAggregateInput
+  project?: Prisma.ProjectOrderByWithRelationInput
 }
 
 export type UnitWhereUniqueInput = Prisma.AtLeast<{
@@ -307,7 +318,9 @@ export type UnitWhereUniqueInput = Prisma.AtLeast<{
   company?: Prisma.StringNullableFilter<"Unit"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
+  projectId?: Prisma.StringFilter<"Unit"> | string
   inspections?: Prisma.InspectionListRelationFilter
+  project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
 }, "id" | "licensePlate" | "vin">
 
 export type UnitOrderByWithAggregationInput = {
@@ -323,6 +336,7 @@ export type UnitOrderByWithAggregationInput = {
   company?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   _count?: Prisma.UnitCountOrderByAggregateInput
   _avg?: Prisma.UnitAvgOrderByAggregateInput
   _max?: Prisma.UnitMaxOrderByAggregateInput
@@ -346,6 +360,7 @@ export type UnitScalarWhereWithAggregatesInput = {
   company?: Prisma.StringNullableWithAggregatesFilter<"Unit"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Unit"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Unit"> | Date | string
+  projectId?: Prisma.StringWithAggregatesFilter<"Unit"> | string
 }
 
 export type UnitCreateInput = {
@@ -362,6 +377,7 @@ export type UnitCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   inspections?: Prisma.InspectionCreateNestedManyWithoutUnitInput
+  project: Prisma.ProjectCreateNestedOneWithoutUnitsInput
 }
 
 export type UnitUncheckedCreateInput = {
@@ -377,6 +393,7 @@ export type UnitUncheckedCreateInput = {
   company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
   inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutUnitInput
 }
 
@@ -394,6 +411,7 @@ export type UnitUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inspections?: Prisma.InspectionUpdateManyWithoutUnitNestedInput
+  project?: Prisma.ProjectUpdateOneRequiredWithoutUnitsNestedInput
 }
 
 export type UnitUncheckedUpdateInput = {
@@ -409,6 +427,7 @@ export type UnitUncheckedUpdateInput = {
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
   inspections?: Prisma.InspectionUncheckedUpdateManyWithoutUnitNestedInput
 }
 
@@ -425,6 +444,7 @@ export type UnitCreateManyInput = {
   company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
 }
 
 export type UnitUpdateManyMutationInput = {
@@ -455,6 +475,7 @@ export type UnitUncheckedUpdateManyInput = {
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type UnitCountOrderByAggregateInput = {
@@ -470,6 +491,7 @@ export type UnitCountOrderByAggregateInput = {
   company?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type UnitAvgOrderByAggregateInput = {
@@ -489,6 +511,7 @@ export type UnitMaxOrderByAggregateInput = {
   company?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type UnitMinOrderByAggregateInput = {
@@ -504,6 +527,7 @@ export type UnitMinOrderByAggregateInput = {
   company?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
 }
 
 export type UnitSumOrderByAggregateInput = {
@@ -513,6 +537,16 @@ export type UnitSumOrderByAggregateInput = {
 export type UnitNullableScalarRelationFilter = {
   is?: Prisma.UnitWhereInput | null
   isNot?: Prisma.UnitWhereInput | null
+}
+
+export type UnitListRelationFilter = {
+  every?: Prisma.UnitWhereInput
+  some?: Prisma.UnitWhereInput
+  none?: Prisma.UnitWhereInput
+}
+
+export type UnitOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type NullableStringFieldUpdateOperationsInput = {
@@ -547,6 +581,48 @@ export type UnitUpdateOneWithoutInspectionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UnitUpdateToOneWithWhereWithoutInspectionsInput, Prisma.UnitUpdateWithoutInspectionsInput>, Prisma.UnitUncheckedUpdateWithoutInspectionsInput>
 }
 
+export type UnitCreateNestedManyWithoutProjectInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutProjectInput, Prisma.UnitUncheckedCreateWithoutProjectInput> | Prisma.UnitCreateWithoutProjectInput[] | Prisma.UnitUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutProjectInput | Prisma.UnitCreateOrConnectWithoutProjectInput[]
+  createMany?: Prisma.UnitCreateManyProjectInputEnvelope
+  connect?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+}
+
+export type UnitUncheckedCreateNestedManyWithoutProjectInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutProjectInput, Prisma.UnitUncheckedCreateWithoutProjectInput> | Prisma.UnitCreateWithoutProjectInput[] | Prisma.UnitUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutProjectInput | Prisma.UnitCreateOrConnectWithoutProjectInput[]
+  createMany?: Prisma.UnitCreateManyProjectInputEnvelope
+  connect?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+}
+
+export type UnitUpdateManyWithoutProjectNestedInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutProjectInput, Prisma.UnitUncheckedCreateWithoutProjectInput> | Prisma.UnitCreateWithoutProjectInput[] | Prisma.UnitUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutProjectInput | Prisma.UnitCreateOrConnectWithoutProjectInput[]
+  upsert?: Prisma.UnitUpsertWithWhereUniqueWithoutProjectInput | Prisma.UnitUpsertWithWhereUniqueWithoutProjectInput[]
+  createMany?: Prisma.UnitCreateManyProjectInputEnvelope
+  set?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  disconnect?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  delete?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  connect?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  update?: Prisma.UnitUpdateWithWhereUniqueWithoutProjectInput | Prisma.UnitUpdateWithWhereUniqueWithoutProjectInput[]
+  updateMany?: Prisma.UnitUpdateManyWithWhereWithoutProjectInput | Prisma.UnitUpdateManyWithWhereWithoutProjectInput[]
+  deleteMany?: Prisma.UnitScalarWhereInput | Prisma.UnitScalarWhereInput[]
+}
+
+export type UnitUncheckedUpdateManyWithoutProjectNestedInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutProjectInput, Prisma.UnitUncheckedCreateWithoutProjectInput> | Prisma.UnitCreateWithoutProjectInput[] | Prisma.UnitUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutProjectInput | Prisma.UnitCreateOrConnectWithoutProjectInput[]
+  upsert?: Prisma.UnitUpsertWithWhereUniqueWithoutProjectInput | Prisma.UnitUpsertWithWhereUniqueWithoutProjectInput[]
+  createMany?: Prisma.UnitCreateManyProjectInputEnvelope
+  set?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  disconnect?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  delete?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  connect?: Prisma.UnitWhereUniqueInput | Prisma.UnitWhereUniqueInput[]
+  update?: Prisma.UnitUpdateWithWhereUniqueWithoutProjectInput | Prisma.UnitUpdateWithWhereUniqueWithoutProjectInput[]
+  updateMany?: Prisma.UnitUpdateManyWithWhereWithoutProjectInput | Prisma.UnitUpdateManyWithWhereWithoutProjectInput[]
+  deleteMany?: Prisma.UnitScalarWhereInput | Prisma.UnitScalarWhereInput[]
+}
+
 export type UnitCreateWithoutInspectionsInput = {
   id?: string
   licensePlate: string
@@ -560,6 +636,7 @@ export type UnitCreateWithoutInspectionsInput = {
   company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  project: Prisma.ProjectCreateNestedOneWithoutUnitsInput
 }
 
 export type UnitUncheckedCreateWithoutInspectionsInput = {
@@ -575,6 +652,7 @@ export type UnitUncheckedCreateWithoutInspectionsInput = {
   company?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  projectId: string
 }
 
 export type UnitCreateOrConnectWithoutInspectionsInput = {
@@ -606,9 +684,150 @@ export type UnitUpdateWithoutInspectionsInput = {
   company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.ProjectUpdateOneRequiredWithoutUnitsNestedInput
 }
 
 export type UnitUncheckedUpdateWithoutInspectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  licensePlate?: Prisma.StringFieldUpdateOperationsInput | string
+  make?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
+export type UnitCreateWithoutProjectInput = {
+  id?: string
+  licensePlate: string
+  make?: string | null
+  model?: string | null
+  type?: string | null
+  color?: string | null
+  vin?: string | null
+  lastKnownKm?: number | null
+  status?: $Enums.UnitStatus
+  company?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  inspections?: Prisma.InspectionCreateNestedManyWithoutUnitInput
+}
+
+export type UnitUncheckedCreateWithoutProjectInput = {
+  id?: string
+  licensePlate: string
+  make?: string | null
+  model?: string | null
+  type?: string | null
+  color?: string | null
+  vin?: string | null
+  lastKnownKm?: number | null
+  status?: $Enums.UnitStatus
+  company?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutUnitInput
+}
+
+export type UnitCreateOrConnectWithoutProjectInput = {
+  where: Prisma.UnitWhereUniqueInput
+  create: Prisma.XOR<Prisma.UnitCreateWithoutProjectInput, Prisma.UnitUncheckedCreateWithoutProjectInput>
+}
+
+export type UnitCreateManyProjectInputEnvelope = {
+  data: Prisma.UnitCreateManyProjectInput | Prisma.UnitCreateManyProjectInput[]
+  skipDuplicates?: boolean
+}
+
+export type UnitUpsertWithWhereUniqueWithoutProjectInput = {
+  where: Prisma.UnitWhereUniqueInput
+  update: Prisma.XOR<Prisma.UnitUpdateWithoutProjectInput, Prisma.UnitUncheckedUpdateWithoutProjectInput>
+  create: Prisma.XOR<Prisma.UnitCreateWithoutProjectInput, Prisma.UnitUncheckedCreateWithoutProjectInput>
+}
+
+export type UnitUpdateWithWhereUniqueWithoutProjectInput = {
+  where: Prisma.UnitWhereUniqueInput
+  data: Prisma.XOR<Prisma.UnitUpdateWithoutProjectInput, Prisma.UnitUncheckedUpdateWithoutProjectInput>
+}
+
+export type UnitUpdateManyWithWhereWithoutProjectInput = {
+  where: Prisma.UnitScalarWhereInput
+  data: Prisma.XOR<Prisma.UnitUpdateManyMutationInput, Prisma.UnitUncheckedUpdateManyWithoutProjectInput>
+}
+
+export type UnitScalarWhereInput = {
+  AND?: Prisma.UnitScalarWhereInput | Prisma.UnitScalarWhereInput[]
+  OR?: Prisma.UnitScalarWhereInput[]
+  NOT?: Prisma.UnitScalarWhereInput | Prisma.UnitScalarWhereInput[]
+  id?: Prisma.StringFilter<"Unit"> | string
+  licensePlate?: Prisma.StringFilter<"Unit"> | string
+  make?: Prisma.StringNullableFilter<"Unit"> | string | null
+  model?: Prisma.StringNullableFilter<"Unit"> | string | null
+  type?: Prisma.StringNullableFilter<"Unit"> | string | null
+  color?: Prisma.StringNullableFilter<"Unit"> | string | null
+  vin?: Prisma.StringNullableFilter<"Unit"> | string | null
+  lastKnownKm?: Prisma.IntNullableFilter<"Unit"> | number | null
+  status?: Prisma.EnumUnitStatusFilter<"Unit"> | $Enums.UnitStatus
+  company?: Prisma.StringNullableFilter<"Unit"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Unit"> | Date | string
+  projectId?: Prisma.StringFilter<"Unit"> | string
+}
+
+export type UnitCreateManyProjectInput = {
+  id?: string
+  licensePlate: string
+  make?: string | null
+  model?: string | null
+  type?: string | null
+  color?: string | null
+  vin?: string | null
+  lastKnownKm?: number | null
+  status?: $Enums.UnitStatus
+  company?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type UnitUpdateWithoutProjectInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  licensePlate?: Prisma.StringFieldUpdateOperationsInput | string
+  make?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inspections?: Prisma.InspectionUpdateManyWithoutUnitNestedInput
+}
+
+export type UnitUncheckedUpdateWithoutProjectInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  licensePlate?: Prisma.StringFieldUpdateOperationsInput | string
+  make?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastKnownKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.EnumUnitStatusFieldUpdateOperationsInput | $Enums.UnitStatus
+  company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inspections?: Prisma.InspectionUncheckedUpdateManyWithoutUnitNestedInput
+}
+
+export type UnitUncheckedUpdateManyWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   licensePlate?: Prisma.StringFieldUpdateOperationsInput | string
   make?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -667,7 +886,9 @@ export type UnitSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
   inspections?: boolean | Prisma.Unit$inspectionsArgs<ExtArgs>
+  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.UnitCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["unit"]>
 
@@ -684,6 +905,8 @@ export type UnitSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
+  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["unit"]>
 
 export type UnitSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -699,6 +922,8 @@ export type UnitSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
+  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["unit"]>
 
 export type UnitSelectScalar = {
@@ -714,20 +939,27 @@ export type UnitSelectScalar = {
   company?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  projectId?: boolean
 }
 
-export type UnitOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "licensePlate" | "make" | "model" | "type" | "color" | "vin" | "lastKnownKm" | "status" | "company" | "createdAt" | "updatedAt", ExtArgs["result"]["unit"]>
+export type UnitOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "licensePlate" | "make" | "model" | "type" | "color" | "vin" | "lastKnownKm" | "status" | "company" | "createdAt" | "updatedAt" | "projectId", ExtArgs["result"]["unit"]>
 export type UnitInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspections?: boolean | Prisma.Unit$inspectionsArgs<ExtArgs>
+  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.UnitCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UnitIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UnitIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UnitIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
+}
+export type UnitIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
+}
 
 export type $UnitPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Unit"
   objects: {
     inspections: Prisma.$InspectionPayload<ExtArgs>[]
+    project: Prisma.$ProjectPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -742,6 +974,7 @@ export type $UnitPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     company: string | null
     createdAt: Date
     updatedAt: Date
+    projectId: string
   }, ExtArgs["result"]["unit"]>
   composites: {}
 }
@@ -1137,6 +1370,7 @@ readonly fields: UnitFieldRefs;
 export interface Prisma__UnitClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   inspections<T extends Prisma.Unit$inspectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$inspectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InspectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  project<T extends Prisma.ProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1178,6 +1412,7 @@ export interface UnitFieldRefs {
   readonly company: Prisma.FieldRef<"Unit", 'String'>
   readonly createdAt: Prisma.FieldRef<"Unit", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Unit", 'DateTime'>
+  readonly projectId: Prisma.FieldRef<"Unit", 'String'>
 }
     
 
@@ -1432,6 +1667,10 @@ export type UnitCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UnitCreateManyInput | Prisma.UnitCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UnitIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1502,6 +1741,10 @@ export type UnitUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Units to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UnitIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

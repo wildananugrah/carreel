@@ -70,8 +70,8 @@ model Unit {
 
   inspections Inspection[]
 
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
   @@index([projectId])
   @@map("units")
@@ -133,8 +133,8 @@ model Inspection {
   reviews            InspectionReview[]
   auditLogs          AuditLog[]
 
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
   @@index([projectId])
   @@map("inspections")
@@ -170,7 +170,7 @@ model InspectionStep {
   mediaFiles MediaFile[]
   aiAnalysis AIAnalysis?
 
-  projectId String?
+  projectId String
 
   @@unique([inspectionId, stepType])
   @@index([projectId])
@@ -205,7 +205,7 @@ model MediaFile {
   damageMarkers DamageMarker[]
   aiAnalyses    AIAnalysis[]
 
-  projectId String?
+  projectId String
 
   @@index([projectId])
   @@map("media_files")
@@ -238,7 +238,7 @@ model AIAnalysis {
   step      InspectionStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
   mediaFile MediaFile?     @relation(fields: [mediaFileId], references: [id], onDelete: SetNull)
 
-  projectId String?
+  projectId String
 
   @@index([projectId])
   @@map("ai_analyses")
@@ -267,7 +267,7 @@ model DamageMarker {
 
   mediaFile MediaFile @relation(fields: [mediaFileId], references: [id], onDelete: Cascade)
 
-  projectId String?
+  projectId String
 
   @@index([projectId])
   @@map("damage_markers")
@@ -288,7 +288,7 @@ model TelemetryData {
   kmDelta        Int?
   createdAt      DateTime @default(now())
 
-  projectId String?
+  projectId String
 
   @@index([projectId])
   @@map("telemetry_data")
@@ -315,7 +315,7 @@ model InspectionReview {
   inspection Inspection @relation(fields: [inspectionId], references: [id])
   reviewer   User       @relation("ReviewerReviews", fields: [reviewerId], references: [id])
 
-  projectId String?
+  projectId String
 
   @@index([projectId])
   @@map("inspection_reviews")
@@ -343,8 +343,8 @@ model Alert {
   isRead       Boolean   @default(false)
   createdAt    DateTime  @default(now())
 
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
   @@index([isRead, createdAt])
   @@index([projectId])

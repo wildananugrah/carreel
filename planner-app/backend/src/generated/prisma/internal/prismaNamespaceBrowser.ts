@@ -64,7 +64,11 @@ export const ModelName = {
   AuditLog: 'AuditLog',
   UploadSession: 'UploadSession',
   UploadedPart: 'UploadedPart',
-  OutboxEvent: 'OutboxEvent'
+  OutboxEvent: 'OutboxEvent',
+  Workspace: 'Workspace',
+  Project: 'Project',
+  ProjectMember: 'ProjectMember',
+  DriverAssignment: 'DriverAssignment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -90,7 +94,8 @@ export const UserScalarFieldEnum = {
   fullName: 'fullName',
   role: 'role',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  systemRole: 'systemRole'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -108,7 +113,8 @@ export const UnitScalarFieldEnum = {
   status: 'status',
   company: 'company',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  projectId: 'projectId'
 } as const
 
 export type UnitScalarFieldEnum = (typeof UnitScalarFieldEnum)[keyof typeof UnitScalarFieldEnum]
@@ -130,7 +136,8 @@ export const InspectionScalarFieldEnum = {
   signedAt: 'signedAt',
   driverComment: 'driverComment',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  projectId: 'projectId'
 } as const
 
 export type InspectionScalarFieldEnum = (typeof InspectionScalarFieldEnum)[keyof typeof InspectionScalarFieldEnum]
@@ -142,7 +149,8 @@ export const InspectionStepScalarFieldEnum = {
   stepType: 'stepType',
   status: 'status',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  projectId: 'projectId'
 } as const
 
 export type InspectionStepScalarFieldEnum = (typeof InspectionStepScalarFieldEnum)[keyof typeof InspectionStepScalarFieldEnum]
@@ -161,7 +169,8 @@ export const MediaFileScalarFieldEnum = {
   longitude: 'longitude',
   capturedAt: 'capturedAt',
   durationSeconds: 'durationSeconds',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  projectId: 'projectId'
 } as const
 
 export type MediaFileScalarFieldEnum = (typeof MediaFileScalarFieldEnum)[keyof typeof MediaFileScalarFieldEnum]
@@ -179,7 +188,8 @@ export const AIAnalysisScalarFieldEnum = {
   processingTimeMs: 'processingTimeMs',
   status: 'status',
   errorMessage: 'errorMessage',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  projectId: 'projectId'
 } as const
 
 export type AIAnalysisScalarFieldEnum = (typeof AIAnalysisScalarFieldEnum)[keyof typeof AIAnalysisScalarFieldEnum]
@@ -194,7 +204,8 @@ export const DamageMarkerScalarFieldEnum = {
   videoTimestamp: 'videoTimestamp',
   boundingBox: 'boundingBox',
   isNewDamage: 'isNewDamage',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  projectId: 'projectId'
 } as const
 
 export type DamageMarkerScalarFieldEnum = (typeof DamageMarkerScalarFieldEnum)[keyof typeof DamageMarkerScalarFieldEnum]
@@ -209,7 +220,8 @@ export const TelemetryDataScalarFieldEnum = {
   kmReasonable: 'kmReasonable',
   previousKm: 'previousKm',
   kmDelta: 'kmDelta',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  projectId: 'projectId'
 } as const
 
 export type TelemetryDataScalarFieldEnum = (typeof TelemetryDataScalarFieldEnum)[keyof typeof TelemetryDataScalarFieldEnum]
@@ -221,7 +233,8 @@ export const InspectionReviewScalarFieldEnum = {
   reviewerId: 'reviewerId',
   decision: 'decision',
   notes: 'notes',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  projectId: 'projectId'
 } as const
 
 export type InspectionReviewScalarFieldEnum = (typeof InspectionReviewScalarFieldEnum)[keyof typeof InspectionReviewScalarFieldEnum]
@@ -233,7 +246,8 @@ export const AlertScalarFieldEnum = {
   alertType: 'alertType',
   message: 'message',
   isRead: 'isRead',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  projectId: 'projectId'
 } as const
 
 export type AlertScalarFieldEnum = (typeof AlertScalarFieldEnum)[keyof typeof AlertScalarFieldEnum]
@@ -247,7 +261,8 @@ export const AuditLogScalarFieldEnum = {
   details: 'details',
   ipAddress: 'ipAddress',
   userAgent: 'userAgent',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  projectId: 'projectId'
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
@@ -299,6 +314,52 @@ export const OutboxEventScalarFieldEnum = {
 } as const
 
 export type OutboxEventScalarFieldEnum = (typeof OutboxEventScalarFieldEnum)[keyof typeof OutboxEventScalarFieldEnum]
+
+
+export const WorkspaceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  displayName: 'displayName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceScalarFieldEnum = (typeof WorkspaceScalarFieldEnum)[keyof typeof WorkspaceScalarFieldEnum]
+
+
+export const ProjectScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  name: 'name',
+  displayName: 'displayName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
+
+
+export const ProjectMemberScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  userId: 'userId',
+  role: 'role',
+  createdAt: 'createdAt'
+} as const
+
+export type ProjectMemberScalarFieldEnum = (typeof ProjectMemberScalarFieldEnum)[keyof typeof ProjectMemberScalarFieldEnum]
+
+
+export const DriverAssignmentScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  driverId: 'driverId',
+  plannerId: 'plannerId',
+  assignedBy: 'assignedBy',
+  createdAt: 'createdAt'
+} as const
+
+export type DriverAssignmentScalarFieldEnum = (typeof DriverAssignmentScalarFieldEnum)[keyof typeof DriverAssignmentScalarFieldEnum]
 
 
 export const SortOrder = {
