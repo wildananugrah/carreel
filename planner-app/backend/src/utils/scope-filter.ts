@@ -61,6 +61,13 @@ export function buildScopeFilter(
     if (projectIds.length === 0) {
       return { projectId: { in: [] } };
     }
+    // For entities without a driverId column (e.g. InspectionStep, MediaFile,
+    // AIAnalysis), restrict by project only. The route layer is responsible
+    // for verifying the driver owns the parent inspection before mutating
+    // child entities — see canWriteToEntity for the write-side check.
+    if (!options.includeDriverFilter) {
+      return { projectId: { in: projectIds } };
+    }
     return {
       projectId: { in: projectIds },
       driverId: scope.userId,
@@ -142,10 +149,19 @@ export function canWriteToEntity(
   if (scope.systemRole === "SUPER_ADMIN") return true;
 
   if (scope.appRole === "DRIVER") {
-    return (
-      entity.driverId === scope.userId &&
-      scope.projects.some((p) => p.projectId === entity.projectId)
-    );
+    // Must be in a project the driver belongs to.
+    if (!scope.projects.some((p) => p.projectId === entity.projectId)) {
+      return false;
+    }
+    // If the entity has a driverId, it must match the current driver.
+    // For child entities (InspectionStep, MediaFile, AIAnalysis, etc.) that
+    // don't carry driverId, project membership alone is sufficient — the
+    // caller is responsible for verifying parent-inspection ownership
+    // separately (typically by fetching the parent and re-running the check).
+    if (entity.driverId !== undefined && entity.driverId !== scope.userId) {
+      return false;
+    }
+    return true;
   }
 
   const projectScope = scope.projects.find(
