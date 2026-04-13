@@ -21,7 +21,9 @@ import { ReviewRepository } from "./repositories/review.repository";
 import { ScopeRepository } from "./repositories/scope.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
+import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
+import { createWorkspaceRoutes } from "./routes/admin/workspace.route";
 import { createAlertRoutes } from "./routes/alert.route";
 import { createAuthRoutes } from "./routes/auth.route";
 import { createDashboardRoutes } from "./routes/dashboard.route";
@@ -36,6 +38,7 @@ import { AuthService } from "./services/auth.service";
 import { DashboardService } from "./services/dashboard.service";
 import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
+import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
 
 // ========================
@@ -72,6 +75,7 @@ const reviewRepository = new ReviewRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
 const auditLogRepository = new AuditLogRepository(prisma);
 const scopeRepository = new ScopeRepository(prisma);
+const workspaceRepository = new WorkspaceRepository(prisma);
 
 // Services
 const authService = new AuthService(
@@ -95,6 +99,8 @@ const dashboardRepository = new DashboardRepository(prisma);
 const dashboardService = new DashboardService(prisma, dashboardRepository);
 
 const mediaStreamService = new MediaStreamService(prisma, storageProvider);
+
+const workspaceService = new WorkspaceService(workspaceRepository);
 
 // Middlewares
 const authMiddleware = createAuthMiddleware(
@@ -135,6 +141,10 @@ app.route(
 app.route("/api/drivers", createDriverRoutes(userRepository, authMiddleware));
 app.route("/api/upload", createUploadRoutes(storageProvider, authMiddleware));
 app.route("/api/media", createMediaRoutes(mediaStreamService));
+app.route(
+  "/api/admin/workspaces",
+  createWorkspaceRoutes(workspaceService, authMiddleware),
+);
 
 // ========================
 // Start Server
