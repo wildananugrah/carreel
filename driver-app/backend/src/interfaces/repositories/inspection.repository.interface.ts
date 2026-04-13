@@ -5,7 +5,6 @@ import type {
   StepStatus,
   Unit,
 } from "../../generated/prisma";
-import type { UserScope } from "../../types/scope";
 import type {
   CreateInspectionDTO,
   CreateStepDTO,
@@ -15,6 +14,7 @@ import type {
   TripListQuery,
   UpdateInspectionDTO,
 } from "../../types/dto";
+import type { UserScope } from "../../types/scope";
 
 export interface LinkedInspectionSummary {
   id: string;

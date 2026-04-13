@@ -13,7 +13,6 @@ import type {
 import type { IAlertRepository } from "../interfaces/repositories/alert.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
-import { SYSTEM_SCOPE as JOB_SYSTEM_SCOPE } from "../utils/system-scope";
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
@@ -23,6 +22,7 @@ import {
   type UnitIdentificationResult,
   type VehicleContext,
 } from "../utils/prompts";
+import { SYSTEM_SCOPE as JOB_SYSTEM_SCOPE } from "../utils/system-scope";
 
 export interface StepAnalysisJobData {
   inspectionId: string;
@@ -146,20 +146,17 @@ export class StepAnalysisJob {
             if (verification.statusVerifikasi === "Mismatch") {
               const processingTimeMs = Date.now() - startTime;
 
-              await this.aiAnalysisRepository.createAnalysis(
-                JOB_SYSTEM_SCOPE,
-                {
-                  stepId,
-                  mediaFileId: primaryMedia.id,
-                  aiModel: "gemini",
-                  promptUsed: `[SYSTEM]\n${verificationPair.systemInstruction}\n\n[USER]\n${verificationPair.userPrompt}`,
-                  rawResponse: verificationRaw,
-                  structuredData: verification,
-                  confidenceScore: verification.confidence ?? null,
-                  processingTimeMs,
-                  status: "SUCCESS",
-                },
-              );
+              await this.aiAnalysisRepository.createAnalysis(JOB_SYSTEM_SCOPE, {
+                stepId,
+                mediaFileId: primaryMedia.id,
+                aiModel: "gemini",
+                promptUsed: `[SYSTEM]\n${verificationPair.systemInstruction}\n\n[USER]\n${verificationPair.userPrompt}`,
+                rawResponse: verificationRaw,
+                structuredData: verification,
+                confidenceScore: verification.confidence ?? null,
+                processingTimeMs,
+                status: "SUCCESS",
+              });
 
               await this.createAlert(
                 inspectionId,

@@ -1,6 +1,6 @@
 import type { MediaFile } from "../../generated/prisma";
-import type { UserScope } from "../../types/scope";
 import type { UploadMediaDTO } from "../../types/dto";
+import type { UserScope } from "../../types/scope";
 
 export interface IMediaFileRepository {
   create(

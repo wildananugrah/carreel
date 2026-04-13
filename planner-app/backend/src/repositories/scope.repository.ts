@@ -1,10 +1,6 @@
 import type { PrismaClient } from "../generated/prisma";
 import type { IScopeRepository } from "../interfaces/repositories/scope.repository.interface";
-import type {
-  ProjectRole,
-  SystemRole,
-  UserScope,
-} from "../types/scope";
+import type { ProjectRole, SystemRole, UserScope } from "../types/scope";
 
 export class ScopeRepository implements IScopeRepository {
   constructor(private prisma: PrismaClient) {}

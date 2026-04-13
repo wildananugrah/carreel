@@ -10,8 +10,8 @@
  * - Driver assignment filtering works within a project
  */
 
-import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../src/generated/prisma";
 import { DashboardRepository } from "../../src/repositories/dashboard.repository";
 import { InspectionRepository } from "../../src/repositories/inspection.repository";

@@ -42,11 +42,7 @@ export interface IInspectionService {
     driverId: string,
     data: UpdateInspectionDTO,
   ): Promise<Inspection>;
-  submit(
-    scope: UserScope,
-    id: string,
-    driverId: string,
-  ): Promise<Inspection>;
+  submit(scope: UserScope, id: string, driverId: string): Promise<Inspection>;
   analyzePhotos(
     scope: UserScope,
     id: string,

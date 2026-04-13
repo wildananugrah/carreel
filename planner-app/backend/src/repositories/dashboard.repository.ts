@@ -403,8 +403,7 @@ export class DashboardRepository implements IDashboardRepository {
           if (!c.preTrip || c.preTrip.status === "DRAFT") return false;
           if (!c.postTrip) return true;
           return (
-            c.postTrip.status === "DRAFT" ||
-            c.postTrip.status === "PENDING_AI"
+            c.postTrip.status === "DRAFT" || c.postTrip.status === "PENDING_AI"
           );
         });
       }

@@ -11,7 +11,6 @@ import type {
   InspectionWithRelations,
 } from "../interfaces/repositories/inspection.repository.interface";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
-import type { UserScope } from "../types/scope";
 import type {
   CreateInspectionDTO,
   InspectionListQuery,
@@ -22,6 +21,7 @@ import type {
   TripListQuery,
   UpdateInspectionDTO,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 export class InspectionService implements IInspectionService {
   constructor(
@@ -320,11 +320,7 @@ export class InspectionService implements IInspectionService {
     return { enqueuedSteps };
   }
 
-  async delete(
-    scope: UserScope,
-    id: string,
-    driverId: string,
-  ): Promise<void> {
+  async delete(scope: UserScope, id: string, driverId: string): Promise<void> {
     const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
       throw new Error("Inspection not found");
@@ -485,9 +481,7 @@ export class InspectionService implements IInspectionService {
 
     const normalize = (s: string) => s.toLowerCase().trim();
     const preKeys = new Set(
-      preDamages.map(
-        (d) => `${normalize(d.area)}|${normalize(d.location)}`,
-      ),
+      preDamages.map((d) => `${normalize(d.area)}|${normalize(d.location)}`),
     );
     const postKeys = postRawDamages.map(
       (d) =>

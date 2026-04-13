@@ -55,10 +55,7 @@ export class MediaFileRepository implements IMediaFileRepository {
     });
   }
 
-  async findByStepId(
-    scope: UserScope,
-    stepId: string,
-  ): Promise<MediaFile[]> {
+  async findByStepId(scope: UserScope, stepId: string): Promise<MediaFile[]> {
     // Ensure the step itself is visible within scope before returning media.
     const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
     const step = await this.prisma.inspectionStep.findFirst({

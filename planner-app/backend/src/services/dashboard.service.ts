@@ -19,7 +19,9 @@ export class DashboardService implements IDashboardService {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const inspectionScope = buildScopeFilter(scope, { includeDriverFilter: true });
+    const inspectionScope = buildScopeFilter(scope, {
+      includeDriverFilter: true,
+    });
 
     // Pre-fetch allowed inspection IDs for alert queries
     // (Alert has no `inspection` relation in the Prisma client — filter via inspectionId).
@@ -44,7 +46,9 @@ export class DashboardService implements IDashboardService {
 
     // AI analyses also need scope filtering — they have projectId but no driverId,
     // so we use includeDriverFilter: false.
-    const aiAnalysisScope = buildScopeFilter(scope, { includeDriverFilter: false });
+    const aiAnalysisScope = buildScopeFilter(scope, {
+      includeDriverFilter: false,
+    });
 
     const [
       statusGroups,

@@ -13,8 +13,8 @@
  * with existing dev data. All test data is cleaned up in afterAll.
  */
 
-import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../src/generated/prisma";
 import { InspectionRepository } from "../../src/repositories/inspection.repository";
 import { ScopeRepository } from "../../src/repositories/scope.repository";

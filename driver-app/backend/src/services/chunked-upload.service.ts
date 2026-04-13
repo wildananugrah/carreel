@@ -5,7 +5,6 @@ import type { IInspectionRepository } from "../interfaces/repositories/inspectio
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import type { IUploadSessionRepository } from "../interfaces/repositories/upload-session.repository.interface";
 import type { IChunkedUploadService } from "../interfaces/services/chunked-upload.service.interface";
-import type { UserScope } from "../types/scope";
 import type {
   ChunkedUploadInitDTO,
   ChunkedUploadInitResponse,
@@ -13,6 +12,7 @@ import type {
   MediaFileResponse,
   UploadStatusResponse,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 const BUCKET_MAP: Record<string, string> = {
   IMAGE: "carreel-images",
@@ -232,16 +232,16 @@ export class ChunkedUploadService implements IChunkedUploadService {
       scope,
       session.stepId,
       {
-      fileName: session.fileName,
-      mimeType: session.mimeType,
-      fileSize: session.fileSize,
-      mediaType: "VIDEO",
-      minioKey: session.minioKey,
-      minioBucket: session.minioBucket,
-      latitude: session.latitude ?? undefined,
-      longitude: session.longitude ?? undefined,
-      capturedAt: session.capturedAt.toISOString(),
-      durationSeconds: session.durationSeconds ?? undefined,
+        fileName: session.fileName,
+        mimeType: session.mimeType,
+        fileSize: session.fileSize,
+        mediaType: "VIDEO",
+        minioKey: session.minioKey,
+        minioBucket: session.minioBucket,
+        latitude: session.latitude ?? undefined,
+        longitude: session.longitude ?? undefined,
+        capturedAt: session.capturedAt.toISOString(),
+        durationSeconds: session.durationSeconds ?? undefined,
       },
     );
 

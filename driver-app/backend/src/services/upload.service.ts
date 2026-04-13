@@ -53,7 +53,10 @@ export class UploadService implements IUploadService {
 
     // Unit Identification and Speedometer only accept images
     const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
-    if (IMAGE_ONLY_STEPS.includes(step.stepType) && meta.mimeType.startsWith("video/")) {
+    if (
+      IMAGE_ONLY_STEPS.includes(step.stepType) &&
+      meta.mimeType.startsWith("video/")
+    ) {
       throw new Error(`${step.stepType} only accepts image uploads, not video`);
     }
 
@@ -73,11 +76,7 @@ export class UploadService implements IUploadService {
     });
 
     // Update step status to UPLOADED
-    await this.inspectionRepository.updateStepStatus(
-      scope,
-      stepId,
-      "UPLOADED",
-    );
+    await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
 
     this.logger.info("Media file uploaded", {
       mediaFileId: mediaFile.id,
