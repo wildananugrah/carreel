@@ -5,6 +5,7 @@ import { RequireProjectAdmin } from "./components/route-guards/RequireProjectAdm
 import { RequireSuperAdmin } from "./components/route-guards/RequireSuperAdmin";
 import { ScopeProvider } from "./contexts/ScopeContext";
 import { AuthProvider } from "./lib/auth";
+import { ProjectAssignments } from "./pages/admin/ProjectAssignments";
 import { ProjectMembers } from "./pages/admin/ProjectMembers";
 import { WorkspaceDetail } from "./pages/admin/WorkspaceDetail";
 import { WorkspaceList } from "./pages/admin/WorkspaceList";
@@ -45,6 +46,10 @@ export default function App() {
                   <Route
                     path="/admin/projects/:projectId/members"
                     element={<ProjectMembers />}
+                  />
+                  <Route
+                    path="/admin/projects/:projectId/assignments"
+                    element={<ProjectAssignments />}
                   />
                 </Route>
               </Route>
