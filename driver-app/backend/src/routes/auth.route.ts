@@ -24,10 +24,15 @@ export function createAuthRoutes(
   });
 
   // GET /api/auth/me (protected)
+  // Returns the current user's profile merged with their UserScope.
+  // Profile fields (id, email, fullName, role) are used by existing frontend code.
+  // scope field (userId, appRole, systemRole, projects) is used by scope-aware UI.
+  // Requires auth + scope middleware to have already run.
   app.get("/me", authMiddleware, async (c) => {
     const userId = c.get("userId") as string;
     const profile = await authService.getProfile(userId);
-    return c.json(profile);
+    const scope = c.get("scope") ?? null;
+    return c.json({ ...profile, scope });
   });
 
   // PUT /api/auth/me (protected)
