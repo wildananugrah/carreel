@@ -8,6 +8,8 @@ import type {
 } from "../../src/interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
 import { UploadService } from "../../src/services/upload.service";
+import type { UserScope } from "../../src/types/scope";
+import { makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -48,9 +50,10 @@ describe("UploadService", () => {
     };
 
     const mockMediaFileRepo: IMediaFileRepository = {
-      create: async (stepId, data) => ({
+      create: async (_scope: UserScope, stepId, data) => ({
         id: "media-1",
         stepId,
+        projectId: "test-project",
         fileName: data.fileName,
         mimeType: data.mimeType,
         fileSize: data.fileSize,
@@ -71,6 +74,7 @@ describe("UploadService", () => {
     const mockStep: InspectionStep = {
       id: "step-1",
       inspectionId: "insp-1",
+      projectId: "test-project",
       stepType: "BODY_INSPECTION",
       status: "PENDING",
       createdAt: new Date(),
@@ -78,11 +82,12 @@ describe("UploadService", () => {
     };
 
     const mockInspectionRepo: Partial<IInspectionRepository> = {
-      findById: async (id: string) => {
+      findById: async (_scope: UserScope, id: string) => {
         if (id === "insp-1") {
           return {
             id: "insp-1",
             driverId: "driver-1",
+            projectId: "test-project",
             unitId: null,
             tripType: "PRE_TRIP",
             status: "DRAFT",
@@ -93,6 +98,7 @@ describe("UploadService", () => {
             longitude: null,
             signatureKey: null,
             signerName: null,
+            signedAt: null,
             driverComment: null,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -104,11 +110,14 @@ describe("UploadService", () => {
         }
         return null;
       },
-      findStepById: async (stepId: string) => {
+      findStepById: async (_scope: UserScope, stepId: string) => {
         if (stepId === "step-1") return mockStep;
         return null;
       },
-      updateStepStatus: async (_stepId, status) => ({ ...mockStep, status }),
+      updateStepStatus: async (_scope: UserScope, _stepId, status) => ({
+        ...mockStep,
+        status,
+      }),
     };
 
     service = new UploadService(
@@ -121,6 +130,7 @@ describe("UploadService", () => {
 
   test("uploadMedia stores file and creates record", async () => {
     const result = await service.uploadMedia(
+      makeSuperAdminScope(),
       "insp-1",
       "step-1",
       "driver-1",
@@ -143,19 +153,27 @@ describe("UploadService", () => {
 
   test("uploadMedia throws for wrong driver", async () => {
     expect(
-      service.uploadMedia("insp-1", "step-1", "driver-2", Buffer.from("data"), {
-        fileName: "photo.jpg",
-        mimeType: "image/jpeg",
-        fileSize: 1024,
-        mediaType: "IMAGE",
-        capturedAt: "2026-03-13T10:00:00.000Z",
-      }),
+      service.uploadMedia(
+        makeSuperAdminScope(),
+        "insp-1",
+        "step-1",
+        "driver-2",
+        Buffer.from("data"),
+        {
+          fileName: "photo.jpg",
+          mimeType: "image/jpeg",
+          fileSize: 1024,
+          mediaType: "IMAGE",
+          capturedAt: "2026-03-13T10:00:00.000Z",
+        },
+      ),
     ).rejects.toThrow("Unauthorized");
   });
 
   test("uploadMedia throws for non-existent inspection", async () => {
     expect(
       service.uploadMedia(
+        makeSuperAdminScope(),
         "non-existent",
         "step-1",
         "driver-1",
@@ -173,6 +191,7 @@ describe("UploadService", () => {
 
   test("getPresignedUrl returns URL", async () => {
     const url = await service.getPresignedUrl(
+      makeSuperAdminScope(),
       "inspections/insp-1/BODY_INSPECTION/file.jpg",
       "driver-1",
     );
@@ -182,6 +201,7 @@ describe("UploadService", () => {
 
   test("getPresignedUrl uses video bucket for video keys", async () => {
     const url = await service.getPresignedUrl(
+      makeSuperAdminScope(),
       "inspections/insp-1/video/file.mp4",
       "driver-1",
     );

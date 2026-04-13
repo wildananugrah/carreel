@@ -21,6 +21,7 @@ import type {
 import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
 import type { StepAnalysisJobData } from "../../src/jobs/step-analysis.job";
 import { StepAnalysisJob } from "../../src/jobs/step-analysis.job";
+import type { UserScope } from "../../src/types/scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -34,6 +35,7 @@ function createMockMediaFile(overrides: Partial<MediaFile> = {}): MediaFile {
   return {
     id: "media-1",
     stepId: "step-1",
+    projectId: "test-project",
     fileName: "photo.jpg",
     mimeType: "image/jpeg",
     mediaType: "IMAGE",
@@ -55,6 +57,7 @@ function createMockStep(
   return {
     id: "step-1",
     inspectionId: "insp-1",
+    projectId: "test-project",
     stepType: "UNIT_IDENTIFICATION",
     status: "UPLOADED",
     createdAt: new Date(),
@@ -161,10 +164,11 @@ describe("StepAnalysisJob", () => {
     mockInspectionRepo = {
       create: async () => ({}) as any,
       createWithSteps: async () => ({}) as any,
-      findById: async (id: string) =>
+      findById: async (_scope: UserScope, id: string) =>
         ({
           id,
           driverId: "driver-1",
+          projectId: "test-project",
           unitId: null,
           tripType: "PRE_TRIP",
           status: inspectionStatuses.get(id) ?? "PENDING_AI",
@@ -175,6 +179,7 @@ describe("StepAnalysisJob", () => {
           longitude: null,
           signatureKey: null,
           signerName: null,
+          signedAt: null,
           driverComment: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -195,13 +200,14 @@ describe("StepAnalysisJob", () => {
         limit: 20,
       }),
       update: async () => ({}) as any,
-      updateStatus: async (id: string, status: string) => {
+      updateStatus: async (_scope: UserScope, id: string, status) => {
         inspectionStatuses.set(id, status);
         return {} as any;
       },
       createStep: async () => ({}) as any,
-      findStepById: async (stepId: string) => steps.get(stepId) ?? null,
-      updateStepStatus: async (stepId: string, status: string) => {
+      findStepById: async (_scope: UserScope, stepId: string) =>
+        steps.get(stepId) ?? null,
+      updateStepStatus: async (_scope: UserScope, stepId: string, status) => {
         stepStatuses.set(stepId, status);
         const step = steps.get(stepId)!;
         return { ...step, status } as any;
@@ -210,7 +216,7 @@ describe("StepAnalysisJob", () => {
       findUnitByInspectionId: async () => mockUnit,
       updateUnitKm: async () => {},
       updateSignatureKey: async () => {},
-      findOrCreateUnit: async (data) =>
+      findOrCreateUnit: async (_scope: UserScope, data) =>
         mockUnit ??
         ({
           id: "unit-new",
@@ -230,7 +236,7 @@ describe("StepAnalysisJob", () => {
     mockMediaRepo = {
       create: async () => ({}) as any,
       findById: async () => null,
-      findByStepId: async (stepId: string) => {
+      findByStepId: async (_scope: UserScope, stepId: string) => {
         if (stepId === "step-empty") return [];
         return [createMockMediaFile({ stepId })];
       },
@@ -238,7 +244,7 @@ describe("StepAnalysisJob", () => {
     };
 
     mockAIAnalysisRepo = {
-      createAnalysis: async (data) => {
+      createAnalysis: async (_scope: UserScope, data) => {
         savedAnalyses.push({ stepId: data.stepId, status: data.status });
         return {
           id: `analysis-${savedAnalyses.length}`,
@@ -246,11 +252,12 @@ describe("StepAnalysisJob", () => {
         } as any as AIAnalysis;
       },
       findByStepId: async () => null,
-      createDamageMarkers: async (markers) => {
+      deleteByStepId: async () => {},
+      createDamageMarkers: async (_scope: UserScope, markers) => {
         savedDamageMarkers.push(markers);
         return markers as any as DamageMarker[];
       },
-      createTelemetryData: async (data) => {
+      createTelemetryData: async (_scope: UserScope, data) => {
         savedTelemetry.push(data);
         return data as any as TelemetryData;
       },
@@ -263,7 +270,7 @@ describe("StepAnalysisJob", () => {
     };
 
     mockAlertRepo = {
-      create: async (data) => {
+      create: async (_scope: UserScope, data) => {
         savedAlerts.push(data);
         return {
           id: `alert-${savedAlerts.length}`,
@@ -687,11 +694,12 @@ describe("StepAnalysisJob", () => {
 
   test("POST_TRIP body inspection: overrides isNewDamage when same damage exists in pre-trip", async () => {
     // Setup: post-trip inspection linked to pre-trip
-    mockInspectionRepo.findById = async (id: string) => {
+    mockInspectionRepo.findById = async (_scope: UserScope, id: string) => {
       if (id === "insp-post") {
         return {
           id: "insp-post",
           driverId: "driver-1",
+          projectId: "test-project",
           unitId: null,
           tripType: "POST_TRIP",
           status: inspectionStatuses.get(id) ?? "PENDING_AI",
@@ -702,6 +710,7 @@ describe("StepAnalysisJob", () => {
           longitude: null,
           signatureKey: null,
           signerName: null,
+          signedAt: null,
           driverComment: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -732,6 +741,7 @@ describe("StepAnalysisJob", () => {
         return {
           id: "insp-pre",
           driverId: "driver-1",
+          projectId: "test-project",
           unitId: null,
           tripType: "PRE_TRIP",
           status: "AI_COMPLETE",
@@ -742,6 +752,7 @@ describe("StepAnalysisJob", () => {
           longitude: null,
           signatureKey: null,
           signerName: null,
+          signedAt: null,
           driverComment: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -830,9 +841,7 @@ describe("StepAnalysisJob", () => {
     const markers = savedDamageMarkers[0] as any[];
     expect(markers.length).toBe(2);
 
-    const existingDamage = markers.find(
-      (m: any) => m.damageType === "goresan",
-    );
+    const existingDamage = markers.find((m: any) => m.damageType === "goresan");
     const newDamage = markers.find((m: any) => m.damageType === "penyok");
 
     expect(existingDamage.isNewDamage).toBe(false); // overridden: same as pre-trip

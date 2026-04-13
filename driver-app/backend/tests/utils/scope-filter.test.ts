@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { UserScope } from "../../src/types/scope";
-import { buildScopeFilter, canWriteToEntity } from "../../src/utils/scope-filter";
+import {
+  buildScopeFilter,
+  canWriteToEntity,
+} from "../../src/utils/scope-filter";
 
 function makeScope(overrides: Partial<UserScope> = {}): UserScope {
   return {
