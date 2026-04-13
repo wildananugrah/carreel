@@ -17,6 +17,7 @@ import { AlertRepository } from "./repositories/alert.repository";
 import { AuditLogRepository } from "./repositories/audit-log.repository";
 import { DashboardRepository } from "./repositories/dashboard.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
+import { DriverAssignmentRepository } from "./repositories/driver-assignment.repository";
 import { ProjectMemberRepository } from "./repositories/project-member.repository";
 import { ProjectRepository } from "./repositories/project.repository";
 import { ReviewRepository } from "./repositories/review.repository";
@@ -25,6 +26,7 @@ import { ScopeRepository } from "./repositories/scope.repository";
 import { UserRepository } from "./repositories/user.repository";
 import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
+import { createDriverAssignmentRoutes } from "./routes/admin/assignment.route";
 import { createProjectMemberRoutes } from "./routes/admin/member.route";
 import {
   createProjectRoutes,
@@ -45,6 +47,7 @@ import { AuthService } from "./services/auth.service";
 import { DashboardService } from "./services/dashboard.service";
 import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
+import { DriverAssignmentService } from "./services/driver-assignment.service";
 import { ProjectMemberService } from "./services/project-member.service";
 import { ProjectService } from "./services/project.service";
 import { WorkspaceService } from "./services/workspace.service";
@@ -87,6 +90,7 @@ const scopeRepository = new ScopeRepository(prisma);
 const workspaceRepository = new WorkspaceRepository(prisma);
 const projectRepository = new ProjectRepository(prisma);
 const projectMemberRepository = new ProjectMemberRepository(prisma);
+const driverAssignmentRepository = new DriverAssignmentRepository(prisma);
 
 // Services
 const authService = new AuthService(
@@ -114,6 +118,9 @@ const mediaStreamService = new MediaStreamService(prisma, storageProvider);
 const workspaceService = new WorkspaceService(workspaceRepository);
 const projectService = new ProjectService(projectRepository);
 const projectMemberService = new ProjectMemberService(projectMemberRepository);
+const driverAssignmentService = new DriverAssignmentService(
+  driverAssignmentRepository,
+);
 
 // Middlewares
 const authMiddleware = createAuthMiddleware(
@@ -169,6 +176,10 @@ app.route(
 app.route(
   "/api/admin/projects/:projectId/members",
   createProjectMemberRoutes(projectMemberService, authMiddleware),
+);
+app.route(
+  "/api/admin/projects/:projectId/assignments",
+  createDriverAssignmentRoutes(driverAssignmentService, authMiddleware),
 );
 
 // ========================
