@@ -8,6 +8,7 @@ import type {
   UpdateProfileDTO,
   UserResponse,
 } from "../types/dto";
+import { conflict, notFound, unauthorized } from "../utils/http-error";
 import { signToken } from "../utils/jwt";
 
 export class AuthService implements IAuthService {
@@ -21,7 +22,7 @@ export class AuthService implements IAuthService {
   async register(data: RegisterDTO): Promise<AuthResponse> {
     const existing = await this.userRepository.findByEmail(data.email);
     if (existing) {
-      throw new Error("Email already registered");
+      throw conflict("Email already registered");
     }
 
     const passwordHash = await Bun.password.hash(data.password, {
@@ -52,7 +53,7 @@ export class AuthService implements IAuthService {
   async login(data: LoginDTO): Promise<AuthResponse> {
     const user = await this.userRepository.findByEmail(data.email);
     if (!user) {
-      throw new Error("Invalid email or password");
+      throw unauthorized("Invalid email or password");
     }
 
     const validPassword = await Bun.password.verify(
@@ -60,7 +61,7 @@ export class AuthService implements IAuthService {
       user.passwordHash,
     );
     if (!validPassword) {
-      throw new Error("Invalid email or password");
+      throw unauthorized("Invalid email or password");
     }
 
     this.logger.info("User logged in", { userId: user.id });
@@ -80,7 +81,7 @@ export class AuthService implements IAuthService {
   async getProfile(userId: string): Promise<UserResponse> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw new Error("User not found");
+      throw notFound("User not found");
     }
     return this.toUserResponse(user);
   }
@@ -92,7 +93,7 @@ export class AuthService implements IAuthService {
     if (data.email) {
       const existing = await this.userRepository.findByEmail(data.email);
       if (existing && existing.id !== userId) {
-        throw new Error("Email already in use");
+        throw conflict("Email already in use");
       }
     }
 

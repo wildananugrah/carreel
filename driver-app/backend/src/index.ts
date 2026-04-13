@@ -11,6 +11,7 @@ import { StepAnalysisJob } from "./jobs/step-analysis.job";
 // Middlewares
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
+import { HttpError } from "./utils/http-error";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import { createScopeMiddleware } from "./middlewares/scope.middleware";
 import {
@@ -170,6 +171,30 @@ app.use(
 app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
 app.use("/api/*", createScopeMiddleware(scopeRepository));
+
+// Hono's official error boundary — catches any error thrown from routes/middlewares.
+// HttpError instances become JSON responses with their status + message.
+// Everything else becomes a 500 "Internal server error".
+app.onError((err, c) => {
+  if (err instanceof HttpError) {
+    logger.warn("HTTP error", {
+      error: err.message,
+      status: err.status,
+      path: c.req.path,
+    });
+    return c.json(
+      { error: err.message },
+      err.status as 400 | 401 | 403 | 404 | 409,
+    );
+  }
+
+  logger.error("Unhandled exception", {
+    error: err.message,
+    stack: err.stack,
+    path: c.req.path,
+  });
+  return c.json({ error: "Internal server error" }, 500);
+});
 
 // Routes
 app.route("/health", createHealthRoutes(prisma, storageProvider));
