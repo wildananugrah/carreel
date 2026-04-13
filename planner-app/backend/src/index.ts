@@ -13,6 +13,7 @@ import { MinIOProvider } from "./providers/minio.provider";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
 // Providers
 import { WinstonLogger } from "./providers/winston-logger.provider";
+import { AdminUserRepository } from "./repositories/admin-user.repository";
 import { AlertRepository } from "./repositories/alert.repository";
 import { AuditLogRepository } from "./repositories/audit-log.repository";
 import { DashboardRepository } from "./repositories/dashboard.repository";
@@ -28,6 +29,7 @@ import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
 import { createDriverAssignmentRoutes } from "./routes/admin/assignment.route";
 import { createProjectMemberRoutes } from "./routes/admin/member.route";
+import { createAdminUserRoutes } from "./routes/admin/user.route";
 import {
   createProjectRoutes,
   createWorkspaceProjectRoutes,
@@ -42,6 +44,7 @@ import { createInspectionRoutes } from "./routes/inspection.route";
 import { createMediaRoutes } from "./routes/media.route";
 import { createUploadRoutes } from "./routes/upload.route";
 // Services
+import { AdminUserService } from "./services/admin-user.service";
 import { AlertService } from "./services/alert.service";
 import { AuthService } from "./services/auth.service";
 import { DashboardService } from "./services/dashboard.service";
@@ -91,6 +94,7 @@ const workspaceRepository = new WorkspaceRepository(prisma);
 const projectRepository = new ProjectRepository(prisma);
 const projectMemberRepository = new ProjectMemberRepository(prisma);
 const driverAssignmentRepository = new DriverAssignmentRepository(prisma);
+const adminUserRepository = new AdminUserRepository(prisma);
 
 // Services
 const authService = new AuthService(
@@ -121,6 +125,7 @@ const projectMemberService = new ProjectMemberService(projectMemberRepository);
 const driverAssignmentService = new DriverAssignmentService(
   driverAssignmentRepository,
 );
+const adminUserService = new AdminUserService(adminUserRepository);
 
 // Middlewares
 const authMiddleware = createAuthMiddleware(
@@ -180,6 +185,10 @@ app.route(
 app.route(
   "/api/admin/projects/:projectId/assignments",
   createDriverAssignmentRoutes(driverAssignmentService, authMiddleware),
+);
+app.route(
+  "/api/admin/users",
+  createAdminUserRoutes(adminUserService, authMiddleware),
 );
 
 // ========================
