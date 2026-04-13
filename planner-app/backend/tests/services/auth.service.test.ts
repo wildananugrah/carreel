@@ -3,6 +3,7 @@ import type { User } from "../../src/generated/prisma";
 import type { ILogger } from "../../src/interfaces/providers/logger.provider.interface";
 import type { IUserRepository } from "../../src/interfaces/repositories/user.repository.interface";
 import { AuthService } from "../../src/services/auth.service";
+import type { UserScope } from "../../src/types/scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -52,7 +53,18 @@ describe("AuthService", () => {
         users.set(user.id, user);
         return user;
       },
-      findDrivers: async () => ({ data: [], total: 0, page: 1, limit: 20 }),
+      update: async (id: string, data) => {
+        const existing = users.get(id)!;
+        const updated = { ...existing, ...data };
+        users.set(id, updated);
+        return updated;
+      },
+      findDrivers: async (_scope: UserScope) => ({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+      }),
     };
 
     authService = new AuthService(

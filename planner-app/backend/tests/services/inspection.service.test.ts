@@ -13,6 +13,8 @@ import type {
 } from "../../src/interfaces/repositories/inspection.repository.interface";
 import type { IReviewRepository } from "../../src/interfaces/repositories/review.repository.interface";
 import { InspectionService } from "../../src/services/inspection.service";
+import type { UserScope } from "../../src/types/scope";
+import { makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -28,13 +30,19 @@ function createMockInspection(
   return {
     id: "insp-1",
     driverId: "driver-1",
+    projectId: "test-project",
     unitId: "unit-1",
     tripType: "PRE_TRIP",
     status: "AI_COMPLETE",
+    linkedInspectionId: null,
     startedAt: new Date(),
     completedAt: null,
     latitude: null,
     longitude: null,
+    signatureKey: null,
+    signerName: null,
+    signedAt: null,
+    driverComment: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     driver: {
@@ -51,7 +59,7 @@ function createMockInspection(
     steps: [],
     reviews: [],
     ...overrides,
-  };
+  } as InspectionDetailWithRelations;
 }
 
 describe("InspectionService", () => {
@@ -64,6 +72,7 @@ describe("InspectionService", () => {
   let auditLogs: any[];
   let reviews: InspectionReview[];
   let inspections: Map<string, InspectionDetailWithRelations>;
+  const scope: UserScope = makeSuperAdminScope();
 
   beforeEach(() => {
     notifications = [];
@@ -73,8 +82,9 @@ describe("InspectionService", () => {
     inspections.set("insp-1", createMockInspection());
 
     mockInspectionRepo = {
-      findById: async (id: string) => inspections.get(id) ?? null,
-      findAll: async (query) => ({
+      findById: async (_scope: UserScope, id: string) =>
+        inspections.get(id) ?? null,
+      findAll: async (_scope: UserScope, query) => ({
         data: [
           {
             id: "insp-1",
@@ -90,13 +100,14 @@ describe("InspectionService", () => {
         page: query.page ?? 1,
         limit: query.limit ?? 20,
       }),
-      updateStatus: async (id: string, status) => {
+      updateStatus: async (_scope: UserScope, id: string, status) => {
         const insp = inspections.get(id)!;
         const updated = { ...insp, status };
         inspections.set(id, updated as InspectionDetailWithRelations);
         return updated as Inspection;
       },
       findCounterpart: async (
+        _scope: UserScope,
         unitId: string,
         tripType: string,
         excludeId: string,
@@ -115,7 +126,7 @@ describe("InspectionService", () => {
     };
 
     mockReviewRepo = {
-      create: async (inspectionId, reviewerId, data) => {
+      create: async (_scope, inspectionId, reviewerId, data) => {
         const review: InspectionReview = {
           id: `review-${reviews.length + 1}`,
           inspectionId,
@@ -123,7 +134,7 @@ describe("InspectionService", () => {
           decision: data.decision,
           notes: data.notes ?? null,
           createdAt: new Date(),
-        };
+        } as InspectionReview;
         reviews.push(review);
         return review;
       },
@@ -159,29 +170,34 @@ describe("InspectionService", () => {
   });
 
   test("list returns paginated inspections", async () => {
-    const result = await inspectionService.list({ page: 1, limit: 20 });
+    const result = await inspectionService.list(scope, { page: 1, limit: 20 });
     expect(result.data).toHaveLength(1);
     expect(result.data[0].driverName).toBe("John Driver");
     expect(result.total).toBe(1);
   });
 
   test("getById returns inspection detail", async () => {
-    const result = await inspectionService.getById("insp-1");
+    const result = await inspectionService.getById(scope, "insp-1");
     expect(result.id).toBe("insp-1");
     expect(result.driver.fullName).toBe("John Driver");
   });
 
   test("getById throws for non-existent inspection", async () => {
-    expect(inspectionService.getById("non-existent")).rejects.toThrow(
+    expect(inspectionService.getById(scope, "non-existent")).rejects.toThrow(
       "Inspection not found",
     );
   });
 
   test("review creates review, transitions status, logs audit, and notifies driver", async () => {
-    const review = await inspectionService.review("insp-1", "planner-1", {
-      decision: "APPROVED",
-      notes: "Looks good",
-    });
+    const review = await inspectionService.review(
+      scope,
+      "insp-1",
+      "planner-1",
+      {
+        decision: "APPROVED",
+        notes: "Looks good",
+      },
+    );
 
     expect(review.decision).toBe("APPROVED");
     expect(review.inspectionId).toBe("insp-1");
@@ -202,7 +218,7 @@ describe("InspectionService", () => {
   });
 
   test("review with REJECTED sets status to REJECTED", async () => {
-    await inspectionService.review("insp-1", "planner-1", {
+    await inspectionService.review(scope, "insp-1", "planner-1", {
       decision: "REJECTED",
       notes: "Missing photos",
     });
@@ -212,7 +228,7 @@ describe("InspectionService", () => {
   });
 
   test("review with NEEDS_MORE_INFO sets status to FLAGGED", async () => {
-    await inspectionService.review("insp-1", "planner-1", {
+    await inspectionService.review(scope, "insp-1", "planner-1", {
       decision: "NEEDS_MORE_INFO",
       notes: "Need clearer photos of rear bumper",
     });
@@ -225,7 +241,7 @@ describe("InspectionService", () => {
     inspections.set("insp-1", createMockInspection({ status: "DRAFT" }));
 
     expect(
-      inspectionService.review("insp-1", "planner-1", {
+      inspectionService.review(scope, "insp-1", "planner-1", {
         decision: "APPROVED",
       }),
     ).rejects.toThrow("Inspection is not ready for review");
@@ -233,7 +249,7 @@ describe("InspectionService", () => {
 
   test("review throws for non-existent inspection", async () => {
     expect(
-      inspectionService.review("non-existent", "planner-1", {
+      inspectionService.review(scope, "non-existent", "planner-1", {
         decision: "APPROVED",
       }),
     ).rejects.toThrow("Inspection not found");
@@ -247,19 +263,19 @@ describe("InspectionService", () => {
     });
     inspections.set("insp-2", postTrip);
 
-    const result = await inspectionService.getComparison("insp-1");
+    const result = await inspectionService.getComparison(scope, "insp-1");
     expect(result).not.toBeNull();
     expect(result!.current.id).toBe("insp-1");
     expect(result!.counterpart.id).toBe("insp-2");
   });
 
   test("getComparison returns null when no counterpart exists", async () => {
-    const result = await inspectionService.getComparison("insp-1");
+    const result = await inspectionService.getComparison(scope, "insp-1");
     expect(result).toBeNull();
   });
 
   test("getComparison returns null for non-existent inspection", async () => {
-    const result = await inspectionService.getComparison("non-existent");
+    const result = await inspectionService.getComparison(scope, "non-existent");
     expect(result).toBeNull();
   });
 
@@ -268,7 +284,7 @@ describe("InspectionService", () => {
       "insp-no-unit",
       createMockInspection({ id: "insp-no-unit", unitId: null }),
     );
-    const result = await inspectionService.getComparison("insp-no-unit");
+    const result = await inspectionService.getComparison(scope, "insp-no-unit");
     expect(result).toBeNull();
   });
 });

@@ -17,6 +17,7 @@ import type {
   InspectionSummary,
   PaginatedResponse,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 export class InspectionService implements IInspectionService {
   constructor(
@@ -28,13 +29,17 @@ export class InspectionService implements IInspectionService {
   ) {}
 
   async list(
+    scope: UserScope,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionSummary>> {
-    return this.inspectionRepository.findAll(query);
+    return this.inspectionRepository.findAll(scope, query);
   }
 
-  async getById(id: string): Promise<InspectionDetailWithRelations> {
-    const inspection = await this.inspectionRepository.findById(id);
+  async getById(
+    scope: UserScope,
+    id: string,
+  ): Promise<InspectionDetailWithRelations> {
+    const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -42,11 +47,15 @@ export class InspectionService implements IInspectionService {
   }
 
   async review(
+    scope: UserScope,
     inspectionId: string,
     reviewerId: string,
     data: CreateReviewDTO,
   ): Promise<InspectionReview> {
-    const inspection = await this.inspectionRepository.findById(inspectionId);
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
     if (!inspection) {
       throw new Error("Inspection not found");
     }
@@ -61,6 +70,7 @@ export class InspectionService implements IInspectionService {
 
     // Create the review record
     const review = await this.reviewRepository.create(
+      scope,
       inspectionId,
       reviewerId,
       data,
@@ -82,7 +92,11 @@ export class InspectionService implements IInspectionService {
         newStatus = "UNDER_REVIEW";
     }
 
-    await this.inspectionRepository.updateStatus(inspectionId, newStatus);
+    await this.inspectionRepository.updateStatus(
+      scope,
+      inspectionId,
+      newStatus,
+    );
 
     // Create audit log
     await this.auditLogRepository.create({
@@ -111,12 +125,17 @@ export class InspectionService implements IInspectionService {
   }
 
   async getComparison(
+    scope: UserScope,
     inspectionId: string,
   ): Promise<InspectionComparison | null> {
-    const current = await this.inspectionRepository.findById(inspectionId);
+    const current = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
     if (!current || !current.unitId) return null;
 
     const counterpart = await this.inspectionRepository.findCounterpart(
+      scope,
       current.unitId,
       current.tripType,
       current.id,

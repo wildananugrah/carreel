@@ -6,6 +6,7 @@ import type {
   DashboardOverviewQuery,
   DashboardOverviewResponse,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
 
 export class DashboardService implements IDashboardService {
   constructor(
@@ -13,7 +14,7 @@ export class DashboardService implements IDashboardService {
     private dashboardRepository: IDashboardRepository,
   ) {}
 
-  async getKPIs(): Promise<DashboardKPIs> {
+  async getKPIs(_scope: UserScope): Promise<DashboardKPIs> {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -70,12 +71,13 @@ export class DashboardService implements IDashboardService {
   }
 
   async getOverview(
+    scope: UserScope,
     query: DashboardOverviewQuery,
   ): Promise<DashboardOverviewResponse> {
     const [kpis, alertBanners, vehicles] = await Promise.all([
-      this.dashboardRepository.getOverviewKPIs(),
-      this.dashboardRepository.getAlertBanners(),
-      this.dashboardRepository.getVehicleCards(query),
+      this.dashboardRepository.getOverviewKPIs(scope),
+      this.dashboardRepository.getAlertBanners(scope),
+      this.dashboardRepository.getVehicleCards(scope, query),
     ]);
     return { kpis, alertBanners, vehicles };
   }
