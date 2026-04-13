@@ -23,9 +23,6 @@ function formatHeaderDate(): string {
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `text-sm font-medium transition-colors ${isActive ? "text-[#F5C518]" : "text-[#C0C0C0] hover:text-[#F5C518]"}`;
-
 export function Header() {
   const { user, logout } = useAuth();
   const { scope } = useScope();
@@ -66,23 +63,12 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Main nav links — hidden on mobile to avoid overlapping the logo.
-              The planner-app is desktop-first; mobile users can still
-              navigate via the profile dropdown or direct URLs. */}
+          {/* Main nav — only the admin Manage / System dropdowns. The
+              top-level Dashboard / Inspections / Alerts / Drivers links
+              were removed because the dashboard's tab bar already covers
+              the daily workflow and the admin actions are the only
+              navigation that needed top-bar placement. */}
           <nav className="hidden md:flex items-center gap-1">
-            <NavLink to="/" end className={navLinkClass}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/inspections" className={navLinkClass}>
-              Inspections
-            </NavLink>
-            <NavLink to="/alerts" className={navLinkClass}>
-              Alerts
-            </NavLink>
-            <NavLink to="/drivers" className={navLinkClass}>
-              Drivers
-            </NavLink>
-
             {/* Manage dropdown — visible to PROJECT_ADMIN or SUPER_ADMIN */}
             {(isProjectAdmin || isSuperAdmin) && (
               <div className="relative group ml-2">
