@@ -19,6 +19,18 @@ const routeBodyConfig: Record<string, BodyLoggingConfig> = {
   "POST /api/inspections": { logRequestBody: true, logResponseBody: true },
 };
 
+function extractClientIp(c: {
+  req: { header: (name: string) => string | undefined; raw: Request };
+}): string {
+  const forwarded = c.req.header("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
+  const realIp = c.req.header("x-real-ip");
+  if (realIp) return realIp;
+  const cfIp = c.req.header("cf-connecting-ip");
+  if (cfIp) return cfIp;
+  return "unknown";
+}
+
 export function createRequestLoggerMiddleware(logger: ILogger) {
   return createMiddleware(async (c, next) => {
     const transactionId = randomUUID();
@@ -27,13 +39,23 @@ export function createRequestLoggerMiddleware(logger: ILogger) {
     const activeSpan = trace.getSpan(context.active());
     const spanContext = activeSpan?.spanContext();
 
+    const ip = extractClientIp(c);
+    const userAgent = c.req.header("user-agent") ?? "unknown";
+    const referer = c.req.header("referer") ?? undefined;
+
     const requestLogger = logger.child({
       transactionId,
       traceId: spanContext?.traceId,
       spanId: spanContext?.spanId,
       method: c.req.method,
       uri: c.req.path,
+      ip,
+      userAgent,
+      ...(referer && { referer }),
     });
+
+    c.set("clientIp", ip);
+    c.set("userAgent", userAgent);
 
     c.set("logger", requestLogger);
     c.set("transactionId", transactionId);

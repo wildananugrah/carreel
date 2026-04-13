@@ -7,6 +7,7 @@ const simpleLineFormat = winston.format.printf(
     const txn = meta.transactionId ? ` [txn:${meta.transactionId}]` : "";
     const trace = meta.traceId ? ` [trace:${meta.traceId}]` : "";
     const user = meta.userId ? ` [user:${meta.userId}]` : "";
+    const ip = meta.ip ? ` [ip:${meta.ip}]` : "";
     const method = meta.method ?? "";
     const uri = meta.uri ?? "";
     const status = meta.statusCode ?? "";
@@ -17,9 +18,11 @@ const simpleLineFormat = winston.format.printf(
     const messagePart = !httpPart && message ? ` ${message}` : "";
 
     const mainLine =
-      `${timestamp} [${level.toUpperCase()}]${txn}${trace}${user}${httpPart}${messagePart}`.trim();
+      `${timestamp} [${level.toUpperCase()}]${txn}${trace}${user}${ip}${httpPart}${messagePart}`.trim();
 
     const extras: Record<string, unknown> = {};
+    if (meta.userAgent) extras.userAgent = meta.userAgent;
+    if (meta.referer) extras.referer = meta.referer;
     if (meta.requestBody) extras.requestBody = meta.requestBody;
     if (meta.responseBody) extras.responseBody = meta.responseBody;
     if (meta.error) extras.error = meta.error;
