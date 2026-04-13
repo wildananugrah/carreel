@@ -31,9 +31,15 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  systemRole SystemRole @default(USER)
+
   inspections Inspection[] @relation("DriverInspections")
   reviews     InspectionReview[] @relation("ReviewerReviews")
   auditLogs   AuditLog[]
+
+  projectMemberships          ProjectMember[]
+  driverAssignmentsAsDriver   DriverAssignment[] @relation("DriverAssignments_driver")
+  driverAssignmentsAsPlanner  DriverAssignment[] @relation("DriverAssignments_planner")
 
   @@map("users")
 }
@@ -64,6 +70,10 @@ model Unit {
 
   inspections Inspection[]
 
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
   @@map("units")
 }
 
@@ -74,6 +84,17 @@ model Unit {
 enum TripType {
   PRE_TRIP
   POST_TRIP
+}
+
+enum ProjectRole {
+  PROJECT_ADMIN
+  PLANNER
+  DRIVER
+}
+
+enum SystemRole {
+  SUPER_ADMIN
+  USER
 }
 
 enum InspectionStatus {
@@ -112,6 +133,10 @@ model Inspection {
   reviews            InspectionReview[]
   auditLogs          AuditLog[]
 
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
   @@map("inspections")
 }
 
@@ -145,7 +170,10 @@ model InspectionStep {
   mediaFiles MediaFile[]
   aiAnalysis AIAnalysis?
 
+  projectId String?
+
   @@unique([inspectionId, stepType])
+  @@index([projectId])
   @@map("inspection_steps")
 }
 
@@ -177,6 +205,9 @@ model MediaFile {
   damageMarkers DamageMarker[]
   aiAnalyses    AIAnalysis[]
 
+  projectId String?
+
+  @@index([projectId])
   @@map("media_files")
 }
 
@@ -207,6 +238,9 @@ model AIAnalysis {
   step      InspectionStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
   mediaFile MediaFile?     @relation(fields: [mediaFileId], references: [id], onDelete: SetNull)
 
+  projectId String?
+
+  @@index([projectId])
   @@map("ai_analyses")
 }
 
@@ -233,6 +267,9 @@ model DamageMarker {
 
   mediaFile MediaFile @relation(fields: [mediaFileId], references: [id], onDelete: Cascade)
 
+  projectId String?
+
+  @@index([projectId])
   @@map("damage_markers")
 }
 
@@ -251,6 +288,9 @@ model TelemetryData {
   kmDelta        Int?
   createdAt      DateTime @default(now())
 
+  projectId String?
+
+  @@index([projectId])
   @@map("telemetry_data")
 }
 
@@ -275,6 +315,9 @@ model InspectionReview {
   inspection Inspection @relation(fields: [inspectionId], references: [id])
   reviewer   User       @relation("ReviewerReviews", fields: [reviewerId], references: [id])
 
+  projectId String?
+
+  @@index([projectId])
   @@map("inspection_reviews")
 }
 
@@ -300,7 +343,11 @@ model Alert {
   isRead       Boolean   @default(false)
   createdAt    DateTime  @default(now())
 
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
   @@index([isRead, createdAt])
+  @@index([projectId])
   @@map("alerts")
 }
 
@@ -321,10 +368,13 @@ model AuditLog {
   user       User?       @relation(fields: [userId], references: [id])
   inspection Inspection? @relation(fields: [inspectionId], references: [id])
 
+  projectId String?
+
   @@index([action])
   @@index([userId])
   @@index([inspectionId])
   @@index([createdAt])
+  @@index([projectId])
   @@map("audit_logs")
 }
 
@@ -399,4 +449,72 @@ model OutboxEvent {
 
   @@index([status, createdAt])
   @@map("outbox_events")
+}
+
+// ========================
+// WORKSPACES & PROJECTS (multi-tenancy)
+// ========================
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projects Project[]
+
+  @@map("workspaces")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members     ProjectMember[]
+  assignments DriverAssignment[]
+  units       Unit[]
+  inspections Inspection[]
+  alerts      Alert[]
+
+  @@unique([workspaceId, name])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String      @id @default(uuid())
+  projectId String
+  userId    String
+  role      ProjectRole
+  createdAt DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model DriverAssignment {
+  id         String   @id @default(uuid())
+  projectId  String
+  driverId   String
+  plannerId  String
+  assignedBy String
+  createdAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  driver  User    @relation("DriverAssignments_driver",  fields: [driverId],  references: [id], onDelete: Cascade)
+  planner User    @relation("DriverAssignments_planner", fields: [plannerId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, driverId, plannerId])
+  @@index([plannerId, projectId])
+  @@index([driverId, projectId])
+  @@map("driver_assignments")
 }
