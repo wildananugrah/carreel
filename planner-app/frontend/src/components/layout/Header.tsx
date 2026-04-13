@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useScope } from "../../contexts/ScopeContext";
 import { useAuth } from "../../lib/auth";
 
 function formatHeaderDate(): string {
@@ -22,10 +23,19 @@ function formatHeaderDate(): string {
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  `text-sm font-medium transition-colors ${isActive ? "text-[#F5C518]" : "text-[#C0C0C0] hover:text-[#F5C518]"}`;
+
 export function Header() {
   const { user, logout } = useAuth();
+  const { scope } = useScope();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isSuperAdmin = scope?.systemRole === "SUPER_ADMIN";
+  const projectAdminProjects =
+    scope?.projects.filter((p) => p.projectRole === "PROJECT_ADMIN") ?? [];
+  const isProjectAdmin = projectAdminProjects.length > 0;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -55,6 +65,90 @@ export function Header() {
               <span className="block text-[10px] text-[#666] leading-tight">PIC Dashboard</span>
             </div>
           </Link>
+
+          {/* Main nav links */}
+          <nav className="flex items-center gap-1">
+            <NavLink to="/" end className={navLinkClass}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/inspections" className={navLinkClass}>
+              Inspections
+            </NavLink>
+            <NavLink to="/alerts" className={navLinkClass}>
+              Alerts
+            </NavLink>
+            <NavLink to="/drivers" className={navLinkClass}>
+              Drivers
+            </NavLink>
+
+            {/* Manage dropdown — visible to PROJECT_ADMIN or SUPER_ADMIN */}
+            {(isProjectAdmin || isSuperAdmin) && (
+              <div className="relative group ml-2">
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm font-bold text-[#C0C0C0] hover:text-[#F5C518] transition-colors"
+                >
+                  Manage {"\u25BE"}
+                </button>
+                <div className="absolute left-0 top-full mt-1 bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl min-w-[220px] hidden group-hover:block z-50">
+                  {projectAdminProjects.length === 0 ? (
+                    <p className="px-4 py-3 text-xs text-[#666] italic">
+                      No projects you administer
+                    </p>
+                  ) : (
+                    projectAdminProjects.map((p) => (
+                      <div
+                        key={p.projectId}
+                        className="border-b border-[#1a1a1a] last:border-b-0"
+                      >
+                        <p className="px-4 pt-2 pb-0.5 text-[9px] font-bold text-[#666] tracking-[1px] uppercase">
+                          {p.projectId.slice(0, 8)}
+                        </p>
+                        <Link
+                          to={`/admin/projects/${p.projectId}/members`}
+                          className="block px-4 py-1.5 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                        >
+                          Members
+                        </Link>
+                        <Link
+                          to={`/admin/projects/${p.projectId}/assignments`}
+                          className="block px-4 py-1.5 mb-1 text-[11px] text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                        >
+                          Driver Assignments
+                        </Link>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* System dropdown — visible to SUPER_ADMIN only */}
+            {isSuperAdmin && (
+              <div className="relative group">
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm font-bold text-[#C0C0C0] hover:text-[#F5C518] transition-colors"
+                >
+                  System {"\u25BE"}
+                </button>
+                <div className="absolute left-0 top-full mt-1 bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl min-w-[180px] hidden group-hover:block z-50">
+                  <Link
+                    to="/admin/workspaces"
+                    className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                  >
+                    Workspaces
+                  </Link>
+                  <Link
+                    to="/admin/users"
+                    className="block px-4 py-2 text-xs text-[#C0C0C0] hover:bg-[#1a1a1a] hover:text-[#F5C518] transition-colors"
+                  >
+                    All Users
+                  </Link>
+                </div>
+              </div>
+            )}
+          </nav>
 
           {/* Right: date + live dot + profile */}
           <div className="flex items-center gap-4">
