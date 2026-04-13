@@ -12,6 +12,7 @@ import { StepAnalysisJob } from "./jobs/step-analysis.job";
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
+import { createScopeMiddleware } from "./middlewares/scope.middleware";
 import {
   GeminiProvider,
   GeminiStubProvider,
@@ -25,6 +26,7 @@ import { AIAnalysisRepository } from "./repositories/ai-analysis.repository";
 import { AlertRepository } from "./repositories/alert.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
 import { MediaFileRepository } from "./repositories/media-file.repository";
+import { ScopeRepository } from "./repositories/scope.repository";
 import { UploadSessionRepository } from "./repositories/upload-session.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
@@ -88,6 +90,7 @@ const mediaFileRepository = new MediaFileRepository(prisma);
 const uploadSessionRepository = new UploadSessionRepository(prisma);
 const aiAnalysisRepository = new AIAnalysisRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
+const scopeRepository = new ScopeRepository(prisma);
 
 // pgboss
 const boss = new PgBoss(databaseUrl);
@@ -166,6 +169,7 @@ app.use(
 );
 app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
+app.use("/api/*", createScopeMiddleware(scopeRepository));
 
 // Routes
 app.route("/health", createHealthRoutes(prisma, storageProvider));

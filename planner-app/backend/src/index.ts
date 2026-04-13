@@ -8,6 +8,7 @@ import { PrismaClient } from "./generated/prisma";
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
+import { createScopeMiddleware } from "./middlewares/scope.middleware";
 import { MinIOProvider } from "./providers/minio.provider";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
 // Providers
@@ -17,6 +18,7 @@ import { AuditLogRepository } from "./repositories/audit-log.repository";
 import { DashboardRepository } from "./repositories/dashboard.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
 import { ReviewRepository } from "./repositories/review.repository";
+import { ScopeRepository } from "./repositories/scope.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
 // Routes
@@ -69,6 +71,7 @@ const inspectionRepository = new InspectionRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
 const auditLogRepository = new AuditLogRepository(prisma);
+const scopeRepository = new ScopeRepository(prisma);
 
 // Services
 const authService = new AuthService(
@@ -115,6 +118,7 @@ app.use(
 );
 app.use("*", createErrorHandlerMiddleware(logger));
 app.use("*", createRequestLoggerMiddleware(logger));
+app.use("/api/*", createScopeMiddleware(scopeRepository));
 
 // Routes
 app.route("/health", createHealthRoutes(prisma, storageProvider));
