@@ -13,6 +13,7 @@ import type {
 import type { IAlertRepository } from "../interfaces/repositories/alert.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
+import { SYSTEM_SCOPE as JOB_SYSTEM_SCOPE } from "../utils/system-scope";
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
@@ -58,11 +59,18 @@ export class StepAnalysisJob {
     log.info("Starting step analysis");
 
     // 1. Set step → PROCESSING
-    await this.inspectionRepository.updateStepStatus(stepId, "PROCESSING");
+    await this.inspectionRepository.updateStepStatus(
+      JOB_SYSTEM_SCOPE,
+      stepId,
+      "PROCESSING",
+    );
 
     try {
       // 2. Download media from MinIO
-      const mediaFiles = await this.mediaFileRepository.findByStepId(stepId);
+      const mediaFiles = await this.mediaFileRepository.findByStepId(
+        JOB_SYSTEM_SCOPE,
+        stepId,
+      );
       if (mediaFiles.length === 0) {
         throw new Error(`No media files found for step ${stepId}`);
       }
@@ -71,8 +79,10 @@ export class StepAnalysisJob {
       const isVideo = primaryMedia.mimeType.startsWith("video/");
 
       // Fetch unit data for vehicle-aware prompts
-      const unit =
-        await this.inspectionRepository.findUnitByInspectionId(inspectionId);
+      const unit = await this.inspectionRepository.findUnitByInspectionId(
+        JOB_SYSTEM_SCOPE,
+        inspectionId,
+      );
       const vehicleContext: VehicleContext | null = unit
         ? {
             make: unit.make,
@@ -136,17 +146,20 @@ export class StepAnalysisJob {
             if (verification.statusVerifikasi === "Mismatch") {
               const processingTimeMs = Date.now() - startTime;
 
-              await this.aiAnalysisRepository.createAnalysis({
-                stepId,
-                mediaFileId: primaryMedia.id,
-                aiModel: "gemini",
-                promptUsed: `[SYSTEM]\n${verificationPair.systemInstruction}\n\n[USER]\n${verificationPair.userPrompt}`,
-                rawResponse: verificationRaw,
-                structuredData: verification,
-                confidenceScore: verification.confidence ?? null,
-                processingTimeMs,
-                status: "SUCCESS",
-              });
+              await this.aiAnalysisRepository.createAnalysis(
+                JOB_SYSTEM_SCOPE,
+                {
+                  stepId,
+                  mediaFileId: primaryMedia.id,
+                  aiModel: "gemini",
+                  promptUsed: `[SYSTEM]\n${verificationPair.systemInstruction}\n\n[USER]\n${verificationPair.userPrompt}`,
+                  rawResponse: verificationRaw,
+                  structuredData: verification,
+                  confidenceScore: verification.confidence ?? null,
+                  processingTimeMs,
+                  status: "SUCCESS",
+                },
+              );
 
               await this.createAlert(
                 inspectionId,
@@ -163,6 +176,7 @@ export class StepAnalysisJob {
               );
 
               await this.inspectionRepository.updateStepStatus(
+                JOB_SYSTEM_SCOPE,
                 stepId,
                 "FAILED",
               );
@@ -278,17 +292,20 @@ export class StepAnalysisJob {
       }
 
       // 5. Save AIAnalysis record
-      const analysis = await this.aiAnalysisRepository.createAnalysis({
-        stepId,
-        mediaFileId: primaryMedia.id,
-        aiModel: "gemini",
-        promptUsed: `[SYSTEM]\n${systemInstruction}\n\n[USER]\n${userPrompt}`,
-        rawResponse,
-        structuredData: parsed,
-        confidenceScore: parsed.confidence ?? null,
-        processingTimeMs,
-        status: "SUCCESS",
-      });
+      const analysis = await this.aiAnalysisRepository.createAnalysis(
+        JOB_SYSTEM_SCOPE,
+        {
+          stepId,
+          mediaFileId: primaryMedia.id,
+          aiModel: "gemini",
+          promptUsed: `[SYSTEM]\n${systemInstruction}\n\n[USER]\n${userPrompt}`,
+          rawResponse,
+          structuredData: parsed,
+          confidenceScore: parsed.confidence ?? null,
+          processingTimeMs,
+          status: "SUCCESS",
+        },
+      );
 
       // 6. Screen recapture detection alert (all step types)
       if (parsed.screenRecaptureDetected) {
@@ -318,15 +335,19 @@ export class StepAnalysisJob {
         // Create or find the unit and link it to the inspection
         if (result.licensePlate) {
           try {
-            const unit = await this.inspectionRepository.findOrCreateUnit({
-              licensePlate: result.licensePlate,
-              make: result.make,
-              model: result.model,
-              color: result.color,
-              vin: result.vin,
-              type: result.bodyType,
-            });
+            const unit = await this.inspectionRepository.findOrCreateUnit(
+              JOB_SYSTEM_SCOPE,
+              {
+                licensePlate: result.licensePlate,
+                make: result.make,
+                model: result.model,
+                color: result.color,
+                vin: result.vin,
+                type: result.bodyType,
+              },
+            );
             await this.inspectionRepository.linkUnitToInspection(
+              JOB_SYSTEM_SCOPE,
               inspectionId,
               unit.id,
             );
@@ -384,7 +405,11 @@ export class StepAnalysisJob {
       });
 
       // 7. Set step → COMPLETED
-      await this.inspectionRepository.updateStepStatus(stepId, "COMPLETED");
+      await this.inspectionRepository.updateStepStatus(
+        JOB_SYSTEM_SCOPE,
+        stepId,
+        "COMPLETED",
+      );
       log.info("Step analysis completed", {
         analysisId: analysis.id,
         processingTimeMs,
@@ -400,7 +425,7 @@ export class StepAnalysisJob {
 
       // Save FAILED AIAnalysis
       await this.aiAnalysisRepository
-        .createAnalysis({
+        .createAnalysis(JOB_SYSTEM_SCOPE, {
           stepId,
           aiModel: "gemini",
           promptUsed: (() => {
@@ -419,7 +444,11 @@ export class StepAnalysisJob {
         );
 
       // Set step → FAILED
-      await this.inspectionRepository.updateStepStatus(stepId, "FAILED");
+      await this.inspectionRepository.updateStepStatus(
+        JOB_SYSTEM_SCOPE,
+        stepId,
+        "FAILED",
+      );
 
       // Generate AI_FAILURE alert
       await this.createAlert(
@@ -454,7 +483,7 @@ export class StepAnalysisJob {
       // Update unit's lastKnownKm
       if (unit) {
         await this.inspectionRepository
-          .updateUnitKm(unit.id, odometerKm)
+          .updateUnitKm(JOB_SYSTEM_SCOPE, unit.id, odometerKm)
           .catch((e) => {
             this.logger.warn("Failed to update unit KM", {
               error: String(e),
@@ -473,7 +502,10 @@ export class StepAnalysisJob {
       kmDelta,
     };
 
-    await this.aiAnalysisRepository.createTelemetryData(telemetryData);
+    await this.aiAnalysisRepository.createTelemetryData(
+      JOB_SYSTEM_SCOPE,
+      telemetryData,
+    );
     return telemetryData;
   }
 
@@ -560,7 +592,7 @@ export class StepAnalysisJob {
     message: string,
   ): Promise<void> {
     await this.alertRepository
-      .create({ inspectionId, alertType, message })
+      .create(JOB_SYSTEM_SCOPE, { inspectionId, alertType, message })
       .catch((e) => {
         this.logger.warn("Failed to create alert", {
           alertType,
@@ -592,7 +624,10 @@ export class StepAnalysisJob {
       boundingBox: d.boundingBox,
     }));
 
-    await this.aiAnalysisRepository.createDamageMarkers(markers);
+    await this.aiAnalysisRepository.createDamageMarkers(
+      JOB_SYSTEM_SCOPE,
+      markers,
+    );
   }
 
   /**
@@ -602,11 +637,14 @@ export class StepAnalysisJob {
   private async getPreTripDamages(
     postTripInspectionId: string,
   ): Promise<Array<{ damageType: string; location: string }> | null> {
-    const postInspection =
-      await this.inspectionRepository.findById(postTripInspectionId);
+    const postInspection = await this.inspectionRepository.findById(
+      JOB_SYSTEM_SCOPE,
+      postTripInspectionId,
+    );
     if (!postInspection?.linkedInspectionId) return null;
 
     const preInspection = await this.inspectionRepository.findById(
+      JOB_SYSTEM_SCOPE,
       postInspection.linkedInspectionId,
     );
     if (!preInspection) return null;
@@ -651,7 +689,10 @@ export class StepAnalysisJob {
     inspectionId: string,
     driverId: string,
   ): Promise<void> {
-    const inspection = await this.inspectionRepository.findById(inspectionId);
+    const inspection = await this.inspectionRepository.findById(
+      JOB_SYSTEM_SCOPE,
+      inspectionId,
+    );
     if (!inspection) return;
 
     const REQUIRED_STEPS =
@@ -671,7 +712,11 @@ export class StepAnalysisJob {
     // During Phase 1 (early photo analysis), the inspection is still DRAFT.
     if (inspection.status !== "PENDING_AI") return;
 
-    await this.inspectionRepository.updateStatus(inspectionId, "AI_COMPLETE");
+    await this.inspectionRepository.updateStatus(
+      JOB_SYSTEM_SCOPE,
+      inspectionId,
+      "AI_COMPLETE",
+    );
     this.logger.info("All steps terminal, inspection marked AI_COMPLETE", {
       inspectionId,
     });
