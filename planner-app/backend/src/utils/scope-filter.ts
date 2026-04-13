@@ -100,3 +100,66 @@ export function buildScopeFilter(
 
   return { OR: clauses };
 }
+
+/**
+ * Options for canWriteToEntity.
+ */
+export interface CanWriteOptions {
+  /**
+   * If true (default), planners can only write to entities owned by drivers
+   * assigned to them. If false, the driver-assignment check is skipped —
+   * useful for entities without a driverId (e.g. Unit) or administrative
+   * writes where only project membership matters.
+   */
+  requireDriverAssignment: boolean;
+}
+
+/**
+ * Verifies that a given entity belongs to a project the user can write to.
+ * Used for write operations — fetch the entity first, then call this.
+ * Return false → throw NotFoundError (return 404, NOT 403 — we don't reveal existence).
+ *
+ * Behavior by role:
+ * - SUPER_ADMIN: always returns true.
+ * - DRIVER: true if entity.driverId === scope.userId AND the entity's
+ *           projectId is in the user's member projects.
+ * - PROJECT_ADMIN: true if the entity's projectId is in the user's admin projects.
+ * - PLANNER: true if the entity's projectId is in the user's member projects
+ *            AND (requireDriverAssignment is false OR the driver is assigned
+ *            to the planner in that project).
+ *
+ * @param scope   The current user's scope.
+ * @param entity  The fetched entity, must have projectId; driverId is optional.
+ * @param options requireDriverAssignment: if true (default), planners are
+ *                restricted to entities owned by their assigned drivers.
+ *                Set false for entities without driver ownership.
+ */
+export function canWriteToEntity(
+  scope: UserScope,
+  entity: { projectId: string; driverId?: string },
+  options: CanWriteOptions = { requireDriverAssignment: true },
+): boolean {
+  if (scope.systemRole === "SUPER_ADMIN") return true;
+
+  if (scope.appRole === "DRIVER") {
+    return (
+      entity.driverId === scope.userId &&
+      scope.projects.some((p) => p.projectId === entity.projectId)
+    );
+  }
+
+  const projectScope = scope.projects.find(
+    (p) => p.projectId === entity.projectId,
+  );
+  if (!projectScope) return false;
+
+  if (projectScope.projectRole === "PROJECT_ADMIN") return true;
+
+  if (projectScope.projectRole === "PLANNER") {
+    if (!options.requireDriverAssignment) return true;
+    if (!entity.driverId) return true;
+    return projectScope.assignedDriverIds.includes(entity.driverId);
+  }
+
+  return false;
+}
