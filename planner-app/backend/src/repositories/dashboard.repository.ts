@@ -6,11 +6,54 @@ import type {
   DashboardOverviewQuery,
   DashboardVehicleCard,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
+import { buildScopeFilter } from "../utils/scope-filter";
 
 export class DashboardRepository implements IDashboardRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async getOverviewKPIs(): Promise<DashboardOverviewKPIs> {
+  /**
+   * Alerts carry projectId but no `inspection` relation in the schema. To
+   * restrict alerts by driver ownership we pre-fetch the in-scope inspection
+   * IDs and filter by `inspectionId: { in: [...] }`.
+   *
+   * Returns null for SUPER_ADMIN (no restriction).
+   */
+  private async allowedInspectionIdsForAlerts(
+    scope: UserScope,
+  ): Promise<string[] | null> {
+    if (scope.systemRole === "SUPER_ADMIN") return null;
+    const inspectionFilter = buildScopeFilter(scope, {
+      includeDriverFilter: true,
+    });
+    const inspections = await this.prisma.inspection.findMany({
+      where: inspectionFilter as never,
+      select: { id: true },
+    });
+    return inspections.map((i) => i.id);
+  }
+
+  async getOverviewKPIs(scope: UserScope): Promise<DashboardOverviewKPIs> {
+    const inspectionScope = buildScopeFilter(scope, {
+      includeDriverFilter: true,
+    });
+    // Units have no driverId — filter by project only.
+    const unitScope = buildScopeFilter(scope, { includeDriverFilter: false });
+    const allowedAlertInspectionIds =
+      await this.allowedInspectionIdsForAlerts(scope);
+
+    const buildAlertWhere = (extra: Record<string, unknown>) => {
+      if (allowedAlertInspectionIds === null) return extra;
+      if (allowedAlertInspectionIds.length === 0) {
+        // No accessible inspections → force zero matches.
+        return { ...extra, id: "__scope-empty__" };
+      }
+      return {
+        ...extra,
+        inspectionId: { in: allowedAlertInspectionIds },
+      };
+    };
+
     const [
       activeUnits,
       preCheckComplete,
@@ -18,29 +61,46 @@ export class DashboardRepository implements IDashboardRepository {
       aiAlerts,
       lowFuelCount,
     ] = await Promise.all([
-      this.prisma.unit.count({ where: { status: "ACTIVE" } }),
-      this.prisma.inspection.count({
+      this.prisma.unit.count({
         where: {
-          tripType: "PRE_TRIP",
-          status: { in: ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"] },
-        },
+          AND: [unitScope, { status: "ACTIVE" }],
+        } as never,
       }),
       this.prisma.inspection.count({
         where: {
-          tripType: "POST_TRIP",
-          status: { in: ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"] },
-        },
+          AND: [
+            inspectionScope,
+            {
+              tripType: "PRE_TRIP",
+              status: { in: ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"] },
+            },
+          ],
+        } as never,
+      }),
+      this.prisma.inspection.count({
+        where: {
+          AND: [
+            inspectionScope,
+            {
+              tripType: "POST_TRIP",
+              status: { in: ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"] },
+            },
+          ],
+        } as never,
       }),
       this.prisma.alert.count({
-        where: {
+        where: buildAlertWhere({
           isRead: false,
           alertType: {
             in: ["NEW_DAMAGE_DETECTED", "HIGH_SEVERITY_DAMAGE", "AI_FAILURE"],
           },
-        },
+        }) as never,
       }),
       this.prisma.alert.count({
-        where: { isRead: false, alertType: "LOW_FUEL" },
+        where: buildAlertWhere({
+          isRead: false,
+          alertType: "LOW_FUEL",
+        }) as never,
       }),
     ]);
 
@@ -53,21 +113,43 @@ export class DashboardRepository implements IDashboardRepository {
     };
   }
 
-  async getAlertBanners(): Promise<DashboardAlertBanner[]> {
+  async getAlertBanners(scope: UserScope): Promise<DashboardAlertBanner[]> {
+    const inspectionScope = buildScopeFilter(scope, {
+      includeDriverFilter: true,
+    });
+    const allowedAlertInspectionIds =
+      await this.allowedInspectionIdsForAlerts(scope);
     const banners: DashboardAlertBanner[] = [];
+
+    const lowFuelAlertWhere: Record<string, unknown> = {
+      isRead: false,
+      alertType: "LOW_FUEL",
+    };
+    if (allowedAlertInspectionIds !== null) {
+      if (allowedAlertInspectionIds.length === 0) {
+        lowFuelAlertWhere.id = "__scope-empty__";
+      } else {
+        lowFuelAlertWhere.inspectionId = { in: allowedAlertInspectionIds };
+      }
+    }
 
     const [unsignedInspections, lowFuelAlerts] = await Promise.all([
       this.prisma.inspection.findMany({
         where: {
-          signatureKey: null,
-          status: { in: ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"] },
-          unitId: { not: null },
-        },
+          AND: [
+            inspectionScope,
+            {
+              signatureKey: null,
+              status: { in: ["AI_COMPLETE", "UNDER_REVIEW", "APPROVED"] },
+              unitId: { not: null },
+            },
+          ],
+        } as never,
         select: { unit: { select: { licensePlate: true } } },
         distinct: ["unitId"],
       }),
       this.prisma.alert.findMany({
-        where: { isRead: false, alertType: "LOW_FUEL" },
+        where: lowFuelAlertWhere as never,
         select: { inspectionId: true },
       }),
     ]);
@@ -86,7 +168,9 @@ export class DashboardRepository implements IDashboardRepository {
     if (lowFuelAlerts.length > 0) {
       const inspectionIds = lowFuelAlerts.map((a) => a.inspectionId);
       const inspections = await this.prisma.inspection.findMany({
-        where: { id: { in: inspectionIds } },
+        where: {
+          AND: [inspectionScope, { id: { in: inspectionIds } }],
+        } as never,
         select: { unit: { select: { licensePlate: true } } },
         distinct: ["unitId"],
       });
@@ -106,20 +190,29 @@ export class DashboardRepository implements IDashboardRepository {
   }
 
   async getVehicleCards(
+    scope: UserScope,
     query: DashboardOverviewQuery,
   ): Promise<DashboardVehicleCard[]> {
+    const inspectionScope = buildScopeFilter(scope, {
+      includeDriverFilter: true,
+    });
+
     // Build inspection-level search filter — include all statuses
-    const inspectionWhere: Record<string, unknown> = {};
+    const conditions: Record<string, unknown>[] = [inspectionScope];
 
     if (query.search) {
       const s = query.search;
-      inspectionWhere.OR = [
-        { unit: { licensePlate: { contains: s, mode: "insensitive" } } },
-        { unit: { make: { contains: s, mode: "insensitive" } } },
-        { unit: { model: { contains: s, mode: "insensitive" } } },
-        { driver: { fullName: { contains: s, mode: "insensitive" } } },
-      ];
+      conditions.push({
+        OR: [
+          { unit: { licensePlate: { contains: s, mode: "insensitive" } } },
+          { unit: { make: { contains: s, mode: "insensitive" } } },
+          { unit: { model: { contains: s, mode: "insensitive" } } },
+          { driver: { fullName: { contains: s, mode: "insensitive" } } },
+        ],
+      });
     }
+
+    const inspectionWhere = { AND: conditions };
 
     const inspections = await this.prisma.inspection.findMany({
       where: inspectionWhere as never,
@@ -150,6 +243,8 @@ export class DashboardRepository implements IDashboardRepository {
 
     const allInspectionIds = inspections.map((i) => i.id);
 
+    // Downstream queries are keyed by the already-scoped inspection IDs, so
+    // they inherit the scope restriction naturally.
     const [alertCounts, damageAlertCounts, telemetryData] = await Promise.all([
       allInspectionIds.length > 0
         ? this.prisma.alert.groupBy({
