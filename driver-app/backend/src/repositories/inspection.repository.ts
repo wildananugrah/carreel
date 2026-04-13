@@ -21,30 +21,48 @@ import type {
   TripListQuery,
   UpdateInspectionDTO,
 } from "../types/dto";
+import type { UserScope } from "../types/scope";
+import { buildScopeFilter, canWriteToEntity } from "../utils/scope-filter";
 
 export class InspectionRepository implements IInspectionRepository {
   constructor(private prisma: PrismaClient) {}
 
+  /**
+   * Resolves the projectId a driver-owned create should be written to.
+   * Uses the driver's first project (drivers only belong to one project in
+   * the current design, but the schema permits multiple).
+   */
+  private requirePrimaryProjectId(scope: UserScope): string {
+    const projectId = scope.projects[0]?.projectId;
+    if (!projectId) {
+      throw new Error("User has no project membership");
+    }
+    return projectId;
+  }
+
   async create(
-    driverId: string,
+    scope: UserScope,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
+    const projectId = this.requirePrimaryProjectId(scope);
     return this.prisma.inspection.create({
       data: {
-        driverId,
+        driverId: scope.userId,
         tripType: data.tripType,
         linkedInspectionId: data.linkedInspectionId,
         latitude: data.latitude,
         longitude: data.longitude,
         status: "DRAFT",
+        projectId,
       },
     });
   }
 
   async createWithSteps(
-    driverId: string,
+    scope: UserScope,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
+    const projectId = this.requirePrimaryProjectId(scope);
     const stepTypes =
       data.tripType === "PRE_TRIP"
         ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
@@ -52,13 +70,14 @@ export class InspectionRepository implements IInspectionRepository {
 
     return this.prisma.inspection.create({
       data: {
-        driverId,
+        driverId: scope.userId,
         tripType: data.tripType,
         linkedInspectionId: data.linkedInspectionId,
         unitId: data.unitId,
         latitude: data.latitude,
         longitude: data.longitude,
         status: "DRAFT",
+        projectId,
         steps: {
           create: stepTypes.map((stepType) => ({
             stepType: stepType as
@@ -66,15 +85,20 @@ export class InspectionRepository implements IInspectionRepository {
               | "SPEEDOMETER"
               | "BODY_INSPECTION",
             status: "PENDING" as const,
+            projectId,
           })),
         },
       },
     });
   }
 
-  async findById(id: string): Promise<InspectionWithRelations | null> {
-    const result = await this.prisma.inspection.findUnique({
-      where: { id },
+  async findById(
+    scope: UserScope,
+    id: string,
+  ): Promise<InspectionWithRelations | null> {
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+    const result = await this.prisma.inspection.findFirst({
+      where: { id, ...(scopeFilter as object) },
       include: {
         unit: {
           select: { id: true, licensePlate: true, make: true, model: true },
@@ -116,6 +140,7 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async findByDriverId(
+    scope: UserScope,
     driverId: string,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionListItem>> {
@@ -123,14 +148,17 @@ export class InspectionRepository implements IInspectionRepository {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+
+    const baseWhere: Record<string, unknown> = {
       driverId,
+      ...(scopeFilter as object),
       ...(query.status ? { status: query.status } : {}),
     };
 
     if (query.search) {
       const s = query.search;
-      where.unit = {
+      baseWhere.unit = {
         OR: [
           { licensePlate: { contains: s, mode: "insensitive" } },
           { make: { contains: s, mode: "insensitive" } },
@@ -141,7 +169,7 @@ export class InspectionRepository implements IInspectionRepository {
 
     const [data, total] = await Promise.all([
       this.prisma.inspection.findMany({
-        where: where as never,
+        where: baseWhere as never,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -175,13 +203,30 @@ export class InspectionRepository implements IInspectionRepository {
           },
         },
       }),
-      this.prisma.inspection.count({ where: where as never }),
+      this.prisma.inspection.count({ where: baseWhere as never }),
     ]);
 
     return { data, total, page, limit };
   }
 
-  async update(id: string, data: UpdateInspectionDTO): Promise<Inspection> {
+  async update(
+    scope: UserScope,
+    id: string,
+    data: UpdateInspectionDTO,
+  ): Promise<Inspection> {
+    const existing = await this.prisma.inspection.findUnique({
+      where: { id },
+      select: { projectId: true, driverId: true },
+    });
+    if (!existing?.projectId) throw new Error("Inspection not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: existing.projectId,
+        driverId: existing.driverId,
+      })
+    ) {
+      throw new Error("Inspection not found");
+    }
     return this.prisma.inspection.update({
       where: { id },
       data: {
@@ -196,9 +241,27 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async updateStatus(
+    scope: UserScope,
     id: string,
     status: InspectionStatus,
   ): Promise<Inspection> {
+    const existing = await this.prisma.inspection.findUnique({
+      where: { id },
+      select: { projectId: true, driverId: true },
+    });
+    if (!existing?.projectId) throw new Error("Inspection not found");
+    if (
+      !canWriteToEntity(
+        scope,
+        {
+          projectId: existing.projectId,
+          driverId: existing.driverId,
+        },
+        { requireDriverAssignment: false },
+      )
+    ) {
+      throw new Error("Inspection not found");
+    }
     const data: { status: InspectionStatus; completedAt?: Date } = { status };
     if (status !== "DRAFT") {
       data.completedAt = new Date();
@@ -210,45 +273,124 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async createStep(
+    scope: UserScope,
     inspectionId: string,
     data: CreateStepDTO,
   ): Promise<InspectionStep> {
+    const inspection = await this.prisma.inspection.findUnique({
+      where: { id: inspectionId },
+      select: { projectId: true, driverId: true },
+    });
+    if (!inspection?.projectId) {
+      throw new Error("Inspection not found");
+    }
+    if (
+      !canWriteToEntity(scope, {
+        projectId: inspection.projectId,
+        driverId: inspection.driverId,
+      })
+    ) {
+      throw new Error("Inspection not found");
+    }
     return this.prisma.inspectionStep.create({
       data: {
         inspectionId,
         stepType: data.stepType,
         status: "PENDING",
+        projectId: inspection.projectId,
       },
     });
   }
 
-  async findStepById(stepId: string): Promise<InspectionStep | null> {
-    return this.prisma.inspectionStep.findUnique({ where: { id: stepId } });
+  async findStepById(
+    scope: UserScope,
+    stepId: string,
+  ): Promise<InspectionStep | null> {
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: false });
+    return this.prisma.inspectionStep.findFirst({
+      where: { id: stepId, ...(scopeFilter as object) },
+    });
   }
 
   async updateStepStatus(
+    scope: UserScope,
     stepId: string,
     status: StepStatus,
   ): Promise<InspectionStep> {
+    const step = await this.prisma.inspectionStep.findUnique({
+      where: { id: stepId },
+      select: {
+        projectId: true,
+        inspection: { select: { driverId: true } },
+      },
+    });
+    if (!step?.projectId) throw new Error("Step not found");
+    if (
+      !canWriteToEntity(
+        scope,
+        {
+          projectId: step.projectId,
+          driverId: step.inspection.driverId,
+        },
+        { requireDriverAssignment: false },
+      )
+    ) {
+      throw new Error("Step not found");
+    }
     return this.prisma.inspectionStep.update({
       where: { id: stepId },
       data: { status },
     });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(scope: UserScope, id: string): Promise<void> {
+    const existing = await this.prisma.inspection.findUnique({
+      where: { id },
+      select: { projectId: true, driverId: true },
+    });
+    if (!existing?.projectId) throw new Error("Inspection not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: existing.projectId,
+        driverId: existing.driverId,
+      })
+    ) {
+      throw new Error("Inspection not found");
+    }
     await this.prisma.inspection.delete({ where: { id } });
   }
 
-  async findUnitByInspectionId(inspectionId: string): Promise<Unit | null> {
-    const inspection = await this.prisma.inspection.findUnique({
-      where: { id: inspectionId },
+  async findUnitByInspectionId(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<Unit | null> {
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId, ...(scopeFilter as object) },
       select: { unit: true },
     });
     return inspection?.unit ?? null;
   }
 
-  async updateUnitKm(unitId: string, km: number): Promise<void> {
+  async updateUnitKm(
+    scope: UserScope,
+    unitId: string,
+    km: number,
+  ): Promise<void> {
+    const unit = await this.prisma.unit.findUnique({
+      where: { id: unitId },
+      select: { projectId: true },
+    });
+    if (!unit?.projectId) throw new Error("Unit not found");
+    if (
+      !canWriteToEntity(
+        scope,
+        { projectId: unit.projectId },
+        { requireDriverAssignment: false },
+      )
+    ) {
+      throw new Error("Unit not found");
+    }
     await this.prisma.unit.update({
       where: { id: unitId },
       data: { lastKnownKm: km },
@@ -256,29 +398,54 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async updateSignatureKey(
+    scope: UserScope,
     id: string,
     signatureKey: string,
     signerName: string,
   ): Promise<void> {
+    const existing = await this.prisma.inspection.findUnique({
+      where: { id },
+      select: { projectId: true, driverId: true },
+    });
+    if (!existing?.projectId) throw new Error("Inspection not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: existing.projectId,
+        driverId: existing.driverId,
+      })
+    ) {
+      throw new Error("Inspection not found");
+    }
     await this.prisma.inspection.update({
       where: { id },
       data: { signatureKey, signerName, signedAt: new Date() },
     });
   }
 
-  async findOrCreateUnit(data: {
-    licensePlate: string;
-    make?: string | null;
-    model?: string | null;
-    color?: string | null;
-    vin?: string | null;
-    type?: string | null;
-  }): Promise<Unit> {
-    const existing = await this.prisma.unit.findUnique({
-      where: { licensePlate: data.licensePlate },
+  async findOrCreateUnit(
+    scope: UserScope,
+    data: {
+      licensePlate: string;
+      make?: string | null;
+      model?: string | null;
+      color?: string | null;
+      vin?: string | null;
+      type?: string | null;
+    },
+  ): Promise<Unit> {
+    // Units are project-scoped. For creates (driver or system job running an
+    // inspection), the unit belongs to the scope's primary project. Look-ups
+    // are constrained to the visible set; licensePlate is unique globally so
+    // if one exists in a different project we still need to return it — but
+    // a cross-project match would leak data, so we filter by scope on reads.
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: false });
+    const existing = await this.prisma.unit.findFirst({
+      where: {
+        licensePlate: data.licensePlate,
+        ...(scopeFilter as object),
+      },
     });
     if (existing) {
-      // Update make/model/color/type if currently null
       const updates: Record<string, string> = {};
       if (!existing.make && data.make) updates.make = data.make;
       if (!existing.model && data.model) updates.model = data.model;
@@ -292,6 +459,7 @@ export class InspectionRepository implements IInspectionRepository {
       }
       return existing;
     }
+    const projectId = this.requirePrimaryProjectId(scope);
     return this.prisma.unit.create({
       data: {
         licensePlate: data.licensePlate,
@@ -300,14 +468,29 @@ export class InspectionRepository implements IInspectionRepository {
         color: data.color ?? undefined,
         vin: data.vin ?? undefined,
         type: data.type ?? undefined,
+        projectId,
       },
     });
   }
 
   async linkUnitToInspection(
+    scope: UserScope,
     inspectionId: string,
     unitId: string,
   ): Promise<void> {
+    const inspection = await this.prisma.inspection.findUnique({
+      where: { id: inspectionId },
+      select: { projectId: true, driverId: true },
+    });
+    if (!inspection?.projectId) throw new Error("Inspection not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: inspection.projectId,
+        driverId: inspection.driverId,
+      })
+    ) {
+      throw new Error("Inspection not found");
+    }
     await this.prisma.inspection.update({
       where: { id: inspectionId },
       data: { unitId },
@@ -315,10 +498,15 @@ export class InspectionRepository implements IInspectionRepository {
   }
 
   async findTripsByDriverId(
+    scope: UserScope,
     driverId: string,
     query: TripListQuery,
   ): Promise<TripGroupCard[]> {
-    const where: Record<string, unknown> = { driverId };
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+    const where: Record<string, unknown> = {
+      driverId,
+      ...(scopeFilter as object),
+    };
 
     if (query.search) {
       const s = query.search;
@@ -359,7 +547,6 @@ export class InspectionRepository implements IInspectionRepository {
       },
     });
 
-    // Build postTripByPreId map
     const postTripByPreId = new Map<string, (typeof inspections)[0]>();
     const usedIds = new Set<string>();
 
@@ -392,7 +579,6 @@ export class InspectionRepository implements IInspectionRepository {
 
     const cards: TripGroupCard[] = [];
 
-    // First pass: pre-trips
     for (const insp of inspections) {
       if (insp.tripType !== "PRE_TRIP") continue;
       usedIds.add(insp.id);
@@ -419,7 +605,6 @@ export class InspectionRepository implements IInspectionRepository {
       });
     }
 
-    // Apply tab filter
     if (query.tab && query.tab !== "ALL") {
       return cards.filter((c) => c.tripStatus === query.tab);
     }

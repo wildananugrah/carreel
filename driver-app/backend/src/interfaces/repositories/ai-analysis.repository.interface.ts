@@ -5,6 +5,7 @@ import type {
   DamageSeverity,
   TelemetryData,
 } from "../../generated/prisma";
+import type { UserScope } from "../../types/scope";
 
 export interface CreateAIAnalysisDTO {
   stepId: string;
@@ -40,11 +41,18 @@ export interface CreateTelemetryDataDTO {
 }
 
 export interface IAIAnalysisRepository {
-  createAnalysis(data: CreateAIAnalysisDTO): Promise<AIAnalysis>;
-  findByStepId(stepId: string): Promise<AIAnalysis | null>;
-  deleteByStepId(stepId: string): Promise<void>;
+  createAnalysis(
+    scope: UserScope,
+    data: CreateAIAnalysisDTO,
+  ): Promise<AIAnalysis>;
+  findByStepId(scope: UserScope, stepId: string): Promise<AIAnalysis | null>;
+  deleteByStepId(scope: UserScope, stepId: string): Promise<void>;
   createDamageMarkers(
+    scope: UserScope,
     markers: CreateDamageMarkerDTO[],
   ): Promise<DamageMarker[]>;
-  createTelemetryData(data: CreateTelemetryDataDTO): Promise<TelemetryData>;
+  createTelemetryData(
+    scope: UserScope,
+    data: CreateTelemetryDataDTO,
+  ): Promise<TelemetryData>;
 }

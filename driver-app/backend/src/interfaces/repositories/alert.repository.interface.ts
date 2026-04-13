@@ -1,4 +1,5 @@
 import type { Alert, AlertType } from "../../generated/prisma";
+import type { UserScope } from "../../types/scope";
 
 export interface CreateAlertDTO {
   inspectionId: string;
@@ -7,5 +8,5 @@ export interface CreateAlertDTO {
 }
 
 export interface IAlertRepository {
-  create(data: CreateAlertDTO): Promise<Alert>;
+  create(scope: UserScope, data: CreateAlertDTO): Promise<Alert>;
 }
