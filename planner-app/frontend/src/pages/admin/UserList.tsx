@@ -31,6 +31,40 @@ function formatDate(iso: string): string {
   });
 }
 
+/**
+ * Returns a deduplicated list of workspace display names from a user's
+ * project memberships (a single workspace may contain multiple projects).
+ */
+function uniqueWorkspaces(
+  memberships: AdminUserProjectMembership[],
+): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const m of memberships) {
+    if (!seen.has(m.workspaceId)) {
+      seen.add(m.workspaceId);
+      result.push(m.workspaceDisplayName);
+    }
+  }
+  return result;
+}
+
+function projectRoleColor(
+  role: "PROJECT_ADMIN" | "PLANNER" | "DRIVER",
+): string {
+  if (role === "PROJECT_ADMIN") return "text-[#F5C518]";
+  if (role === "PLANNER") return "text-[#4DA3FF]";
+  return "text-[#8DC26F]";
+}
+
+function projectRoleShort(
+  role: "PROJECT_ADMIN" | "PLANNER" | "DRIVER",
+): string {
+  if (role === "PROJECT_ADMIN") return "Admin";
+  if (role === "PLANNER") return "Planner";
+  return "Driver";
+}
+
 export function UserList() {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,64 +180,111 @@ export function UserList() {
             {search ? "No users match your search." : "No users yet."}
           </div>
         ) : (
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
-            <table className="w-full">
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-x-auto">
+            <table className="w-full min-w-[1280px]">
               <thead>
                 <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase">
+                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
                     Name
                   </th>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase">
+                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
                     Email
                   </th>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase">
+                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
                     Global Role
                   </th>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase">
+                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
                     System Role
                   </th>
-                  <th className="text-right px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase">
+                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
+                    Workspaces
+                  </th>
+                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
                     Projects
                   </th>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase">
+                  <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
                     Created
                   </th>
-                  <th className="w-20" />
+                  <th className="w-20 whitespace-nowrap" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#2a2a2a]">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-[#1f1f1f] transition-colors">
-                    <td className="px-4 py-3 text-sm font-bold text-white">
-                      {u.fullName}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#888]">{u.email}</td>
-                    <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-[1px] text-[#C0C0C0]">
-                      {u.role}
-                    </td>
-                    <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-[1px]">
-                      {u.systemRole === "SUPER_ADMIN" ? (
-                        <span className="text-[#F5C518]">Super Admin</span>
-                      ) : (
-                        <span className="text-[#666]">User</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-[#C0C0C0] text-right">
-                      {u.projectMemberships.length}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#888]">
-                      {formatDate(u.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        to={`/admin/users/${u.id}`}
-                        className="text-xs text-[#F5C518] hover:text-[#F5D848] font-bold"
-                      >
-                        View {"\u2192"}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {users.map((u) => {
+                  const workspaces = uniqueWorkspaces(u.projectMemberships);
+                  return (
+                    <tr
+                      key={u.id}
+                      className="hover:bg-[#1f1f1f] transition-colors align-top"
+                    >
+                      <td className="px-4 py-3 text-sm font-bold text-white whitespace-nowrap">
+                        {u.fullName}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-[#888] whitespace-nowrap">
+                        {u.email}
+                      </td>
+                      <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-[1px] text-[#C0C0C0] whitespace-nowrap">
+                        {u.role}
+                      </td>
+                      <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-[1px] whitespace-nowrap">
+                        {u.systemRole === "SUPER_ADMIN" ? (
+                          <span className="text-[#F5C518]">Super Admin</span>
+                        ) : (
+                          <span className="text-[#666]">User</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-[#C0C0C0]">
+                        {workspaces.length === 0 ? (
+                          <span className="text-[#444] italic">—</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1 max-w-[240px]">
+                            {workspaces.map((w) => (
+                              <span
+                                key={w}
+                                className="inline-block px-2 py-0.5 bg-[#111] border border-[#2a2a2a] rounded-full text-[10px] whitespace-nowrap"
+                              >
+                                {w}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-[#C0C0C0]">
+                        {u.projectMemberships.length === 0 ? (
+                          <span className="text-[#444] italic">—</span>
+                        ) : (
+                          <div className="flex flex-col gap-1 max-w-[280px]">
+                            {u.projectMemberships.map((m) => (
+                              <div
+                                key={m.projectId}
+                                className="flex items-center gap-2 whitespace-nowrap"
+                              >
+                                <span className="text-[11px] text-white">
+                                  {m.projectDisplayName}
+                                </span>
+                                <span
+                                  className={`text-[9px] font-bold uppercase tracking-[0.5px] ${projectRoleColor(m.role)}`}
+                                >
+                                  {projectRoleShort(m.role)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-[#888] whitespace-nowrap">
+                        {formatDate(u.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <Link
+                          to={`/admin/users/${u.id}`}
+                          className="text-xs text-[#F5C518] hover:text-[#F5D848] font-bold"
+                        >
+                          View {"\u2192"}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
