@@ -36,6 +36,7 @@ export function createAdminUserRoutes(
       fullName: string;
       role: "DRIVER" | "PLANNER";
       password: string;
+      systemRole?: SystemRole;
     }>();
     const user = await service.create(scope, body);
     return c.json(user, 201);

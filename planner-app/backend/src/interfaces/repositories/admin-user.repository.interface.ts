@@ -25,6 +25,7 @@ export interface CreateAdminUserDTO {
   fullName: string;
   role: "DRIVER" | "PLANNER";
   passwordHash: string;
+  systemRole?: SystemRole;
 }
 
 export interface UpdateAdminUserDTO {

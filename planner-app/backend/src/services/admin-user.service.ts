@@ -9,6 +9,7 @@ import type {
   IAdminUserService,
 } from "../interfaces/services/admin-user.service.interface";
 import type { UserScope } from "../types/scope";
+import { badRequest, notFound } from "../utils/http-error";
 
 /**
  * Admin-level user management. Separate from the auth-facing UserRepository
@@ -51,6 +52,13 @@ export class AdminUserService implements IAdminUserService {
       throw new Error("Password must be at least 8 characters");
     }
 
+    const systemRole = input.systemRole ?? "USER";
+    if (systemRole === "CARREEL_DRIVER_SUPPORT" && input.role !== "DRIVER") {
+      throw badRequest(
+        "CARREEL_DRIVER_SUPPORT can only be assigned to users with global role DRIVER",
+      );
+    }
+
     const passwordHash = await Bun.password.hash(input.password, {
       algorithm: "bcrypt",
     });
@@ -59,6 +67,7 @@ export class AdminUserService implements IAdminUserService {
       fullName: input.fullName,
       role: input.role,
       passwordHash,
+      systemRole,
     });
   }
 
@@ -68,6 +77,17 @@ export class AdminUserService implements IAdminUserService {
     input: AdminUpdateUserInput,
   ): Promise<User> {
     this.requireSuperAdmin(scope);
+
+    if (input.systemRole === "CARREEL_DRIVER_SUPPORT") {
+      const existing = await this.repository.findById(id);
+      if (!existing) throw notFound("User not found");
+      if (existing.role !== "DRIVER") {
+        throw badRequest(
+          "CARREEL_DRIVER_SUPPORT can only be assigned to users with global role DRIVER",
+        );
+      }
+    }
+
     return this.repository.update(id, input);
   }
 

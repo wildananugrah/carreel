@@ -112,6 +112,7 @@ export class AdminUserRepository implements IAdminUserRepository {
         fullName: data.fullName,
         role: data.role,
         passwordHash: data.passwordHash,
+        systemRole: data.systemRole ?? "USER",
       },
     });
   }

@@ -7,6 +7,7 @@ export interface AdminCreateUserInput {
   fullName: string;
   role: "DRIVER" | "PLANNER";
   password: string;
+  systemRole?: SystemRole;
 }
 
 export interface AdminUpdateUserInput {
