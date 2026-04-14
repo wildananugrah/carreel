@@ -29,6 +29,7 @@ import { ScopeRepository } from "./repositories/scope.repository";
 import { UploadSessionRepository } from "./repositories/upload-session.repository";
 // Repositories
 import { UserRepository } from "./repositories/user.repository";
+import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
 import { createAuthRoutes } from "./routes/auth.route";
 import { createChunkedUploadRoutes } from "./routes/chunked-upload.route";
@@ -36,12 +37,14 @@ import { createHealthRoutes } from "./routes/health.route";
 import { createInspectionRoutes } from "./routes/inspection.route";
 import { createMediaRoutes } from "./routes/media.route";
 import { createUploadRoutes } from "./routes/upload.route";
+import { createWorkspaceRoutes } from "./routes/workspace.route";
 // Services
 import { AuthService } from "./services/auth.service";
 import { ChunkedUploadService } from "./services/chunked-upload.service";
 import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
 import { UploadService } from "./services/upload.service";
+import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
 import { HttpError } from "./utils/http-error";
 
@@ -91,6 +94,7 @@ const uploadSessionRepository = new UploadSessionRepository(prisma);
 const aiAnalysisRepository = new AIAnalysisRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
 const scopeRepository = new ScopeRepository(prisma);
+const workspaceRepository = new WorkspaceRepository(prisma);
 
 // pgboss
 const boss = new PgBoss(databaseUrl);
@@ -134,6 +138,8 @@ const mediaStreamService = new MediaStreamService(
   storageProvider,
   mediaFileRepository,
 );
+
+const workspaceService = new WorkspaceService(workspaceRepository);
 
 // Jobs
 const stepAnalysisJob = new StepAnalysisJob(
@@ -210,6 +216,10 @@ app.route("/api/media", createMediaRoutes(uploadService, mediaStreamService));
 app.route(
   "/api/chunked-upload",
   createChunkedUploadRoutes(chunkedUploadService, authMiddleware),
+);
+app.route(
+  "/api/workspaces",
+  createWorkspaceRoutes(workspaceService, authMiddleware),
 );
 
 // ========================
