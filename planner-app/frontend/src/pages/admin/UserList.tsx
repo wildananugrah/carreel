@@ -17,7 +17,7 @@ interface AdminUserListItem {
   email: string;
   fullName: string;
   role: "DRIVER" | "PLANNER";
-  systemRole: "SUPER_ADMIN" | "USER";
+  systemRole: "SUPER_ADMIN" | "USER" | "CARREEL_DRIVER_SUPPORT";
   projectMemberships: AdminUserProjectMembership[];
   createdAt: string;
 }
@@ -75,13 +75,18 @@ export function UserList() {
   const [createFullName, setCreateFullName] = useState("");
   const [createRole, setCreateRole] = useState<"DRIVER" | "PLANNER">("PLANNER");
   const [createPassword, setCreatePassword] = useState("");
+  const [createSystemRole, setCreateSystemRole] = useState<
+    "USER" | "SUPER_ADMIN" | "CARREEL_DRIVER_SUPPORT"
+  >("USER");
   const [submitting, setSubmitting] = useState(false);
 
   const [editingUser, setEditingUser] = useState<AdminUserListItem | null>(
     null,
   );
   const [editFullName, setEditFullName] = useState("");
-  const [editIsSuperAdmin, setEditIsSuperAdmin] = useState(false);
+  const [editSystemRole, setEditSystemRole] = useState<
+    "USER" | "SUPER_ADMIN" | "CARREEL_DRIVER_SUPPORT"
+  >("USER");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async (searchQuery?: string) => {
@@ -104,6 +109,13 @@ export function UserList() {
     load();
   }, [load]);
 
+  // CARREEL_DRIVER_SUPPORT can only be assigned to DRIVER global-role users.
+  useEffect(() => {
+    if (createSystemRole === "CARREEL_DRIVER_SUPPORT" && createRole !== "DRIVER") {
+      setCreateRole("DRIVER");
+    }
+  }, [createSystemRole, createRole]);
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -115,14 +127,14 @@ export function UserList() {
   const openEdit = (u: AdminUserListItem) => {
     setEditingUser(u);
     setEditFullName(u.fullName);
-    setEditIsSuperAdmin(u.systemRole === "SUPER_ADMIN");
+    setEditSystemRole(u.systemRole);
     setError(null);
   };
 
   const closeEdit = () => {
     setEditingUser(null);
     setEditFullName("");
-    setEditIsSuperAdmin(false);
+    setEditSystemRole("USER");
   };
 
   const handleEditSave = async () => {
@@ -130,16 +142,18 @@ export function UserList() {
     const trimmedName = editFullName.trim();
     if (!trimmedName) return;
 
-    const nextSystemRole: "SUPER_ADMIN" | "USER" = editIsSuperAdmin
-      ? "SUPER_ADMIN"
-      : "USER";
-    const promotingToSuperAdmin =
-      editingUser.systemRole !== "SUPER_ADMIN" && nextSystemRole === "SUPER_ADMIN";
-
+    const escalating =
+      editingUser.systemRole !== editSystemRole &&
+      (editSystemRole === "SUPER_ADMIN" ||
+        editSystemRole === "CARREEL_DRIVER_SUPPORT");
     if (
-      promotingToSuperAdmin &&
+      escalating &&
       !window.confirm(
-        `Promote ${editingUser.fullName} to SUPER_ADMIN? They will get full platform access.`,
+        `Grant ${
+          editSystemRole === "SUPER_ADMIN"
+            ? "SUPER_ADMIN"
+            : "CARREEL_DRIVER_SUPPORT"
+        } to ${editingUser.fullName}? They will bypass all project filters.`,
       )
     ) {
       return;
@@ -150,7 +164,7 @@ export function UserList() {
     try {
       await api.patch(`/api/admin/users/${editingUser.id}`, {
         fullName: trimmedName,
-        systemRole: nextSystemRole,
+        systemRole: editSystemRole,
       });
       closeEdit();
       await load(search.trim() || undefined);
@@ -197,12 +211,14 @@ export function UserList() {
         fullName: createFullName.trim(),
         role: createRole,
         password: createPassword,
+        systemRole: createSystemRole,
       });
       setShowCreate(false);
       setCreateEmail("");
       setCreateFullName("");
       setCreateRole("PLANNER");
       setCreatePassword("");
+      setCreateSystemRole("USER");
       await load(search.trim() || undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user");
@@ -306,6 +322,8 @@ export function UserList() {
                       <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-[1px] whitespace-nowrap">
                         {u.systemRole === "SUPER_ADMIN" ? (
                           <span className="text-[#F5C518]">Super Admin</span>
+                        ) : u.systemRole === "CARREEL_DRIVER_SUPPORT" ? (
+                          <span className="text-[#4DA3FF]">Driver Support</span>
                         ) : (
                           <span className="text-[#666]">User</span>
                         )}
@@ -450,13 +468,45 @@ export function UserList() {
                   onChange={(e) =>
                     setCreateRole(e.target.value as "DRIVER" | "PLANNER")
                   }
-                  className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518]"
+                  disabled={createSystemRole === "CARREEL_DRIVER_SUPPORT"}
+                  className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <option value="DRIVER">Driver</option>
                   <option value="PLANNER">Planner</option>
                 </select>
                 <p className="text-[10px] text-[#666] mt-1">
                   Determines which app the user can log into.
+                </p>
+              </div>
+              <div>
+                <label
+                  htmlFor="user-system-role"
+                  className="block text-[10px] font-bold text-[#666] tracking-[1px] uppercase mb-1"
+                >
+                  System Role
+                </label>
+                <select
+                  id="user-system-role"
+                  value={createSystemRole}
+                  onChange={(e) =>
+                    setCreateSystemRole(
+                      e.target.value as
+                        | "USER"
+                        | "SUPER_ADMIN"
+                        | "CARREEL_DRIVER_SUPPORT",
+                    )
+                  }
+                  className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518]"
+                >
+                  <option value="USER">User</option>
+                  <option value="SUPER_ADMIN">Super Admin</option>
+                  <option value="CARREEL_DRIVER_SUPPORT">
+                    Carreel Driver Support
+                  </option>
+                </select>
+                <p className="text-[10px] text-[#666] mt-1">
+                  Carreel Driver Support users log into the driver-app with
+                  full cross-project access.
                 </p>
               </div>
               <div>
@@ -543,20 +593,36 @@ export function UserList() {
               </div>
 
               <div>
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={editIsSuperAdmin}
-                    onChange={(e) => setEditIsSuperAdmin(e.target.checked)}
-                    className="w-4 h-4 accent-[#F5C518]"
-                  />
-                  <span className="text-sm text-white font-bold">
-                    Super Admin
-                  </span>
+                <label
+                  htmlFor="edit-user-system-role"
+                  className="block text-[10px] font-bold text-[#666] tracking-[1px] uppercase mb-1"
+                >
+                  System Role
                 </label>
-                <p className="text-[10px] text-[#666] mt-1 ml-7">
-                  Grants full platform access across all workspaces and
-                  projects.
+                <select
+                  id="edit-user-system-role"
+                  value={editSystemRole}
+                  onChange={(e) =>
+                    setEditSystemRole(
+                      e.target.value as
+                        | "USER"
+                        | "SUPER_ADMIN"
+                        | "CARREEL_DRIVER_SUPPORT",
+                    )
+                  }
+                  className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518]"
+                >
+                  <option value="USER">User</option>
+                  <option value="SUPER_ADMIN">Super Admin</option>
+                  {editingUser.role === "DRIVER" && (
+                    <option value="CARREEL_DRIVER_SUPPORT">
+                      Carreel Driver Support
+                    </option>
+                  )}
+                </select>
+                <p className="text-[10px] text-[#666] mt-1">
+                  Grants elevated platform access. Driver Support is available
+                  only for driver-app users.
                 </p>
               </div>
             </div>
