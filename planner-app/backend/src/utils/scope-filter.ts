@@ -1,6 +1,20 @@
 import type { UserScope } from "../types/scope";
 
 /**
+ * Returns true when the user holds a platform-wide bypass — they see every
+ * row across every project. Today: SUPER_ADMIN (platform admins) and
+ * CARREEL_DRIVER_SUPPORT (internal support staff running demos and
+ * troubleshooting). Used as the short-circuit branch in both
+ * buildScopeFilter and canWriteToEntity.
+ */
+export function hasPlatformBypass(scope: UserScope): boolean {
+  return (
+    scope.systemRole === "SUPER_ADMIN" ||
+    scope.systemRole === "CARREEL_DRIVER_SUPPORT"
+  );
+}
+
+/**
  * Options for buildScopeFilter.
  */
 export interface BuildScopeFilterOptions {
@@ -29,7 +43,8 @@ export type ScopeWhereFragment =
  * rows the user is allowed to see based on their scope.
  *
  * Behavior by role:
- * - SUPER_ADMIN: returns {} (no restriction, sees everything).
+ * - Platform bypass (SUPER_ADMIN, CARREEL_DRIVER_SUPPORT): returns {}
+ *   (no restriction, sees everything across every project).
  * - DRIVER: returns { projectId: { in: [...] }, driverId: userId }.
  * - PLANNER: returns { OR: [...] } with one clause per project, filtered
  *            by assignedDriverIds if includeDriverFilter is true.
@@ -50,8 +65,8 @@ export function buildScopeFilter(
   scope: UserScope,
   options: BuildScopeFilterOptions,
 ): ScopeWhereFragment {
-  // SUPER_ADMIN sees everything
-  if (scope.systemRole === "SUPER_ADMIN") {
+  // Platform bypass — SUPER_ADMIN and CARREEL_DRIVER_SUPPORT see everything
+  if (hasPlatformBypass(scope)) {
     return {};
   }
 
@@ -127,7 +142,7 @@ export interface CanWriteOptions {
  * Return false → throw NotFoundError (return 404, NOT 403 — we don't reveal existence).
  *
  * Behavior by role:
- * - SUPER_ADMIN: always returns true.
+ * - Platform bypass (SUPER_ADMIN, CARREEL_DRIVER_SUPPORT): always returns true.
  * - DRIVER: true if entity.driverId === scope.userId AND the entity's
  *           projectId is in the user's member projects.
  * - PROJECT_ADMIN: true if the entity's projectId is in the user's admin projects.
@@ -146,7 +161,7 @@ export function canWriteToEntity(
   entity: { projectId: string; driverId?: string },
   options: CanWriteOptions = { requireDriverAssignment: true },
 ): boolean {
-  if (scope.systemRole === "SUPER_ADMIN") return true;
+  if (hasPlatformBypass(scope)) return true;
 
   if (scope.appRole === "DRIVER") {
     // Must be in a project the driver belongs to.
