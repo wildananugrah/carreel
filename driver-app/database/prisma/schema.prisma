@@ -95,6 +95,7 @@ enum ProjectRole {
 enum SystemRole {
   SUPER_ADMIN
   USER
+  CARREEL_DRIVER_SUPPORT
 }
 
 enum InspectionStatus {

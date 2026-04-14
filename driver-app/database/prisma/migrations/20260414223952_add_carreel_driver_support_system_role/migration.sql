@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "SystemRole" ADD VALUE 'CARREEL_DRIVER_SUPPORT';

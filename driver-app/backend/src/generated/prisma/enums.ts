@@ -46,7 +46,8 @@ export type ProjectRole = (typeof ProjectRole)[keyof typeof ProjectRole]
 
 export const SystemRole = {
   SUPER_ADMIN: 'SUPER_ADMIN',
-  USER: 'USER'
+  USER: 'USER',
+  CARREEL_DRIVER_SUPPORT: 'CARREEL_DRIVER_SUPPORT'
 } as const
 
 export type SystemRole = (typeof SystemRole)[keyof typeof SystemRole]
