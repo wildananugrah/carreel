@@ -8,7 +8,7 @@
  * Section 2 for the full design.
  */
 
-export type SystemRole = "SUPER_ADMIN" | "USER";
+export type SystemRole = "SUPER_ADMIN" | "USER" | "CARREEL_DRIVER_SUPPORT";
 export type ProjectRole = "PROJECT_ADMIN" | "PLANNER" | "DRIVER";
 
 export interface ProjectScope {
