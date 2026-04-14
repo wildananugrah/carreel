@@ -18,6 +18,7 @@ export interface User {
   email: string;
   fullName: string;
   role: string;
+  systemRole: "SUPER_ADMIN" | "USER" | "CARREEL_DRIVER_SUPPORT";
   createdAt: string;
 }
 
