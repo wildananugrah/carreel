@@ -107,6 +107,7 @@ export class AuthService implements IAuthService {
     email: string;
     fullName: string;
     role: string;
+    systemRole: "SUPER_ADMIN" | "USER" | "CARREEL_DRIVER_SUPPORT";
     createdAt: Date;
   }): UserResponse {
     return {
@@ -114,6 +115,7 @@ export class AuthService implements IAuthService {
       email: user.email,
       fullName: user.fullName,
       role: user.role,
+      systemRole: user.systemRole,
       createdAt: user.createdAt,
     };
   }
