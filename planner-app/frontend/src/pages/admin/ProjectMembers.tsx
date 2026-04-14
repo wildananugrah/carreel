@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../lib/api";
+
+interface CandidateUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: "DRIVER" | "PLANNER";
+}
 
 type ProjectRole = "PROJECT_ADMIN" | "PLANNER" | "DRIVER";
 
@@ -45,6 +52,12 @@ export function ProjectMembers() {
   const [inviteRole, setInviteRole] = useState<ProjectRole>("DRIVER");
   const [submitting, setSubmitting] = useState(false);
 
+  const [candidates, setCandidates] = useState<CandidateUser[]>([]);
+  const [candidatesLoading, setCandidatesLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+
   const load = useCallback(async () => {
     if (!projectId) return;
     setLoading(true);
@@ -65,6 +78,90 @@ export function ProjectMembers() {
     load();
   }, [load]);
 
+  // Debounced candidate search. Refetches when query or role changes.
+  useEffect(() => {
+    if (!showInvite || !projectId) return;
+    const trimmed = inviteEmail.trim();
+    if (trimmed.length < 2) {
+      setCandidates([]);
+      setCandidatesLoading(false);
+      return;
+    }
+    setCandidatesLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const data = await api.get<CandidateUser[]>(
+          `/api/admin/projects/${projectId}/members/search-candidates?q=${encodeURIComponent(trimmed)}&role=${inviteRole}`,
+        );
+        setCandidates(data);
+        setHighlightedIndex(data.length > 0 ? 0 : -1);
+      } catch {
+        setCandidates([]);
+        setHighlightedIndex(-1);
+      } finally {
+        setCandidatesLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [inviteEmail, inviteRole, projectId, showInvite]);
+
+  // Close the suggestions dropdown on outside click.
+  useEffect(() => {
+    if (!showSuggestions) return;
+    const onDown = (e: MouseEvent) => {
+      if (
+        comboboxRef.current &&
+        !comboboxRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [showSuggestions]);
+
+  const selectCandidate = (candidate: CandidateUser) => {
+    setInviteEmail(candidate.email);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+  };
+
+  const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || candidates.length === 0) {
+      if (e.key === "ArrowDown" && candidates.length > 0) {
+        setShowSuggestions(true);
+        setHighlightedIndex(0);
+        e.preventDefault();
+      }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((i) => (i + 1) % candidates.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex(
+        (i) => (i - 1 + candidates.length) % candidates.length,
+      );
+    } else if (e.key === "Enter") {
+      if (highlightedIndex >= 0 && highlightedIndex < candidates.length) {
+        e.preventDefault();
+        selectCandidate(candidates[highlightedIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
+  const resetInviteForm = () => {
+    setShowInvite(false);
+    setInviteEmail("");
+    setInviteRole("DRIVER");
+    setCandidates([]);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+  };
+
   const handleInvite = async () => {
     if (!projectId || !inviteEmail.trim()) return;
     setSubmitting(true);
@@ -74,9 +171,7 @@ export function ProjectMembers() {
         email: inviteEmail.trim(),
         role: inviteRole,
       });
-      setShowInvite(false);
-      setInviteEmail("");
-      setInviteRole("DRIVER");
+      resetInviteForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to invite member");
@@ -181,10 +276,11 @@ export function ProjectMembers() {
       </div>
 
       {showInvite && (
+        // biome-ignore lint/a11y/useSemanticElements: backdrop acts as click-to-close, not a real button
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowInvite(false)}
-          onKeyDown={(e) => e.key === "Escape" && setShowInvite(false)}
+          onClick={resetInviteForm}
+          onKeyDown={(e) => e.key === "Escape" && resetInviteForm()}
           role="button"
           tabIndex={0}
         >
@@ -202,7 +298,7 @@ export function ProjectMembers() {
             </p>
 
             <div className="space-y-4">
-              <div>
+              <div ref={comboboxRef} className="relative">
                 <label
                   htmlFor="invite-email"
                   className="block text-[10px] font-bold text-[#666] tracking-[1px] uppercase mb-1"
@@ -211,12 +307,75 @@ export function ProjectMembers() {
                 </label>
                 <input
                   id="invite-email"
-                  type="email"
+                  type="text"
+                  role="combobox"
+                  autoComplete="off"
                   value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="user@example.com"
+                  onChange={(e) => {
+                    setInviteEmail(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={handleEmailKeyDown}
+                  placeholder="Type email or name..."
+                  aria-autocomplete="list"
+                  aria-expanded={showSuggestions}
+                  aria-controls="invite-email-suggestions"
                   className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518]"
                 />
+                {showSuggestions && inviteEmail.trim().length >= 2 && (
+                  <div
+                    id="invite-email-suggestions"
+                    role="listbox"
+                    className="absolute left-0 right-0 top-full mt-1 bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl max-h-64 overflow-y-auto z-10"
+                  >
+                    {candidatesLoading ? (
+                      <div className="px-3 py-2 text-xs text-[#666]">
+                        Searching...
+                      </div>
+                    ) : candidates.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-[#666]">
+                        No matching users
+                      </div>
+                    ) : (
+                      candidates.map((c, idx) => (
+                        <button
+                          type="button"
+                          key={c.id}
+                          role="option"
+                          aria-selected={idx === highlightedIndex}
+                          onMouseEnter={() => setHighlightedIndex(idx)}
+                          onClick={() => selectCandidate(c)}
+                          className={`w-full text-left px-3 py-2 border-b border-[#2a2a2a] last:border-b-0 transition-colors ${
+                            idx === highlightedIndex
+                              ? "bg-[#1f1f1f]"
+                              : "hover:bg-[#1a1a1a]"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-bold text-white truncate">
+                                {c.fullName}
+                              </div>
+                              <div className="text-[11px] text-[#888] truncate">
+                                {c.email}
+                              </div>
+                            </div>
+                            <span
+                              className={`text-[9px] font-bold uppercase tracking-[0.5px] shrink-0 ${
+                                c.role === "DRIVER"
+                                  ? "text-[#8DC26F]"
+                                  : "text-[#4DA3FF]"
+                              }`}
+                            >
+                              {c.role}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <label
@@ -245,7 +404,7 @@ export function ProjectMembers() {
             <div className="flex justify-end gap-2 mt-6">
               <button
                 type="button"
-                onClick={() => setShowInvite(false)}
+                onClick={resetInviteForm}
                 className="px-4 py-2 text-sm text-[#C0C0C0] hover:text-white transition-colors"
               >
                 Cancel

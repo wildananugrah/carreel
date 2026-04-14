@@ -1,4 +1,11 @@
-import type { ProjectRole, User } from "../../generated/prisma";
+import type { ProjectRole, User, UserRole } from "../../generated/prisma";
+
+export interface CandidateUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+}
 
 export interface ProjectMemberView {
   id: string;
@@ -20,4 +27,10 @@ export interface IProjectMemberRepository {
   remove(projectId: string, userId: string): Promise<void>;
   findUserByEmail(email: string): Promise<User | null>;
   exists(projectId: string, userId: string): Promise<boolean>;
+  searchCandidates(
+    projectId: string,
+    query: string,
+    userRole: UserRole,
+    limit: number,
+  ): Promise<CandidateUser[]>;
 }

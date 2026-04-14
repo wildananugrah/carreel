@@ -1,6 +1,9 @@
 import type { ProjectRole } from "../../generated/prisma";
 import type { UserScope } from "../../types/scope";
-import type { ProjectMemberView } from "../repositories/project-member.repository.interface";
+import type {
+  CandidateUser,
+  ProjectMemberView,
+} from "../repositories/project-member.repository.interface";
 
 export interface IProjectMemberService {
   list(scope: UserScope, projectId: string): Promise<ProjectMemberView[]>;
@@ -11,4 +14,10 @@ export interface IProjectMemberService {
     role: ProjectRole,
   ): Promise<ProjectMemberView>;
   remove(scope: UserScope, projectId: string, userId: string): Promise<void>;
+  searchCandidates(
+    scope: UserScope,
+    projectId: string,
+    query: string,
+    targetRole: ProjectRole,
+  ): Promise<CandidateUser[]>;
 }

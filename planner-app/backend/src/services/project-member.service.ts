@@ -1,10 +1,14 @@
-import type { ProjectRole } from "../generated/prisma";
+import type { ProjectRole, UserRole } from "../generated/prisma";
 import type {
+  CandidateUser,
   IProjectMemberRepository,
   ProjectMemberView,
 } from "../interfaces/repositories/project-member.repository.interface";
 import type { IProjectMemberService } from "../interfaces/services/project-member.service.interface";
 import type { UserScope } from "../types/scope";
+
+const CANDIDATE_SEARCH_LIMIT = 10;
+const CANDIDATE_MIN_QUERY_LENGTH = 2;
 
 export class ProjectMemberService implements IProjectMemberService {
   constructor(private repository: IProjectMemberRepository) {}
@@ -72,5 +76,31 @@ export class ProjectMemberService implements IProjectMemberService {
       throw new Error("Project member not found");
     }
     return this.repository.remove(projectId, userId);
+  }
+
+  async searchCandidates(
+    scope: UserScope,
+    projectId: string,
+    query: string,
+    targetRole: ProjectRole,
+  ): Promise<CandidateUser[]> {
+    this.requireProjectAdminOrSuperAdmin(scope, projectId);
+
+    const trimmed = query.trim();
+    if (trimmed.length < CANDIDATE_MIN_QUERY_LENGTH) {
+      return [];
+    }
+
+    // Global role must match the project role being invited for.
+    // DRIVER project role → DRIVER users only.
+    // PLANNER or PROJECT_ADMIN project role → PLANNER users only.
+    const userRole: UserRole = targetRole === "DRIVER" ? "DRIVER" : "PLANNER";
+
+    return this.repository.searchCandidates(
+      projectId,
+      trimmed,
+      userRole,
+      CANDIDATE_SEARCH_LIMIT,
+    );
   }
 }

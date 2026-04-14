@@ -18,6 +18,29 @@ export function createProjectMemberRoutes(
 
   app.use("*", authMiddleware);
 
+  // GET /api/admin/projects/:projectId/members/search-candidates?q=...&role=...
+  // Returns users matching the query who are eligible to be invited as the
+  // given project role. Excludes users already in the project and archived
+  // users. Caller must be SUPER_ADMIN or PROJECT_ADMIN of the project.
+  app.get("/search-candidates", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const projectId = c.req.param("projectId");
+    if (!projectId) return c.json({ error: "projectId required" }, 400);
+    const query = c.req.query("q") ?? "";
+    const role = (c.req.query("role") ?? "DRIVER") as ProjectRole;
+    if (role !== "DRIVER" && role !== "PLANNER" && role !== "PROJECT_ADMIN") {
+      return c.json({ error: "invalid role" }, 400);
+    }
+    const candidates = await memberService.searchCandidates(
+      scope,
+      projectId,
+      query,
+      role,
+    );
+    return c.json(candidates);
+  });
+
   // GET /api/admin/projects/:projectId/members
   app.get("/", async (c) => {
     const scope = c.get("scope");

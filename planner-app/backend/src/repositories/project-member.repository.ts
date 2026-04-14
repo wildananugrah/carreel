@@ -1,5 +1,11 @@
-import type { PrismaClient, ProjectRole, User } from "../generated/prisma";
 import type {
+  PrismaClient,
+  ProjectRole,
+  User,
+  UserRole,
+} from "../generated/prisma";
+import type {
+  CandidateUser,
   IProjectMemberRepository,
   ProjectMemberView,
 } from "../interfaces/repositories/project-member.repository.interface";
@@ -73,5 +79,28 @@ export class ProjectMemberRepository implements IProjectMemberRepository {
       },
     });
     return member !== null;
+  }
+
+  async searchCandidates(
+    projectId: string,
+    query: string,
+    userRole: UserRole,
+    limit: number,
+  ): Promise<CandidateUser[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: userRole,
+        email: { not: { startsWith: "archived-" } },
+        projectMemberships: { none: { projectId } },
+        OR: [
+          { email: { contains: query, mode: "insensitive" } },
+          { fullName: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true, email: true, fullName: true, role: true },
+      orderBy: { fullName: "asc" },
+      take: limit,
+    });
+    return users;
   }
 }
