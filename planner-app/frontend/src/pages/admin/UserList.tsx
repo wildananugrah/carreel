@@ -77,6 +77,13 @@ export function UserList() {
   const [createPassword, setCreatePassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [editingUser, setEditingUser] = useState<AdminUserListItem | null>(
+    null,
+  );
+  const [editFullName, setEditFullName] = useState("");
+  const [editIsSuperAdmin, setEditIsSuperAdmin] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const load = useCallback(async (searchQuery?: string) => {
     setLoading(true);
     setError(null);
@@ -104,6 +111,75 @@ export function UserList() {
     }, 300);
     return () => clearTimeout(timer);
   }, [search, load]);
+
+  const openEdit = (u: AdminUserListItem) => {
+    setEditingUser(u);
+    setEditFullName(u.fullName);
+    setEditIsSuperAdmin(u.systemRole === "SUPER_ADMIN");
+    setError(null);
+  };
+
+  const closeEdit = () => {
+    setEditingUser(null);
+    setEditFullName("");
+    setEditIsSuperAdmin(false);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingUser) return;
+    const trimmedName = editFullName.trim();
+    if (!trimmedName) return;
+
+    const nextSystemRole: "SUPER_ADMIN" | "USER" = editIsSuperAdmin
+      ? "SUPER_ADMIN"
+      : "USER";
+    const promotingToSuperAdmin =
+      editingUser.systemRole !== "SUPER_ADMIN" && nextSystemRole === "SUPER_ADMIN";
+
+    if (
+      promotingToSuperAdmin &&
+      !window.confirm(
+        `Promote ${editingUser.fullName} to SUPER_ADMIN? They will get full platform access.`,
+      )
+    ) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.patch(`/api/admin/users/${editingUser.id}`, {
+        fullName: trimmedName,
+        systemRole: nextSystemRole,
+      });
+      closeEdit();
+      await load(search.trim() || undefined);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update user");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (u: AdminUserListItem) => {
+    if (
+      !window.confirm(
+        `Archive ${u.fullName}? They will be unable to log in. This is a soft delete \u2014 data is preserved.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingId(u.id);
+    setError(null);
+    try {
+      await api.delete(`/api/admin/users/${u.id}`);
+      await load(search.trim() || undefined);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to archive user");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleCreate = async () => {
     if (
@@ -205,7 +281,9 @@ export function UserList() {
                   <th className="text-left px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
                     Created
                   </th>
-                  <th className="w-20 whitespace-nowrap" />
+                  <th className="text-right px-4 py-3 text-[10px] font-bold text-[#666] tracking-[1px] uppercase whitespace-nowrap">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#2a2a2a]">
@@ -275,12 +353,29 @@ export function UserList() {
                         {formatDate(u.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <Link
-                          to={`/admin/users/${u.id}`}
-                          className="text-xs text-[#F5C518] hover:text-[#F5D848] font-bold"
-                        >
-                          View {"\u2192"}
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          <Link
+                            to={`/admin/users/${u.id}`}
+                            className="text-xs text-[#888] hover:text-white font-bold"
+                          >
+                            View
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => openEdit(u)}
+                            className="text-xs text-[#F5C518] hover:text-[#F5D848] font-bold"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(u)}
+                            disabled={deletingId === u.id}
+                            className="text-xs text-red-400 hover:text-red-300 font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {deletingId === u.id ? "Archiving..." : "Delete"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -401,6 +496,86 @@ export function UserList() {
                 className="px-4 py-2 bg-[#F5C518] text-black text-sm font-bold rounded-lg hover:bg-[#F5D848] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {submitting ? "Creating..." : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal */}
+      {editingUser && (
+        // biome-ignore lint/a11y/useSemanticElements: backdrop acts as click-to-close, not a real button
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={closeEdit}
+          onKeyDown={(e) => e.key === "Escape" && closeEdit()}
+          role="button"
+          tabIndex={0}
+        >
+          <div
+            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2 className="text-lg font-bold text-white mb-1">Edit User</h2>
+            <p className="text-xs text-[#666] mb-4">
+              {editingUser.email} {"\u00B7"} {editingUser.role}
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="edit-user-fullname"
+                  className="block text-[10px] font-bold text-[#666] tracking-[1px] uppercase mb-1"
+                >
+                  Full Name
+                </label>
+                <input
+                  id="edit-user-fullname"
+                  type="text"
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="Full Name"
+                  className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518]"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={editIsSuperAdmin}
+                    onChange={(e) => setEditIsSuperAdmin(e.target.checked)}
+                    className="w-4 h-4 accent-[#F5C518]"
+                  />
+                  <span className="text-sm text-white font-bold">
+                    Super Admin
+                  </span>
+                </label>
+                <p className="text-[10px] text-[#666] mt-1 ml-7">
+                  Grants full platform access across all workspaces and
+                  projects.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={closeEdit}
+                className="px-4 py-2 text-sm text-[#C0C0C0] hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEditSave}
+                disabled={submitting || !editFullName.trim()}
+                className="px-4 py-2 bg-[#F5C518] text-black text-sm font-bold rounded-lg hover:bg-[#F5D848] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {submitting ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
