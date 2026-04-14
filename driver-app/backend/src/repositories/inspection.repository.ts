@@ -44,7 +44,7 @@ export class InspectionRepository implements IInspectionRepository {
     scope: UserScope,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
-    const projectId = this.requirePrimaryProjectId(scope);
+    const projectId = data.projectId ?? this.requirePrimaryProjectId(scope);
     return this.prisma.inspection.create({
       data: {
         driverId: scope.userId,
@@ -62,7 +62,7 @@ export class InspectionRepository implements IInspectionRepository {
     scope: UserScope,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
-    const projectId = this.requirePrimaryProjectId(scope);
+    const projectId = data.projectId ?? this.requirePrimaryProjectId(scope);
     const stepTypes =
       data.tripType === "PRE_TRIP"
         ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]

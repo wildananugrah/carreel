@@ -22,6 +22,7 @@ import type {
   UpdateInspectionDTO,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { badRequest, notFound } from "../utils/http-error";
 import { hasPlatformBypass } from "../utils/scope-filter";
 
 export class InspectionService implements IInspectionService {
@@ -37,6 +38,21 @@ export class InspectionService implements IInspectionService {
     driverId: string,
     data: CreateInspectionDTO,
   ): Promise<Inspection> {
+    if (data.projectId) {
+      if (!hasPlatformBypass(scope)) {
+        const isMember = scope.projects.some(
+          (p) => p.projectId === data.projectId,
+        );
+        if (!isMember) {
+          throw notFound("Project not found");
+        }
+      }
+    } else if (scope.systemRole === "CARREEL_DRIVER_SUPPORT") {
+      throw badRequest(
+        "projectId required when creating as CARREEL_DRIVER_SUPPORT",
+      );
+    }
+
     const inspection = await this.inspectionRepository.createWithSteps(
       scope,
       data,
@@ -45,6 +61,7 @@ export class InspectionService implements IInspectionService {
       inspectionId: inspection.id,
       driverId,
       tripType: data.tripType,
+      projectId: inspection.projectId,
     });
     return inspection;
   }
@@ -82,6 +99,7 @@ export class InspectionService implements IInspectionService {
       unitId: preTrip.unitId ?? undefined,
       latitude: data.latitude,
       longitude: data.longitude,
+      projectId: preTrip.projectId,
     });
 
     this.logger.info("Post-trip inspection created", {
