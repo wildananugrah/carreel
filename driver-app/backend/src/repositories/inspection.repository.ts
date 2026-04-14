@@ -141,7 +141,7 @@ export class InspectionRepository implements IInspectionRepository {
 
   async findByDriverId(
     scope: UserScope,
-    driverId: string,
+    driverId: string | null,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionListItem>> {
     const page = query.page ?? 1;
@@ -150,22 +150,27 @@ export class InspectionRepository implements IInspectionRepository {
 
     const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
 
-    const baseWhere: Record<string, unknown> = {
-      driverId,
-      ...(scopeFilter as object),
-      ...(query.status ? { status: query.status } : {}),
-    };
-
-    if (query.search) {
-      const s = query.search;
-      baseWhere.unit = {
-        OR: [
-          { licensePlate: { contains: s, mode: "insensitive" } },
-          { make: { contains: s, mode: "insensitive" } },
-          { model: { contains: s, mode: "insensitive" } },
-        ],
-      };
+    const whereClauses: Array<Record<string, unknown>> = [
+      scopeFilter as Record<string, unknown>,
+    ];
+    if (driverId) whereClauses.push({ driverId });
+    if (query.status) whereClauses.push({ status: query.status });
+    if (query.projectId) whereClauses.push({ projectId: query.projectId });
+    if (query.workspaceId) {
+      whereClauses.push({ project: { workspaceId: query.workspaceId } });
     }
+    if (query.search && query.search.trim().length > 0) {
+      const s = query.search.trim();
+      whereClauses.push({
+        OR: [
+          { unit: { licensePlate: { contains: s, mode: "insensitive" } } },
+          { unit: { make: { contains: s, mode: "insensitive" } } },
+          { unit: { model: { contains: s, mode: "insensitive" } } },
+          { driver: { fullName: { contains: s, mode: "insensitive" } } },
+        ],
+      });
+    }
+    const baseWhere = { AND: whereClauses };
 
     const [data, total] = await Promise.all([
       this.prisma.inspection.findMany({

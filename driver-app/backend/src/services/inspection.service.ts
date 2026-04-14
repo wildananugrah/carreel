@@ -22,6 +22,7 @@ import type {
   UpdateInspectionDTO,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { hasPlatformBypass } from "../utils/scope-filter";
 
 export class InspectionService implements IInspectionService {
   constructor(
@@ -112,7 +113,12 @@ export class InspectionService implements IInspectionService {
     driverId: string,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionListItem>> {
-    return this.inspectionRepository.findByDriverId(scope, driverId, query);
+    const effectiveDriverId = hasPlatformBypass(scope) ? null : driverId;
+    return this.inspectionRepository.findByDriverId(
+      scope,
+      effectiveDriverId,
+      query,
+    );
   }
 
   async update(

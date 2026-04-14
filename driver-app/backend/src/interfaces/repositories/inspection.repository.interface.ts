@@ -77,9 +77,16 @@ export interface IInspectionRepository {
     scope: UserScope,
     id: string,
   ): Promise<InspectionWithRelations | null>;
+  /**
+   * List inspections with filters. Pass a concrete `driverId` to restrict to
+   * one driver's inspections (normal driver flow). Pass `null` to span every
+   * driver — this is only valid for platform-bypass callers (SUPER_ADMIN or
+   * CARREEL_DRIVER_SUPPORT) and the caller is responsible for making that
+   * decision via `hasPlatformBypass(scope)`.
+   */
   findByDriverId(
     scope: UserScope,
-    driverId: string,
+    driverId: string | null,
     query: InspectionListQuery,
   ): Promise<PaginatedResponse<InspectionListItem>>;
   update(

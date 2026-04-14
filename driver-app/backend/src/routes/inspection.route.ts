@@ -32,11 +32,15 @@ export function createInspectionRoutes(
     if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const status = c.req.query("status") as InspectionStatus | undefined;
     const search = c.req.query("search") || undefined;
+    const workspaceId = c.req.query("workspaceId") || undefined;
+    const projectId = c.req.query("projectId") || undefined;
     const page = Number(c.req.query("page")) || 1;
     const limit = Number(c.req.query("limit")) || 20;
     const result = await inspectionService.list(scope, userId, {
       status,
       search,
+      workspaceId,
+      projectId,
       page,
       limit,
     });
