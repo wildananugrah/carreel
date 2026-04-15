@@ -1,37 +1,81 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
+import { useAuth } from "../../lib/auth";
+import { WorkspaceProjectPickerModal } from "../inspection/WorkspaceProjectPickerModal";
+
+interface Workspace {
+  id: string;
+  displayName: string;
+  projects: Array<{ id: string; displayName: string }>;
+}
 
 export function BottomNav() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSupport = user?.systemRole === "CARREEL_DRIVER_SUPPORT";
+
   const [starting, setStarting] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+
+  function attachBackgroundGps(inspectionId: string) {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        api
+          .patch(`/api/inspections/${inspectionId}`, {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          })
+          .catch(() => {});
+      },
+      () => {},
+      { timeout: 5000 },
+    );
+  }
 
   async function handleStartTrip() {
     if (starting) return;
-    setStarting(true);
 
+    if (isSupport) {
+      try {
+        if (workspaces.length === 0) {
+          const list = await api.get<Workspace[]>("/api/workspaces");
+          setWorkspaces(list);
+        }
+        setShowPicker(true);
+      } catch {
+        // silently fail
+      }
+      return;
+    }
+
+    setStarting(true);
     try {
       // Create inspection immediately — GPS is optional and can be updated later
       const inspection = await api.post<{ id: string }>("/api/inspections", {
         tripType: "PRE_TRIP",
       });
       navigate(`/inspections/${inspection.id}/photos`);
+      attachBackgroundGps(inspection.id);
+    } catch {
+      // silently fail
+    } finally {
+      setStarting(false);
+    }
+  }
 
-      // Update GPS in the background after navigation
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            api
-              .patch(`/api/inspections/${inspection.id}`, {
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude,
-              })
-              .catch(() => {});
-          },
-          () => {},
-          { timeout: 5000 },
-        );
-      }
+  async function handleSupportStart(projectId: string) {
+    if (starting) return;
+    setStarting(true);
+    try {
+      const inspection = await api.post<{ id: string }>("/api/inspections", {
+        tripType: "PRE_TRIP",
+        projectId,
+      });
+      navigate(`/inspections/${inspection.id}/photos`);
+      attachBackgroundGps(inspection.id);
     } catch {
       // silently fail
     } finally {
@@ -130,6 +174,18 @@ export function BottomNav() {
           <span className="text-xs mt-0.5">Profile</span>
         </NavLink>
       </div>
+
+      {showPicker && (
+        <WorkspaceProjectPickerModal
+          workspaces={workspaces}
+          submitting={starting}
+          onCancel={() => setShowPicker(false)}
+          onConfirm={async (projectId) => {
+            await handleSupportStart(projectId);
+            setShowPicker(false);
+          }}
+        />
+      )}
     </nav>
   );
 }
