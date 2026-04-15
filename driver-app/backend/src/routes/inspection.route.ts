@@ -54,10 +54,14 @@ export function createInspectionRoutes(
     if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const tab = (c.req.query("tab") as TripTab | undefined) ?? "ALL";
     const search = c.req.query("search") || undefined;
+    const workspaceId = c.req.query("workspaceId") || undefined;
+    const projectId = c.req.query("projectId") || undefined;
     const limit = Number(c.req.query("limit")) || 50;
     const trips = await inspectionService.listTrips(scope, userId, {
       tab,
       search,
+      workspaceId,
+      projectId,
       limit,
     });
     return c.json({ data: trips });

@@ -3,6 +3,7 @@ import { TripCard } from "../components/inspection/TripCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
+import { useAuth } from "../lib/auth";
 import type { TripGroupCard, TripTab } from "../lib/types";
 
 const tabs: { value: TripTab; label: string }[] = [
@@ -13,12 +14,24 @@ const tabs: { value: TripTab; label: string }[] = [
 ];
 
 export function InspectionList() {
+  const { user } = useAuth();
+  const isSupport = user?.systemRole === "CARREEL_DRIVER_SUPPORT";
+
   const [trips, setTrips] = useState<TripGroupCard[]>([]);
   const [activeTab, setActiveTab] = useState<TripTab>("ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState("");
+  const [workspaces, setWorkspaces] = useState<
+    Array<{
+      id: string;
+      displayName: string;
+      projects: Array<{ id: string; displayName: string }>;
+    }>
+  >([]);
+  const [filterWorkspaceId, setFilterWorkspaceId] = useState("");
+  const [filterProjectId, setFilterProjectId] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -29,6 +42,8 @@ export function InspectionList() {
       const params = new URLSearchParams();
       params.set("tab", activeTab);
       if (search) params.set("search", search);
+      if (filterWorkspaceId) params.set("workspaceId", filterWorkspaceId);
+      if (filterProjectId) params.set("projectId", filterProjectId);
       params.set("limit", "50");
       const data = await api.get<{ data: TripGroupCard[] }>(`/api/inspections/trips?${params}`);
       setTrips(data.data);
@@ -37,11 +52,25 @@ export function InspectionList() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, search]);
+  }, [activeTab, search, filterWorkspaceId, filterProjectId]);
 
   useEffect(() => {
     fetchTrips();
   }, [fetchTrips]);
+
+  useEffect(() => {
+    if (!isSupport) return;
+    api
+      .get<
+        Array<{
+          id: string;
+          displayName: string;
+          projects: Array<{ id: string; displayName: string }>;
+        }>
+      >("/api/workspaces")
+      .then(setWorkspaces)
+      .catch(() => setWorkspaces([]));
+  }, [isSupport]);
 
   function handleSearchChange(value: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -109,6 +138,41 @@ export function InspectionList() {
           </>
         )}
       </div>
+
+      {isSupport && (
+        <div className="bg-[#0A0A0A] px-5 pt-1 pb-2 grid grid-cols-2 gap-2">
+          <select
+            value={filterWorkspaceId}
+            onChange={(e) => {
+              setFilterWorkspaceId(e.target.value);
+              setFilterProjectId("");
+            }}
+            className="bg-[#171717] text-white text-xs border border-[#2a2a2a] rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+          >
+            <option value="">All workspaces</option>
+            {workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.displayName}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filterProjectId}
+            onChange={(e) => setFilterProjectId(e.target.value)}
+            disabled={!filterWorkspaceId}
+            className="bg-[#171717] text-white text-xs border border-[#2a2a2a] rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-yellow-400 disabled:opacity-40"
+          >
+            <option value="">All projects</option>
+            {workspaces
+              .find((w) => w.id === filterWorkspaceId)
+              ?.projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.displayName}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
 
       {/* Tab Bar */}
       <div className="flex">

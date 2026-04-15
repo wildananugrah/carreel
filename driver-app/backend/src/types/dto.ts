@@ -179,6 +179,8 @@ export type TripTab = "ALL" | "DRAFT" | "ON_GOING" | "COMPLETED";
 export interface TripListQuery {
   tab?: TripTab;
   search?: string;
+  workspaceId?: string;
+  projectId?: string;
   limit?: number;
 }
 

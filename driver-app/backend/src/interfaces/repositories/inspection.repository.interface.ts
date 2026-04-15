@@ -145,9 +145,14 @@ export interface IInspectionRepository {
     unitId: string,
   ): Promise<void>;
 
+  /**
+   * List grouped trip cards. `driverId` may be `null` to return trips for all
+   * drivers — this is only intended for platform-bypass callers (SUPER_ADMIN,
+   * CARREEL_DRIVER_SUPPORT). Regular drivers must always pass their own userId.
+   */
   findTripsByDriverId(
     scope: UserScope,
-    driverId: string,
+    driverId: string | null,
     query: TripListQuery,
   ): Promise<TripGroupCard[]>;
 }

@@ -395,9 +395,10 @@ export class InspectionService implements IInspectionService {
     driverId: string,
     query: TripListQuery,
   ): Promise<TripGroupCard[]> {
+    const effectiveDriverId = hasPlatformBypass(scope) ? null : driverId;
     return this.inspectionRepository.findTripsByDriverId(
       scope,
-      driverId,
+      effectiveDriverId,
       query,
     );
   }
