@@ -1,12 +1,11 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTorch } from "../../hooks/useTorch";
+import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
 import type { InspectionStep } from "../../lib/types";
 import { MediaLightbox } from "../ui/MediaLightbox";
 import { StatusBadge } from "../ui/StatusBadge";
-
-const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
 const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
 
@@ -259,8 +258,7 @@ export function StepCard({
     }
   }
   const isImageOnly = IMAGE_ONLY_STEPS.includes(step.stepType);
-  const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
-  const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
+  const { allowCamera, allowFile } = useUploadSources();
 
   async function handleFile(file: File) {
     setUploading(true);

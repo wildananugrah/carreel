@@ -4,9 +4,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { TopBar } from "../components/layout/TopBar";
 import { MediaPreview } from "../components/media/MediaPreview";
 import { Button } from "../components/ui/Button";
+import { useUploadSources } from "../hooks/useUploadSources";
 import { api } from "../lib/api";
-
-const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
 // Steps that only accept images (camera opens in photo mode)
 const IMAGE_ONLY_STEPS = ["SPEEDOMETER"];
@@ -18,6 +17,7 @@ export function MediaUpload() {
   const stepType = state?.stepType ?? "";
   const initialAction = state?.action as "camera" | "file" | undefined;
   const isImageOnly = IMAGE_ONLY_STEPS.includes(stepType);
+  const { allowCamera, allowFile } = useUploadSources();
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -161,7 +161,7 @@ export function MediaUpload() {
       {/* Hidden file inputs — rendered via portal to document.body to avoid form interference */}
       {createPortal(
         <>
-          {(UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both") && (
+          {allowCamera && (
             <input
               ref={cameraInputRef}
               type="file"
@@ -171,7 +171,7 @@ export function MediaUpload() {
               className="hidden"
             />
           )}
-          {(UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both") && (
+          {allowFile && (
             <input
               ref={fileInputRef}
               type="file"
@@ -187,7 +187,7 @@ export function MediaUpload() {
       <div className="flex-1 px-4 pt-6">
         {!file ? (
           <div className="space-y-3">
-            {(UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both") && (
+            {allowCamera && (
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
@@ -213,7 +213,7 @@ export function MediaUpload() {
               </button>
             )}
 
-            {(UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both") && (
+            {allowFile && (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}

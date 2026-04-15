@@ -6,6 +6,7 @@ import { TopBar } from "../components/layout/TopBar";
 import { Button } from "../components/ui/Button";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
+import { useUploadSources } from "../hooks/useUploadSources";
 import { api } from "../lib/api";
 import type { InspectionDetail } from "../lib/types";
 
@@ -19,7 +20,6 @@ function formatVideoTimestamp(seconds: number): string {
 
 const MIN_DURATION = Number(import.meta.env.VITE_VIDEO_MIN_DURATION) || 30;
 const MAX_DURATION = Number(import.meta.env.VITE_VIDEO_MAX_DURATION) || 180;
-const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
 
 const COMMENT_CHIPS = ["Kondisi unit baik", "Ada baret minor", "Perlu dicek"];
 
@@ -186,8 +186,7 @@ export function VideoReview() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
-  const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
+  const { allowCamera, allowFile } = useUploadSources();
   const [showRecorder, setShowRecorder] = useState(false);
   const [seekLightbox, setSeekLightbox] = useState<{
     src: string;
