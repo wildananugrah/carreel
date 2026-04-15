@@ -38,6 +38,7 @@ let projAId = "";
 let projBId = "";
 let driverAId = "";
 let driverBId = "";
+let supportUserId = "";
 
 async function seedWorkspaceA() {
   const ws = await prisma.workspace.create({
@@ -133,6 +134,17 @@ let seedB: Awaited<ReturnType<typeof seedWorkspaceB>>;
 beforeAll(async () => {
   seedA = await seedWorkspaceA();
   seedB = await seedWorkspaceB();
+
+  const support = await prisma.user.create({
+    data: {
+      email: `${TEST_PREFIX}-support@test.local`,
+      fullName: "Test Support User",
+      passwordHash: "test-hash",
+      role: "DRIVER",
+      systemRole: "CARREEL_DRIVER_SUPPORT",
+    },
+  });
+  supportUserId = support.id;
 });
 
 afterAll(async () => {
@@ -151,7 +163,7 @@ afterAll(async () => {
     where: { id: { in: [wsAId, wsBId] } },
   });
   await prisma.user.deleteMany({
-    where: { id: { in: [driverAId, driverBId] } },
+    where: { id: { in: [driverAId, driverBId, supportUserId] } },
   });
   await prisma.$disconnect();
 });
@@ -198,5 +210,45 @@ describe("Cross-project leak prevention (driver-backend)", () => {
     const scopeB = await scopeRepo.loadScope(seedB.driver.id);
     expect(scopeB?.projects).toHaveLength(1);
     expect(scopeB?.projects[0].projectId).toBe(projBId);
+  });
+
+  test("CARREEL_DRIVER_SUPPORT sees inspections from every project via findByDriverId(null)", async () => {
+    const scope = await scopeRepo.loadScope(supportUserId);
+    expect(scope).not.toBeNull();
+    expect(scope?.systemRole).toBe("CARREEL_DRIVER_SUPPORT");
+
+    // Pass null as driverId — this is the signature used by the service
+    // when hasPlatformBypass(scope) is true. The bypass user has no
+    // memberships of their own, so the only way they see data is via
+    // scope-filter returning {} AND the repository accepting null.
+    const results = await inspectionRepo.findByDriverId(scope!, null, {
+      page: 1,
+      limit: 100,
+    });
+
+    const ids = results.data.map((i) => i.id);
+    expect(ids).toContain(seedA.inspection.id);
+    expect(ids).toContain(seedB.inspection.id);
+  });
+
+  test("CARREEL_DRIVER_SUPPORT can filter findByDriverId by projectId across projects", async () => {
+    const scope = await scopeRepo.loadScope(supportUserId);
+    const onlyA = await inspectionRepo.findByDriverId(scope!, null, {
+      projectId: projAId,
+      page: 1,
+      limit: 100,
+    });
+    const ids = onlyA.data.map((i) => i.id);
+    expect(ids).toContain(seedA.inspection.id);
+    expect(ids).not.toContain(seedB.inspection.id);
+  });
+
+  test("CARREEL_DRIVER_SUPPORT sees another driver's inspection via findById", async () => {
+    // Support user is NOT a member of project A, yet they can fetch an
+    // inspection owned by driverA because hasPlatformBypass returns true.
+    const scope = await scopeRepo.loadScope(supportUserId);
+    const result = await inspectionRepo.findById(scope!, seedA.inspection.id);
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe(seedA.inspection.id);
   });
 });
