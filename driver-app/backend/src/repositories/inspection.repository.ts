@@ -239,7 +239,7 @@ export class InspectionRepository implements IInspectionRepository {
     ) {
       throw new Error("Inspection not found");
     }
-    return this.prisma.inspection.update({
+    const inspection = await this.prisma.inspection.update({
       where: { id },
       data: {
         ...(data.unitId !== undefined ? { unitId: data.unitId } : {}),
@@ -250,6 +250,15 @@ export class InspectionRepository implements IInspectionRepository {
           : {}),
       },
     });
+
+    if (data.unitVin !== undefined && inspection.unitId) {
+      await this.prisma.unit.update({
+        where: { id: inspection.unitId },
+        data: { vin: data.unitVin },
+      });
+    }
+
+    return inspection;
   }
 
   async updateStatus(

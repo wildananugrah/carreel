@@ -75,6 +75,7 @@ export interface UpdateInspectionDTO {
   unitModel?: string;
   unitLicensePlate?: string;
   unitOdometerKm?: number;
+  unitVin?: string;
 }
 
 export interface InspectionListQuery {
