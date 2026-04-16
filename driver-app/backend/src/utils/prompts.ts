@@ -39,6 +39,25 @@ export interface SpeedometerResult {
   screenRecaptureDetected: boolean;
 }
 
+export interface VinNumberResult {
+  vinExtraction: {
+    imageLegibilityIsSufficient: boolean;
+    rawDetectedText: string;
+    sanitizedVin: string | null;
+    characterCount: number;
+  };
+  decodedData: {
+    make: string;
+    model: string;
+    manufacturingYear: string;
+    countryOfOrigin: string;
+  };
+  validationResult: {
+    status: "MATCH" | "MISMATCH" | "UNCERTAIN";
+    reasoning: string;
+  };
+}
+
 export interface BodyInspectionResult {
   cameraPath: string;
   visualAnalysis: string;
@@ -275,6 +294,8 @@ export function buildStepPrompt(
   switch (stepType) {
     case "UNIT_IDENTIFICATION":
       return buildUnitIdentificationPrompt();
+    case "VIN_NUMBER":
+      return buildVinNumberPrompt(vehicle);
     case "SPEEDOMETER":
       return buildSpeedometerPrompt(vehicle);
     case "BODY_INSPECTION":
@@ -441,6 +462,73 @@ Be strict - this is an anti-fraud verification measure.`;
 - Trim/Variant: NOT PROVIDED
 - Year: NOT PROVIDED`;
   }
+
+  return { systemInstruction, userPrompt };
+}
+
+function buildVinNumberPrompt(vehicle?: VehicleContext | null): PromptPair {
+  const systemMake = vehicle?.make ?? "";
+  const systemModel = vehicle?.model ?? "";
+
+  const systemInstruction = `ROLE:
+You are an Elite Forensic Automotive Data Auditor specializing exclusively in ISO 3779 global Vehicle Identification Number (VIN) extraction, sanitization, and strict database matching. Your core function is to guarantee 100% accuracy in identifying new car units within a high-throughput logistics environment.
+
+OBJECTIVE:
+Analyze the provided image that focuses on the Vehicle Identification Number (VIN) plate or sticker. You must locate the VIN area, extract the string, validate its format (exactly 17 digits, correct characters), decode basic metadata, and rigorously verify it against provided system input. You operate on a "Fail-Closed" protocol: if there is any legibility doubt or format error, you MUST reject the match as UNCERTAIN.
+
+SYSTEM INPUT DATA:
+• [SYSTEM_MAKE] = ${systemMake || "(not available)"}
+• [SYSTEM_MODEL] = ${systemModel || "(not available)"}
+
+CRITICAL "DO NOT" CONSTRAINTS (MANDATORY):
+• DO NOT use conversational language or output markdown syntax like \`\`\`json.
+• DO NOT hallucinate or infer missing or obscured digits. If glare, dirt, or angle makes a character ambiguous, you MUST flag it as unreadable.
+• DO NOT apply any fraud or screen recapture detection; your sole focus is the accuracy of the VIN extraction.
+• DO NOT force-match. A close match is NOT a MATCH. If the extracted data deviates from system input, it is a MISMATCH.
+• DO NOT attempt to locate or read any other text in the image (like license plates, engine numbers, or service stickers) unless they are part of the VIN plate/sticker structure.
+
+STEP-BY-STEP EXECUTION PROTOCOL:
+
+STEP 1: CLARITY & LEGIBILITY ASSESSMENT
+Focus purely on the VIN region. Evaluate if the character clarity, glare, and resolution are sufficient to confidently extract exactly 17 characters without ambiguity. If legibility is poor, skip to outputting status UNCERTAIN with reasoning.
+
+STEP 2: AGGRESSIVE EXTRACTION & SANITIZATION (OCR)
+Locate the 17-character VIN string. Record the characters exactly as they appear (rawDetectedText). COUNT the characters. If the count is NOT exactly 17, skip to status UNCERTAIN. Apply strict ISO 3779 sanitization: DO NOT accept letters 'I' (India), 'O' (Oscar), or 'Q' (Quebec). If you detect these letters, you MUST attempt character correction based on visual similarity (e.g., '0' is '0', 'I' is '1', 'Q' is '0' or 'G'). If ambiguity remains after correction, flag as UNCERTAIN.
+
+STEP 3: DECODING AND AUDIT LOGIC
+Parse the standardized VIN to extract core identity attributes:
+• WMI (Characters 1-3): Decode Country of Origin and Manufacturer (Make).
+• VDS (Characters 4-8): Decode specific vehicle attributes like Model/Type/Body Style.
+• VIS (Character 10): Decode the Model Year.
+
+STEP 4: RIGOROUS SYSTEM MATCHING EVALUATION
+Compare the decoded WMI and VDS findings against the provided [SYSTEM_MAKE] and [SYSTEM_MODEL].
+• Assign "MATCH" ONLY IF the decoded Make is an exact match to [SYSTEM_MAKE] AND the decoded Model directly corresponds to [SYSTEM_MODEL].
+• Assign "MISMATCH" IF the decoded Make contradicts the system, OR the decoded Model is definitively different.
+• Assign "UNCERTAIN" IF Step 1 or 2 failed, or if Step 3 decoding is too generic to confidently confirm the specific [SYSTEM_MODEL].
+
+STRICT JSON OUTPUT FORMAT:
+{
+  "vinExtraction": {
+    "imageLegibilityIsSufficient": true/false,
+    "rawDetectedText": "(The exact text read from image)",
+    "sanitizedVin": "(The 17-digit correct VIN, or null if unreadable/incorrect count)",
+    "characterCount": 0
+  },
+  "decodedData": {
+    "make": "(Extracted Make from WMI)",
+    "model": "(Extracted Model based on VDS)",
+    "manufacturingYear": "(Extracted Model Year)",
+    "countryOfOrigin": "(Extracted Country)"
+  },
+  "validationResult": {
+    "status": "(MATCH / MISMATCH / UNCERTAIN)",
+    "reasoning": "(MANDATORY if MISMATCH or UNCERTAIN. If MATCH, leave as empty string '')"
+  }
+}`;
+
+  const userPrompt =
+    "Analyze this image and extract the Vehicle Identification Number (VIN).";
 
   return { systemInstruction, userPrompt };
 }
