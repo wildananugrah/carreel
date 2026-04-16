@@ -30,6 +30,7 @@ export interface InspectionWithRelations extends Inspection {
     model: string | null;
     type?: string | null;
     lastKnownKm?: number | null;
+    vin?: string | null;
   } | null;
   linkedInspection?: LinkedInspectionSummary | null;
   linkedFrom?: LinkedInspectionSummary | null;
@@ -61,6 +62,7 @@ export interface InspectionListItem extends Inspection {
     model: string | null;
     type?: string | null;
     lastKnownKm?: number | null;
+    vin?: string | null;
   } | null;
   linkedInspection?: LinkedInspectionSummary | null;
   linkedFrom?: LinkedInspectionSummary | null;

@@ -63,6 +63,14 @@ function getSpeedoAI(inspection: InspectionDetailType): SpeedoData | null {
   return step.aiAnalysis.structuredData as SpeedoData;
 }
 
+function getVinFromAI(inspection: InspectionDetailType): string | null {
+  const vinStep = inspection.steps.find((s) => s.stepType === "VIN_NUMBER");
+  const vinData = vinStep?.aiAnalysis?.structuredData as {
+    vinExtraction?: { sanitizedVin?: string | null };
+  } | null;
+  return vinData?.vinExtraction?.sanitizedVin ?? null;
+}
+
 function getVideoMediaId(inspection: InspectionDetailType): string | null {
   const step = inspection.steps.find((s) => s.stepType === "BODY_INSPECTION");
   return step?.mediaFiles?.[0]?.id ?? null;
@@ -530,6 +538,8 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
   const speedoId = getSpeedoMediaId(inspection);
   const speedoAI = getSpeedoAI(inspection);
   const speedoTime = getSpeedoTime(inspection);
+  const vinFromAI = getVinFromAI(inspection);
+  const displayVin = vinFromAI ?? inspection.unit?.vin ?? null;
   const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
 
   return (
@@ -622,11 +632,23 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
             </svg>
           )}
         </div>
-        <p className="text-base font-black text-white">
-          KM {formatKm(speedoAI?.odometerKm ?? inspection.unit?.lastKnownKm)}
-        </p>
-        <p className="text-[10px] text-[#555] mt-1">{formatDate(speedoTime)}</p>
+        {(speedoAI?.odometerKm != null || inspection.unit?.lastKnownKm != null) && (
+          <p className="text-base font-black text-white">
+            KM {formatKm(speedoAI?.odometerKm ?? inspection.unit?.lastKnownKm)}
+          </p>
+        )}
+        {speedoTime && (
+          <p className="text-[10px] text-[#555] mt-1">{formatDate(speedoTime)}</p>
+        )}
       </div>
+
+      {/* VIN */}
+      {displayVin && (
+        <div className="bg-[#0A0A0A] border border-[#3a2800] rounded-[10px] p-3">
+          <p className="text-[9px] font-extrabold text-[#F5C842] tracking-[1px] mb-2">VIN NUMBER</p>
+          <p className="text-base font-black text-white font-mono tracking-wider">{displayVin}</p>
+        </div>
+      )}
 
       {/* Signature */}
       <div className="bg-[#0A0A0A] border border-[#3a2800] rounded-[10px] p-3">
