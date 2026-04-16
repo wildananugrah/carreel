@@ -5,6 +5,7 @@ import type {
   ProjectListItem,
   UpdateProjectDTO,
 } from "../interfaces/repositories/project.repository.interface";
+import { badRequest } from "../utils/http-error";
 
 export class ProjectRepository implements IProjectRepository {
   constructor(private prisma: PrismaClient) {}
@@ -40,17 +41,24 @@ export class ProjectRepository implements IProjectRepository {
   }
 
   async delete(id: string): Promise<void> {
-    // Cascade is defined at the schema level (ProjectMember, DriverAssignment,
-    // etc. cascade on delete). For data safety, only allow delete when there
-    // are no inspections in the project — otherwise we'd lose real user data.
     const inspectionCount = await this.prisma.inspection.count({
       where: { projectId: id },
     });
     if (inspectionCount > 0) {
-      throw new Error(
+      throw badRequest(
         "Cannot delete project with existing inspections. Archive data first.",
       );
     }
+
+    const unitCount = await this.prisma.unit.count({
+      where: { projectId: id },
+    });
+    if (unitCount > 0) {
+      throw badRequest(
+        "Cannot delete project with existing units. Remove or reassign units first.",
+      );
+    }
+
     await this.prisma.project.delete({ where: { id } });
   }
 }
