@@ -701,9 +701,10 @@
         <span class="gold">terdokumentasi.</span>
       </h1>
       <p class="hero-sub">
-        Sistem inspeksi body eksterior berbasis AI untuk serah terima kendaraan.
-        Dirancang untuk valet, rental, dan bengkel — dasar dokumentasi yang
-        lebih kuat untuk penanganan klaim.
+        Sistem inspeksi kendaraan berbasis AI — identifikasi unit, pembacaan VIN
+        & speedometer, hingga inspeksi body eksterior. Dirancang untuk valet,
+        rental, dan bengkel — dasar dokumentasi yang lebih kuat untuk
+        penanganan klaim.
       </p>
       <div class="hero-cta">
         <a href="#contact" class="btn-gold">Jadwalkan Demo</a>
@@ -821,21 +822,22 @@
         <div class="steps">
           <div class="step reveal">
             <div class="step-n">01</div>
-            <span class="step-tag">Pre-Handover</span>
-            <div class="step-title">Rekam Body Sebelum Serah Terima</div>
+            <span class="step-tag">Identifikasi Unit</span>
+            <div class="step-title">Foto Unit, VIN & Speedometer</div>
             <div class="step-desc">
-              Teknisi rekam body eksterior unit via kamera langsung sebelum
-              diserahkan ke pelanggan. Tidak dapat diunggah dari galeri.
+              Teknisi foto eksterior unit untuk identifikasi otomatis (plat,
+              merk, tipe). Dilanjutkan dengan foto VIN Number untuk verifikasi
+              nomor rangka dan/atau foto speedometer untuk pencatatan kilometer.
             </div>
           </div>
           <div class="step reveal">
             <div class="step-n">02</div>
             <span class="step-tag">AI Inspection</span>
-            <div class="step-title">AI Inspeksi Kondisi Body</div>
+            <div class="step-title">AI Inspeksi Body Eksterior</div>
             <div class="step-desc">
-              AI menganalisis rekaman — mendeteksi ada atau tidaknya kerusakan,
-              lokasi spesifik, dan confidence score. Laporan tekstual dihasilkan
-              otomatis.
+              Rekam body eksterior via kamera langsung. AI menganalisis rekaman
+              — mendeteksi kerusakan, lokasi spesifik, dan confidence score.
+              VIN diverifikasi via OCR forensik standar ISO 3779.
             </div>
           </div>
           <div class="step reveal">
@@ -882,37 +884,51 @@
               <div class="ai-pt">
                 <div class="ai-ck">✓</div>
                 <div class="ai-pt-txt">
+                  Identifikasi unit otomatis
+                  <span
+                    >— plat nomor, merk, tipe, dan warna dikenali dari foto
+                    eksterior</span
+                  >
+                </div>
+              </div>
+              <div class="ai-pt">
+                <div class="ai-ck">✓</div>
+                <div class="ai-pt-txt">
+                  VIN OCR forensik (ISO 3779)
+                  <span
+                    >— ekstraksi 17 digit VIN dari foto nomor rangka, dengan
+                    verifikasi pabrikan dan model</span
+                  >
+                </div>
+              </div>
+              <div class="ai-pt">
+                <div class="ai-ck">✓</div>
+                <div class="ai-pt-txt">
                   Deteksi kerusakan body eksterior
                   <span
-                    >— goresan, penyok, kerusakan permukaan yang terlihat pada
-                    rekaman</span
+                    >— goresan, penyok, kerusakan permukaan dari rekaman
+                    video langsung</span
                   >
                 </div>
               </div>
               <div class="ai-pt">
                 <div class="ai-ck">✓</div>
                 <div class="ai-pt-txt">
-                  Laporan tekstual per area
+                  Pembacaan speedometer & KM
                   <span
-                    >— contoh: "Terdapat goresan pada pintu kiri belakang"</span
+                    >— odometer, bahan bakar, dan lampu peringatan direkam
+                    otomatis</span
                   >
                 </div>
               </div>
               <div class="ai-pt">
                 <div class="ai-ck">✓</div>
                 <div class="ai-pt-txt">
-                  Confidence score per temuan
+                  Confidence score & timestamp
                   <span
-                    >— transparansi tingkat keyakinan AI untuk setiap kerusakan
-                    yang terdeteksi</span
+                    >— setiap temuan dilengkapi tingkat keyakinan AI dan
+                    terikat waktu</span
                   >
-                </div>
-              </div>
-              <div class="ai-pt">
-                <div class="ai-ck">✓</div>
-                <div class="ai-pt-txt">
-                  Timestamp otomatis per sesi
-                  <span>— rekaman dan laporan terikat waktu sejak diambil</span>
                 </div>
               </div>
             </div>
@@ -948,9 +964,9 @@
               </div>
               <div style="flex: 1">
                 <div class="report-unit-label">Toyota Avanza · B 1234 XYZ</div>
-                <div class="ru-sub">Pre-Handover · Hari ini · 09.14</div>
+                <div class="ru-sub">VIN MHFBA8GS4N0123456 · Pre-Handover · 09.14</div>
               </div>
-              <div class="status-ok">✓ Scanned</div>
+              <div class="status-ok">✓ Verified</div>
             </div>
             <div class="report-findings">
               <div class="findings-lbl">Temuan AI</div>
@@ -1110,6 +1126,17 @@
               </div>
               <div style="font-size: 11px; color: var(--sub); margin-top: 4px">
                 Inspeksi Otomatis
+              </div>
+            </div>
+            <div style="width: 1px; background: var(--border)"></div>
+            <div style="text-align: center">
+              <div
+                style="font-size: 28px; font-weight: 800; color: var(--gold)"
+              >
+                VIN
+              </div>
+              <div style="font-size: 11px; color: var(--sub); margin-top: 4px">
+                OCR Forensik
               </div>
             </div>
             <div style="width: 1px; background: var(--border)"></div>

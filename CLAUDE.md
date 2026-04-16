@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Carreel is a multi-app platform with two main applications (driver-app and planner-app), each following a three-tier architecture with separate frontend, backend, and database layers. The system uses WebSocket for real-time communication and MinIO for object storage.
 
-The platform is **strictly multi-tenant** at the project level. Every authenticated request loads a `UserScope` via middleware, and every repository query is filtered by it so users can only see data from projects they belong to. There are 3 roles: `SUPER_ADMIN` (system-wide bypass), `PROJECT_ADMIN` (per-project admin who bypasses the driver-assignment filter), and `PLANNER`/`DRIVER` (restricted by their project memberships and assignments). See "Multi-Tenancy & Scope Filtering" below for the full pattern.
+The platform is **strictly multi-tenant** at the project level. Every authenticated request loads a `UserScope` via middleware, and every repository query is filtered by it so users can only see data from projects they belong to. There are 4 system roles: `SUPER_ADMIN` (system-wide bypass), `CARREEL_DRIVER_SUPPORT` (internal support staff with platform-wide bypass who log into the driver-app for demos and troubleshooting), `PROJECT_ADMIN` (per-project admin who bypasses the driver-assignment filter), and `PLANNER`/`DRIVER` (restricted by their project memberships and assignments). See "Multi-Tenancy & Scope Filtering" below for the full pattern.
 
 ## Tech Stack
 
@@ -169,15 +169,16 @@ export default app;
 
 The platform is **strictly multi-tenant** at the project level. Every data-bearing entity belongs to a project, and every query is filtered by the current user's `UserScope` so users can only see data from projects they belong to.
 
-**Three roles:**
+**Four system roles:**
 
 | Role | Scope | What they can do |
 |------|-------|------------------|
 | `SUPER_ADMIN` | System-wide | Bypass all filters, manage workspaces and users |
+| `CARREEL_DRIVER_SUPPORT` | System-wide (driver-app) | Platform-wide bypass for demos and troubleshooting. Logs into driver-app, sees all inspections across all projects, can create inspections in any project (must pick workspace/project first). Bypasses `VITE_UPLOAD_SOURCE` restriction (always has camera + file upload). |
 | `PROJECT_ADMIN` | Per project | Bypass driver-assignment filter within their projects, manage members/assignments |
 | `PLANNER` / `DRIVER` | Per project (membership) | Restricted to drivers assigned to them (planner) or own data (driver) |
 
-A single user can hold different `ProjectMember.role` values in different projects. `SUPER_ADMIN` is a separate `User.systemRole` flag that bypasses everything.
+A single user can hold different `ProjectMember.role` values in different projects. `SUPER_ADMIN` and `CARREEL_DRIVER_SUPPORT` are `User.systemRole` values that bypass scope filtering via the `hasPlatformBypass(scope)` helper in `src/utils/scope-filter.ts`.
 
 #### The `UserScope` type
 
@@ -197,7 +198,7 @@ export interface ProjectScope {
 export interface UserScope {
   userId: string;
   appRole: "DRIVER" | "PLANNER";              // existing User.role — which app
-  systemRole: "SUPER_ADMIN" | "USER";          // bypass flag
+  systemRole: "SUPER_ADMIN" | "USER" | "CARREEL_DRIVER_SUPPORT"; // bypass flag
   projects: ProjectScope[];                    // all projects the user belongs to
 }
 ```
@@ -1457,16 +1458,24 @@ The driver-app is primarily used on **mobile browsers**. All driver-app frontend
 
 The inspection process follows a 2-page wizard flow:
 
-1. **Page 1 — Photos** (`/inspections/:id/photos`): Upload photos for UNIT_IDENTIFICATION (PRE_TRIP only) and SPEEDOMETER steps.
-2. **Page 2 — Video & Submit** (`/inspections/:id/video`): Record body inspection video, fill unit info, add driver comment, capture signature, and submit.
+1. **Page 1 — Photos** (`/inspections/:id/photos`): Upload photos for UNIT_IDENTIFICATION (PRE_TRIP only), VIN_NUMBER (PRE_TRIP only, optional), and SPEEDOMETER (optional) steps.
+2. **Page 2 — Video & Submit** (`/inspections/:id/video`): Record body inspection video, fill unit info (VIN field appears when VIN was captured, odometer field appears when speedometer was captured), add driver comment, capture signature, and submit.
 
 Each page shows a progress indicator: "Halaman X dari 2" with 2 pill dots (`w-8 h-1.5 rounded-full`).
 
 **DRAFT auto-redirect**: When a user clicks a DRAFT inspection from the dashboard, `InspectionDetail` auto-redirects to the correct wizard page based on progress (photos done → video page, otherwise → photos page). This ensures the resume flow matches the creation flow. Uses `navigate(url, { replace: true })` so the back button goes to the dashboard, not back to the detail page.
 
 **Trip types differ in steps:**
-- **PRE_TRIP**: 3 steps — UNIT_IDENTIFICATION, SPEEDOMETER, BODY_INSPECTION
-- **POST_TRIP**: 2 steps — SPEEDOMETER, BODY_INSPECTION
+- **PRE_TRIP**: 4 steps — UNIT_IDENTIFICATION, VIN_NUMBER, SPEEDOMETER, BODY_INSPECTION
+- **POST_TRIP**: Conditional — SPEEDOMETER + BODY_INSPECTION if pre-trip had speedometer; BODY_INSPECTION only if pre-trip had only VIN
+
+**VIN/Speedometer optionality rule (PRE_TRIP only):**
+- At least one of VIN_NUMBER or SPEEDOMETER must be captured. Both are individually optional but one is required.
+- VIN_NUMBER and SPEEDOMETER cards show "(Opsional)" hint on page 1.
+- UNIT_IDENTIFICATION and BODY_INSPECTION remain required.
+- Steps without media at submit time are marked `SKIPPED` (a terminal step status alongside COMPLETED and FAILED).
+- When speedometer is not captured: all downstream speedometer features are hidden (odometer KM field, KM comparison, KM anomaly alerts).
+- VIN_NUMBER uses a forensic ISO 3779 OCR prompt with WMI/VDS decode and strict vehicle matching.
 
 #### Upload Source Configuration (`VITE_UPLOAD_SOURCE`)
 
@@ -1478,17 +1487,19 @@ The `VITE_UPLOAD_SOURCE` environment variable controls how media is captured in 
 | `"camera"` | Only allow camera capture (no gallery picker) |
 | `"file"` | Only allow file/gallery upload (no camera) |
 
-**How to read it:**
+**How to read it (use the centralized hook):**
 ```typescript
-const UPLOAD_SOURCE = (import.meta.env.VITE_UPLOAD_SOURCE as string) || "both";
-const allowCamera = UPLOAD_SOURCE === "camera" || UPLOAD_SOURCE === "both";
-const allowFile = UPLOAD_SOURCE === "file" || UPLOAD_SOURCE === "both";
+import { useUploadSources } from "../hooks/useUploadSources";
+const { allowCamera, allowFile } = useUploadSources();
 ```
 
-**Components that implement this:**
+The `useUploadSources` hook reads `VITE_UPLOAD_SOURCE` and automatically overrides to `{ allowCamera: true, allowFile: true }` for `CARREEL_DRIVER_SUPPORT` users so support staff can upload reference media regardless of the production camera-only lockout.
+
+**Components that use this hook:**
 - `StepCard.tsx` — shows Upload/Camera buttons for photo steps
 - `VideoReview.tsx` — shows "Upload" / "Buka Kamera" buttons for video recording
-- Any new upload UI MUST read `VITE_UPLOAD_SOURCE` and conditionally render camera/file inputs
+- `MediaUpload.tsx` — shows camera/file upload options
+- Any new upload UI MUST use `useUploadSources()` — do NOT read `VITE_UPLOAD_SOURCE` directly
 
 #### Camera Capture (Full-Screen Overlays via `getUserMedia`)
 
@@ -1552,7 +1563,7 @@ When creating a child entity, fetch the parent first to get its `projectId`, the
 
 | Table | Driver-App | Planner-App | Notes |
 |-------|-----------|-------------|-------|
-| `users` | Read & Write | Read & Write | Both apps register/login users. Has `systemRole: SUPER_ADMIN \| USER` (default USER). |
+| `users` | Read & Write | Read & Write | Both apps register/login users. Has `systemRole: SUPER_ADMIN \| USER \| CARREEL_DRIVER_SUPPORT` (default USER). |
 | `units` | Read & Write | Read only | Driver updates `lastKnownKm`; planner reads unit info via inspection. **Note:** `licensePlate @unique` is still global — needs `@@unique([projectId, licensePlate])` for true multi-client isolation. |
 | `inspections` | Read & Write | Read & Write (status only) | Driver creates/updates; planner reads and updates status on review |
 | `inspection_steps` | Read & Write | Read only | Driver creates steps and updates status; planner reads via inspection |
