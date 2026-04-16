@@ -7,7 +7,7 @@ import type { InspectionStep } from "../../lib/types";
 import { MediaLightbox } from "../ui/MediaLightbox";
 import { StatusBadge } from "../ui/StatusBadge";
 
-const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
+const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER", "VIN_NUMBER"];
 
 interface StepCardProps {
   step: InspectionStep;
@@ -15,10 +15,12 @@ interface StepCardProps {
   index: number;
   onUploadComplete: () => void;
   readOnly?: boolean;
+  optionalHint?: string;
 }
 
 const stepTypeLabels: Record<string, string> = {
   UNIT_IDENTIFICATION: "Unit Identification",
+  VIN_NUMBER: "VIN Number",
   SPEEDOMETER: "Speedometer",
   BODY_INSPECTION: "Body",
 };
@@ -176,11 +178,7 @@ function CameraOverlay({
               strokeWidth={2}
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </button>
         )}
@@ -225,6 +223,7 @@ export function StepCard({
   index,
   onUploadComplete,
   readOnly,
+  optionalHint,
 }: StepCardProps) {
   const uid = useId();
   const fileInputId = `${uid}-file`;
@@ -310,7 +309,9 @@ export function StepCard({
   }
 
   return (
-    <div className={`relative border-2 border-dashed rounded-xl p-3 transition-all ${hasMedia ? "border-[#2a2a2a] bg-[#1a1a1a]" : "border-[#3a2800] bg-[#141414]"}`}>
+    <div
+      className={`relative border-2 border-dashed rounded-xl p-3 transition-all ${hasMedia ? "border-[#2a2a2a] bg-[#1a1a1a]" : "border-[#3a2800] bg-[#141414]"}`}
+    >
       {/* Hidden file input for Upload button */}
       {allowFile && (
         <input
@@ -390,6 +391,9 @@ export function StepCard({
           </div>
           <p className="text-xs font-medium text-white">
             {stepTypeLabels[step.stepType] ?? step.stepType}
+            {optionalHint && (
+              <span className="text-[10px] text-neutral-500 ml-2">{optionalHint}</span>
+            )}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <StatusBadge status={step.status} />
@@ -404,6 +408,9 @@ export function StepCard({
           </div>
           <p className="text-xs font-medium text-white mb-0.5">
             {stepTypeLabels[step.stepType] ?? step.stepType}
+            {optionalHint && (
+              <span className="text-[10px] text-neutral-500 ml-2">{optionalHint}</span>
+            )}
           </p>
           <p className="text-[10px] text-yellow-400 mb-2">{isImageOnly ? "Photo" : "Video"}</p>
 
