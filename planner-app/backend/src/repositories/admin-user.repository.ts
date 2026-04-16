@@ -34,15 +34,21 @@ export class AdminUserRepository implements IAdminUserRepository {
   }
 
   async list(search?: string): Promise<AdminUserListItem[]> {
+    const notArchived = { email: { not: { startsWith: "archived-" } } };
     const users = await this.prisma.user.findMany({
       where: search
         ? {
-            OR: [
-              { email: { contains: search, mode: "insensitive" } },
-              { fullName: { contains: search, mode: "insensitive" } },
+            AND: [
+              notArchived,
+              {
+                OR: [
+                  { email: { contains: search, mode: "insensitive" } },
+                  { fullName: { contains: search, mode: "insensitive" } },
+                ],
+              },
             ],
           }
-        : undefined,
+        : notArchived,
       orderBy: { createdAt: "desc" },
       include: {
         projectMemberships: {
