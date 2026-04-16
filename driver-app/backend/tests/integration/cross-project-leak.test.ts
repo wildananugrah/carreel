@@ -251,4 +251,44 @@ describe("Cross-project leak prevention (driver-backend)", () => {
     expect(result).not.toBeNull();
     expect(result?.id).toBe(seedA.inspection.id);
   });
+
+  test("PRE_TRIP creates 4 steps including VIN_NUMBER", async () => {
+    const scope = await scopeRepo.loadScope(driverAId);
+    const inspection = await inspectionRepo.createWithSteps(scope!, {
+      tripType: "PRE_TRIP",
+      projectId: projAId,
+    });
+
+    const full = await inspectionRepo.findById(scope!, inspection.id);
+    expect(full).not.toBeNull();
+    const stepTypes = full!.steps.map((s) => s.stepType);
+    expect(stepTypes).toHaveLength(4);
+    expect(stepTypes).toContain("UNIT_IDENTIFICATION");
+    expect(stepTypes).toContain("VIN_NUMBER");
+    expect(stepTypes).toContain("SPEEDOMETER");
+    expect(stepTypes).toContain("BODY_INSPECTION");
+
+    // Cleanup
+    await prisma.inspectionStep.deleteMany({ where: { inspectionId: inspection.id } });
+    await prisma.inspection.delete({ where: { id: inspection.id } });
+  });
+
+  test("POST_TRIP with stepTypes override creates only BODY_INSPECTION", async () => {
+    const scope = await scopeRepo.loadScope(driverAId);
+    const inspection = await inspectionRepo.createWithSteps(scope!, {
+      tripType: "POST_TRIP",
+      projectId: projAId,
+      stepTypes: ["BODY_INSPECTION"],
+    });
+
+    const full = await inspectionRepo.findById(scope!, inspection.id);
+    expect(full).not.toBeNull();
+    const stepTypes = full!.steps.map((s) => s.stepType);
+    expect(stepTypes).toHaveLength(1);
+    expect(stepTypes).toEqual(["BODY_INSPECTION"]);
+
+    // Cleanup
+    await prisma.inspectionStep.deleteMany({ where: { inspectionId: inspection.id } });
+    await prisma.inspection.delete({ where: { id: inspection.id } });
+  });
 });
