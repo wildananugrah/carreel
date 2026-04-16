@@ -402,6 +402,31 @@ export class InspectionRepository implements IInspectionRepository {
     });
   }
 
+  async updateUnitVin(
+    scope: UserScope,
+    unitId: string,
+    vin: string,
+  ): Promise<void> {
+    const unit = await this.prisma.unit.findUnique({
+      where: { id: unitId },
+      select: { projectId: true },
+    });
+    if (!unit?.projectId) throw new Error("Unit not found");
+    if (
+      !canWriteToEntity(
+        scope,
+        { projectId: unit.projectId },
+        { requireDriverAssignment: false },
+      )
+    ) {
+      throw new Error("Unit not found");
+    }
+    await this.prisma.unit.update({
+      where: { id: unitId },
+      data: { vin },
+    });
+  }
+
   async updateSignatureKey(
     scope: UserScope,
     id: string,

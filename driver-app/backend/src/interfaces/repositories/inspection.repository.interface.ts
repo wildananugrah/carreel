@@ -122,6 +122,7 @@ export interface IInspectionRepository {
     inspectionId: string,
   ): Promise<Unit | null>;
   updateUnitKm(scope: UserScope, unitId: string, km: number): Promise<void>;
+  updateUnitVin(scope: UserScope, unitId: string, vin: string): Promise<void>;
   updateSignatureKey(
     scope: UserScope,
     id: string,

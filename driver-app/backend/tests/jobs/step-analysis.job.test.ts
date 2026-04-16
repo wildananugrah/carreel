@@ -215,6 +215,7 @@ describe("StepAnalysisJob", () => {
       delete: async () => {},
       findUnitByInspectionId: async () => mockUnit,
       updateUnitKm: async () => {},
+      updateUnitVin: async () => {},
       updateSignatureKey: async () => {},
       findOrCreateUnit: async (_scope: UserScope, data) =>
         mockUnit ??

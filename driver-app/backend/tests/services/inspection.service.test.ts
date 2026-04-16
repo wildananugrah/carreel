@@ -175,6 +175,7 @@ describe("InspectionService", () => {
       },
       findUnitByInspectionId: async () => null,
       updateUnitKm: async () => {},
+      updateUnitVin: async () => {},
       updateSignatureKey: async () => {},
       findOrCreateUnit: async (_scope: UserScope, data) =>
         ({
@@ -448,6 +449,7 @@ describe("InspectionService", () => {
       updateStepStatus: async () => ({}) as any,
       findUnitByInspectionId: async () => null,
       updateUnitKm: async () => {},
+      updateUnitVin: async () => {},
       updateSignatureKey: async () => {},
       findOrCreateUnit: async (_scope: UserScope, data) =>
         ({

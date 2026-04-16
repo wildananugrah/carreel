@@ -21,6 +21,7 @@ import {
   type SpeedometerResult,
   type UnitIdentificationResult,
   type VehicleContext,
+  type VinNumberResult,
 } from "../utils/prompts";
 import { SYSTEM_SCOPE as JOB_SYSTEM_SCOPE } from "../utils/system-scope";
 
@@ -359,6 +360,39 @@ export class StepAnalysisJob {
             });
           }
         }
+      } else if (stepType === "VIN_NUMBER") {
+        const result = parsed as VinNumberResult;
+
+        if (result.vinExtraction.sanitizedVin) {
+          const vinUnit =
+            await this.inspectionRepository.findUnitByInspectionId(
+              JOB_SYSTEM_SCOPE,
+              inspectionId,
+            );
+          if (vinUnit) {
+            await this.inspectionRepository.updateUnitVin(
+              JOB_SYSTEM_SCOPE,
+              vinUnit.id,
+              result.vinExtraction.sanitizedVin,
+            );
+            log.info("Updated unit VIN from VIN_NUMBER step", {
+              unitId: vinUnit.id,
+              vin: result.vinExtraction.sanitizedVin,
+            });
+          } else {
+            log.warn("No unit linked to inspection for VIN update", {
+              inspectionId,
+            });
+          }
+        }
+
+        if (result.validationResult.status === "MISMATCH") {
+          await this.createAlert(
+            inspectionId,
+            "VEHICLE_MISMATCH",
+            `VIN mismatch: ${result.validationResult.reasoning}`,
+          );
+        }
       } else if (stepType === "SPEEDOMETER") {
         const result = parsed as SpeedometerResult;
         const telemetry = await this.validateAndSaveTelemetry(
@@ -692,15 +726,23 @@ export class StepAnalysisJob {
     );
     if (!inspection) return;
 
-    const REQUIRED_STEPS =
+    const requiredStepTypes =
       inspection.tripType === "PRE_TRIP"
-        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
-        : ["SPEEDOMETER", "BODY_INSPECTION"];
+        ? [
+            "UNIT_IDENTIFICATION",
+            "VIN_NUMBER",
+            "SPEEDOMETER",
+            "BODY_INSPECTION",
+          ]
+        : inspection.steps.map((s: { stepType: string }) => s.stepType);
     const requiredSteps = inspection.steps.filter((step) =>
-      REQUIRED_STEPS.includes(step.stepType),
+      requiredStepTypes.includes(step.stepType),
     );
     const allTerminal = requiredSteps.every(
-      (step) => step.status === "COMPLETED" || step.status === "FAILED",
+      (step) =>
+        step.status === "COMPLETED" ||
+        step.status === "FAILED" ||
+        step.status === "SKIPPED",
     );
 
     if (!allTerminal) return;
