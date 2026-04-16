@@ -201,19 +201,55 @@ export class InspectionService implements IInspectionService {
       throw new Error("Only DRAFT inspections can be submitted");
     }
 
-    // Only required steps must have media uploaded
+    // Only required steps must have media uploaded.
+    // VIN_NUMBER and SPEEDOMETER are optional for PRE_TRIP (at least one must have media).
     const REQUIRED_STEPS =
       inspection.tripType === "PRE_TRIP"
-        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
+        ? ["UNIT_IDENTIFICATION", "BODY_INSPECTION"]
         : ["SPEEDOMETER", "BODY_INSPECTION"];
-    const pendingSteps = inspection.steps.filter(
+    const pendingRequired = inspection.steps.filter(
       (s) => REQUIRED_STEPS.includes(s.stepType) && s.status === "PENDING",
     );
-    if (pendingSteps.length > 0) {
-      const pendingTypes = pendingSteps.map((s) => s.stepType).join(", ");
-      throw new Error(
-        `All steps must have media uploaded before submitting. Pending: ${pendingTypes}`,
+    if (pendingRequired.length > 0) {
+      const pendingTypes = pendingRequired.map((s) => s.stepType).join(", ");
+      throw badRequest(
+        `All required steps must have media uploaded before submitting. Pending: ${pendingTypes}`,
       );
+    }
+
+    // For PRE_TRIP: at least one of VIN_NUMBER or SPEEDOMETER must have media
+    if (inspection.tripType === "PRE_TRIP") {
+      const vinStep = inspection.steps.find(
+        (s) => s.stepType === "VIN_NUMBER",
+      );
+      const speedoStep = inspection.steps.find(
+        (s) => s.stepType === "SPEEDOMETER",
+      );
+
+      const vinHasMedia = vinStep && vinStep.status !== "PENDING";
+      const speedoHasMedia = speedoStep && speedoStep.status !== "PENDING";
+
+      if (!vinHasMedia && !speedoHasMedia) {
+        throw badRequest(
+          "Please capture at least one: VIN Number or Speedometer",
+        );
+      }
+
+      // Mark uncaptured optional steps as SKIPPED
+      if (vinStep && !vinHasMedia) {
+        await this.inspectionRepository.updateStepStatus(
+          scope,
+          vinStep.id,
+          "SKIPPED",
+        );
+      }
+      if (speedoStep && !speedoHasMedia) {
+        await this.inspectionRepository.updateStepStatus(
+          scope,
+          speedoStep.id,
+          "SKIPPED",
+        );
+      }
     }
 
     if (!inspection.signatureKey) {
@@ -315,6 +351,7 @@ export class InspectionService implements IInspectionService {
 
     const ANALYZABLE_STEP_TYPES = [
       "UNIT_IDENTIFICATION",
+      "VIN_NUMBER",
       "SPEEDOMETER",
       "BODY_INSPECTION",
     ];
