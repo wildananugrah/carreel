@@ -147,6 +147,7 @@ model Inspection {
 
 enum StepType {
   UNIT_IDENTIFICATION
+  VIN_NUMBER
   SPEEDOMETER
   BODY_INSPECTION
 }
@@ -157,6 +158,7 @@ enum StepStatus {
   PROCESSING
   COMPLETED
   FAILED
+  SKIPPED
 }
 
 model InspectionStep {

@@ -68,6 +68,7 @@ export type InspectionStatus = (typeof InspectionStatus)[keyof typeof Inspection
 
 export const StepType = {
   UNIT_IDENTIFICATION: 'UNIT_IDENTIFICATION',
+  VIN_NUMBER: 'VIN_NUMBER',
   SPEEDOMETER: 'SPEEDOMETER',
   BODY_INSPECTION: 'BODY_INSPECTION'
 } as const
@@ -80,7 +81,8 @@ export const StepStatus = {
   UPLOADED: 'UPLOADED',
   PROCESSING: 'PROCESSING',
   COMPLETED: 'COMPLETED',
-  FAILED: 'FAILED'
+  FAILED: 'FAILED',
+  SKIPPED: 'SKIPPED'
 } as const
 
 export type StepStatus = (typeof StepStatus)[keyof typeof StepStatus]
