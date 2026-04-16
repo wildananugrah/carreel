@@ -64,9 +64,15 @@ export class InspectionRepository implements IInspectionRepository {
   ): Promise<Inspection> {
     const projectId = data.projectId ?? this.requirePrimaryProjectId(scope);
     const stepTypes =
-      data.tripType === "PRE_TRIP"
-        ? ["UNIT_IDENTIFICATION", "SPEEDOMETER", "BODY_INSPECTION"]
-        : ["SPEEDOMETER", "BODY_INSPECTION"];
+      data.stepTypes ??
+      (data.tripType === "PRE_TRIP"
+        ? [
+            "UNIT_IDENTIFICATION",
+            "VIN_NUMBER",
+            "SPEEDOMETER",
+            "BODY_INSPECTION",
+          ]
+        : ["SPEEDOMETER", "BODY_INSPECTION"]);
 
     return this.prisma.inspection.create({
       data: {
@@ -82,6 +88,7 @@ export class InspectionRepository implements IInspectionRepository {
           create: stepTypes.map((stepType) => ({
             stepType: stepType as
               | "UNIT_IDENTIFICATION"
+              | "VIN_NUMBER"
               | "SPEEDOMETER"
               | "BODY_INSPECTION",
             status: "PENDING" as const,

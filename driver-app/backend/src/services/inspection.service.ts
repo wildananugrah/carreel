@@ -93,6 +93,18 @@ export class InspectionService implements IInspectionService {
       );
     }
 
+    // If the pre-trip had a speedometer captured (not PENDING/SKIPPED),
+    // include SPEEDOMETER in the post-trip. Otherwise, only BODY_INSPECTION.
+    const preTripHasSpeedometer = preTrip.steps.some(
+      (s) =>
+        s.stepType === "SPEEDOMETER" &&
+        s.status !== "PENDING" &&
+        s.status !== "SKIPPED",
+    );
+    const postTripStepTypes = preTripHasSpeedometer
+      ? ["SPEEDOMETER", "BODY_INSPECTION"]
+      : ["BODY_INSPECTION"];
+
     const postTrip = await this.inspectionRepository.createWithSteps(scope, {
       tripType: "POST_TRIP",
       linkedInspectionId: preTripId,
@@ -100,6 +112,7 @@ export class InspectionService implements IInspectionService {
       latitude: data.latitude,
       longitude: data.longitude,
       projectId: preTrip.projectId,
+      stepTypes: postTripStepTypes,
     });
 
     this.logger.info("Post-trip inspection created", {

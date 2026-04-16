@@ -63,6 +63,7 @@ export interface CreateInspectionDTO {
   latitude?: number;
   longitude?: number;
   projectId?: string;
+  stepTypes?: string[];
 }
 
 export interface UpdateInspectionDTO {
