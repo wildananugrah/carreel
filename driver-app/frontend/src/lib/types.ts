@@ -7,9 +7,9 @@ export type InspectionStatus =
   | "REJECTED"
   | "FLAGGED";
 
-export type StepType = "UNIT_IDENTIFICATION" | "SPEEDOMETER" | "BODY_INSPECTION";
+export type StepType = "UNIT_IDENTIFICATION" | "VIN_NUMBER" | "SPEEDOMETER" | "BODY_INSPECTION";
 
-export type StepStatus = "PENDING" | "UPLOADED" | "PROCESSING" | "COMPLETED" | "FAILED";
+export type StepStatus = "PENDING" | "UPLOADED" | "PROCESSING" | "COMPLETED" | "FAILED" | "SKIPPED";
 
 export type TripType = "PRE_TRIP" | "POST_TRIP";
 
