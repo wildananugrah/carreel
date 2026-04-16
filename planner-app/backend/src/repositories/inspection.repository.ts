@@ -30,7 +30,7 @@ export class InspectionRepository implements IInspectionRepository {
           select: { id: true, fullName: true, email: true },
         },
         unit: {
-          select: { id: true, licensePlate: true, make: true, model: true },
+          select: { id: true, licensePlate: true, make: true, model: true, vin: true },
         },
         linkedInspection: {
           select: { id: true, tripType: true, status: true },
@@ -184,7 +184,7 @@ export class InspectionRepository implements IInspectionRepository {
       include: {
         driver: { select: { id: true, fullName: true, email: true } },
         unit: {
-          select: { id: true, licensePlate: true, make: true, model: true },
+          select: { id: true, licensePlate: true, make: true, model: true, vin: true },
         },
         steps: {
           include: {

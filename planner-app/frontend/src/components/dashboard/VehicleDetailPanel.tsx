@@ -212,9 +212,14 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
         </div>
         <div>
           <p className="text-base font-black text-white mb-1">{vehicle.unitName}</p>
-          <p className="text-xs text-[#666] mb-2">
+          <p className="text-xs text-[#666] mb-1">
             {vehicle.licensePlate} {"\u00B7"} KM {formatKm(vehicle.lastKnownKm)}
           </p>
+          {(preDetail?.unit?.vin || postDetail?.unit?.vin) && (
+            <p className="text-[10px] text-[#555] font-mono mb-1">
+              VIN {preDetail?.unit?.vin ?? postDetail?.unit?.vin}
+            </p>
+          )}
           <div className="flex gap-1.5 flex-wrap">
             <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#1a1600] text-[#F5C518] border border-[#F5C51833]">
               {statusLabel}

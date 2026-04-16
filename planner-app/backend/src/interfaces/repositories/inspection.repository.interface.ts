@@ -25,6 +25,7 @@ export interface InspectionDetailWithRelations extends Inspection {
     licensePlate: string;
     make: string | null;
     model: string | null;
+    vin: string | null;
   } | null;
   steps: (InspectionStep & {
     mediaFiles: {

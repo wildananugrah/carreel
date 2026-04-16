@@ -144,6 +144,7 @@ export interface InspectionDetail {
     licensePlate: string;
     make: string | null;
     model: string | null;
+    vin: string | null;
   } | null;
   linkedInspection?: LinkedInspectionSummary | null;
   linkedFrom?: LinkedInspectionSummary | null;
