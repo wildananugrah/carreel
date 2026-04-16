@@ -5,6 +5,14 @@ import type {
   UpdateWorkspaceDTO,
   WorkspaceListItem,
 } from "../interfaces/repositories/workspace.repository.interface";
+import { badRequest } from "../utils/http-error";
+
+export type {
+  CreateWorkspaceDTO,
+  IWorkspaceRepository,
+  UpdateWorkspaceDTO,
+  WorkspaceListItem,
+} from "../interfaces/repositories/workspace.repository.interface";
 
 export class WorkspaceRepository implements IWorkspaceRepository {
   constructor(private prisma: PrismaClient) {}
@@ -49,7 +57,7 @@ export class WorkspaceRepository implements IWorkspaceRepository {
       where: { workspaceId: id },
     });
     if (projectCount > 0) {
-      throw new Error("Cannot delete workspace with existing projects");
+      throw badRequest("Cannot delete workspace with existing projects. Delete all projects first.");
     }
     await this.prisma.workspace.delete({ where: { id } });
   }
