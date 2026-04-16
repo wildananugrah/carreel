@@ -63,7 +63,7 @@ interface AIFlag {
 function extractUnitInfo(
   inspection: InspectionDetail,
   preTripData?: PreTripUnitData | null,
-): AIDetectedInfo | null {
+): (AIDetectedInfo & { vin: string | null }) | null {
   const unitIdStep = inspection.steps.find((s) => s.stepType === "UNIT_IDENTIFICATION");
   const aiData = unitIdStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
 
@@ -71,6 +71,17 @@ function extractUnitInfo(
   const speedoStep = inspection.steps.find((s) => s.stepType === "SPEEDOMETER");
   const speedoData = speedoStep?.aiAnalysis?.structuredData as Record<string, unknown> | null;
   const speedoKm = speedoData?.odometerKm as number | undefined;
+
+  // Extract VIN from VIN_NUMBER step (takes precedence)
+  const vinStep = inspection.steps.find((s) => s.stepType === "VIN_NUMBER");
+  const vinData = vinStep?.aiAnalysis?.structuredData as {
+    vinExtraction?: { sanitizedVin?: string | null };
+  } | null;
+  const extractedVin = vinData?.vinExtraction?.sanitizedVin ?? null;
+
+  // VIN from UNIT_IDENTIFICATION as fallback
+  const unitIdVin = (aiData?.vin as string | null) ?? null;
+  const vin = extractedVin ?? unitIdVin ?? inspection.unit?.vin ?? null;
 
   // Build unit info: AI data > inspection.unit > pre-trip reference
   const unit = inspection.unit;
@@ -89,9 +100,9 @@ function extractUnitInfo(
     preTripData?.odometerKm ??
     undefined;
 
-  if (!make && !model && !licensePlate && odometerKm == null) return null;
+  if (!make && !model && !licensePlate && odometerKm == null && !vin) return null;
 
-  return { make, model, year, licensePlate, odometerKm };
+  return { make, model, year, licensePlate, odometerKm, vin };
 }
 
 function formatDate(dateStr: string | null): string {
@@ -175,6 +186,7 @@ export function VideoReview() {
     year: "",
     licensePlate: "",
     odometerKm: "",
+    vin: "",
   });
   const [showSignature, setShowSignature] = useState(false);
   const [sigSaved, setSigSaved] = useState(false);
@@ -257,6 +269,7 @@ export function VideoReview() {
         year: prev.year || info.year || "",
         licensePlate: prev.licensePlate || info.licensePlate || "",
         odometerKm: prev.odometerKm || (info.odometerKm != null ? String(info.odometerKm) : ""),
+        vin: prev.vin || info.vin || "",
       }));
     }
   }, [inspection, unitData]);
@@ -285,12 +298,20 @@ export function VideoReview() {
   const hasMedia = bodyStep && bodyStep.mediaFiles.length > 0;
   const aiInfo = inspection ? extractUnitInfo(inspection, unitData) : null;
   const hasAIData = !!inspection?.steps.some(
-    (s) => s.stepType === "UNIT_IDENTIFICATION" && s.aiAnalysis?.structuredData,
+    (s) =>
+      (s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "VIN_NUMBER") &&
+      s.aiAnalysis?.structuredData,
   );
   const photoStepsProcessing = !!inspection?.steps.some(
     (s) =>
-      (s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "SPEEDOMETER") &&
+      (s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "VIN_NUMBER" || s.stepType === "SPEEDOMETER") &&
       (s.status === "PROCESSING" || s.status === "UPLOADED"),
+  );
+  const hasSpeedometer = !!inspection?.steps.some(
+    (s) => s.stepType === "SPEEDOMETER" && s.status !== "PENDING" && s.status !== "SKIPPED",
+  );
+  const hasVin = !!inspection?.steps.some(
+    (s) => s.stepType === "VIN_NUMBER" && s.status !== "PENDING" && s.status !== "SKIPPED",
   );
   const aiFlags = inspection ? extractAIFlags(inspection) : [];
   const isPostTrip = inspection?.tripType === "POST_TRIP";
@@ -439,7 +460,8 @@ export function VideoReview() {
       if (unitForm.licensePlate) patchData.unitLicensePlate = unitForm.licensePlate;
       if (unitForm.make) patchData.unitMake = unitForm.make;
       if (unitForm.model) patchData.unitModel = unitForm.model;
-      if (unitForm.odometerKm) patchData.unitOdometerKm = Number(unitForm.odometerKm);
+      if (hasSpeedometer && unitForm.odometerKm) patchData.unitOdometerKm = Number(unitForm.odometerKm);
+      if (hasVin && unitForm.vin) patchData.unitVin = unitForm.vin;
       if (Object.keys(patchData).length > 0) {
         await api.patch(`/api/inspections/${id}`, patchData);
       }
@@ -588,30 +610,50 @@ export function VideoReview() {
                     className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600"
                   />
                 </div>
-                <div className="bg-[#1a1a1a] rounded-lg p-2.5">
-                  <p className="text-[9px] text-neutral-500 mb-0.5">Odometer</p>
-                  <div className="flex items-center gap-1">
+                {hasVin && (
+                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                    <p className="text-[9px] text-neutral-500 mb-0.5">VIN Number</p>
                     <input
-                      type="number"
-                      value={unitForm.odometerKm}
+                      type="text"
+                      value={unitForm.vin}
                       onChange={(e) =>
                         setUnitForm((prev) => ({
                           ...prev,
-                          odometerKm: e.target.value,
+                          vin: e.target.value.toUpperCase(),
                         }))
                       }
-                      placeholder="0"
-                      className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      maxLength={17}
+                      placeholder="17 karakter"
+                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder-neutral-600 font-mono"
                     />
-                    <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
                   </div>
-                </div>
+                )}
+                {hasSpeedometer && (
+                  <div className="bg-[#1a1a1a] rounded-lg p-2.5">
+                    <p className="text-[9px] text-neutral-500 mb-0.5">Odometer</p>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={unitForm.odometerKm}
+                        onChange={(e) =>
+                          setUnitForm((prev) => ({
+                            ...prev,
+                            odometerKm: e.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                        className="w-full bg-transparent text-sm font-bold text-[#F5C842] outline-none placeholder-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <span className="text-sm font-bold text-[#F5C842] shrink-0">KM</span>
+                    </div>
+                  </div>
+                )}
               </div>
               <p className="text-[10px] text-neutral-600 italic mt-3">
                 {photoStepsProcessing
                   ? "Sedang dianalisa AI... hasil akan muncul otomatis"
                   : hasAIData
-                    ? "Terdeteksi otomatis \u2014 bisa disesuaikan manual"
+                    ? "Terdeteksi otomatis — bisa disesuaikan manual"
                     : "Silakan isi manual atau tunggu hasil analisa AI"}
               </p>
             </div>

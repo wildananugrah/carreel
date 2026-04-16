@@ -57,6 +57,7 @@ export interface Inspection {
     model: string | null;
     type: string | null;
     lastKnownKm: number | null;
+    vin?: string | null;
   } | null;
   linkedInspection?: LinkedInspectionSummary | null;
   linkedFrom?: LinkedInspectionSummary | null;
