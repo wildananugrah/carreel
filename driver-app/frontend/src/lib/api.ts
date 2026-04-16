@@ -41,15 +41,22 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     headers,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && token) {
     clearToken();
     window.location.href = "/login";
     throw new ApiError(401, "Unauthorized");
   }
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, (body as { error?: string }).error ?? "Request failed");
+    const body = await response.text().catch(() => "");
+    let message = "Request failed";
+    if (body) {
+      try {
+        const parsed = JSON.parse(body) as { error?: string };
+        message = parsed.error ?? message;
+      } catch {}
+    }
+    throw new ApiError(response.status, message);
   }
 
   return response.json() as Promise<T>;
