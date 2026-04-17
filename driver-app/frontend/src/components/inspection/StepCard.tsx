@@ -391,10 +391,10 @@ export function StepCard({
           </div>
           <p className="text-xs font-medium text-white">
             {stepTypeLabels[step.stepType] ?? step.stepType}
-            {optionalHint && (
-              <span className="text-[10px] text-neutral-500 ml-2">{optionalHint}</span>
-            )}
           </p>
+          {optionalHint && (
+            <p className="text-[10px] text-neutral-500">{optionalHint}</p>
+          )}
           <div className="flex items-center gap-1.5 mt-0.5">
             <StatusBadge status={step.status} />
           </div>
@@ -408,10 +408,10 @@ export function StepCard({
           </div>
           <p className="text-xs font-medium text-white mb-0.5">
             {stepTypeLabels[step.stepType] ?? step.stepType}
-            {optionalHint && (
-              <span className="text-[10px] text-neutral-500 ml-2">{optionalHint}</span>
-            )}
           </p>
+          {optionalHint && (
+            <p className="text-[10px] text-neutral-500 mb-0.5">{optionalHint}</p>
+          )}
           <p className="text-[10px] text-yellow-400 mb-2">{isImageOnly ? "Photo" : "Video"}</p>
 
           {uploading ? (
