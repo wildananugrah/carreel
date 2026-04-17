@@ -13,13 +13,15 @@ function getPhotoSteps(inspection: InspectionDetail): InspectionStep[] {
   if (inspection.tripType === "PRE_TRIP") {
     const unitIdStep = inspection.steps.find((s) => s.stepType === "UNIT_IDENTIFICATION");
     if (unitIdStep) steps.push(unitIdStep);
-
-    const vinStep = inspection.steps.find((s) => s.stepType === "VIN_NUMBER");
-    if (vinStep) steps.push(vinStep);
   }
 
   const speedoStep = inspection.steps.find((s) => s.stepType === "SPEEDOMETER");
   if (speedoStep) steps.push(speedoStep);
+
+  if (inspection.tripType === "PRE_TRIP") {
+    const vinStep = inspection.steps.find((s) => s.stepType === "VIN_NUMBER");
+    if (vinStep) steps.push(vinStep);
+  }
 
   return steps;
 }
