@@ -310,9 +310,11 @@ export class StepAnalysisJob {
         const stepLabel =
           stepType === "UNIT_IDENTIFICATION"
             ? "Unit Identification photo"
-            : stepType === "SPEEDOMETER"
-              ? "Speedometer photo"
-              : "Body Inspection video";
+            : stepType === "VIN_NUMBER"
+              ? "VIN Number photo"
+              : stepType === "SPEEDOMETER"
+                ? "Speedometer photo"
+                : "Body Inspection video";
         await this.createAlert(
           inspectionId,
           "SCREEN_RECAPTURE",

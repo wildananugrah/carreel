@@ -56,6 +56,7 @@ export interface VinNumberResult {
     status: "MATCH" | "MISMATCH" | "UNCERTAIN";
     reasoning: string;
   };
+  screenRecaptureDetected: boolean;
 }
 
 export interface BodyInspectionResult {
@@ -483,7 +484,7 @@ SYSTEM INPUT DATA:
 CRITICAL "DO NOT" CONSTRAINTS (MANDATORY):
 • DO NOT use conversational language or output markdown syntax like \`\`\`json.
 • DO NOT hallucinate or infer missing or obscured digits. If glare, dirt, or angle makes a character ambiguous, you MUST flag it as unreadable.
-• DO NOT apply any fraud or screen recapture detection; your sole focus is the accuracy of the VIN extraction.
+• DO apply screen recapture detection: if the image appears to be a photograph of a screen, monitor, printout, or digitally rendered text rather than a direct camera capture of a physical VIN plate, set screenRecaptureDetected to true.
 • DO NOT force-match. A close match is NOT a MATCH. If the extracted data deviates from system input, it is a MISMATCH.
 • DO NOT attempt to locate or read any other text in the image (like license plates, engine numbers, or service stickers) unless they are part of the VIN plate/sticker structure.
 
@@ -524,7 +525,8 @@ STRICT JSON OUTPUT FORMAT:
   "validationResult": {
     "status": "(MATCH / MISMATCH / UNCERTAIN)",
     "reasoning": "(MANDATORY if MISMATCH or UNCERTAIN. If MATCH, leave as empty string '')"
-  }
+  },
+  "screenRecaptureDetected": false
 }`;
 
   const userPrompt =
