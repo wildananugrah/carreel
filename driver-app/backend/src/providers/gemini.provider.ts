@@ -25,6 +25,7 @@ export class GeminiProvider implements IAIProvider {
       model: this.model,
       contents: [{ inlineData: { mimeType, data: base64 } }, { text: prompt }],
       config: {
+        responseMimeType: "application/json",
         ...(systemInstruction && { systemInstruction }),
       },
     });
@@ -45,6 +46,7 @@ export class GeminiProvider implements IAIProvider {
       ]),
       config: {
         temperature: 0.0,
+        responseMimeType: "application/json",
         ...(systemInstruction && { systemInstruction }),
       },
     });
