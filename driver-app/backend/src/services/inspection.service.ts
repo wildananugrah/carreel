@@ -171,11 +171,15 @@ export class InspectionService implements IInspectionService {
 
     // Handle manual unit info from driver
     if (data.unitLicensePlate) {
-      const unit = await this.inspectionRepository.findOrCreateUnit(scope, {
-        licensePlate: data.unitLicensePlate,
-        make: data.unitMake ?? null,
-        model: data.unitModel ?? null,
-      });
+      const unit = await this.inspectionRepository.findOrCreateUnit(
+        scope,
+        {
+          licensePlate: data.unitLicensePlate,
+          make: data.unitMake ?? null,
+          model: data.unitModel ?? null,
+        },
+        inspection.projectId,
+      );
       await this.inspectionRepository.linkUnitToInspection(scope, id, unit.id);
       if (data.unitOdometerKm != null) {
         await this.inspectionRepository.updateUnitKm(

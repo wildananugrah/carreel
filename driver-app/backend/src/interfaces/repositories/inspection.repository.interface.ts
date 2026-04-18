@@ -141,6 +141,7 @@ export interface IInspectionRepository {
       vin?: string | null;
       type?: string | null;
     },
+    projectId?: string,
   ): Promise<Unit>;
   linkUnitToInspection(
     scope: UserScope,

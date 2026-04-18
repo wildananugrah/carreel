@@ -479,6 +479,7 @@ export class InspectionRepository implements IInspectionRepository {
       vin?: string | null;
       type?: string | null;
     },
+    projectId?: string,
   ): Promise<Unit> {
     // Units are project-scoped. For creates (driver or system job running an
     // inspection), the unit belongs to the scope's primary project. Look-ups
@@ -506,7 +507,7 @@ export class InspectionRepository implements IInspectionRepository {
       }
       return existing;
     }
-    const projectId = this.requirePrimaryProjectId(scope);
+    const targetProjectId = projectId ?? this.requirePrimaryProjectId(scope);
     return this.prisma.unit.create({
       data: {
         licensePlate: data.licensePlate,
@@ -515,7 +516,7 @@ export class InspectionRepository implements IInspectionRepository {
         color: data.color ?? undefined,
         vin: data.vin ?? undefined,
         type: data.type ?? undefined,
-        projectId,
+        projectId: targetProjectId,
       },
     });
   }
