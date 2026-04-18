@@ -8,7 +8,7 @@ import type {
 } from "../../src/interfaces/repositories/inspection.repository.interface";
 import { InspectionService } from "../../src/services/inspection.service";
 import type { UserScope } from "../../src/types/scope";
-import { makeSuperAdminScope } from "../helpers/test-scope";
+import { makeDriverScope, makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -240,11 +240,11 @@ describe("InspectionService", () => {
     );
     expect(
       service.getById(
-        makeSuperAdminScope({ userId: "driver-2" }),
+        makeDriverScope({ userId: "driver-2" }),
         "insp-1",
         "driver-2",
       ),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow("not found");
   });
 
   test("getById throws for non-existent inspection", async () => {
@@ -579,12 +579,12 @@ describe("InspectionService", () => {
     );
     expect(
       service.createPostTrip(
-        makeSuperAdminScope({ userId: "driver-2" }),
+        makeDriverScope({ userId: "driver-2" }),
         "driver-2",
         "insp-1",
         {},
       ),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow("not found");
   });
 
   test("createPostTrip throws for non-PRE_TRIP", async () => {
@@ -666,11 +666,11 @@ describe("InspectionService", () => {
     );
     expect(
       service.delete(
-        makeSuperAdminScope({ userId: "driver-2" }),
+        makeDriverScope({ userId: "driver-2" }),
         "insp-1",
         "driver-2",
       ),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow("not found");
   });
 
   test("delete non-existent inspection throws", async () => {
@@ -817,10 +817,10 @@ describe("InspectionService", () => {
     );
     expect(
       service.getPreTripUnitData(
-        makeSuperAdminScope({ userId: "driver-2" }),
+        makeDriverScope({ userId: "driver-2" }),
         "insp-1",
         "driver-2",
       ),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow("not found");
   });
 });

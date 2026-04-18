@@ -22,7 +22,7 @@ import type {
   UpdateInspectionDTO,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
-import { badRequest, notFound } from "../utils/http-error";
+import { badRequest, conflict, notFound } from "../utils/http-error";
 import { hasPlatformBypass } from "../utils/scope-filter";
 
 export class InspectionService implements IInspectionService {
@@ -74,23 +74,21 @@ export class InspectionService implements IInspectionService {
   ): Promise<Inspection> {
     const preTrip = await this.inspectionRepository.findById(scope, preTripId);
     if (!preTrip) {
-      throw new Error("Pre-trip inspection not found");
+      throw notFound("Pre-trip inspection not found");
     }
-    if (preTrip.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && preTrip.driverId !== driverId) {
+      throw notFound("Pre-trip inspection not found");
     }
     if (preTrip.tripType !== "PRE_TRIP") {
-      throw new Error("Can only create post-trip from a pre-trip inspection");
+      throw badRequest("Can only create post-trip from a pre-trip inspection");
     }
     if (preTrip.status === "DRAFT") {
-      throw new Error(
+      throw badRequest(
         "Pre-trip inspection must be submitted before ending trip",
       );
     }
     if (preTrip.linkedFrom) {
-      throw new Error(
-        "A post-trip inspection already exists for this pre-trip",
-      );
+      throw conflict("A post-trip inspection already exists for this pre-trip");
     }
 
     // If the pre-trip had a speedometer captured (not PENDING/SKIPPED),
@@ -131,10 +129,10 @@ export class InspectionService implements IInspectionService {
   ): Promise<InspectionWithRelations> {
     const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
     return inspection;
   }
@@ -160,13 +158,13 @@ export class InspectionService implements IInspectionService {
   ): Promise<Inspection> {
     const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
     if (inspection.status !== "DRAFT") {
-      throw new Error("Only DRAFT inspections can be updated");
+      throw badRequest("Only DRAFT inspections can be updated");
     }
 
     const updated = await this.inspectionRepository.update(scope, id, data);
@@ -205,13 +203,13 @@ export class InspectionService implements IInspectionService {
   ): Promise<Inspection> {
     const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
     if (inspection.status !== "DRAFT") {
-      throw new Error("Only DRAFT inspections can be submitted");
+      throw badRequest("Only DRAFT inspections can be submitted");
     }
 
     // Only required steps must have media uploaded.
@@ -266,7 +264,7 @@ export class InspectionService implements IInspectionService {
     }
 
     if (!inspection.signatureKey) {
-      throw new Error("Signature is required before submitting");
+      throw badRequest("Signature is required before submitting");
     }
 
     if (!this.aiEnabled) {
@@ -349,13 +347,13 @@ export class InspectionService implements IInspectionService {
   ): Promise<{ enqueuedSteps: string[] }> {
     const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
     if (inspection.status !== "DRAFT") {
-      throw new Error("Only DRAFT inspections can trigger photo analysis");
+      throw badRequest("Only DRAFT inspections can trigger photo analysis");
     }
 
     if (!this.aiEnabled || !this.jobQueue) {
@@ -397,13 +395,13 @@ export class InspectionService implements IInspectionService {
   async delete(scope: UserScope, id: string, driverId: string): Promise<void> {
     const inspection = await this.inspectionRepository.findById(scope, id);
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
     if (inspection.status !== "DRAFT") {
-      throw new Error("Only DRAFT inspections can be deleted");
+      throw badRequest("Only DRAFT inspections can be deleted");
     }
 
     await this.inspectionRepository.delete(scope, id);
@@ -422,15 +420,15 @@ export class InspectionService implements IInspectionService {
       inspectionId,
     );
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
 
     const step = await this.inspectionRepository.findStepById(scope, stepId);
     if (!step || step.inspectionId !== inspectionId) {
-      throw new Error("Step not found");
+      throw notFound("Step not found");
     }
 
     return this.inspectionRepository.updateStepStatus(
@@ -463,10 +461,10 @@ export class InspectionService implements IInspectionService {
       postTripId,
     );
     if (!postTrip) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (postTrip.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && postTrip.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
     if (postTrip.tripType !== "POST_TRIP" || !postTrip.linkedInspectionId) {
       return null;
