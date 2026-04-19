@@ -610,11 +610,21 @@ GORESAN (SCRATCH) DETECTION:
   - Single long linear marks consistent with key scratches or parking contact
 - Uncertain scratch: still report it with severity "MINOR" and append "(low confidence)" to the description. Over-report rather than miss.
 
-VIDEO ARTIFACTS & OUT-OF-SCOPE:
+VIDEO ARTIFACTS & CLARITY:
 - Motion blur, lens flares, compression artifacts are NOT damage.
 - Do not infer hidden damage.
 - Assess ONLY the primary subject vehicle. Ignore background vehicles, objects, and reflections.
-- If the video is too low-quality (blurry, dark, obstructed) for an accurate assessment, set overallCondition to "POOR", confidence to 0, and return an empty damages array.
+
+PANEL-LEVEL CLARITY (BLUR HANDLING):
+- Motion blur during camera pan is normal. Assess each body panel's clarity independently, not the video as a whole.
+- A panel is "inspectable" only if it appears in at least ONE sharp frame where edges are clean, paint texture is visible, and reflections are not smeared.
+- If a panel is blurry in every frame it appears in, you CANNOT reliably assess it. State this in "visualAnalysis" and do NOT report or invent damage for that panel.
+- Confidence calibration (apply to the top-level "confidence" field):
+  - All major zones (front, rear, both sides, roof) clearly inspectable → 0.85–0.95
+  - 1–2 zones too blurry or obstructed to assess → 0.60–0.80
+  - Most of the body unassessable (blur, darkness, obstruction) → 0.30–0.50, set overallCondition to "POOR"
+  - Video unusable end-to-end (severe blur / darkness / no vehicle visible) → 0.0–0.20, empty damages, overallCondition "POOR"
+- Per-damage confidence is still binary within the damages array (visible or not). The top-level confidence reflects overall assessability.
 
 STRICT DICTIONARY (ENUMS)
 Use damageType and location EXCLUSIVELY from these lists. No synonyms, no English, no extra text.
