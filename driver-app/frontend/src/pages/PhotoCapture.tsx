@@ -110,9 +110,7 @@ export function PhotoCapture() {
     const capturedSteps = photoSteps.filter((s) => s.mediaFiles.length > 0);
     const allCapturedAnalyzed =
       capturedSteps.length > 0 &&
-      capturedSteps.every(
-        (s) => s.status === "COMPLETED" || s.status === "FAILED",
-      );
+      capturedSteps.every((s) => s.status === "COMPLETED" || s.status === "FAILED");
 
     allDone = !!unitIdDone && !!atLeastOneOptional;
     allAnalyzed = allCapturedAnalyzed;

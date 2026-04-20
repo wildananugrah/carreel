@@ -14,9 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 type TrackCapabilitiesWithTorch = MediaTrackCapabilities & { torch?: boolean };
 
 function probeTorch(track: MediaStreamTrack): boolean {
-  const getCaps = track.getCapabilities as
-    | (() => TrackCapabilitiesWithTorch)
-    | undefined;
+  const getCaps = track.getCapabilities as (() => TrackCapabilitiesWithTorch) | undefined;
   if (!getCaps) return false;
   try {
     const caps = getCaps.call(track);
@@ -53,16 +51,13 @@ export function useTorch(stream: MediaStream | null) {
 
       const hasTorch = probeTorch(track);
       // eslint-disable-next-line no-console
-      console.log(
-        `[useTorch] probe attempt ${attempts}/${maxAttempts}`,
-        {
-          readyState: track.readyState,
-          hasTorch,
-          capabilities: (
-            track.getCapabilities as (() => TrackCapabilitiesWithTorch) | undefined
-          )?.call(track),
-        },
-      );
+      console.log(`[useTorch] probe attempt ${attempts}/${maxAttempts}`, {
+        readyState: track.readyState,
+        hasTorch,
+        capabilities: (
+          track.getCapabilities as (() => TrackCapabilitiesWithTorch) | undefined
+        )?.call(track),
+      });
 
       if (hasTorch) {
         setAvailable(true);

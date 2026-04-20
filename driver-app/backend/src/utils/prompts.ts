@@ -573,10 +573,14 @@ Mandatory Output Structure (Chain of Thought):
 Use the "cameraPath" and "visualAnalysis" fields to trace the camera's movement and note when the rear plate was in frame. Do this BEFORE listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
-For EVERY damage you report, the "orientationReason" field must answer:
+For EVERY damage you report, you MUST write "orientationReason" BEFORE "location" within the damage object. The reasoning drives the conclusion — the side must never be chosen before the justification is established.
+
+"orientationReason" MUST answer:
 1. Was the rear license plate visible in the frame where this damage appears, or in a recent frame with a continuous camera path to this one?
-2. If YES: where does the damaged part sit relative to the rear plate (screen-left or screen-right)? Conclude Kiri or Kanan.
-3. If NO: explicitly state the rear plate was not available, and use a center location or "Eksterior Tidak Jelas" — do not guess a side.
+2. If YES: where does the damaged part sit relative to the rear plate (screen-left or screen-right)? Conclude Kiri or Kanan. The reason MUST include the literal phrase "plat nomor belakang" and describe the side relative to it.
+3. If NO: explicitly write "plat nomor belakang tidak terlihat" and use a center location or "Eksterior Tidak Jelas" — do NOT guess a side.
+
+HARD CONSTRAINT (POST-PROCESSED): If "orientationReason" does not reference the rear plate, the "location" MUST be one of: "Bumper Depan Tengah", "Bumper Belakang Tengah", "Atap", "Kap Mesin", "Bagasi", "Kaca Depan", "Kaca Belakang", "Roda / Ban", or "Eksterior Tidak Jelas". This rule is enforced programmatically after you respond — violations are automatically rewritten to a center variant, which wastes your reasoning. Get it right the first time.
 
 EXHAUSTIVE SCANNING:
 - You MUST analyze the entire video from start to finish (0:00 to end).
@@ -694,6 +698,7 @@ You MUST perform spatial and visual reasoning BEFORE listing damages:
 CRITICAL RULE FOR JSON GENERATION (STRICT KEY ORDERING):
 You MUST generate the JSON keys in the EXACT sequential order shown in the template below.
 You are STRICTLY FORBIDDEN from outputting the "damages" array until you have fully generated the reasoning fields: "verificationAnalysis", "cameraPath", and "visualAnalysis". This guarantees your spatial reasoning is established before you classify any damage locations.
+Within EACH damage object, you are STRICTLY FORBIDDEN from outputting "location" until "orientationReason" has been fully generated. Reasoning must precede conclusion at BOTH levels (document-level and per-damage).
 
 ## Response Format
 Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
@@ -707,15 +712,26 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   "damages": [
     {
       "damageType": "goresan",
-      "location": "Bumper Belakang Kiri",
+      "orientationReason": "Plat nomor belakang terlihat di frame sekitar detik 0:14. Kerusakan pada panel berada di sisi screen-right dari plat tersebut = Kanan kendaraan.",
+      "location": "Bumper / Panel Belakang Kanan",
       "severity": "MINOR",
       "description": "Goresan putih linear pada panel bawah, sekitar 8cm",
-      "orientationReason": "Kerusakan terletak di sisi kiri dari plat nomor belakang = Kiri kendaraan",
       "isNewDamage": true,
-      "videoTimestamp": 0
+      "videoTimestamp": 18
+    },
+    {
+      "damageType": "goresan",
+      "orientationReason": "Plat nomor belakang tidak terlihat di frame ini maupun frame sebelumnya yang dapat dijejak secara kontinu. Sisi kendaraan tidak dapat ditentukan.",
+      "location": "Eksterior Tidak Jelas",
+      "severity": "MINOR",
+      "description": "Goresan pendek pada bumper, sekitar 3cm",
+      "isNewDamage": true,
+      "videoTimestamp": 32
     }
   ]
 }
+
+The second damage above shows the correct refusal pattern: when the rear plate is not in the continuous camera path, you MUST output a center/unclear location and explain the plate's absence. Follow this pattern whenever the anchor is unavailable.
 
 This is a high-recall inspection system. When in doubt, report.`;
 

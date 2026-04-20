@@ -108,7 +108,13 @@ export class InspectionRepository implements IInspectionRepository {
       where: { id, ...(scopeFilter as object) },
       include: {
         unit: {
-          select: { id: true, licensePlate: true, make: true, model: true, vin: true },
+          select: {
+            id: true,
+            licensePlate: true,
+            make: true,
+            model: true,
+            vin: true,
+          },
         },
         linkedInspection: {
           select: { id: true, tripType: true, status: true },

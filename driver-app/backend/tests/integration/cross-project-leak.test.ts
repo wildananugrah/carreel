@@ -269,7 +269,9 @@ describe("Cross-project leak prevention (driver-backend)", () => {
     expect(stepTypes).toContain("BODY_INSPECTION");
 
     // Cleanup
-    await prisma.inspectionStep.deleteMany({ where: { inspectionId: inspection.id } });
+    await prisma.inspectionStep.deleteMany({
+      where: { inspectionId: inspection.id },
+    });
     await prisma.inspection.delete({ where: { id: inspection.id } });
   });
 
@@ -288,7 +290,9 @@ describe("Cross-project leak prevention (driver-backend)", () => {
     expect(stepTypes).toEqual(["BODY_INSPECTION"]);
 
     // Cleanup
-    await prisma.inspectionStep.deleteMany({ where: { inspectionId: inspection.id } });
+    await prisma.inspectionStep.deleteMany({
+      where: { inspectionId: inspection.id },
+    });
     await prisma.inspection.delete({ where: { id: inspection.id } });
   });
 });

@@ -2,11 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 interface SignatureOverlayProps {
   unitName: string;
+  submitting?: boolean;
   onConfirm: (data: { image: Blob; signerName: string }) => void;
   onCancel: () => void;
 }
 
-export function SignatureOverlay({ unitName, onConfirm, onCancel }: SignatureOverlayProps) {
+export function SignatureOverlay({
+  unitName,
+  submitting = false,
+  onConfirm,
+  onCancel,
+}: SignatureOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
@@ -129,7 +135,7 @@ export function SignatureOverlay({ unitName, onConfirm, onCancel }: SignatureOve
 
   function handleConfirm() {
     const canvas = canvasRef.current;
-    if (!canvas || !hasStrokes) return;
+    if (!canvas || !hasStrokes || submitting) return;
     canvas.toBlob((blob) => {
       if (blob) {
         onConfirm({ image: blob, signerName: signerName.trim() });
@@ -206,7 +212,8 @@ export function SignatureOverlay({ unitName, onConfirm, onCancel }: SignatureOve
         <button
           type="button"
           onClick={onCancel}
-          className="px-5 py-3 rounded-xl bg-gray-800 text-white text-sm font-medium border border-gray-600"
+          disabled={submitting}
+          className="px-5 py-3 rounded-xl bg-gray-800 text-white text-sm font-medium border border-gray-600 disabled:opacity-40"
         >
           Batal
         </button>
@@ -216,11 +223,34 @@ export function SignatureOverlay({ unitName, onConfirm, onCancel }: SignatureOve
         </div>
         <button
           type="button"
-          disabled={!hasStrokes}
+          disabled={!hasStrokes || submitting}
           onClick={handleConfirm}
-          className="px-5 py-3 rounded-xl bg-[#F5C842] text-black text-sm font-bold disabled:opacity-40"
+          className="px-5 py-3 rounded-xl bg-[#F5C842] text-black text-sm font-bold disabled:opacity-40 inline-flex items-center gap-2"
         >
-          Konfirmasi
+          {submitting && (
+            <svg
+              aria-hidden="true"
+              className="w-4 h-4 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeOpacity="0.25"
+              />
+              <path
+                d="M22 12a10 10 0 0 1-10 10"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+          )}
+          {submitting ? "Menyimpan..." : "Konfirmasi"}
         </button>
       </div>
     </div>

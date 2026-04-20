@@ -234,9 +234,7 @@ export class InspectionService implements IInspectionService {
 
     // For PRE_TRIP: at least one of VIN_NUMBER or SPEEDOMETER must have media
     if (inspection.tripType === "PRE_TRIP") {
-      const vinStep = inspection.steps.find(
-        (s) => s.stepType === "VIN_NUMBER",
-      );
+      const vinStep = inspection.steps.find((s) => s.stepType === "VIN_NUMBER");
       const speedoStep = inspection.steps.find(
         (s) => s.stepType === "SPEEDOMETER",
       );

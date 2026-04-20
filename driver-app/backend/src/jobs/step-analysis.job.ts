@@ -13,6 +13,7 @@ import type {
 import type { IAlertRepository } from "../interfaces/repositories/alert.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
+import { applyBodyDamageSideGuard } from "../utils/body-damage-guard";
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
@@ -223,6 +224,23 @@ export class StepAnalysisJob {
         .trim();
       const parsed = JSON.parse(cleaned);
       const processingTimeMs = Date.now() - startTime;
+
+      // 4a. Enforce single-anchor rule on body inspection damages. The prompt
+      // forbids Kiri/Kanan without a rear-plate-based orientationReason; the
+      // guard downgrades any violations the model emits anyway.
+      if (
+        stepType === "BODY_INSPECTION" &&
+        Array.isArray(parsed.damages) &&
+        parsed.damages.length > 0
+      ) {
+        const { appliedCount } = applyBodyDamageSideGuard(parsed.damages);
+        if (appliedCount > 0) {
+          log.warn("Side-guard downgraded damage locations", {
+            appliedCount,
+            total: parsed.damages.length,
+          });
+        }
+      }
 
       log.info("AI structured result", {
         stepType,

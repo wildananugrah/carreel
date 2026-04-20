@@ -191,6 +191,7 @@ export function VideoReview() {
   const [showSignature, setShowSignature] = useState(false);
   const [sigSaved, setSigSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [signatureSubmitting, setSignatureSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -304,7 +305,9 @@ export function VideoReview() {
   );
   const photoStepsProcessing = !!inspection?.steps.some(
     (s) =>
-      (s.stepType === "UNIT_IDENTIFICATION" || s.stepType === "VIN_NUMBER" || s.stepType === "SPEEDOMETER") &&
+      (s.stepType === "UNIT_IDENTIFICATION" ||
+        s.stepType === "VIN_NUMBER" ||
+        s.stepType === "SPEEDOMETER") &&
       (s.status === "PROCESSING" || s.status === "UPLOADED"),
   );
   const hasSpeedometer = !!inspection?.steps.some(
@@ -435,7 +438,7 @@ export function VideoReview() {
 
   async function handleSignatureConfirm(data: { image: Blob; signerName: string }) {
     if (!id) return;
-    setShowSignature(false);
+    setSignatureSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("file", data.image, "signature.png");
@@ -444,8 +447,11 @@ export function VideoReview() {
       setSigSaved(true);
       setToast("Tanda tangan tersimpan");
       await fetchDetail();
+      setShowSignature(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save signature");
+    } finally {
+      setSignatureSubmitting(false);
     }
   }
 
@@ -460,7 +466,8 @@ export function VideoReview() {
       if (unitForm.licensePlate) patchData.unitLicensePlate = unitForm.licensePlate;
       if (unitForm.make) patchData.unitMake = unitForm.make;
       if (unitForm.model) patchData.unitModel = unitForm.model;
-      if (hasSpeedometer && unitForm.odometerKm) patchData.unitOdometerKm = Number(unitForm.odometerKm);
+      if (hasSpeedometer && unitForm.odometerKm)
+        patchData.unitOdometerKm = Number(unitForm.odometerKm);
       if (hasVin && unitForm.vin) patchData.unitVin = unitForm.vin;
       if (Object.keys(patchData).length > 0) {
         await api.patch(`/api/inspections/${id}`, patchData);
@@ -766,9 +773,7 @@ export function VideoReview() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <p className="text-sm font-bold text-white">
-                              {damageLabel(d.area)}
-                            </p>
+                            <p className="text-sm font-bold text-white">{damageLabel(d.area)}</p>
                             <span
                               className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
                                 d.severity === "MAJOR"
@@ -786,18 +791,14 @@ export function VideoReview() {
                             </span>
                           </div>
                           {d.location && (
-                            <p className="text-[10px] text-neutral-400 mb-0.5">
-                              {d.location}
-                            </p>
+                            <p className="text-[10px] text-neutral-400 mb-0.5">{d.location}</p>
                           )}
                           <p className="text-xs text-neutral-500">{d.description}</p>
-                          {!canSeek &&
-                            d.videoTimestamp != null &&
-                            d.videoTimestamp > 0 && (
-                              <p className="text-[10px] text-neutral-600 mt-0.5">
-                                {"\u23F1"} {formatVideoTimestamp(d.videoTimestamp)}
-                              </p>
-                            )}
+                          {!canSeek && d.videoTimestamp != null && d.videoTimestamp > 0 && (
+                            <p className="text-[10px] text-neutral-600 mt-0.5">
+                              {"\u23F1"} {formatVideoTimestamp(d.videoTimestamp)}
+                            </p>
+                          )}
                         </div>
                         {canSeek && (
                           <button
@@ -1059,18 +1060,14 @@ export function VideoReview() {
                               </span>
                             </div>
                             {flag.location && (
-                              <p className="text-[10px] text-neutral-400 mb-0.5">
-                                {flag.location}
-                              </p>
+                              <p className="text-[10px] text-neutral-400 mb-0.5">{flag.location}</p>
                             )}
                             <p className="text-xs text-neutral-500">{flag.description}</p>
-                            {!canSeek &&
-                              flag.videoTimestamp != null &&
-                              flag.videoTimestamp > 0 && (
-                                <p className="text-[10px] text-neutral-600 mt-0.5">
-                                  {"\u23F1"} {formatVideoTimestamp(flag.videoTimestamp)}
-                                </p>
-                              )}
+                            {!canSeek && flag.videoTimestamp != null && flag.videoTimestamp > 0 && (
+                              <p className="text-[10px] text-neutral-600 mt-0.5">
+                                {"\u23F1"} {formatVideoTimestamp(flag.videoTimestamp)}
+                              </p>
+                            )}
                           </div>
                           {canSeek && (
                             <button
@@ -1278,6 +1275,7 @@ export function VideoReview() {
       {showSignature && (
         <SignatureOverlay
           unitName={unitName}
+          submitting={signatureSubmitting}
           onConfirm={handleSignatureConfirm}
           onCancel={() => setShowSignature(false)}
         />

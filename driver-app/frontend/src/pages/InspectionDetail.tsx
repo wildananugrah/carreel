@@ -3,10 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
-import type {
-  InspectionDetail as InspectionDetailType,
-  InspectionStatus,
-} from "../lib/types";
+import type { InspectionDetail as InspectionDetailType, InspectionStatus } from "../lib/types";
 
 type Tab = "pre" | "post" | "ai-alert";
 
@@ -637,9 +634,7 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
             KM {formatKm(speedoAI?.odometerKm ?? inspection.unit?.lastKnownKm)}
           </p>
         )}
-        {speedoTime && (
-          <p className="text-[10px] text-[#555] mt-1">{formatDate(speedoTime)}</p>
-        )}
+        {speedoTime && <p className="text-[10px] text-[#555] mt-1">{formatDate(speedoTime)}</p>}
       </div>
 
       {/* VIN */}
