@@ -13,6 +13,8 @@ import type {
   UploadStatusResponse,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { badRequest, notFound } from "../utils/http-error";
+import { hasPlatformBypass } from "../utils/scope-filter";
 
 const BUCKET_MAP: Record<string, string> = {
   IMAGE: "carreel-images",
@@ -47,10 +49,10 @@ export class ChunkedUploadService implements IChunkedUploadService {
       dto.inspectionId,
     );
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
 
     // Verify step exists
@@ -59,13 +61,15 @@ export class ChunkedUploadService implements IChunkedUploadService {
       dto.stepId,
     );
     if (!step || step.inspectionId !== dto.inspectionId) {
-      throw new Error("Step not found");
+      throw notFound("Step not found");
     }
 
     // Unit Identification and Speedometer only accept images
     const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
     if (IMAGE_ONLY_STEPS.includes(step.stepType)) {
-      throw new Error(`${step.stepType} only accepts image uploads, not video`);
+      throw badRequest(
+        `${step.stepType} only accepts image uploads, not video`,
+      );
     }
 
     // Generate MinIO key
@@ -129,13 +133,13 @@ export class ChunkedUploadService implements IChunkedUploadService {
       sessionId,
     );
     if (!session) {
-      throw new Error("Upload session not found");
+      throw notFound("Upload session not found");
     }
-    if (session.driverId !== driverId) {
-      throw new Error("Unauthorized access to upload session");
+    if (!hasPlatformBypass(scope) && session.driverId !== driverId) {
+      throw notFound("Upload session not found");
     }
     if (session.status !== "IN_PROGRESS") {
-      throw new Error("Upload session is not in progress");
+      throw badRequest("Upload session is not in progress");
     }
 
     // Idempotent: skip if part already uploaded
@@ -201,16 +205,16 @@ export class ChunkedUploadService implements IChunkedUploadService {
       sessionId,
     );
     if (!session) {
-      throw new Error("Upload session not found");
+      throw notFound("Upload session not found");
     }
-    if (session.driverId !== driverId) {
-      throw new Error("Unauthorized access to upload session");
+    if (!hasPlatformBypass(scope) && session.driverId !== driverId) {
+      throw notFound("Upload session not found");
     }
     if (session.status !== "IN_PROGRESS") {
-      throw new Error("Upload session is not in progress");
+      throw badRequest("Upload session is not in progress");
     }
     if (session.parts.length !== session.totalChunks) {
-      throw new Error(
+      throw badRequest(
         `Not all chunks uploaded: ${session.parts.length}/${session.totalChunks}`,
       );
     }
@@ -294,10 +298,10 @@ export class ChunkedUploadService implements IChunkedUploadService {
       sessionId,
     );
     if (!session) {
-      throw new Error("Upload session not found");
+      throw notFound("Upload session not found");
     }
-    if (session.driverId !== driverId) {
-      throw new Error("Unauthorized access to upload session");
+    if (!hasPlatformBypass(scope) && session.driverId !== driverId) {
+      throw notFound("Upload session not found");
     }
 
     // Abort MinIO multipart upload
@@ -330,10 +334,10 @@ export class ChunkedUploadService implements IChunkedUploadService {
       sessionId,
     );
     if (!session) {
-      throw new Error("Upload session not found");
+      throw notFound("Upload session not found");
     }
-    if (session.driverId !== driverId) {
-      throw new Error("Unauthorized access to upload session");
+    if (!hasPlatformBypass(scope) && session.driverId !== driverId) {
+      throw notFound("Upload session not found");
     }
 
     return {

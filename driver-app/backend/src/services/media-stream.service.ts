@@ -5,6 +5,7 @@ import type {
   StreamInfo,
 } from "../interfaces/services/media-stream.service.interface";
 import type { UserScope } from "../types/scope";
+import { notFound } from "../utils/http-error";
 
 export class MediaStreamService implements IMediaStreamService {
   constructor(
@@ -19,7 +20,7 @@ export class MediaStreamService implements IMediaStreamService {
   ): Promise<StreamInfo> {
     const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media) {
-      throw new Error("Media file not found");
+      throw notFound("Media file not found");
     }
 
     const stat = await this.storageProvider.statObject(

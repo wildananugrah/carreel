@@ -9,7 +9,7 @@ import type {
 import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
 import { UploadService } from "../../src/services/upload.service";
 import type { UserScope } from "../../src/types/scope";
-import { makeSuperAdminScope } from "../helpers/test-scope";
+import { makeDriverScope, makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -154,7 +154,7 @@ describe("UploadService", () => {
   test("uploadMedia throws for wrong driver", async () => {
     expect(
       service.uploadMedia(
-        makeSuperAdminScope(),
+        makeDriverScope({ userId: "driver-2" }),
         "insp-1",
         "step-1",
         "driver-2",
@@ -167,7 +167,7 @@ describe("UploadService", () => {
           capturedAt: "2026-03-13T10:00:00.000Z",
         },
       ),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow("not found");
   });
 
   test("uploadMedia throws for non-existent inspection", async () => {

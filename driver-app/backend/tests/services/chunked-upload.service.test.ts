@@ -16,7 +16,7 @@ import type {
 } from "../../src/interfaces/repositories/upload-session.repository.interface";
 import { ChunkedUploadService } from "../../src/services/chunked-upload.service";
 import type { UserScope } from "../../src/types/scope";
-import { makeSuperAdminScope } from "../helpers/test-scope";
+import { makeDriverScope, makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -264,7 +264,7 @@ describe("ChunkedUploadService", () => {
 
     test("throws for wrong driver", async () => {
       expect(
-        service.initiate(makeSuperAdminScope(), "driver-2", {
+        service.initiate(makeDriverScope({ userId: "driver-2" }), "driver-2", {
           inspectionId: "insp-1",
           stepId: "step-1",
           fileName: "video.mp4",
@@ -272,7 +272,7 @@ describe("ChunkedUploadService", () => {
           fileSize: 1024,
           capturedAt: "2026-03-13T10:00:00.000Z",
         }),
-      ).rejects.toThrow("Unauthorized");
+      ).rejects.toThrow("not found");
     });
 
     test("throws for non-existent step", async () => {
@@ -386,13 +386,13 @@ describe("ChunkedUploadService", () => {
 
       expect(
         service.uploadChunk(
-          makeSuperAdminScope(),
+          makeDriverScope({ userId: "driver-2" }),
           "session-1",
           "driver-2",
           1,
           Buffer.alloc(1024),
         ),
-      ).rejects.toThrow("Unauthorized");
+      ).rejects.toThrow("not found");
     });
   });
 
@@ -501,8 +501,12 @@ describe("ChunkedUploadService", () => {
       });
 
       expect(
-        service.cancel(makeSuperAdminScope(), "session-1", "driver-2"),
-      ).rejects.toThrow("Unauthorized");
+        service.cancel(
+          makeDriverScope({ userId: "driver-2" }),
+          "session-1",
+          "driver-2",
+        ),
+      ).rejects.toThrow("not found");
     });
   });
 

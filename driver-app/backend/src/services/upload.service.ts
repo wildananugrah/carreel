@@ -8,6 +8,8 @@ import type { IMediaFileRepository } from "../interfaces/repositories/media-file
 import type { IUploadService } from "../interfaces/services/upload.service.interface";
 import type { MediaFileResponse, UploadMediaDTO } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { badRequest, notFound } from "../utils/http-error";
+import { hasPlatformBypass } from "../utils/scope-filter";
 
 const BUCKET_MAP: Record<string, string> = {
   IMAGE: "carreel-images",
@@ -40,15 +42,15 @@ export class UploadService implements IUploadService {
       inspectionId,
     );
     if (!inspection) {
-      throw new Error("Inspection not found");
+      throw notFound("Inspection not found");
     }
-    if (inspection.driverId !== driverId) {
-      throw new Error("Unauthorized access to inspection");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
     }
 
     const step = await this.inspectionRepository.findStepById(scope, stepId);
     if (!step || step.inspectionId !== inspectionId) {
-      throw new Error("Step not found");
+      throw notFound("Step not found");
     }
 
     // Unit Identification and Speedometer only accept images
@@ -57,7 +59,9 @@ export class UploadService implements IUploadService {
       IMAGE_ONLY_STEPS.includes(step.stepType) &&
       meta.mimeType.startsWith("video/")
     ) {
-      throw new Error(`${step.stepType} only accepts image uploads, not video`);
+      throw badRequest(
+        `${step.stepType} only accepts image uploads, not video`,
+      );
     }
 
     // Generate MinIO key
@@ -137,7 +141,7 @@ export class UploadService implements IUploadService {
   async getMediaUrl(scope: UserScope, mediaId: string): Promise<string> {
     const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media) {
-      throw new Error("Media file not found");
+      throw notFound("Media file not found");
     }
     return this.storageProvider.getPresignedUrl(
       media.minioBucket,
@@ -151,7 +155,7 @@ export class UploadService implements IUploadService {
   ): Promise<{ buffer: Buffer; mimeType: string }> {
     const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media) {
-      throw new Error("Media file not found");
+      throw notFound("Media file not found");
     }
     const buffer = await this.storageProvider.download(
       media.minioBucket,
@@ -180,19 +184,19 @@ export class UploadService implements IUploadService {
       scope,
       inspectionId,
     );
-    if (!inspection) throw new Error("Inspection not found");
-    if (inspection.driverId !== driverId)
-      throw new Error("Unauthorized access to inspection");
+    if (!inspection) throw notFound("Inspection not found");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId)
+      throw notFound("Inspection not found");
     if (inspection.status !== "DRAFT")
-      throw new Error("Can only delete media from draft inspections");
+      throw badRequest("Can only delete media from draft inspections");
 
     const step = await this.inspectionRepository.findStepById(scope, stepId);
     if (!step || step.inspectionId !== inspectionId)
-      throw new Error("Step not found");
+      throw notFound("Step not found");
 
     const media = await this.mediaFileRepository.findById(scope, mediaId);
     if (!media || media.stepId !== stepId)
-      throw new Error("Media file not found");
+      throw notFound("Media file not found");
 
     // Delete from MinIO
     await this.storageProvider
@@ -247,11 +251,11 @@ export class UploadService implements IUploadService {
       scope,
       inspectionId,
     );
-    if (!inspection) throw new Error("Inspection not found");
-    if (inspection.driverId !== driverId)
-      throw new Error("Unauthorized access to inspection");
+    if (!inspection) throw notFound("Inspection not found");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId)
+      throw notFound("Inspection not found");
     if (inspection.status !== "DRAFT")
-      throw new Error("Only DRAFT inspections can be updated");
+      throw badRequest("Only DRAFT inspections can be updated");
 
     const key = `inspections/${inspectionId}/signature/${randomUUID()}.png`;
     const bucket = "carreel-images";
