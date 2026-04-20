@@ -4,7 +4,13 @@
       "Bash(bun test:*)",
       "Bash(bun run build:*)",
       "Bash(bun run lint:*)",
-      "Bash(bunx biome check:*)"
+      "Bash(bunx biome check:*)",
+      "Read(//^function buildBodyInspectionPrompt/,/**)",
+      "Read(//private/tmp/**)",
+      "Bash(node -e ' *)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }

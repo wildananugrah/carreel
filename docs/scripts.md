@@ -159,8 +159,13 @@ docker exec carreel-driver-db psql -U carreel carreel_driver -c '\d ai_analyses'
 
 ```sql
 SELECT u."fullName", u.email,
-         i.id AS inspection_id, i."tripType", i.status AS inspection_status,
-         s."stepType", s.status AS step_status,
+         i.id AS inspection_id, 
+         i."tripType", 
+         i.status AS inspection_status,
+         s."stepType", 
+         s.status AS step_status,
+         a."promptUsed" as prompt_used,
+         a."rawResponse" as raw_response,
          a."structuredData" as structured_data,
          a.id AS analysis_id, a."aiModel", a.status AS ai_status,
          a."confidenceScore", a."processingTimeMs",
@@ -170,7 +175,8 @@ SELECT u."fullName", u.email,
   JOIN inspections i ON i."driverId" = u.id
   JOIN inspection_steps s ON s."inspectionId" = i.id
   JOIN ai_analyses a ON a."stepId" = s.id
-  WHERE u.email = 'wildananugrah@gmail.com'
+  WHERE u.email = 'support1@carreel.id'
+  AND s."stepType" = 'BODY_INSPECTION' -- optional
   ORDER BY a."createdAt" DESC;
 
 

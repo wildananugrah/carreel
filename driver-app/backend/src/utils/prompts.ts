@@ -561,71 +561,36 @@ MANDATORY SEQUENCE:
    - Left side of the vehicle
    - Right side of the vehicle
 
-2. Utilize Vehicle Anchors (in order of reliability):
-   - PRIMARY ANCHOR — License Plate / Brand Logo:
-     - Rear License Plate = The exact rear center of the vehicle.
-     - Front Logo / Front License Plate = The exact front center of the vehicle.
-     - These are the ONLY 100% reliable anchors for determining left/right side.
-   - SECONDARY ANCHOR — Taillights / Headlights:
-     - A car has TWO taillights and TWO headlights (left and right).
-     - A single taillight or headlight by itself is NOT a reliable anchor — you MUST first identify which one it is (left or right) using the plate.
-   - TERTIARY — Wheels, Doors, Fenders are only side determiners AFTER the primary anchor has established orientation.
+2. Utilize Vehicle Anchors:
+   - Rear License Plate = The exact rear center of the vehicle.
+   - Front Logo / Front License Plate = The exact front center of the vehicle.
+   - Lights, Wheels/Tires, Doors, and Fenders = Side determiners.
 
-3. Identifying WHICH Taillight or Headlight You Are Looking At:
-   Before applying any corner rule, you MUST first determine whether the visible taillight/headlight is the LEFT or RIGHT unit. Use the plate as the reference:
-
-   - If the license plate is visible in the same frame:
-     - In a REAR view: the taillight on the screen-RIGHT of the rear plate = rear-RIGHT taillight. The taillight on the screen-LEFT of the rear plate = rear-LEFT taillight.
-     - In a FRONT view: the headlight on the screen-RIGHT of the front plate/logo = front-LEFT headlight (mirrored, because the front faces you). The headlight on the screen-LEFT of the front plate/logo = front-RIGHT headlight.
-
-   - If the license plate is NOT visible but you can see the FULL rear or FULL front (both taillights or both headlights):
-     - Use the pair to determine which is which, then apply the rules above.
-
-   - If only ONE taillight/headlight is visible AND the plate is NOT visible:
-     - You CANNOT determine the side from the light alone. Treat this as insufficient evidence.
-
-4. Inference Rules (Logic Core):
-   - REAR VIEW (Face-to-face with the rear, plate visible):
-     - The body side extending to the RIGHT of the rear license plate = RIGHT side of the vehicle.
-     - The body side extending to the LEFT of the rear license plate = LEFT side of the vehicle.
-
-   - FRONT VIEW (Face-to-face with the front, plate/logo visible):
-     - The body side extending to the RIGHT of the front plate/logo = LEFT side of the vehicle.
-     - The body side extending to the LEFT of the front plate/logo = RIGHT side of the vehicle.
-
+3. Inference Rules (Logic Core):
+   - REAR VIEW: The body side extending to the right of the rear license plate = RIGHT side of the vehicle.
+   - FRONT VIEW (Face-to-face): The body side extending to the right of the front plate/logo = LEFT side of the vehicle.
    - REAR CORNER (Close-up near red taillights):
-     - First identify the taillight using rule 3 above.
-     - All damage on the body panel, bumper corner, wheel, or door adjacent to the rear-RIGHT taillight = RIGHT side of the vehicle, regardless of whether the damage appears on the screen-left or screen-right of the taillight.
-     - All damage on the body panel, bumper corner, wheel, or door adjacent to the rear-LEFT taillight = LEFT side of the vehicle, regardless of whether the damage appears on the screen-left or screen-right of the taillight.
-     - CRITICAL: Do NOT use the screen position of the damage relative to the taillight as the determiner. Use WHICH taillight (left or right) as the determiner.
-
+     - Side Body / Wheel / Door to the RIGHT of the taillight = RIGHT side of the vehicle.
+     - Side Body / Wheel / Door to the LEFT of the taillight = LEFT side of the vehicle.
    - FRONT CORNER (Close-up near white headlights):
-     - First identify the headlight using rule 3 above.
-     - All damage on the body panel, bumper corner, wheel, or door adjacent to the front-RIGHT headlight = RIGHT side of the vehicle.
-     - All damage on the body panel, bumper corner, wheel, or door adjacent to the front-LEFT headlight = LEFT side of the vehicle.
-     - CRITICAL: Do NOT use the screen position of the damage relative to the headlight as the determiner. Use WHICH headlight (left or right) as the determiner.
+     - Side Body / Wheel / Door to the RIGHT of the headlight = LEFT side of the vehicle.
+     - Side Body / Wheel / Door to the LEFT of the headlight = RIGHT side of the vehicle.
 
-5. Prohibitions (Fail-Safes):
+4. Prohibitions (Fail-Safes):
    - DO NOT use screen position (left/right of the monitor) as the primary baseline.
    - DO NOT guess if the plates, lights, wheels, or side body are not clearly visible.
-   - DO NOT use a single taillight or headlight alone as a side anchor — you must first identify WHICH one it is.
    - If visual evidence is insufficient to determine the side, use "Eksterior Tidak Jelas" as the location.
 
-6. Mandatory Output Structure (Chain of Thought):
-   You MUST use the "cameraPath" (Jalur Perekaman) and "visualAnalysis" (Analisis Visual) fields in your output to explicitly state your Camera View Orientation, Vehicle Side, and Visual Reasoning before listing any damage.
+5. Mandatory Output Structure (Chain of Thought):
+   You MUST use the "cameraPath" and "visualAnalysis" fields in your output to explicitly state your Camera View Orientation, Vehicle Side, and Visual Reasoning before listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
 For EVERY damage you report, you MUST include an "orientationReason" field that explains:
-1. Which view (front / rear / side / corner close-up) the camera is in.
-2. Whether the license plate or brand logo is visible in the frame (this is your PRIMARY anchor). If yes, state where it sits on screen.
-3. If only a taillight/headlight is visible without the plate, state explicitly which unit it is (rear-left, rear-right, front-left, front-right) and how you determined that (e.g. "visible in an earlier frame next to the plate").
-4. Where the damaged body part sits relative to the primary anchor (not relative to the taillight/headlight, unless you have already identified which one it is).
-5. Applying the inference rules, conclude: Kiri or Kanan from the vehicle's perspective.
-
-COMMON MISTAKE TO AVOID:
-Do NOT conclude a side based purely on whether the damage is on the screen-left or screen-right of a taillight. Example: if you see the rear-RIGHT taillight and damage appears on the screen-LEFT of that taillight, the damage is still on the vehicle's RIGHT side because the taillight itself belongs to the right side. The determining factor is WHICH taillight, not the damage's position relative to it.
-
-If spatial evidence is insufficient (no plate visible AND you cannot determine which taillight/headlight you're looking at), state so and use "Eksterior Tidak Jelas" as the location.
+1. Which view (front / rear / side / corner close-up) the camera is in
+2. Which anchor (rear plate, front plate/logo, taillight, headlight) is visible or was recently crossed
+3. Where the damaged body part sits relative to that anchor
+4. Applying the inference rules, conclude: Kiri or Kanan from the vehicle's perspective
+If spatial evidence is insufficient, state so and use "Eksterior Tidak Jelas" as the location.
 
 EXHAUSTIVE SCANNING:
 - You MUST analyze the entire video from start to finish (0:00 to end).
