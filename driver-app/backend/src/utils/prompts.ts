@@ -550,47 +550,33 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-SPATIAL ORIENTATION RULES (STRICT)
+SPATIAL ORIENTATION (SINGLE-ANCHOR RULE)
 
-Determine the Left/Right side of the vehicle based ONLY on the vehicle's actual anatomy, NOT the left/right of your screen.
+Determine Kiri (left) / Kanan (right) from the VEHICLE's anatomy, never from your screen. To avoid the common mistake of flipping sides when looking at the front of the car, this prompt uses ONE anchor only: the REAR LICENSE PLATE.
 
-MANDATORY SEQUENCE:
-1. First, identify what the camera is currently viewing:
-   - Front of the vehicle
-   - Rear of the vehicle
-   - Left side of the vehicle
-   - Right side of the vehicle
+THE ONLY RULE for side determination:
+- If the REAR license plate is visible in the current frame, or was clearly visible in a recent frame and you can trace the continuous camera path since then:
+  - Body panel / bumper / wheel / door extending to the SCREEN-RIGHT of the rear plate → KANAN (vehicle right).
+  - Body panel / bumper / wheel / door extending to the SCREEN-LEFT of the rear plate → KIRI (vehicle left).
 
-2. Utilize Vehicle Anchors:
-   - Rear License Plate = The exact rear center of the vehicle.
-   - Front Logo / Front License Plate = The exact front center of the vehicle.
-   - Lights, Wheels/Tires, Doors, and Fenders = Side determiners.
+When the REAR plate is NOT available:
+- Do NOT attempt to infer Kiri/Kanan from the FRONT plate, FRONT logo, or any front/head-on view. The mirroring is error-prone and this prompt explicitly forbids it.
+- Do NOT infer Kiri/Kanan from a single taillight, a single headlight, or a pure side-body shot.
+- Instead, set the damage location to one of the center/unclear options: "Bumper Depan Tengah", "Bumper Belakang Tengah", "Atap", "Kap Mesin", "Bagasi", "Kaca Depan", "Kaca Belakang", or "Eksterior Tidak Jelas". Preferring "Eksterior Tidak Jelas" is correct behavior — do NOT guess a side.
 
-3. Inference Rules (Logic Core):
-   - REAR VIEW: The body side extending to the right of the rear license plate = RIGHT side of the vehicle.
-   - FRONT VIEW (Face-to-face): The body side extending to the right of the front plate/logo = LEFT side of the vehicle.
-   - REAR CORNER (Close-up near red taillights):
-     - Side Body / Wheel / Door to the RIGHT of the taillight = RIGHT side of the vehicle.
-     - Side Body / Wheel / Door to the LEFT of the taillight = LEFT side of the vehicle.
-   - FRONT CORNER (Close-up near white headlights):
-     - Side Body / Wheel / Door to the RIGHT of the headlight = LEFT side of the vehicle.
-     - Side Body / Wheel / Door to the LEFT of the headlight = RIGHT side of the vehicle.
+Prohibitions (Fail-Safes):
+- DO NOT use screen position alone as the baseline. The rule requires the REAR plate as the spatial anchor.
+- DO NOT mirror-correct a front view to derive Kiri/Kanan.
+- DO NOT report a "Kiri" or "Kanan" location unless you can explicitly justify it by reference to the rear plate in "orientationReason".
 
-4. Prohibitions (Fail-Safes):
-   - DO NOT use screen position (left/right of the monitor) as the primary baseline.
-   - DO NOT guess if the plates, lights, wheels, or side body are not clearly visible.
-   - If visual evidence is insufficient to determine the side, use "Eksterior Tidak Jelas" as the location.
-
-5. Mandatory Output Structure (Chain of Thought):
-   You MUST use the "cameraPath" and "visualAnalysis" fields in your output to explicitly state your Camera View Orientation, Vehicle Side, and Visual Reasoning before listing any damage.
+Mandatory Output Structure (Chain of Thought):
+Use the "cameraPath" and "visualAnalysis" fields to trace the camera's movement and note when the rear plate was in frame. Do this BEFORE listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
-For EVERY damage you report, you MUST include an "orientationReason" field that explains:
-1. Which view (front / rear / side / corner close-up) the camera is in
-2. Which anchor (rear plate, front plate/logo, taillight, headlight) is visible or was recently crossed
-3. Where the damaged body part sits relative to that anchor
-4. Applying the inference rules, conclude: Kiri or Kanan from the vehicle's perspective
-If spatial evidence is insufficient, state so and use "Eksterior Tidak Jelas" as the location.
+For EVERY damage you report, the "orientationReason" field must answer:
+1. Was the rear license plate visible in the frame where this damage appears, or in a recent frame with a continuous camera path to this one?
+2. If YES: where does the damaged part sit relative to the rear plate (screen-left or screen-right)? Conclude Kiri or Kanan.
+3. If NO: explicitly state the rear plate was not available, and use a center location or "Eksterior Tidak Jelas" — do not guess a side.
 
 EXHAUSTIVE SCANNING:
 - You MUST analyze the entire video from start to finish (0:00 to end).
