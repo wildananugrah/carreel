@@ -78,4 +78,10 @@ export interface IInspectionRepository {
     tripType: string,
     excludeId: string,
   ): Promise<InspectionDetailWithRelations | null>;
+  updateDamageLocation(
+    scope: UserScope,
+    analysisId: string,
+    damageIndex: number,
+    newLocation: string,
+  ): Promise<{ structuredData: unknown }>;
 }

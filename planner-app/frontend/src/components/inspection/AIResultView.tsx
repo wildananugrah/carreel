@@ -1,5 +1,5 @@
 import type { AIAnalysis } from "../../lib/types";
-import { DamageList, type DamageItem } from "./DamageList";
+import { type DamageItem, DamageList } from "./DamageList";
 
 const DAMAGE_SEEK_ENABLED = import.meta.env.VITE_DAMAGE_SEEK_ENABLED === "true";
 
@@ -7,9 +7,19 @@ interface AIResultViewProps {
   analysis: AIAnalysis;
   stepType?: string;
   videoMediaId?: string | null;
+  onSwapDamageSide?: (
+    analysisId: string,
+    damageIndex: number,
+    newLocation: string,
+  ) => Promise<void>;
 }
 
-export function AIResultView({ analysis, stepType, videoMediaId }: AIResultViewProps) {
+export function AIResultView({
+  analysis,
+  stepType,
+  videoMediaId,
+  onSwapDamageSide,
+}: AIResultViewProps) {
   const data = analysis.structuredData as Record<string, unknown> | null;
 
   return (
@@ -47,6 +57,12 @@ export function AIResultView({ analysis, stepType, videoMediaId }: AIResultViewP
                     <DamageList
                       damages={value as DamageItem[]}
                       videoMediaId={videoMediaId}
+                      onSwapSide={
+                        onSwapDamageSide
+                          ? (damageIndex, newLocation) =>
+                              onSwapDamageSide(analysis.id, damageIndex, newLocation)
+                          : undefined
+                      }
                     />
                   </div>
                 );

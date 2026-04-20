@@ -226,11 +226,7 @@ export function VideoRecorderOverlay({
               strokeWidth={2}
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </button>
         )}
@@ -283,8 +279,10 @@ export function VideoRecorderOverlay({
 
         {status === "recording" && (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-white/60 text-xs">
-              {canStop ? "Tekan untuk berhenti" : `Minimum ${formatTime(minDuration)}`}
+            <p className="text-white/60 text-xs text-center px-6">
+              {canStop
+                ? "Pastikan plat nomor belakang sudah direkam dengan jelas sebelum berhenti."
+                : `Minimum ${formatTime(minDuration)}`}
             </p>
             <button
               type="button"

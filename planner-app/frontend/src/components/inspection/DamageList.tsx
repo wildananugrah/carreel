@@ -15,6 +15,24 @@ export interface DamageItem {
 interface DamageListProps {
   damages: DamageItem[];
   videoMediaId?: string | null;
+  /**
+   * When provided, enables the "Tukar Sisi" (flip) button on damages whose
+   * location contains "Kiri" or "Kanan". The parent is responsible for
+   * performing the API call and updating state.
+   */
+  onSwapSide?: (damageIndex: number, newLocation: string) => Promise<void>;
+}
+
+/**
+ * Returns the side-swapped version of a location string, or null if the
+ * location is not side-swappable (e.g. "Atap", "Bumper Depan Tengah").
+ * A location is swappable if it contains exactly one of "Kiri" or "Kanan".
+ */
+function swapSideLocation(location: string): string | null {
+  const hasKiri = /\bKiri\b/.test(location);
+  const hasKanan = /\bKanan\b/.test(location);
+  if (hasKiri === hasKanan) return null; // neither or both — not swappable
+  return hasKiri ? location.replace(/\bKiri\b/g, "Kanan") : location.replace(/\bKanan\b/g, "Kiri");
 }
 
 function formatTimestamp(seconds: number): string {
@@ -37,8 +55,9 @@ function severityClasses(severity: string | undefined): string {
   }
 }
 
-export function DamageList({ damages, videoMediaId }: DamageListProps) {
+export function DamageList({ damages, videoMediaId, onSwapSide }: DamageListProps) {
   const [seekTo, setSeekTo] = useState<number | null>(null);
+  const [pendingSwapIndex, setPendingSwapIndex] = useState<number | null>(null);
 
   if (damages.length === 0) {
     return (
@@ -59,10 +78,7 @@ export function DamageList({ damages, videoMediaId }: DamageListProps) {
           const showSeek = canSeek && hasTimestamp;
 
           return (
-            <div
-              key={key}
-              className="bg-[#1a1a1a] rounded-md p-3 text-sm flex items-start gap-3"
-            >
+            <div key={key} className="bg-[#1a1a1a] rounded-md p-3 text-sm flex items-start gap-3">
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   {damage.severity && (
@@ -77,15 +93,37 @@ export function DamageList({ damages, videoMediaId }: DamageListProps) {
                       {damage.damageType.replace(/_/g, " ")}
                     </span>
                   )}
-                  {damage.location && (
-                    <span className="text-neutral-500">· {damage.location}</span>
-                  )}
+                  {damage.location && <span className="text-neutral-500">· {damage.location}</span>}
                 </div>
                 {damage.description && (
-                  <p className="text-neutral-400 text-xs leading-relaxed">
-                    {damage.description}
-                  </p>
+                  <p className="text-neutral-400 text-xs leading-relaxed">{damage.description}</p>
                 )}
+                {onSwapSide &&
+                  damage.location &&
+                  (() => {
+                    const swapped = swapSideLocation(damage.location);
+                    if (!swapped) return null;
+                    const pending = pendingSwapIndex === index;
+                    return (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={async () => {
+                          setPendingSwapIndex(index);
+                          try {
+                            await onSwapSide(index, swapped);
+                          } finally {
+                            setPendingSwapIndex(null);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md border border-[#2a2a2a] text-neutral-400 text-[11px] hover:bg-[#222222] hover:text-white disabled:opacity-50 transition-colors"
+                        aria-label={`Tukar sisi ke ${swapped}`}
+                      >
+                        <span aria-hidden="true">⇄</span>
+                        {pending ? "Menyimpan…" : `Tukar ke ${swapped}`}
+                      </button>
+                    );
+                  })()}
               </div>
 
               {showSeek && (

@@ -29,4 +29,11 @@ export interface IInspectionService {
     scope: UserScope,
     inspectionId: string,
   ): Promise<InspectionComparison | null>;
+  updateDamageLocation(
+    scope: UserScope,
+    inspectionId: string,
+    analysisId: string,
+    damageIndex: number,
+    newLocation: string,
+  ): Promise<{ structuredData: unknown }>;
 }

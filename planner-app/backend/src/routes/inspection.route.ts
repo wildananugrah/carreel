@@ -74,6 +74,32 @@ export function createInspectionRoutes(
     return c.json(comparison);
   });
 
+  // PATCH /api/inspections/:id/analyses/:analysisId/damages/:damageIndex
+  // Body: { location: string }
+  // Planner override for an AI-detected damage location (e.g., flip Kiri↔Kanan).
+  app.patch("/:id/analyses/:analysisId/damages/:damageIndex", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const inspectionId = c.req.param("id");
+    const analysisId = c.req.param("analysisId");
+    const damageIndex = Number(c.req.param("damageIndex"));
+    if (!Number.isInteger(damageIndex) || damageIndex < 0) {
+      return c.json({ error: "Invalid damage index" }, 400);
+    }
+    const body = (await c.req.json()) as { location?: unknown };
+    if (typeof body.location !== "string") {
+      return c.json({ error: "location must be a string" }, 400);
+    }
+    const result = await inspectionService.updateDamageLocation(
+      scope,
+      inspectionId,
+      analysisId,
+      damageIndex,
+      body.location,
+    );
+    return c.json(result);
+  });
+
   // POST /api/inspections/:id/reviews
   app.post("/:id/reviews", async (c) => {
     const scope = c.get("scope");

@@ -13,6 +13,7 @@ import type {
   PaginatedResponse,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { badRequest, notFound } from "../utils/http-error";
 import { buildScopeFilter, canWriteToEntity } from "../utils/scope-filter";
 
 export class InspectionRepository implements IInspectionRepository {
@@ -30,7 +31,13 @@ export class InspectionRepository implements IInspectionRepository {
           select: { id: true, fullName: true, email: true },
         },
         unit: {
-          select: { id: true, licensePlate: true, make: true, model: true, vin: true },
+          select: {
+            id: true,
+            licensePlate: true,
+            make: true,
+            model: true,
+            vin: true,
+          },
         },
         linkedInspection: {
           select: { id: true, tripType: true, status: true },
@@ -184,7 +191,13 @@ export class InspectionRepository implements IInspectionRepository {
       include: {
         driver: { select: { id: true, fullName: true, email: true } },
         unit: {
-          select: { id: true, licensePlate: true, make: true, model: true, vin: true },
+          select: {
+            id: true,
+            licensePlate: true,
+            make: true,
+            model: true,
+            vin: true,
+          },
         },
         steps: {
           include: {
@@ -228,5 +241,56 @@ export class InspectionRepository implements IInspectionRepository {
       },
     });
     return result as unknown as InspectionDetailWithRelations | null;
+  }
+
+  async updateDamageLocation(
+    scope: UserScope,
+    analysisId: string,
+    damageIndex: number,
+    newLocation: string,
+  ): Promise<{ structuredData: unknown }> {
+    const analysis = await this.prisma.aIAnalysis.findUnique({
+      where: { id: analysisId },
+      select: {
+        id: true,
+        structuredData: true,
+        projectId: true,
+        step: {
+          select: { inspection: { select: { driverId: true } } },
+        },
+      },
+    });
+    if (!analysis?.projectId) throw notFound("AI analysis not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: analysis.projectId,
+        driverId: analysis.step.inspection.driverId,
+      })
+    ) {
+      throw notFound("AI analysis not found");
+    }
+
+    const data = (analysis.structuredData ?? {}) as {
+      damages?: Array<Record<string, unknown>>;
+    };
+    if (
+      !Array.isArray(data.damages) ||
+      damageIndex < 0 ||
+      damageIndex >= data.damages.length
+    ) {
+      throw badRequest("Damage index out of range");
+    }
+
+    data.damages[damageIndex] = {
+      ...data.damages[damageIndex],
+      location: newLocation,
+    };
+
+    const updated = await this.prisma.aIAnalysis.update({
+      where: { id: analysisId },
+      data: { structuredData: data as never },
+      select: { structuredData: true },
+    });
+    return { structuredData: updated.structuredData };
   }
 }

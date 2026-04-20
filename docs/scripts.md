@@ -179,6 +179,14 @@ SELECT u."fullName", u.email,
   AND s."stepType" = 'BODY_INSPECTION' -- optional
   ORDER BY a."createdAt" DESC;
 
+SELECT i."tripType", LEFT(a."promptUsed", 300) AS prompt_head
+FROM inspections i
+JOIN inspection_steps s ON s."inspectionId" = i.id AND s."stepType" = 'BODY_INSPECTION'
+JOIN ai_analyses a ON a."stepId" = s.id
+WHERE i.id IN ('12a69895-1b58-4f0b-86c8-35145430a05b', '2e3016ad-0166-42ec-8c50-82c228a34d20')
+ORDER BY a."createdAt";
+
+
 
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns

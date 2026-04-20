@@ -18,6 +18,7 @@ import type {
   PaginatedResponse,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { badRequest, notFound } from "../utils/http-error";
 
 export class InspectionService implements IInspectionService {
   constructor(
@@ -122,6 +123,47 @@ export class InspectionService implements IInspectionService {
     });
 
     return review;
+  }
+
+  async updateDamageLocation(
+    scope: UserScope,
+    inspectionId: string,
+    analysisId: string,
+    damageIndex: number,
+    newLocation: string,
+  ): Promise<{ structuredData: unknown }> {
+    const trimmed = newLocation.trim();
+    if (!trimmed) {
+      throw badRequest("Location must be a non-empty string");
+    }
+
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
+    if (!inspection) {
+      throw notFound("Inspection not found");
+    }
+    const analysisBelongsToInspection = inspection.steps.some(
+      (s) => s.aiAnalysis?.id === analysisId,
+    );
+    if (!analysisBelongsToInspection) {
+      throw notFound("AI analysis not found");
+    }
+
+    const result = await this.inspectionRepository.updateDamageLocation(
+      scope,
+      analysisId,
+      damageIndex,
+      trimmed,
+    );
+    this.logger.info("Damage location updated", {
+      inspectionId,
+      analysisId,
+      damageIndex,
+      newLocation: trimmed,
+    });
+    return result;
   }
 
   async getComparison(

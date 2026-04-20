@@ -7,7 +7,12 @@ interface VideoGuidanceOverlayProps {
 
 const DEFAULT_HINT = "Pastikan Posisi HP Vertikal dan Rekam perlahan untuk menjaga kualitas video.";
 
-const STAGES = [
+const STAGES: Array<{
+  label: string;
+  icon: string;
+  hint: string;
+  critical?: boolean;
+}> = [
   {
     label: "Depan",
     icon: "↑",
@@ -15,6 +20,12 @@ const STAGES = [
   },
   { label: "Samping Kanan", icon: "→", hint: DEFAULT_HINT },
   { label: "Belakang", icon: "↓", hint: DEFAULT_HINT },
+  {
+    label: "Plat Nomor Belakang",
+    icon: "⧉",
+    hint: "Dekatkan kamera ke plat nomor belakang dan tahan 2–3 detik agar terlihat jelas.",
+    critical: true,
+  },
   { label: "Samping Kiri", icon: "←", hint: DEFAULT_HINT },
 ];
 
@@ -34,8 +45,12 @@ export function VideoGuidanceOverlay({
 
   const progress = Math.min(elapsedSeconds / maxDuration, 1);
   const minProgress = minDuration / maxDuration;
+  // Stages are paced against minDuration so the driver cycles through all
+  // guidance (including the critical rear-plate close-up) within the minimum
+  // required recording time, not only if they record all the way to max.
+  const stageReference = Math.max(minDuration, 1);
   const stageIndex = Math.min(
-    Math.floor((elapsedSeconds / maxDuration) * STAGES.length),
+    Math.floor((elapsedSeconds / stageReference) * STAGES.length),
     STAGES.length - 1,
   );
   const currentStage = STAGES[stageIndex];
@@ -44,15 +59,29 @@ export function VideoGuidanceOverlay({
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between">
       {/* Top: Stage indicator */}
       <div className="p-4 pt-6">
-        <div className="bg-black/60 backdrop-blur-sm rounded-xl px-4 py-3">
+        <div
+          className={`backdrop-blur-sm rounded-xl px-4 py-3 ${
+            currentStage.critical ? "bg-yellow-400/20 ring-2 ring-yellow-400" : "bg-black/60"
+          }`}
+        >
           {/* Stage name */}
           <div className="flex items-center justify-center gap-2 mb-1">
             <span className="text-2xl">{currentStage.icon}</span>
-            <span className="text-white text-lg font-bold">{currentStage.label}</span>
+            <span
+              className={`text-lg font-bold ${
+                currentStage.critical ? "text-yellow-300" : "text-white"
+              }`}
+            >
+              {currentStage.label}
+            </span>
           </div>
 
           {/* Stage hint */}
-          <p className="text-white/70 text-xs text-center mb-2 px-1 leading-snug">
+          <p
+            className={`text-xs text-center mb-2 px-1 leading-snug ${
+              currentStage.critical ? "text-yellow-100" : "text-white/70"
+            }`}
+          >
             {currentStage.hint}
           </p>
 

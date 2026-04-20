@@ -45,6 +45,41 @@ export function InspectionDetail() {
     fetchDetail();
   }, [fetchDetail]);
 
+  async function handleSwapDamageSide(
+    analysisId: string,
+    damageIndex: number,
+    newLocation: string,
+  ) {
+    if (!id) return;
+    await api.patch<{ structuredData: unknown }>(
+      `/api/inspections/${id}/analyses/${analysisId}/damages/${damageIndex}`,
+      { location: newLocation },
+    );
+    setInspection((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        steps: prev.steps.map((step) => {
+          if (step.aiAnalysis?.id !== analysisId) return step;
+          const data = step.aiAnalysis.structuredData as {
+            damages?: Array<Record<string, unknown>>;
+          } | null;
+          if (!data?.damages || !data.damages[damageIndex]) return step;
+          const nextDamages = data.damages.map((d, i) =>
+            i === damageIndex ? { ...d, location: newLocation } : d,
+          );
+          return {
+            ...step,
+            aiAnalysis: {
+              ...step.aiAnalysis,
+              structuredData: { ...data, damages: nextDamages },
+            },
+          };
+        }),
+      };
+    });
+  }
+
   async function handleCompare() {
     if (!id) return;
     try {
@@ -252,9 +287,11 @@ export function InspectionDetail() {
                         stepType={step.stepType}
                         videoMediaId={
                           step.stepType === "BODY_INSPECTION"
-                            ? (step.mediaFiles.find((m) => m.mimeType.startsWith("video/"))?.id ?? null)
+                            ? (step.mediaFiles.find((m) => m.mimeType.startsWith("video/"))?.id ??
+                              null)
                             : null
                         }
+                        onSwapDamageSide={handleSwapDamageSide}
                       />
                     )}
                   </Card>
