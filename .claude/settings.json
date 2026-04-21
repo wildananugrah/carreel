@@ -12,7 +12,8 @@
       "Bash(ffprobe -v error -show_entries stream=width,height,r_frame_rate,duration,codec_name -of default=noprint_wrappers=1 /Users/bellinnn/Documents/projects/carreel/tests/video/body2.mp4)",
       "Bash(ffmpeg -y -i tests/video/body1.mp4 -vf \"fps=1\" -vframes 21 /tmp/frames/body1_%02d.jpg -loglevel error)",
       "Bash(ffmpeg -y -i tests/video/body2.mp4 -vf \"fps=1\" -vframes 36 /tmp/frames/body2_%02d.jpg -loglevel error)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(echo \"tsc EXIT=$?\")"
     ],
     "additionalDirectories": [
       "/tmp"

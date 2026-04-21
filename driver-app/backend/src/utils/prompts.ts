@@ -577,10 +577,23 @@ For EVERY damage you report, you MUST write "orientationReason" BEFORE "location
 
 "orientationReason" MUST answer:
 1. Was the rear license plate visible in the frame where this damage appears, or in a recent frame with a continuous camera path to this one?
-2. If YES: where does the damaged part sit relative to the rear plate (screen-left or screen-right)? Conclude Kiri or Kanan. The reason MUST include the literal phrase "plat nomor belakang" and describe the side relative to it.
+2. If YES: where does the damaged part sit relative to the rear plate? Conclude Kiri or Kanan. The reason MUST include BOTH (a) the literal phrase "plat nomor belakang", AND (b) one of the literal screen-side markers "screen-left" or "screen-right". Any equivalent phrase is NOT acceptable — use these literal tokens.
 3. If NO: explicitly write "plat nomor belakang tidak terlihat" and use a center location or "Eksterior Tidak Jelas" — do NOT guess a side.
 
-HARD CONSTRAINT (POST-PROCESSED): If "orientationReason" does not reference the rear plate, the "location" MUST be one of: "Bumper Depan Tengah", "Bumper Belakang Tengah", "Atap", "Kap Mesin", "Bagasi", "Kaca Depan", "Kaca Belakang", "Roda / Ban", or "Eksterior Tidak Jelas". This rule is enforced programmatically after you respond — violations are automatically rewritten to a center variant, which wastes your reasoning. Get it right the first time.
+EXAMPLE OF A WELL-FORMED Kanan REASON:
+  "Plat nomor belakang terlihat pada frame sekitar detik 0:22. Kerusakan pada panel berada di posisi screen-right dari plat tersebut, sehingga Kanan kendaraan."
+
+EXAMPLE OF A WELL-FORMED Kiri REASON:
+  "Plat nomor belakang terlihat pada frame sekitar detik 0:22. Kerusakan pada panel berada di posisi screen-left dari plat tersebut, sehingga Kiri kendaraan."
+
+HARD CONSTRAINT (POST-PROCESSED): Your response is automatically checked after you respond. A damage with a Kiri/Kanan location will be REWRITTEN to a center/unclear variant whenever ANY of these hold:
+  a. "orientationReason" does not mention "plat nomor belakang".
+  b. "orientationReason" mentions the plate but says it is "tidak terlihat" (not visible) / "tidak tampak" / "tidak di frame" / "not visible" / "out of frame".
+  c. "orientationReason" does not contain the literal token "screen-left" or "screen-right".
+  d. The screen-side token in "orientationReason" contradicts the side in "location" (e.g. reason says "screen-right" but location ends in "Kiri").
+  e. The "videoTimestamp" falls in the driver's Samping-Kanan walking stage but the location ends in "Kiri" — or vice-versa for Samping-Kiri timestamps labeled Kanan. The driver records in this exact order: Depan → Samping Kanan → Belakang → Plat Nomor Belakang → Samping Kiri; the rewrite uses the timestamp's position within the minimum recording duration as independent evidence.
+
+All five rules are machine-enforced. Violations do not raise an error; they silently rewrite the side to a center variant, which wastes your reasoning. Get it right the first time.
 
 EXHAUSTIVE SCANNING:
 - You MUST analyze the entire video from start to finish (0:00 to end).
@@ -712,12 +725,12 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   "damages": [
     {
       "damageType": "goresan",
-      "orientationReason": "Plat nomor belakang terlihat di frame sekitar detik 0:14. Kerusakan pada panel berada di sisi screen-right dari plat tersebut = Kanan kendaraan.",
+      "orientationReason": "Plat nomor belakang terlihat pada frame sekitar detik 0:22. Kerusakan pada panel berada di posisi screen-right dari plat tersebut, sehingga Kanan kendaraan.",
       "location": "Bumper / Panel Belakang Kanan",
       "severity": "MINOR",
       "description": "Goresan putih linear pada panel bawah, sekitar 8cm",
       "isNewDamage": true,
-      "videoTimestamp": 18
+      "videoTimestamp": 22
     },
     {
       "damageType": "goresan",
@@ -731,7 +744,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   ]
 }
 
-The second damage above shows the correct refusal pattern: when the rear plate is not in the continuous camera path, you MUST output a center/unclear location and explain the plate's absence. Follow this pattern whenever the anchor is unavailable.
+The first damage uses the literal tokens "plat nomor belakang" and "screen-right" and its location ends in "Kanan" — all three agree, so the post-processor keeps it. The second damage shows the correct refusal: when the plate is not in the continuous camera path, output a center/unclear location and explicitly write "plat nomor belakang tidak terlihat". Follow these patterns exactly.
 
 This is a high-recall inspection system. When in doubt, report.`;
 

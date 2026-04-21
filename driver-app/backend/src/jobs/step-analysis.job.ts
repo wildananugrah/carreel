@@ -36,6 +36,12 @@ export interface StepAnalysisJobData {
 
 const MAX_REASONABLE_KM_DELTA = 50000;
 const KM_TOLERANCE = Number(process.env.KM_TOLERANCE ?? 20);
+// Driver walking-protocol reference (matches VIDEO_MIN_DURATION on the
+// frontend used to pace the VideoGuidanceOverlay stages). Used by the side
+// guard's stage cross-check.
+const WALKING_PROTOCOL_DURATION_SEC = Number(
+  process.env.VIDEO_MIN_DURATION ?? 30,
+);
 
 export class StepAnalysisJob {
   constructor(
@@ -227,17 +233,38 @@ export class StepAnalysisJob {
 
       // 4a. Enforce single-anchor rule on body inspection damages. The prompt
       // forbids Kiri/Kanan without a rear-plate-based orientationReason; the
-      // guard downgrades any violations the model emits anyway.
+      // guard downgrades any violations the model emits anyway. Also applies
+      // a walking-protocol cross-check on Stage 2 (Kanan) and Stage 5 (Kiri)
+      // timestamps where the physical side is determined by the driver's
+      // walk, not the AI's derivation.
       if (
         stepType === "BODY_INSPECTION" &&
         Array.isArray(parsed.damages) &&
         parsed.damages.length > 0
       ) {
-        const { appliedCount } = applyBodyDamageSideGuard(parsed.damages);
+        const { appliedCount } = applyBodyDamageSideGuard(parsed.damages, {
+          walkingProtocolDurationSec: WALKING_PROTOCOL_DURATION_SEC,
+        });
         if (appliedCount > 0) {
+          const downgraded = parsed.damages
+            .filter((d: { sideGuardApplied?: boolean }) => d.sideGuardApplied)
+            .map(
+              (d: {
+                originalLocation?: string;
+                location: string;
+                sideGuardReason?: string;
+                videoTimestamp?: number;
+              }) => ({
+                from: d.originalLocation,
+                to: d.location,
+                reason: d.sideGuardReason,
+                videoTimestamp: d.videoTimestamp,
+              }),
+            );
           log.warn("Side-guard downgraded damage locations", {
             appliedCount,
             total: parsed.damages.length,
+            downgraded,
           });
         }
       }
