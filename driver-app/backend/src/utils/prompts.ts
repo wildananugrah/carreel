@@ -561,12 +561,7 @@ MANDATORY SEQUENCE:
    - Left side of the vehicle
    - Right side of the vehicle
 
-2. Utilize Vehicle Anchors:
-   - Rear License Plate = The exact rear center of the vehicle.
-   - Front Logo / Front License Plate = The exact front center of the vehicle.
-   - Lights, Wheels/Tires, Doors, and Fenders = Side determiners.
-
-3. ANATOMICAL SYMMETRY & SIDE ANCHORS (FALLBACK LOGIC):
+2. ANATOMICAL SYMMETRY & SIDE ANCHORS (FALLBACK LOGIC):
 If primary anchors (Plates/Logos) are missing, use these anatomical markers:
 
 - THE MIDPOINT RULE: If BOTH headlights or BOTH taillights are visible, create an imaginary center line between them. 
@@ -585,12 +580,12 @@ If primary anchors (Plates/Logos) are missing, use these anatomical markers:
 - CONTINUITY TRACKING:
   - You MUST maintain a "Spatial Memory". If you identified the Rear-Kanan side at the start, every panel captured in a continuous camera movement along that side remains KANAN until the camera crosses the Midpoint (Front/Rear center).
 
-4. Prohibitions (Fail-Safes):
+3. Prohibitions (Fail-Safes):
    - DO NOT use screen position (left/right of the monitor) as the primary baseline.
    - DO NOT guess if the plates, lights, wheels, or side body are not clearly visible.
    - If visual evidence is insufficient to determine the side, state "Uncertain" in "orientationReason" and use a center location or "Eksterior Tidak Jelas".
 
-5. Mandatory Output Structure (Chain of Thought):
+4. Mandatory Output Structure (Chain of Thought):
    To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields to explicitly state your Camera View Orientation, Vehicle Side orientation, and Visual Reasoning BEFORE listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
