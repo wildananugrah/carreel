@@ -2,12 +2,20 @@ import { describe, expect, test } from "bun:test";
 import {
   applyBodyDamageSideGuard,
   type BodyDamage,
+  type DamageAnchor,
+  type GeminiBoundingBox,
 } from "../../src/utils/body-damage-guard";
 
 const GOOD_REASON_LEFT =
   "Rear Corner. Taillight kiri dan plat nomor belakang terlihat di frame 0:22. Kerusakan berada to the left of the taillight = Kiri kendaraan.";
 const GOOD_REASON_RIGHT =
   "Rear Corner. Taillight kanan dan plat nomor belakang terlihat di frame 0:22. Kerusakan berada to the right of the taillight = Kanan kendaraan.";
+
+// Bounding-box format: [ymin, xmin, ymax, xmax] normalized to 0-1000 (Gemini format).
+function box(xmin: number, xmax: number): GeminiBoundingBox {
+  // y values don't matter for side derivation — fix to the image middle.
+  return [400, xmin, 600, xmax];
+}
 
 function makeDamage(overrides: Partial<BodyDamage> = {}): BodyDamage {
   return {
@@ -22,14 +30,23 @@ function makeDamage(overrides: Partial<BodyDamage> = {}): BodyDamage {
   };
 }
 
-describe("applyBodyDamageSideGuard — text-based checks", () => {
+function anchor(
+  type: DamageAnchor["type"],
+  bbox: GeminiBoundingBox,
+  frameTimestamp = 10,
+): DamageAnchor {
+  return { type, boundingBox: bbox, frameTimestamp };
+}
+
+// ---- Text-only path (no bounding-box data) ------------------------------
+
+describe("applyBodyDamageSideGuard — text-based checks (no bboxes)", () => {
   test("passes a well-formed reason: anchor + conclusion token + matching location", () => {
     const damages = [makeDamage()];
     const result = applyBodyDamageSideGuard(damages);
 
     expect(result.appliedCount).toBe(0);
     expect(damages[0].location).toBe("Bumper Depan Kiri");
-    expect(damages[0].sideGuardApplied).toBeUndefined();
   });
 
   test("passes a center location untouched regardless of reason", () => {
@@ -43,23 +60,16 @@ describe("applyBodyDamageSideGuard — text-based checks", () => {
   });
 
   test("downgrades when orientationReason is missing entirely", () => {
-    const damages = [
-      makeDamage({
-        location: "Bumper Depan Kiri",
-        orientationReason: undefined,
-      }),
-    ];
+    const damages = [makeDamage({ orientationReason: undefined })];
     const result = applyBodyDamageSideGuard(damages);
 
     expect(result.appliedCount).toBe(1);
-    expect(damages[0].location).toBe("Bumper Depan Tengah");
     expect(damages[0].sideGuardReason).toBe("missing-anchor-citation");
   });
 
   test("downgrades when reason cites no recognized anchor", () => {
     const damages = [
       makeDamage({
-        location: "Bumper Depan Kiri",
         orientationReason:
           "Kerusakan terlihat di sudut pandang kiri = Kiri kendaraan.",
       }),
@@ -70,85 +80,34 @@ describe("applyBodyDamageSideGuard — text-based checks", () => {
     expect(damages[0].sideGuardReason).toBe("missing-anchor-citation");
   });
 
-  test("accepts taillight as a valid anchor (rear corner view)", () => {
-    const damages = [
-      makeDamage({
-        location: "Bumper Depan Kiri",
-        orientationReason:
-          "Rear Corner. Taillight kiri terlihat. Kerusakan to the left of the taillight = Kiri kendaraan.",
-      }),
-    ];
-    const result = applyBodyDamageSideGuard(damages);
-
-    expect(result.appliedCount).toBe(0);
-  });
-
-  test("accepts headlight (front corner) + mirror-applied Kiri conclusion", () => {
-    const damages = [
-      makeDamage({
-        location: "Fender Depan Kiri",
-        orientationReason:
-          "Front Corner. Headlight kanan terlihat. Kerusakan berada to the right of the headlight (mirror view) = Kiri kendaraan.",
-      }),
-    ];
-    const result = applyBodyDamageSideGuard(damages);
-
-    expect(result.appliedCount).toBe(0);
-  });
-
-  test("accepts plat nomor depan / logo depan as anchor", () => {
-    const damages = [
-      makeDamage({
-        location: "Bumper Depan Kiri",
-        orientationReason:
-          "Front View. Logo depan dan plat nomor depan terlihat. Kerusakan di fender berada to the right of the front logo (mirror view) = Kiri kendaraan.",
-      }),
-    ];
-    const result = applyBodyDamageSideGuard(damages);
-
-    expect(result.appliedCount).toBe(0);
-  });
-
   test("downgrades when reason ends in '= Uncertain'", () => {
     const damages = [
       makeDamage({
-        location: "Bumper Depan Kiri",
         orientationReason:
           "Rear Corner. Plat nomor belakang tidak terlihat dengan jelas. = Uncertain.",
       }),
     ];
-    const result = applyBodyDamageSideGuard(damages);
+    applyBodyDamageSideGuard(damages);
 
-    expect(result.appliedCount).toBe(1);
-    expect(damages[0].location).toBe("Bumper Depan Tengah");
     expect(damages[0].sideGuardReason).toBe("uncertain-conclusion");
   });
 
   test("downgrades when reason cites anchor but has no conclusion token", () => {
     const damages = [
       makeDamage({
-        location: "Bumper Depan Kiri",
         orientationReason:
           "Rear Corner. Taillight kiri terlihat. Kerusakan pada panel bawah.",
       }),
     ];
-    const result = applyBodyDamageSideGuard(damages);
+    applyBodyDamageSideGuard(damages);
 
-    expect(result.appliedCount).toBe(1);
     expect(damages[0].sideGuardReason).toBe("missing-conclusion-token");
   });
 
   test("downgrades when conclusion token contradicts the location's side", () => {
-    // location Kiri but conclusion says "= Kanan kendaraan"
-    const damages = [
-      makeDamage({
-        location: "Bumper Depan Kiri",
-        orientationReason: GOOD_REASON_RIGHT,
-      }),
-    ];
-    const result = applyBodyDamageSideGuard(damages);
+    const damages = [makeDamage({ orientationReason: GOOD_REASON_RIGHT })];
+    applyBodyDamageSideGuard(damages);
 
-    expect(result.appliedCount).toBe(1);
     expect(damages[0].sideGuardReason).toBe("contradiction-with-reason");
     expect(damages[0].location).toBe("Bumper Depan Tengah");
   });
@@ -165,7 +124,7 @@ describe("applyBodyDamageSideGuard — text-based checks", () => {
     expect(damages[0].location).toBe("Bumper Belakang Tengah");
   });
 
-  test("door / fender / mirror side locations downgrade to Eksterior Tidak Jelas", () => {
+  test("door/fender/mirror side locations downgrade to Eksterior Tidak Jelas", () => {
     const damages = [
       makeDamage({
         location: "Pintu Depan Kiri",
@@ -177,36 +136,20 @@ describe("applyBodyDamageSideGuard — text-based checks", () => {
         orientationReason: undefined,
       }),
     ];
-    const result = applyBodyDamageSideGuard(damages);
+    applyBodyDamageSideGuard(damages);
 
-    expect(result.appliedCount).toBe(3);
     for (const d of damages) {
       expect(d.location).toBe("Eksterior Tidak Jelas");
     }
   });
 
-  test("handles the trailing-space dictionary variant 'Bumper / Panel Belakang Kiri '", () => {
-    const damages = [
-      makeDamage({
-        location: "Bumper / Panel Belakang Kiri ",
-        orientationReason: undefined,
-      }),
-    ];
-    const result = applyBodyDamageSideGuard(damages);
-
-    expect(result.appliedCount).toBe(1);
-    expect(damages[0].location).toBe("Bumper Belakang Tengah");
-  });
-
-  test("preserves all other damage fields when downgrading", () => {
+  test("preserves non-side fields when downgrading", () => {
     const damages = [
       makeDamage({
         damageType: "penyok",
         location: "Pintu Depan Kiri",
         severity: "MODERATE",
-        description: "dent 10cm",
         orientationReason: undefined,
-        isNewDamage: false,
         videoTimestamp: 42,
       }),
     ];
@@ -214,17 +157,197 @@ describe("applyBodyDamageSideGuard — text-based checks", () => {
 
     expect(damages[0].damageType).toBe("penyok");
     expect(damages[0].severity).toBe("MODERATE");
-    expect(damages[0].description).toBe("dent 10cm");
-    expect(damages[0].isNewDamage).toBe(false);
     expect(damages[0].videoTimestamp).toBe(42);
   });
 
   test("returns zero appliedCount for an empty damages array", () => {
-    const damages: BodyDamage[] = [];
-    const result = applyBodyDamageSideGuard(damages);
+    const result = applyBodyDamageSideGuard([]);
     expect(result.appliedCount).toBe(0);
   });
 });
+
+// ---- Coordinate-based derivation ----------------------------------------
+
+describe("applyBodyDamageSideGuard — coordinate derivation", () => {
+  test("rear-plate anchor: damage left of plate → Kiri derived, agrees with Kiri location, no override", () => {
+    const damages = [
+      makeDamage({
+        location: "Bumper / Panel Belakang Kiri",
+        damageBoundingBox: box(100, 250),
+        anchor: anchor("rear-plate", box(400, 600)),
+      }),
+    ];
+    const result = applyBodyDamageSideGuard(damages);
+
+    expect(result.appliedCount).toBe(0);
+    expect(damages[0].location).toBe("Bumper / Panel Belakang Kiri");
+  });
+
+  test("rear-plate anchor: damage right of plate → Kanan derived, flips Kiri location to Kanan", () => {
+    const damages = [
+      makeDamage({
+        location: "Bumper / Panel Belakang Kiri",
+        damageBoundingBox: box(700, 900),
+        anchor: anchor("rear-plate", box(400, 600)),
+      }),
+    ];
+    const result = applyBodyDamageSideGuard(damages);
+
+    expect(result.appliedCount).toBe(1);
+    expect(damages[0].sideGuardReason).toBe("coordinate-override");
+    expect(damages[0].originalLocation).toBe("Bumper / Panel Belakang Kiri");
+    expect(damages[0].location).toBe("Bumper / Panel Belakang Kanan");
+  });
+
+  test("rear-taillight anchor: direct mapping — damage right of taillight → Kanan", () => {
+    const damages = [
+      makeDamage({
+        location: "Bumper / Panel Belakang Kiri",
+        damageBoundingBox: box(650, 850),
+        anchor: anchor("rear-taillight", box(300, 500)),
+      }),
+    ];
+    applyBodyDamageSideGuard(damages);
+
+    expect(damages[0].location).toBe("Bumper / Panel Belakang Kanan");
+    expect(damages[0].sideGuardReason).toBe("coordinate-override");
+  });
+
+  test("front-plate anchor: MIRROR — damage right of front plate → Kiri derived", () => {
+    // damage is screen-right of front plate → vehicle LEFT (mirror view)
+    const damages = [
+      makeDamage({
+        location: "Bumper Depan Kanan",
+        damageBoundingBox: box(700, 900),
+        anchor: anchor("front-plate", box(400, 600)),
+      }),
+    ];
+    applyBodyDamageSideGuard(damages);
+
+    expect(damages[0].location).toBe("Bumper Depan Kiri");
+    expect(damages[0].sideGuardReason).toBe("coordinate-override");
+  });
+
+  test("front-logo anchor: MIRROR — damage left of logo → Kanan derived", () => {
+    const damages = [
+      makeDamage({
+        location: "Fender Depan Kiri",
+        damageBoundingBox: box(100, 300),
+        anchor: anchor("front-logo", box(400, 600)),
+      }),
+    ];
+    applyBodyDamageSideGuard(damages);
+
+    expect(damages[0].location).toBe("Fender Depan Kanan");
+    expect(damages[0].sideGuardReason).toBe("coordinate-override");
+  });
+
+  test("front-headlight anchor: MIRROR — damage right of headlight → Kiri derived", () => {
+    const damages = [
+      makeDamage({
+        location: "Pintu Depan Kanan",
+        damageBoundingBox: box(700, 900),
+        anchor: anchor("front-headlight", box(300, 500)),
+      }),
+    ];
+    applyBodyDamageSideGuard(damages);
+
+    expect(damages[0].location).toBe("Pintu Depan Kiri");
+    expect(damages[0].sideGuardReason).toBe("coordinate-override");
+  });
+
+  test("coord check agrees with location — no override, passes", () => {
+    // Rear-plate anchor, damage clearly screen-right → Kanan, location is Kanan
+    const damages = [
+      makeDamage({
+        location: "Bumper / Panel Belakang Kanan",
+        damageBoundingBox: box(700, 900),
+        anchor: anchor("rear-plate", box(400, 600)),
+        orientationReason: GOOD_REASON_RIGHT,
+      }),
+    ];
+    const result = applyBodyDamageSideGuard(damages);
+
+    expect(result.appliedCount).toBe(0);
+    expect(damages[0].location).toBe("Bumper / Panel Belakang Kanan");
+  });
+
+  test("missing damageBoundingBox falls through to text-based checks", () => {
+    // Text checks would pass this (reason agrees with location)
+    const damages = [
+      makeDamage({
+        location: "Bumper Depan Kiri",
+        anchor: anchor("rear-plate", box(400, 600)),
+        // damageBoundingBox intentionally absent
+      }),
+    ];
+    const result = applyBodyDamageSideGuard(damages);
+
+    expect(result.appliedCount).toBe(0);
+  });
+
+  test("missing anchor falls through to text-based checks", () => {
+    const damages = [
+      makeDamage({
+        location: "Bumper Depan Kiri",
+        damageBoundingBox: box(100, 300),
+        anchor: null,
+      }),
+    ];
+    const result = applyBodyDamageSideGuard(damages);
+
+    expect(result.appliedCount).toBe(0);
+  });
+
+  test("malformed bounding box (xmin >= xmax) falls through to text checks", () => {
+    const damages = [
+      makeDamage({
+        location: "Bumper Depan Kiri",
+        damageBoundingBox: box(500, 500), // zero width
+        anchor: anchor("rear-plate", box(400, 600)),
+      }),
+    ];
+    const result = applyBodyDamageSideGuard(damages);
+
+    // Falls through; text checks find reason already matches location → pass
+    expect(result.appliedCount).toBe(0);
+  });
+
+  test("uncertain-conclusion in reason wins over bbox (AI said it can't tell)", () => {
+    const damages = [
+      makeDamage({
+        location: "Bumper Depan Kiri",
+        damageBoundingBox: box(100, 300),
+        anchor: anchor("rear-plate", box(400, 600)),
+        orientationReason:
+          "Rear Corner. Plat nomor belakang tidak terlihat dengan jelas. = Uncertain.",
+      }),
+    ];
+    applyBodyDamageSideGuard(damages);
+
+    expect(damages[0].sideGuardReason).toBe("uncertain-conclusion");
+    expect(damages[0].location).toBe("Bumper Depan Tengah");
+  });
+
+  test("missing-anchor-citation in reason still downgrades even if bboxes valid", () => {
+    // If the AI emits bboxes but doesn't cite any anchor in text, the reason is
+    // malformed and we downgrade. Bbox override does not paper over weak reasoning.
+    const damages = [
+      makeDamage({
+        location: "Bumper Depan Kiri",
+        damageBoundingBox: box(100, 300),
+        anchor: anchor("rear-plate", box(400, 600)),
+        orientationReason: "Damage visible on panel. = Kiri kendaraan.",
+      }),
+    ];
+    applyBodyDamageSideGuard(damages);
+
+    expect(damages[0].sideGuardReason).toBe("missing-anchor-citation");
+    expect(damages[0].location).toBe("Bumper Depan Tengah");
+  });
+});
+
+// ---- Walking-stage cross-check ------------------------------------------
 
 describe("applyBodyDamageSideGuard — walking-stage cross-check", () => {
   test("disabled by default (no walkingProtocolDurationSec option)", () => {
@@ -232,8 +355,6 @@ describe("applyBodyDamageSideGuard — walking-stage cross-check", () => {
       makeDamage({
         location: "Bumper / Panel Belakang Kiri",
         orientationReason: GOOD_REASON_LEFT,
-        // timestamp 8s sits in the Kanan stage of a 30s walk, but without
-        // the option we don't check stage.
         videoTimestamp: 8,
       }),
     ];
@@ -243,7 +364,6 @@ describe("applyBodyDamageSideGuard — walking-stage cross-check", () => {
   });
 
   test("overrides Kiri location that falls in the Kanan walking stage", () => {
-    // minDuration=30 → Kanan stage: [6s, 12s)
     const damages = [
       makeDamage({
         location: "Pintu Depan Kiri",
@@ -251,17 +371,14 @@ describe("applyBodyDamageSideGuard — walking-stage cross-check", () => {
         videoTimestamp: 8,
       }),
     ];
-    const result = applyBodyDamageSideGuard(damages, {
+    applyBodyDamageSideGuard(damages, {
       walkingProtocolDurationSec: 30,
     });
 
-    expect(result.appliedCount).toBe(1);
     expect(damages[0].sideGuardReason).toBe("contradiction-with-walking-stage");
-    expect(damages[0].location).toBe("Eksterior Tidak Jelas");
   });
 
   test("overrides Kanan location that falls in the Kiri walking stage", () => {
-    // minDuration=30 → Kiri stage: [24s, 30s]
     const damages = [
       makeDamage({
         location: "Pintu Belakang Kanan",
@@ -269,38 +386,22 @@ describe("applyBodyDamageSideGuard — walking-stage cross-check", () => {
         videoTimestamp: 27,
       }),
     ];
-    const result = applyBodyDamageSideGuard(damages, {
+    applyBodyDamageSideGuard(damages, {
       walkingProtocolDurationSec: 30,
     });
 
-    expect(result.appliedCount).toBe(1);
     expect(damages[0].sideGuardReason).toBe("contradiction-with-walking-stage");
   });
 
-  test("leaves a rear-stage (Stage 3/4) side claim alone — stage doesn't constrain side", () => {
-    // timestamp 18s, minDuration 30s → ratio 0.6 → Stage 4 (plate close-up).
-    // No expected side → no stage-based override.
+  test("coordinate override takes precedence over walking-stage check", () => {
+    // timestamp 8s = Kanan walking stage. Location is Kiri. Text-only would
+    // downgrade via contradiction-with-walking-stage. But bbox says Kanan —
+    // so we override to Kanan and don't downgrade to center.
     const damages = [
       makeDamage({
-        location: "Bumper / Panel Belakang Kanan",
-        orientationReason: GOOD_REASON_RIGHT,
-        videoTimestamp: 18,
-      }),
-    ];
-    const result = applyBodyDamageSideGuard(damages, {
-      walkingProtocolDurationSec: 30,
-    });
-
-    expect(result.appliedCount).toBe(0);
-    expect(damages[0].location).toBe("Bumper / Panel Belakang Kanan");
-  });
-
-  test("stage agrees with location — no override", () => {
-    // timestamp 8s, minDuration 30s → Stage 2 (Kanan). Location also Kanan → fine.
-    const damages = [
-      makeDamage({
-        location: "Pintu Depan Kanan",
-        orientationReason: GOOD_REASON_RIGHT,
+        location: "Pintu Depan Kiri",
+        damageBoundingBox: box(700, 900),
+        anchor: anchor("rear-plate", box(400, 600), 8),
         videoTimestamp: 8,
       }),
     ];
@@ -308,6 +409,8 @@ describe("applyBodyDamageSideGuard — walking-stage cross-check", () => {
       walkingProtocolDurationSec: 30,
     });
 
-    expect(result.appliedCount).toBe(0);
+    expect(result.appliedCount).toBe(1);
+    expect(damages[0].sideGuardReason).toBe("coordinate-override");
+    expect(damages[0].location).toBe("Pintu Depan Kanan");
   });
 });

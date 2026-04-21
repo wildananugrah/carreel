@@ -246,7 +246,7 @@ export class StepAnalysisJob {
           walkingProtocolDurationSec: WALKING_PROTOCOL_DURATION_SEC,
         });
         if (appliedCount > 0) {
-          const downgraded = parsed.damages
+          const adjusted = parsed.damages
             .filter((d: { sideGuardApplied?: boolean }) => d.sideGuardApplied)
             .map(
               (d: {
@@ -254,17 +254,23 @@ export class StepAnalysisJob {
                 location: string;
                 sideGuardReason?: string;
                 videoTimestamp?: number;
+                anchor?: { type?: string } | null;
               }) => ({
                 from: d.originalLocation,
                 to: d.location,
                 reason: d.sideGuardReason,
+                action:
+                  d.sideGuardReason === "coordinate-override"
+                    ? "flip"
+                    : "downgrade",
                 videoTimestamp: d.videoTimestamp,
+                anchorType: d.anchor?.type ?? null,
               }),
             );
-          log.warn("Side-guard downgraded damage locations", {
+          log.warn("Side-guard adjusted damage locations", {
             appliedCount,
             total: parsed.damages.length,
-            downgraded,
+            adjusted,
           });
         }
       }

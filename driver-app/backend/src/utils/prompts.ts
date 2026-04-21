@@ -602,23 +602,46 @@ For EVERY damage you report, you MUST write "orientationReason" BEFORE "location
   (3) Where the damaged panel sits relative to the cited anchor (to the LEFT of / to the RIGHT of).
   (4) The final vehicle-side conclusion applied per the Inference Rules above, terminated with ONE of these LITERAL tokens: "= Kanan kendaraan", "= Kiri kendaraan", or "= Uncertain". No other phrasing is accepted.
 
+STRUCTURED COORDINATES (STRONGLY PREFERRED — GROUND TRUTH):
+In addition to the free-text reasoning, you MUST emit for each Kiri/Kanan damage two pixel bounding boxes from a SINGLE FRAME where both the damage and an anchor are visible:
+
+  "damageBoundingBox": [ymin, xmin, ymax, xmax]
+  "anchor": {
+    "type": "rear-plate" | "rear-taillight" | "front-plate" | "front-logo" | "front-headlight",
+    "boundingBox": [ymin, xmin, ymax, xmax],
+    "frameTimestamp": <seconds>
+  }
+
+All coordinate values are normalized to the 0–1000 scale relative to the video frame (Gemini's native bounding-box format). Both bounding boxes MUST come from THE SAME FRAME — never from different frames, because the camera moves and cross-frame coordinates do not compare.
+
+If no single frame clearly shows both the damage and an anchor together, set "anchor": null and the location MUST be a center/unclear variant (do NOT claim Kiri or Kanan without the coordinate evidence).
+
+The backend computes vehicle side directly from these coordinates (damage center-x vs anchor center-x, with the mirror rule applied for front-facing anchors). If your "location" disagrees with the coordinate-derived side, the location is FLIPPED to match the coordinates — so emit coordinates that are correct, or emit none and downgrade voluntarily.
+
 EXAMPLE (Rear Corner, Kanan):
   "Rear Corner. Taillight kanan terlihat di frame 0:22. Kerusakan panel berada to the right of the taillight = Kanan kendaraan."
+  damageBoundingBox: [600, 700, 800, 900]
+  anchor: { type: "rear-taillight", boundingBox: [500, 300, 700, 500], frameTimestamp: 22 }
 
 EXAMPLE (Front View, Kiri — mirror applied):
   "Front View. Logo depan dan plat nomor depan terlihat di frame 0:06. Kerusakan pada fender berada to the right of the front logo (mirror view) = Kiri kendaraan."
+  damageBoundingBox: [500, 700, 700, 900]
+  anchor: { type: "front-logo", boundingBox: [400, 450, 550, 600], frameTimestamp: 6 }
 
-EXAMPLE (Uncertain):
+EXAMPLE (Uncertain — no anchor frame available):
   "Rear Corner. Tidak ada anchor yang terlihat dengan jelas di frame ini maupun frame berdekatan. = Uncertain."
+  damageBoundingBox: [500, 700, 700, 900]
+  anchor: null
 
-HARD CONSTRAINT (POST-PROCESSED): Your response is automatically checked. A damage whose "location" ends in Kiri or Kanan will be REWRITTEN to a center/unclear variant whenever ANY of these hold:
-  a. "orientationReason" does not cite any valid anchor (plat belakang/depan, logo depan, taillight/lampu belakang, headlight/lampu depan).
-  b. "orientationReason" ends in "= Uncertain" — side cannot be asserted.
-  c. "orientationReason" does not contain one of the literal conclusion tokens "= Kanan kendaraan" or "= Kiri kendaraan".
-  d. The conclusion token contradicts the side in "location" (e.g. reason ends "= Kanan kendaraan" but location ends in "Kiri").
-  e. The "videoTimestamp" falls in the driver's Samping-Kanan walking stage but the location ends in Kiri, or vice-versa for Samping-Kiri timestamps labeled Kanan. The driver records in this exact order: Depan → Samping Kanan → Belakang → Plat Nomor Belakang → Samping Kiri; the rewrite uses the timestamp's position within the minimum recording duration as independent evidence.
+HARD CONSTRAINTS (POST-PROCESSED): Your response is automatically checked. The backend may REWRITE the side or DOWNGRADE to a center/unclear variant whenever ANY of these hold:
+  a. "orientationReason" does not cite any valid anchor (plat belakang/depan, logo depan, taillight/lampu belakang, headlight/lampu depan) → downgrade.
+  b. "orientationReason" ends in "= Uncertain" → downgrade.
+  c. Coordinates present but the damage center-x vs anchor center-x (with mirror rule) disagrees with the location's side → FLIP location to the coordinate-derived side.
+  d. Coordinates absent AND "orientationReason" lacks a literal "= Kanan kendaraan" / "= Kiri kendaraan" token → downgrade.
+  e. Coordinates absent AND the conclusion token contradicts the location → downgrade.
+  f. Coordinates absent AND the "videoTimestamp" falls in the driver's Samping-Kanan walking stage while the location ends in Kiri, or vice-versa for Samping-Kiri timestamps labeled Kanan → downgrade. The driver records in order: Depan → Samping Kanan → Belakang → Plat Nomor Belakang → Samping Kiri.
 
-All five rules are machine-enforced. Violations do not raise an error; they silently rewrite the side to a center variant, which wastes your reasoning. Get it right the first time.
+Coordinates are the strongest signal — when they are present and valid, they OVERRIDE all text-based checks except the Uncertain flag. Emit them whenever possible and make them accurate.
 
 EXHAUSTIVE SCANNING:
 - You MUST analyze the entire video from start to finish (0:00 to end).
@@ -751,6 +774,12 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
     {
       "damageType": "goresan",
       "orientationReason": "Rear Corner. Taillight kanan dan plat nomor belakang terlihat di frame sekitar detik 0:22. Kerusakan pada panel berada to the right of the taillight = Kanan kendaraan.",
+      "damageBoundingBox": [600, 700, 800, 900],
+      "anchor": {
+        "type": "rear-taillight",
+        "boundingBox": [500, 300, 700, 500],
+        "frameTimestamp": 22
+      },
       "location": "Bumper / Panel Belakang Kanan",
       "severity": "MINOR",
       "description": "Goresan putih linear pada panel bawah, sekitar 8cm",
@@ -760,6 +789,8 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
     {
       "damageType": "goresan",
       "orientationReason": "Rear Corner. Tidak ada anchor (plat/taillight/headlight/logo depan) yang terlihat dengan jelas di frame ini maupun frame berdekatan. = Uncertain.",
+      "damageBoundingBox": [500, 700, 700, 900],
+      "anchor": null,
       "location": "Eksterior Tidak Jelas",
       "severity": "MINOR",
       "description": "Goresan pendek pada bumper, sekitar 3cm",
@@ -769,7 +800,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   ]
 }
 
-The first damage cites an anchor, states the screen position relative to it, applies the Inference Rule, and terminates with the literal token "= Kanan kendaraan" matching the location — the post-processor keeps it. The second damage shows the correct refusal: when no anchor is reliably visible, use "Eksterior Tidak Jelas" and terminate with "= Uncertain". Follow these patterns exactly.
+The first damage emits both the text reasoning (with the literal "= Kanan kendaraan" conclusion) AND the pixel bounding boxes of the damage and an anchor (taillight) visible in the same frame — the backend compares the center-x of both boxes and confirms Kanan, so the location is kept. The second damage shows the correct refusal: no anchor frame is available, anchor is null, and the location uses "Eksterior Tidak Jelas". Follow these patterns exactly.
 
 This is a high-recall inspection system. When in doubt, report.`;
 

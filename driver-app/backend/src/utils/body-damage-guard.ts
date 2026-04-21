@@ -3,7 +3,35 @@ export type SideGuardReason =
   | "uncertain-conclusion"
   | "missing-conclusion-token"
   | "contradiction-with-reason"
-  | "contradiction-with-walking-stage";
+  | "contradiction-with-walking-stage"
+  | "coordinate-override";
+
+/**
+ * Gemini's native bounding-box format: `[ymin, xmin, ymax, xmax]` normalized
+ * to the 0–1000 scale relative to the image. The y values are unused by side
+ * derivation but are preserved so we can round-trip the original response.
+ */
+export type GeminiBoundingBox = [
+  ymin: number,
+  xmin: number,
+  ymax: number,
+  xmax: number,
+];
+
+export type AnchorType =
+  | "rear-plate"
+  | "rear-taillight"
+  | "front-plate"
+  | "front-logo"
+  | "front-headlight";
+
+export interface DamageAnchor {
+  type: AnchorType;
+  boundingBox: GeminiBoundingBox;
+  /** Seconds into the video for the frame where BOTH the anchor and the
+   * damage were visible — the frame the coordinates were read from. */
+  frameTimestamp: number;
+}
 
 export interface BodyDamage {
   damageType?: string;
@@ -13,6 +41,8 @@ export interface BodyDamage {
   orientationReason?: string;
   isNewDamage?: boolean;
   videoTimestamp?: number;
+  damageBoundingBox?: GeminiBoundingBox | null;
+  anchor?: DamageAnchor | null;
   originalLocation?: string;
   sideGuardApplied?: boolean;
   sideGuardReason?: SideGuardReason;
@@ -39,21 +69,41 @@ const SIDE_TO_CENTER: Record<string, string> = {
   "Bumper / Panel Belakang Kanan": "Bumper Belakang Tengah",
 };
 
+// Flips the side suffix (Kiri ↔ Kanan) for every side-specific location.
+// Used by coordinate-override to move a damage to the correct side while
+// preserving the panel category.
+const SIDE_FLIP: Record<string, string> = {
+  "Bumper Depan Kiri": "Bumper Depan Kanan",
+  "Bumper Depan Kanan": "Bumper Depan Kiri",
+  "Bumper / Panel Belakang Kiri": "Bumper / Panel Belakang Kanan",
+  "Bumper / Panel Belakang Kanan": "Bumper / Panel Belakang Kiri",
+  "Pintu Depan Kiri": "Pintu Depan Kanan",
+  "Pintu Belakang Kiri": "Pintu Belakang Kanan",
+  "Pintu Depan Kanan": "Pintu Depan Kiri",
+  "Pintu Belakang Kanan": "Pintu Belakang Kiri",
+  "Fender Depan Kiri": "Fender Depan Kanan",
+  "Fender Depan Kanan": "Fender Depan Kiri",
+  "Spion Kiri": "Spion Kanan",
+  "Spion Kanan": "Spion Kiri",
+};
+
 const FALLBACK_LOCATION = "Eksterior Tidak Jelas";
 
-// Any one of these anchor mentions is enough to satisfy rule (a) — the AI
-// must have engaged with at least one recognized reference feature when
-// deriving a Kiri/Kanan location.
 const ANCHOR_MENTION =
   /\b(plat\s+nomor\s+belakang|plat\s+belakang|plat\s+nomor\s+depan|plat\s+depan|logo\s+depan|rear\s+(license\s+)?plate|front\s+(license\s+)?plate|front\s+logo|taillight|tail[-\s]?light|lampu\s+(belakang|rem)|headlight|head[-\s]?light|lampu\s+(depan|utama))\b/i;
 
-// Per the prompt's PER-DAMAGE VERIFICATION (4), the AI MUST terminate
-// `orientationReason` with one of these literal tokens. The guard requires
-// the literal format so it has a machine-checkable anchor against the
-// location's side.
 const CONCLUSION_KANAN = /=\s*Kanan\s+kendaraan\b/i;
 const CONCLUSION_KIRI = /=\s*Kiri\s+kendaraan\b/i;
 const CONCLUSION_UNCERTAIN = /=\s*Uncertain\b/i;
+
+// Anchors where the camera faces the FRONT of the vehicle. For these, the
+// screen-left/screen-right observation is mirrored when mapped to the
+// vehicle's own anatomical left/right.
+const MIRROR_ANCHORS: ReadonlySet<AnchorType> = new Set([
+  "front-plate",
+  "front-logo",
+  "front-headlight",
+]);
 
 type Side = "left" | "right" | "none";
 type Conclusion = "left" | "right" | "uncertain" | "none";
@@ -78,15 +128,11 @@ function downgradeLocation(location: string): string {
   return SIDE_TO_CENTER[normalized] ?? FALLBACK_LOCATION;
 }
 
-/**
- * Maps a timestamp within the driver walking protocol to the *physically
- * expected* vehicle side, if the stage is side-determining.
- *
- * The protocol (from VideoGuidanceOverlay) is 5 equal stages paced against
- * `durationSec`: Depan → Samping Kanan → Belakang → Plat Nomor Belakang →
- * Samping Kiri. Only stages 2 and 5 constrain the side — stages 1/3/4 look
- * at front/rear/plate where Kiri & Kanan are both possible.
- */
+function flipLocation(location: string): string {
+  const normalized = location.trim();
+  return SIDE_FLIP[normalized] ?? location;
+}
+
 function walkingStageExpectedSide(
   timestampSec: number,
   durationSec: number,
@@ -98,6 +144,48 @@ function walkingStageExpectedSide(
   return "none";
 }
 
+function isValidBoundingBox(
+  bbox: GeminiBoundingBox | null | undefined,
+): bbox is GeminiBoundingBox {
+  if (!Array.isArray(bbox) || bbox.length !== 4) return false;
+  const [ymin, xmin, ymax, xmax] = bbox;
+  if (
+    typeof ymin !== "number" ||
+    typeof xmin !== "number" ||
+    typeof ymax !== "number" ||
+    typeof xmax !== "number"
+  ) {
+    return false;
+  }
+  return xmax > xmin && ymax > ymin;
+}
+
+function centerX(bbox: GeminiBoundingBox): number {
+  const [, xmin, , xmax] = bbox;
+  return (xmin + xmax) / 2;
+}
+
+/**
+ * Derives the vehicle side (left / right) from the pixel coordinates of the
+ * damage and the anchor, applying the mirror rule for front-facing anchors.
+ * Returns `"none"` when the inputs are not usable (malformed bboxes).
+ */
+function deriveSideFromCoordinates(
+  damageBox: GeminiBoundingBox,
+  anchorBox: GeminiBoundingBox,
+  anchorType: AnchorType,
+): Side {
+  if (!isValidBoundingBox(damageBox) || !isValidBoundingBox(anchorBox)) {
+    return "none";
+  }
+  const damageX = centerX(damageBox);
+  const anchorX = centerX(anchorBox);
+  const screenSide: Side = damageX < anchorX ? "left" : "right";
+  const isMirror = MIRROR_ANCHORS.has(anchorType);
+  if (screenSide === "right") return isMirror ? "left" : "right";
+  return isMirror ? "right" : "left";
+}
+
 function applyDowngrade(damage: BodyDamage, reason: SideGuardReason): void {
   damage.originalLocation = damage.location;
   damage.location = downgradeLocation(damage.location);
@@ -105,23 +193,36 @@ function applyDowngrade(damage: BodyDamage, reason: SideGuardReason): void {
   damage.sideGuardReason = reason;
 }
 
+function applyCoordOverride(damage: BodyDamage): void {
+  damage.originalLocation = damage.location;
+  damage.location = flipLocation(damage.location);
+  damage.sideGuardApplied = true;
+  damage.sideGuardReason = "coordinate-override";
+}
+
 /**
- * Enforces the SPATIAL ORIENTATION RULES (STRICT) in the body inspection
- * prompt. A damage may only keep a Kiri/Kanan location if ALL of the
- * following hold:
- *   1. `orientationReason` cites at least one valid anchor (rear/front plate,
- *      front logo, taillight, or headlight).
- *   2. The reason does NOT terminate with the literal `= Uncertain` token.
- *   3. The reason contains exactly one of the literal conclusion tokens
- *      `= Kanan kendaraan` or `= Kiri kendaraan`.
- *   4. The conclusion token matches the location's side (no contradiction).
- *   5. If `walkingProtocolDurationSec` is provided, the timestamp does not
- *      fall in a walking stage whose physical side contradicts the location
- *      (Stage 2 = Kanan, Stage 5 = Kiri).
+ * Enforces the SPATIAL ORIENTATION RULES (STRICT). Two independent checks
+ * run per damage:
  *
- * Violations are downgraded to the nearest center/unclear location and
- * marked with `sideGuardApplied: true` plus a machine-readable
- * `sideGuardReason`. Mutates `damages` in place.
+ *   **Text-based** (always): orientationReason must cite an anchor, not be
+ *   Uncertain, contain `= Kanan kendaraan` or `= Kiri kendaraan`, and match
+ *   the location's side. Failures downgrade to a center/unclear location.
+ *
+ *   **Coordinate-based** (when `damageBoundingBox` + `anchor` are present):
+ *   derives the vehicle side from pixel geometry, applying the mirror rule
+ *   for front-facing anchors. If the derivation disagrees with the
+ *   location's side, the location is FLIPPED (not downgraded) — the
+ *   coordinates are treated as ground truth.
+ *
+ *   **Walking-stage** (when `walkingProtocolDurationSec` is provided):
+ *   timestamps in Stage 2 (Samping Kanan) labeled Kiri, or Stage 5 (Samping
+ *   Kiri) labeled Kanan, are downgraded.
+ *
+ * The checks run in this order so a valid coordinate derivation supersedes
+ * weaker text-only heuristics, while an explicit "= Uncertain" conclusion
+ * still forces a downgrade (the AI signalled it couldn't decide).
+ *
+ * Mutates `damages` in place.
  */
 export function applyBodyDamageSideGuard(
   damages: BodyDamage[],
@@ -141,13 +242,37 @@ export function applyBodyDamageSideGuard(
     }
 
     const conclusion = readConclusion(reason);
-
     if (conclusion === "uncertain") {
       applyDowngrade(damage, "uncertain-conclusion");
       appliedCount++;
       continue;
     }
 
+    // Coordinate check (authoritative when available)
+    const anchor = damage.anchor;
+    if (
+      anchor &&
+      isValidBoundingBox(damage.damageBoundingBox) &&
+      isValidBoundingBox(anchor.boundingBox)
+    ) {
+      const derived = deriveSideFromCoordinates(
+        damage.damageBoundingBox,
+        anchor.boundingBox,
+        anchor.type,
+      );
+      if (derived !== "none") {
+        if (derived !== locSide) {
+          applyCoordOverride(damage);
+          appliedCount++;
+        }
+        // Coordinate derivation agreed (or was inconclusive) — no action.
+        // Skip text-only contradiction and walking-stage checks because
+        // coordinates are the authoritative signal.
+        continue;
+      }
+    }
+
+    // Fall-through: text-only side verification
     if (conclusion === "none") {
       applyDowngrade(damage, "missing-conclusion-token");
       appliedCount++;
