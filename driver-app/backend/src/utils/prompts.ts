@@ -550,48 +550,73 @@ ${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
-SPATIAL ORIENTATION (SINGLE-ANCHOR RULE)
+SPATIAL ORIENTATION RULES (STRICT)
 
-Determine Kiri (left) / Kanan (right) from the VEHICLE's anatomy, never from your screen. To avoid the common mistake of flipping sides when looking at the front of the car, this prompt uses ONE anchor only: the REAR LICENSE PLATE.
+Determine the Left/Right side of the vehicle based ONLY on the vehicle's actual anatomy, NOT the left/right of your screen.
 
-THE ONLY RULE for side determination:
-- If the REAR license plate is visible in the current frame, or was clearly visible in a recent frame and you can trace the continuous camera path since then:
-  - Body panel / bumper / wheel / door extending to the SCREEN-RIGHT of the rear plate → KANAN (vehicle right).
-  - Body panel / bumper / wheel / door extending to the SCREEN-LEFT of the rear plate → KIRI (vehicle left).
+MANDATORY SEQUENCE:
+1. First, identify what the camera is currently viewing:
+   - Front of the vehicle
+   - Rear of the vehicle
+   - Left side of the vehicle
+   - Right side of the vehicle
 
-When the REAR plate is NOT available:
-- Do NOT attempt to infer Kiri/Kanan from the FRONT plate, FRONT logo, or any front/head-on view. The mirroring is error-prone and this prompt explicitly forbids it.
-- Do NOT infer Kiri/Kanan from a single taillight, a single headlight, or a pure side-body shot.
-- Instead, set the damage location to one of the center/unclear options: "Bumper Depan Tengah", "Bumper Belakang Tengah", "Atap", "Kap Mesin", "Bagasi", "Kaca Depan", "Kaca Belakang", or "Eksterior Tidak Jelas". Preferring "Eksterior Tidak Jelas" is correct behavior — do NOT guess a side.
+2. Utilize Vehicle Anchors:
+   - Rear License Plate = The exact rear center of the vehicle.
+   - Front Logo / Front License Plate = The exact front center of the vehicle.
+   - Lights, Wheels/Tires, Doors, and Fenders = Side determiners.
 
-Prohibitions (Fail-Safes):
-- DO NOT use screen position alone as the baseline. The rule requires the REAR plate as the spatial anchor.
-- DO NOT mirror-correct a front view to derive Kiri/Kanan.
-- DO NOT report a "Kiri" or "Kanan" location unless you can explicitly justify it by reference to the rear plate in "orientationReason".
+3. ANATOMICAL SYMMETRY & SIDE ANCHORS (FALLBACK LOGIC):
+If primary anchors (Plates/Logos) are missing, use these anatomical markers:
 
-Mandatory Output Structure (Chain of Thought):
-Use the "cameraPath" and "visualAnalysis" fields to trace the camera's movement and note when the rear plate was in frame. Do this BEFORE listing any damage.
+- THE MIDPOINT RULE: If BOTH headlights or BOTH taillights are visible, create an imaginary center line between them. 
+  - FRONT VIEW: Screen-Left = Anatomical Kanan; Screen-Right = Anatomical Kiri.
+  - REAR VIEW: Screen-Left = Anatomical Kiri; Screen-Right = Anatomical Kanan.
+
+- THE MIRROR & RHD ANCHOR: 
+  - Locate the side mirrors. In a Right-Hand Drive (RHD) vehicle, the mirror closest to the steering wheel/instrument cluster is the KANAN (Right) side.
+  - Mirror orientation points toward the Rear. Use this to determine the Front/Rear vector of the vehicle.
+
+- THE WHEEL & PROFILE RULE:
+  - If a wheel is visible in a side-profile shot:
+    - Look for the Fuel Cap: If visible, it marks a specific side (Reference the car's known anatomy).
+    - Look for the Mirror above the front wheel: If the mirror is on the Right side of the driver, the side is KANAN.
+
+- CONTINUITY TRACKING:
+  - You MUST maintain a "Spatial Memory". If you identified the Rear-Kanan side at the start, every panel captured in a continuous camera movement along that side remains KANAN until the camera crosses the Midpoint (Front/Rear center).
+
+4. Prohibitions (Fail-Safes):
+   - DO NOT use screen position (left/right of the monitor) as the primary baseline.
+   - DO NOT guess if the plates, lights, wheels, or side body are not clearly visible.
+   - If visual evidence is insufficient to determine the side, state "Uncertain" in "orientationReason" and use a center location or "Eksterior Tidak Jelas".
+
+5. Mandatory Output Structure (Chain of Thought):
+   To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields to explicitly state your Camera View Orientation, Vehicle Side orientation, and Visual Reasoning BEFORE listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
 For EVERY damage you report, you MUST write "orientationReason" BEFORE "location" within the damage object. The reasoning drives the conclusion — the side must never be chosen before the justification is established.
 
-"orientationReason" MUST answer:
-1. Was the rear license plate visible in the frame where this damage appears, or in a recent frame with a continuous camera path to this one?
-2. If YES: where does the damaged part sit relative to the rear plate? Conclude Kiri or Kanan. The reason MUST include BOTH (a) the literal phrase "plat nomor belakang", AND (b) one of the literal screen-side markers "screen-left" or "screen-right". Any equivalent phrase is NOT acceptable — use these literal tokens.
-3. If NO: explicitly write "plat nomor belakang tidak terlihat" and use a center location or "Eksterior Tidak Jelas" — do NOT guess a side.
+"orientationReason" MUST state ALL of:
+  (1) The camera view at this damage's moment — one of: "Rear View", "Front View", "Rear Corner", "Front Corner", "Left Side", "Right Side", or "Uncertain" when unclear.
+  (2) The visible anchor — one of "plat nomor belakang", "plat nomor depan" / "logo depan", "taillight" / "lampu belakang", "headlight" / "lampu depan". You may cite more than one.
+  (3) Where the damaged panel sits relative to the cited anchor (to the LEFT of / to the RIGHT of).
+  (4) The final vehicle-side conclusion applied per the Inference Rules above, terminated with ONE of these LITERAL tokens: "= Kanan kendaraan", "= Kiri kendaraan", or "= Uncertain". No other phrasing is accepted.
 
-EXAMPLE OF A WELL-FORMED Kanan REASON:
-  "Plat nomor belakang terlihat pada frame sekitar detik 0:22. Kerusakan pada panel berada di posisi screen-right dari plat tersebut, sehingga Kanan kendaraan."
+EXAMPLE (Rear Corner, Kanan):
+  "Rear Corner. Taillight kanan terlihat di frame 0:22. Kerusakan panel berada to the right of the taillight = Kanan kendaraan."
 
-EXAMPLE OF A WELL-FORMED Kiri REASON:
-  "Plat nomor belakang terlihat pada frame sekitar detik 0:22. Kerusakan pada panel berada di posisi screen-left dari plat tersebut, sehingga Kiri kendaraan."
+EXAMPLE (Front View, Kiri — mirror applied):
+  "Front View. Logo depan dan plat nomor depan terlihat di frame 0:06. Kerusakan pada fender berada to the right of the front logo (mirror view) = Kiri kendaraan."
 
-HARD CONSTRAINT (POST-PROCESSED): Your response is automatically checked after you respond. A damage with a Kiri/Kanan location will be REWRITTEN to a center/unclear variant whenever ANY of these hold:
-  a. "orientationReason" does not mention "plat nomor belakang".
-  b. "orientationReason" mentions the plate but says it is "tidak terlihat" (not visible) / "tidak tampak" / "tidak di frame" / "not visible" / "out of frame".
-  c. "orientationReason" does not contain the literal token "screen-left" or "screen-right".
-  d. The screen-side token in "orientationReason" contradicts the side in "location" (e.g. reason says "screen-right" but location ends in "Kiri").
-  e. The "videoTimestamp" falls in the driver's Samping-Kanan walking stage but the location ends in "Kiri" — or vice-versa for Samping-Kiri timestamps labeled Kanan. The driver records in this exact order: Depan → Samping Kanan → Belakang → Plat Nomor Belakang → Samping Kiri; the rewrite uses the timestamp's position within the minimum recording duration as independent evidence.
+EXAMPLE (Uncertain):
+  "Rear Corner. Tidak ada anchor yang terlihat dengan jelas di frame ini maupun frame berdekatan. = Uncertain."
+
+HARD CONSTRAINT (POST-PROCESSED): Your response is automatically checked. A damage whose "location" ends in Kiri or Kanan will be REWRITTEN to a center/unclear variant whenever ANY of these hold:
+  a. "orientationReason" does not cite any valid anchor (plat belakang/depan, logo depan, taillight/lampu belakang, headlight/lampu depan).
+  b. "orientationReason" ends in "= Uncertain" — side cannot be asserted.
+  c. "orientationReason" does not contain one of the literal conclusion tokens "= Kanan kendaraan" or "= Kiri kendaraan".
+  d. The conclusion token contradicts the side in "location" (e.g. reason ends "= Kanan kendaraan" but location ends in "Kiri").
+  e. The "videoTimestamp" falls in the driver's Samping-Kanan walking stage but the location ends in Kiri, or vice-versa for Samping-Kiri timestamps labeled Kanan. The driver records in this exact order: Depan → Samping Kanan → Belakang → Plat Nomor Belakang → Samping Kiri; the rewrite uses the timestamp's position within the minimum recording duration as independent evidence.
 
 All five rules are machine-enforced. Violations do not raise an error; they silently rewrite the side to a center variant, which wastes your reasoning. Get it right the first time.
 
@@ -725,7 +750,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   "damages": [
     {
       "damageType": "goresan",
-      "orientationReason": "Plat nomor belakang terlihat pada frame sekitar detik 0:22. Kerusakan pada panel berada di posisi screen-right dari plat tersebut, sehingga Kanan kendaraan.",
+      "orientationReason": "Rear Corner. Taillight kanan dan plat nomor belakang terlihat di frame sekitar detik 0:22. Kerusakan pada panel berada to the right of the taillight = Kanan kendaraan.",
       "location": "Bumper / Panel Belakang Kanan",
       "severity": "MINOR",
       "description": "Goresan putih linear pada panel bawah, sekitar 8cm",
@@ -734,7 +759,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
     },
     {
       "damageType": "goresan",
-      "orientationReason": "Plat nomor belakang tidak terlihat di frame ini maupun frame sebelumnya yang dapat dijejak secara kontinu. Sisi kendaraan tidak dapat ditentukan.",
+      "orientationReason": "Rear Corner. Tidak ada anchor (plat/taillight/headlight/logo depan) yang terlihat dengan jelas di frame ini maupun frame berdekatan. = Uncertain.",
       "location": "Eksterior Tidak Jelas",
       "severity": "MINOR",
       "description": "Goresan pendek pada bumper, sekitar 3cm",
@@ -744,7 +769,7 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   ]
 }
 
-The first damage uses the literal tokens "plat nomor belakang" and "screen-right" and its location ends in "Kanan" — all three agree, so the post-processor keeps it. The second damage shows the correct refusal: when the plate is not in the continuous camera path, output a center/unclear location and explicitly write "plat nomor belakang tidak terlihat". Follow these patterns exactly.
+The first damage cites an anchor, states the screen position relative to it, applies the Inference Rule, and terminates with the literal token "= Kanan kendaraan" matching the location — the post-processor keeps it. The second damage shows the correct refusal: when no anchor is reliably visible, use "Eksterior Tidak Jelas" and terminate with "= Uncertain". Follow these patterns exactly.
 
 This is a high-recall inspection system. When in doubt, report.`;
 

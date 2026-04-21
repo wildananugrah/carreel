@@ -815,7 +815,7 @@ describe("StepAnalysisJob", () => {
           {
             damageType: "goresan",
             orientationReason:
-              "Plat nomor belakang terlihat di frame sebelumnya; kerusakan ada di sisi kanan dari plat.",
+              "Rear Corner. Plat nomor belakang terlihat; kerusakan to the right of the plat = Kanan kendaraan.",
             location: "Bumper Belakang Kanan",
             severity: "MINOR",
             description: "Same scratch as pre-trip",
@@ -824,7 +824,7 @@ describe("StepAnalysisJob", () => {
           {
             damageType: "penyok",
             orientationReason:
-              "Plat nomor belakang terlihat di frame sebelumnya; pintu ada di sisi kiri dari plat.",
+              "Rear Corner. Plat nomor belakang terlihat; pintu to the left of the plat = Kiri kendaraan.",
             location: "Pintu Depan Kiri",
             severity: "MODERATE",
             description: "New dent not in pre-trip",

@@ -1,7 +1,7 @@
 export type SideGuardReason =
-  | "missing-plate-citation"
-  | "plate-not-visible"
-  | "missing-screen-side-marker"
+  | "missing-anchor-citation"
+  | "uncertain-conclusion"
+  | "missing-conclusion-token"
   | "contradiction-with-reason"
   | "contradiction-with-walking-stage";
 
@@ -41,22 +41,22 @@ const SIDE_TO_CENTER: Record<string, string> = {
 
 const FALLBACK_LOCATION = "Eksterior Tidak Jelas";
 
-const PLATE_MENTION =
-  /\b(plat\s+nomor\s+belakang|plat\s+belakang|rear\s+(license\s+)?plate)\b/i;
+// Any one of these anchor mentions is enough to satisfy rule (a) — the AI
+// must have engaged with at least one recognized reference feature when
+// deriving a Kiri/Kanan location.
+const ANCHOR_MENTION =
+  /\b(plat\s+nomor\s+belakang|plat\s+belakang|plat\s+nomor\s+depan|plat\s+depan|logo\s+depan|rear\s+(license\s+)?plate|front\s+(license\s+)?plate|front\s+logo|taillight|tail[-\s]?light|lampu\s+(belakang|rem)|headlight|head[-\s]?light|lampu\s+(depan|utama))\b/i;
 
-// Captures phrases that say the plate is NOT visible / not in frame / absent.
-// The "plat[^.]{0,40}tidak" window catches "plat ... tidak terlihat" where the
-// negation lands a few words after the plate mention.
-const PLATE_NEGATION =
-  /(tidak\s+(terlihat|tampak|nampak|ada|jelas|dalam\s+frame|dalam\s+pandangan)|tanpa\s+plat|tidak\s+di\s+frame|tidak\s+di\s+dalam\s+frame|not\s+visible|no\s+visible|out\s+of\s+frame|cannot\s+see|unable\s+to\s+see|absent|plat[^.]{0,40}tidak)/i;
-
-const SCREEN_LEFT_MARKER =
-  /(screen[-\s]?left|left\s+of\s+(the\s+)?plate|sisi\s+kiri\s+(dari|relatif\s+terhadap)\s+(plat|layar)|kiri\s+dari\s+plat|kiri\s+layar|di\s+kiri\s+plat)/i;
-
-const SCREEN_RIGHT_MARKER =
-  /(screen[-\s]?right|right\s+of\s+(the\s+)?plate|sisi\s+kanan\s+(dari|relatif\s+terhadap)\s+(plat|layar)|kanan\s+dari\s+plat|kanan\s+layar|di\s+kanan\s+plat)/i;
+// Per the prompt's PER-DAMAGE VERIFICATION (4), the AI MUST terminate
+// `orientationReason` with one of these literal tokens. The guard requires
+// the literal format so it has a machine-checkable anchor against the
+// location's side.
+const CONCLUSION_KANAN = /=\s*Kanan\s+kendaraan\b/i;
+const CONCLUSION_KIRI = /=\s*Kiri\s+kendaraan\b/i;
+const CONCLUSION_UNCERTAIN = /=\s*Uncertain\b/i;
 
 type Side = "left" | "right" | "none";
+type Conclusion = "left" | "right" | "uncertain" | "none";
 
 function locationSide(location: string): Side {
   if (/\bKiri\s*$/i.test(location)) return "left";
@@ -64,9 +64,10 @@ function locationSide(location: string): Side {
   return "none";
 }
 
-function reasonSide(reason: string): Side {
-  const hasLeft = SCREEN_LEFT_MARKER.test(reason);
-  const hasRight = SCREEN_RIGHT_MARKER.test(reason);
+function readConclusion(reason: string): Conclusion {
+  if (CONCLUSION_UNCERTAIN.test(reason)) return "uncertain";
+  const hasLeft = CONCLUSION_KIRI.test(reason);
+  const hasRight = CONCLUSION_KANAN.test(reason);
   if (hasLeft && !hasRight) return "left";
   if (hasRight && !hasLeft) return "right";
   return "none";
@@ -105,20 +106,22 @@ function applyDowngrade(damage: BodyDamage, reason: SideGuardReason): void {
 }
 
 /**
- * Enforces the SINGLE-ANCHOR RULE in the body inspection prompt. A damage may
- * only keep a Kiri/Kanan location if ALL of the following hold:
- *   1. `orientationReason` explicitly cites the rear plate ("plat nomor belakang")
- *   2. The citation is positive (not a negation like "tidak terlihat")
- *   3. The reason contains an explicit screen-side marker (`screen-left`,
- *      `kanan dari plat`, etc.)
- *   4. The reason's screen-side matches the location's side (no contradiction)
+ * Enforces the SPATIAL ORIENTATION RULES (STRICT) in the body inspection
+ * prompt. A damage may only keep a Kiri/Kanan location if ALL of the
+ * following hold:
+ *   1. `orientationReason` cites at least one valid anchor (rear/front plate,
+ *      front logo, taillight, or headlight).
+ *   2. The reason does NOT terminate with the literal `= Uncertain` token.
+ *   3. The reason contains exactly one of the literal conclusion tokens
+ *      `= Kanan kendaraan` or `= Kiri kendaraan`.
+ *   4. The conclusion token matches the location's side (no contradiction).
  *   5. If `walkingProtocolDurationSec` is provided, the timestamp does not
  *      fall in a walking stage whose physical side contradicts the location
  *      (Stage 2 = Kanan, Stage 5 = Kiri).
  *
- * Violations are downgraded to the nearest center/unclear location and marked
- * with `sideGuardApplied: true` and a machine-readable `sideGuardReason`.
- * Mutates `damages` in place.
+ * Violations are downgraded to the nearest center/unclear location and
+ * marked with `sideGuardApplied: true` plus a machine-readable
+ * `sideGuardReason`. Mutates `damages` in place.
  */
 export function applyBodyDamageSideGuard(
   damages: BodyDamage[],
@@ -131,26 +134,27 @@ export function applyBodyDamageSideGuard(
 
     const reason = (damage.orientationReason ?? "").trim();
 
-    if (!PLATE_MENTION.test(reason)) {
-      applyDowngrade(damage, "missing-plate-citation");
+    if (!ANCHOR_MENTION.test(reason)) {
+      applyDowngrade(damage, "missing-anchor-citation");
       appliedCount++;
       continue;
     }
 
-    if (PLATE_NEGATION.test(reason)) {
-      applyDowngrade(damage, "plate-not-visible");
+    const conclusion = readConclusion(reason);
+
+    if (conclusion === "uncertain") {
+      applyDowngrade(damage, "uncertain-conclusion");
       appliedCount++;
       continue;
     }
 
-    const rSide = reasonSide(reason);
-    if (rSide === "none") {
-      applyDowngrade(damage, "missing-screen-side-marker");
+    if (conclusion === "none") {
+      applyDowngrade(damage, "missing-conclusion-token");
       appliedCount++;
       continue;
     }
 
-    if (rSide !== locSide) {
+    if (conclusion !== locSide) {
       applyDowngrade(damage, "contradiction-with-reason");
       appliedCount++;
       continue;
