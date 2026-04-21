@@ -13,7 +13,8 @@
       "Bash(ffmpeg -y -i tests/video/body1.mp4 -vf \"fps=1\" -vframes 21 /tmp/frames/body1_%02d.jpg -loglevel error)",
       "Bash(ffmpeg -y -i tests/video/body2.mp4 -vf \"fps=1\" -vframes 36 /tmp/frames/body2_%02d.jpg -loglevel error)",
       "Bash(echo \"EXIT=$?\")",
-      "Bash(echo \"tsc EXIT=$?\")"
+      "Bash(echo \"tsc EXIT=$?\")",
+      "Bash(git tag *)"
     ],
     "additionalDirectories": [
       "/tmp"
