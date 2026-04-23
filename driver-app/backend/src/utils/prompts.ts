@@ -582,7 +582,7 @@ MANDATORY SEQUENCE:
 
 5. Prohibitions (Fail-Safes):
    • DO NOT use screen position (left/right of the monitor) as the baseline for corner shots.
-   • If visual evidence and continuity are insufficient to determine the side, state "Uncertain" in "orientationReason" and use a center location or "Eksterior Tidak Jelas".
+   • If visual evidence AND continuity are entirely missing (e.g., extremely blurry or dark frame where you genuinely cannot tell Kiri from Kanan), ONLY THEN state "Uncertain" in "orientationReason" and use "Eksterior Tidak Jelas". Do NOT default to a center location (like "Bumper Tengah") for corner shots — a corner shot still has a definite side; continuity tells you which one.
 
 6. Mandatory Output Structure (Chain of Thought):
    To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields to explicitly state your Camera View Orientation, Continuity timeline, and Visual Reasoning BEFORE listing any damage.
@@ -610,6 +610,8 @@ The backend computes vehicle side from coordinates (damage center-x vs anchor ce
 • Rear Corner Trap: A rear-right damage might appear on the left side of the right taillight on a 2D screen.
 • Front Mirror Trap: In a front corner shot, the damage appears on the right side of the front logo/headlight. The backend will falsely apply the "Mirror Rule" and flip this to Kiri.
 IF the view is a "Rear Corner", "Front Corner", or "Side Profile" and 2D bounding boxes will cause a mathematical contradiction to your anatomical Continuity tracking, YOU MUST SET "anchor": null. Do NOT output bounding boxes that will force the backend to falsely flip a correct anatomical deduction. Preserve the correct text-based location and continuity reasoning.
+
+CRITICAL INSTRUCTION FOR LOCATION: Setting "anchor": null does NOT mean the location is uncertain. You MUST STILL output the exact Kiri/Kanan panel in the "location" field (e.g., "Bumper Depan Kanan", NOT "Bumper Depan Tengah"). Do NOT use a "Tengah" (center) location just because the anchor was nullified. Only use "Tengah" if the damage is physically in the exact middle of the vehicle. "Eksterior Tidak Jelas" is reserved for cases where continuity itself is broken (step 5 Prohibitions) — not for every anchor-null corner shot.
 
 EXAMPLE 1 (Rear Corner, Kanan):
 "Rear Corner. Kamera berada di fase Samping Kanan menuju Belakang di frame 0:19. Walaupun taillight kanan terlihat, posisi goresan di layar 2D akan memicu kesalahan komputasi. Berdasarkan kontinuitas, sisi = Kanan kendaraan."
@@ -648,6 +650,12 @@ GORESAN (SCRATCH) DETECTION RULES:
 • Visible in at least 1 frame with reasonable clarity and does not move.
 • Exclude general microscopic swirl marks.
 • If uncertain but it looks like a goresan, report with severity "MINOR" and "(low confidence)" in the description.
+
+MOTION vs DAMAGE & SCRATCH DETECTION (REVISED FOR HIGH RECALL):
+1. HIGH RECALL PRIORITY: If a mark is clearly a scratch but only appears briefly (1–2 frames) due to lighting angles, YOU MUST REPORT IT. Do not ignore transient visibility.
+2. SHIMMERING EFFECT: Understand that scratches often "shimmer" or flicker as the camera moves. As long as the mark remains stationary on the vehicle panel (fixed position) and does not "walk" or drift with the light reflections, it is confirmed physical damage.
+3. SWIRL MARKS & FINE SCRATCHES: Do not exclude fine or microscopic scratches. Any visible surface-level scratch must be captured and categorized as MINOR.
+4. WHEN IN DOUBT, REPORT: If there is a 50/50 ambiguity between a reflection/dirt and a real scratch, default to REPORTING it as a MINOR scratch. Add "(low confidence)" to the description if necessary, but never omit it.
 
 VIDEO ARTIFACTS:
 • Assess ONLY the primary subject vehicle. Ignore background.
