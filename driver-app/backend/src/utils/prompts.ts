@@ -555,266 +555,105 @@ SPATIAL ORIENTATION RULES (STRICT)
 Determine the Left/Right side of the vehicle based ONLY on the vehicle's actual anatomy (driver's perspective), NOT the left/right of your screen.
 
 MANDATORY SEQUENCE:
-1. First, identify what the camera is currently viewing:
-   - Front of the vehicle
-   - Rear of the vehicle
-   - Left side of the vehicle
-   - Right side of the vehicle
-   - Corner/Profile Angle (Diagonal view)
-
-2. Utilize Vehicle Anchors:
-   - Rear License Plate = The exact rear center of the vehicle.
-   - Front Logo / Front License Plate = The exact front center of the vehicle.
-   - Lights, Wheels/Tires, Doors, and Fenders = Side determiners.
-
-3. ANATOMICAL SYMMETRY & SIDE ANCHORS (FALLBACK LOGIC):
-If primary anchors (Plates/Logos) are missing, use these anatomical markers:
-
-- THE MIDPOINT RULE: If BOTH headlights or BOTH taillights are visible, create an imaginary center line between them.
-  - FRONT VIEW: Screen-Left = Anatomical Kanan; Screen-Right = Anatomical Kiri.
-  - REAR VIEW: Screen-Left = Anatomical Kiri; Screen-Right = Anatomical Kanan.
-
-- THE MIRROR & RHD ANCHOR:
-  - Locate the side mirrors. In a Right-Hand Drive (RHD) vehicle, the mirror closest to the steering wheel/instrument cluster is the KANAN (Right) side.
-  - Mirror orientation points toward the Rear. Use this to determine the Front/Rear vector of the vehicle.
-
-- THE WHEEL & PROFILE RULE:
-  - If a wheel is visible in a side-profile shot:
-    - Look for the Fuel Cap: If visible, it marks a specific side (reference the car's known anatomy).
-    - Look for the Mirror above the front wheel: If the mirror is on the right side of the driver, the side is KANAN.
-
-4. CONTINUITY TRACKING & TIMESTAMP OVERRIDE (CRITICAL FOR CORNER SHOTS):
-   - You MUST maintain a "Spatial Memory" based on the recording sequence.
-   - Standard recording sequence is: Depan → Samping Kanan → Belakang → Samping Kiri.
-   - If the camera is at an angle (e.g., Rear Corner) and 2D screen coordinates are distorted, rely entirely on Continuity. If you identified the camera moving from the Front to the Right Side, any taillight or bumper corner seen BEFORE crossing the rear center plate is strictly the KANAN side — regardless of its left/right position on your 2D screen.
-
-5. Prohibitions (Fail-Safes):
-   - DO NOT use screen position (left/right of the monitor) as the baseline for corner shots.
-   - DO NOT guess if the plates, lights, wheels, or side body are not clearly visible AND continuity is ambiguous.
-   - If visual evidence AND continuity are both insufficient to determine the side, state "Uncertain" in "orientationReason" and use a center location or "Eksterior Tidak Jelas".
-
-6. Mandatory Output Structure (Chain of Thought):
-   To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields to explicitly state your Camera View Orientation, Continuity timeline, and Visual Reasoning BEFORE listing any damage.
+ 1. First, identify what the camera is currently viewing:
+   * Front of the vehicle
+   * Rear of the vehicle
+   * Left side of the vehicle
+   * Right side of the vehicle
+   * Corner/Profile Angle (Diagonal view)
+ 2. Utilize Vehicle Anchors:
+   * Rear License Plate = The exact rear center of the vehicle.
+   * Front Logo / Front License Plate = The exact front center of the vehicle.
+   * Lights, Wheels/Tires, Doors, and Fenders = Side determiners.
+ 3. ANATOMICAL SYMMETRY & SIDE ANCHORS (FALLBACK LOGIC):
+    If primary anchors (Plates/Logos) are missing, use these anatomical markers:
+    * THE MIDPOINT RULE: If BOTH headlights or BOTH taillights are visible, create an imaginary center line between them.
+    * FRONT VIEW: Screen-Left = Anatomical Kanan; Screen-Right = Anatomical Kiri.
+    * REAR VIEW: Screen-Left = Anatomical Kiri; Screen-Right = Anatomical Kanan.
+    * THE MIRROR & RHD ANCHOR: Locate the side mirrors. In a Right-Hand Drive (RHD) vehicle, the mirror closest to the steering wheel/instrument cluster is the KANAN (Right) side.
+    * THE WHEEL & PROFILE RULE: Look for the Fuel Cap or Side Mirrors above the front wheel to determine the side based on known anatomy.
+ 4. CONTINUITY TRACKING & TIMESTAMP OVERRIDE (CRITICAL FOR CORNER SHOTS):
+    * You MUST maintain a "Spatial Memory" based on the recording sequence.
+    * Standard recording sequence is: Depan → Samping Kanan → Belakang → Samping Kiri.
+    * If the camera is at an angle (e.g., Corner view) and 2D screen coordinates are distorted, rely entirely on Continuity. If you identified the camera moving from the Front to the Right Side, any damage seen BEFORE crossing the rear center plate is strictly the KANAN side, regardless of its position on your 2D screen.
+ 5. Prohibitions (Fail-Safes):
+    * DO NOT use screen position (left/right of the monitor) as the baseline for corner shots.
+    * If visual evidence and continuity are insufficient to determine the side, state "Uncertain" in "orientationReason" and use a center location or "Eksterior Tidak Jelas".
+ 6. Mandatory Output Structure (Chain of Thought):
+    To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields to explicitly state your Camera View Orientation, Continuity timeline, and Visual Reasoning BEFORE listing any damage.
 
 PER-DAMAGE VERIFICATION (MANDATORY):
-For EVERY damage you report, you MUST write "orientationReason" BEFORE "location" within the damage object. The reasoning drives the conclusion — the side must never be chosen before the justification is established.
-
+For EVERY damage you report, you MUST write "orientationReason" BEFORE "location".
 "orientationReason" MUST state ALL of:
-  (1) The camera view at this damage's moment — one of: "Rear View", "Front View", "Rear Corner", "Front Corner", "Left Side", "Right Side", or "Uncertain" when unclear.
-  (2) The visible anchor — one of "plat nomor belakang", "plat nomor depan" / "logo depan", "taillight" / "lampu belakang", "headlight" / "lampu depan". You may cite more than one.
-  (3) The continuity timeline at this timestamp (e.g., "Kamera sedang berada di fase Samping Kanan sebelum mencapai Plat Nomor Belakang").
-  (4) The final vehicle-side conclusion applied per the Inference Rules above, terminated with ONE of these LITERAL tokens: "= Kanan kendaraan", "= Kiri kendaraan", or "= Uncertain". No other phrasing is accepted.
+(1) The camera view at this damage's moment.
+(2) The visible anchor.
+(3) The continuity timeline at this timestamp (e.g., "Fase Samping Kanan sebelum mencapai belakang").
+(4) The final vehicle-side conclusion applied per the Inference Rules above, terminated with ONE of these LITERAL tokens: "= Kanan kendaraan", "= Kiri kendaraan", or "= Uncertain".
 
 STRUCTURED COORDINATES (STRONGLY PREFERRED — GROUND TRUTH):
-In addition to the free-text reasoning, emit for each Kiri/Kanan damage two pixel bounding boxes from a SINGLE FRAME where both the damage and an anchor are visible:
-
-  "damageBoundingBox": [ymin, xmin, ymax, xmax]
-  "anchor": {
-    "type": "rear-plate" | "rear-taillight" | "front-plate" | "front-logo" | "front-headlight",
-    "boundingBox": [ymin, xmin, ymax, xmax],
-    "frameTimestamp": <seconds>
-  }
-
-All coordinate values are normalized to the 0–1000 scale relative to the video frame (Gemini's native bounding-box format). Both bounding boxes MUST come from THE SAME FRAME — never from different frames, because the camera moves and cross-frame coordinates do not compare.
-
-If no single frame clearly shows both the damage and an anchor together, set "anchor": null and the location MUST be a center/unclear variant (do NOT claim Kiri or Kanan without the coordinate evidence OR clear continuity reasoning).
-
-The backend computes vehicle side directly from these coordinates (damage center-x vs anchor center-x, with the mirror rule applied for front-facing anchors). If your "location" disagrees with the coordinate-derived side, the location is FLIPPED to match the coordinates — so emit coordinates that are correct, or emit none and rely on continuity.
+In addition to the free-text reasoning, emit for each Kiri/Kanan damage two pixel bounding boxes from a SINGLE FRAME:
+"damageBoundingBox": [ymin, xmin, ymax, xmax]
+"anchor": {
+  "type": "rear-plate" | "rear-taillight" | "front-plate" | "front-logo" | "front-headlight",
+  "boundingBox": [ymin, xmin, ymax, xmax],
+  "frameTimestamp": <seconds>
+}
 
 3D PERSPECTIVE / CORNER EXCEPTION (CRITICAL):
-The center-x comparison FAILS on corner / diagonal shots. A rear-right scratch, seen from the rear-right corner, can appear to the screen-LEFT of the right taillight on a 2D frame because of the camera angle — feeding these coordinates to the backend would force a Kiri flip that is anatomically wrong.
+The backend computes vehicle side from coordinates (damage center-x vs anchor center-x). HOWEVER, this math fails on corner shots due to 2D perspective distortion:
+ * Rear Corner Trap: A rear-right damage might appear on the left of the right taillight on a 2D screen.
+ * Front Mirror Trap: In a front corner shot (e.g., Volvo), damage on the right fender appears on the right side of the front logo. The backend will falsely apply the Mirror Rule and flip this to Kiri.
+THE RULE: IF the view is a "Corner" or "Side Profile" and 2D bounding boxes will cause a mathematical contradiction to your anatomical Continuity tracking, YOU MUST SET "anchor": null. Preserve the correct text-based location and continuity reasoning.
 
-IF the view is a "Rear Corner" or "Front Corner" AND emitting 2D bounding boxes would contradict your anatomical/continuity reasoning, YOU MUST SET "anchor": null. Do NOT output anchor bounding boxes that will force the backend to falsely flip a correct anatomical deduction. Preserve the correct text-based location and rely on continuity reasoning. You may still emit "damageBoundingBox" so the damage region is displayed — only the anchor is nullified.
+EXAMPLE 1 (Rear Corner, Kanan):
+"Rear Corner. Kamera berada di fase Samping Kanan menuju Belakang. Walaupun taillight kanan terlihat, posisi goresan di layar 2D akan memicu kesalahan komputasi center-x. Berdasarkan kontinuitas, sisi = Kanan kendaraan."
+damageBoundingBox: [600, 700, 800, 900], anchor: null
 
-EXAMPLE (Rear Corner, Kanan — anchor nullified to prevent 2D flip):
-  "Rear Corner. Kamera berada di fase Samping Kanan menuju Belakang di frame 0:19 (sebelum melewati plat nomor belakang). Walaupun taillight kanan terlihat, posisi goresan di layar 2D akan memicu kesalahan komputasi center-x. Berdasarkan kontinuitas = Kanan kendaraan."
-  damageBoundingBox: [600, 700, 800, 900]
-  anchor: null
+EXAMPLE 2 (Front Corner, Kanan):
+"Front Corner. Kamera berada di fase Samping Kanan di frame 0:04. Posisi goresan di sebelah kanan layar 2D akan memicu Front Mirror Trap di backend (Screen-Right = Kiri). Berdasarkan kontinuitas, sisi = Kanan kendaraan. Anchor diabaikan."
+damageBoundingBox: [400, 700, 500, 800], anchor: null
 
-EXAMPLE (Rear View head-on, Kanan — coordinates safe to emit):
-  "Rear View. Plat nomor belakang terlihat jelas di frame 0:22. Kerusakan panel berada to the right of the plat = Kanan kendaraan."
-  damageBoundingBox: [600, 700, 800, 900]
-  anchor: { type: "rear-plate", boundingBox: [500, 450, 650, 600], frameTimestamp: 22 }
-
-EXAMPLE (Front View, Kiri — mirror applied, coordinates safe):
-  "Front View. Logo depan dan plat nomor depan terlihat di frame 0:06. Kerusakan pada fender berada to the right of the front logo (mirror view) = Kiri kendaraan."
-  damageBoundingBox: [500, 700, 700, 900]
-  anchor: { type: "front-logo", boundingBox: [400, 450, 550, 600], frameTimestamp: 6 }
-
-EXAMPLE (Uncertain — continuity and anchors both unclear):
-  "Rear Corner. Tidak ada anchor yang terlihat dengan jelas dan kontinuitas kamera tidak dapat dijejak. = Uncertain."
-  damageBoundingBox: [500, 700, 700, 900]
-  anchor: null
-
-HARD CONSTRAINTS (POST-PROCESSED): Your response is automatically checked. The backend may REWRITE the side or DOWNGRADE to a center/unclear variant whenever ANY of these hold:
-  a. "orientationReason" does not cite any valid anchor (plat belakang/depan, logo depan, taillight/lampu belakang, headlight/lampu depan) or a continuity phase → downgrade.
-  b. "orientationReason" ends in "= Uncertain" → downgrade.
-  c. Coordinates present (anchor + damage bbox) and the damage center-x vs anchor center-x disagrees with the location's side → FLIP location to the coordinate-derived side. For corner shots where this math would be wrong, set "anchor": null to opt out of this check.
-  d. Coordinates absent AND "orientationReason" lacks a literal "= Kanan kendaraan" / "= Kiri kendaraan" token → downgrade.
-  e. Coordinates absent AND the "videoTimestamp" falls in the driver's Samping-Kanan walking stage while the location ends in Kiri, or vice-versa for Samping-Kiri timestamps labeled Kanan → downgrade. The driver records in order: Depan → Samping Kanan → Belakang → Plat Nomor Belakang → Samping Kiri.
-
-Coordinates are the strongest signal when the view is head-on (Rear View / Front View / Left Side / Right Side). On corner shots the coordinate math is unreliable — null the anchor and rely on continuity reasoning.
+HARD CONSTRAINTS (POST-PROCESSED):
+a. "orientationReason" does not cite valid anchor/continuity → downgrade.
+b. "orientationReason" ends in "= Uncertain" → downgrade.
+c. Coordinates present but center-x disagrees with side (and not a corner shot) → FLIP location.
+d. Coordinates absent AND "orientationReason" lacks literal "= Kanan kendaraan" / "= Kiri kendaraan" token → downgrade.
 
 EXHAUSTIVE SCANNING:
-- You MUST analyze the entire video from start to finish (0:00 to end).
-- Do NOT reduce attention after finding the first damage instance.
-- The vehicle may have multiple damages on different sides. You are required to find and list ALL distinct damages that are physically fixed to the vehicle surface and visible in at least ONE frame with reasonable clarity. There is no minimum severity threshold — report all findings including MINOR.
-- Apply frame-by-frame attention to the following HIGH-PRIORITY SCRATCH ZONES:
-  - All 4 door panels (especially lower panels and edges near door handles)
-  - Front left and right fenders
-  - All bumper corners
-  - Both side mirrors (housing and cap)
-  - Lower body panels along the full length of the vehicle
-
-DEDUPLICATION & MULTIPLE DAMAGES:
-- Track damage across frames. Do NOT report the exact same physical damage multiple times from different angles.
-- If the same mark appears in multiple frames from different angles, count it as ONE damage item.
-- CRITICAL: If there are multiple DISTINCT and SEPARATE damages on the same panel (e.g., two different scratches on 'Bumper Depan Kiri'), you MUST report them as separate entries. Do NOT merge separate damages just because they share a location.
+ * Analyze video from 0:00 to end. Report ALL distinct damages (MINOR included).
+ * HIGH-PRIORITY: Door panels, fenders, bumper corners, side mirrors, lower body panels.
 
 MOTION vs DAMAGE:
-- Moving reflections, glare, or shifting shadows as the camera pans are NOT damage. Real physical damage (dents, scratches) will remain fixed on the vehicle's surface regardless of camera angle.
-- EXCEPTION FOR GORESAN (SCRATCHES): Scratches naturally change in visibility as the camera angle shifts due to light refraction on the paint surface. A linear mark that is clearly visible in one frame but fades in another AT THE SAME FIXED LOCATION is physical damage — NOT a moving reflection. Do NOT use changing visibility alone as grounds to dismiss a scratch.
-
-GORESAN (SCRATCH) DETECTION RULES:
-- A mark qualifies as goresan if it is a LINEAR/CURVED mark, OR a BROAD SCUFF/ABRASION (patch of scratched surface), OR edge chipping.
-- It must be visible in at least 1 frame with reasonable clarity AND does not move or shift position between frames.
-- Scratches legitimately appear and disappear depending on light angle. This is expected. Do NOT dismiss a scratch solely because it is not visible in every frame.
-- EXCLUSION: Strictly ignore general microscopic swirl marks (spiderweb scratches) caused by routine car washing. Focus ONLY on distinct, incident-related damage.
-- Visual characteristics to look for:
-  - Bright white or silver highlights on the surface (clear coat scratch)
-  - Dark or matte lines against glossy paint (deep paint scratch)
-  - Broad patches of scuffing/abrasion (lecet) often found on bumper corners
-  - Paint chips or rough marks along the vertical edges of doors
-  - Clusters of fine lines near door handle zones or lower body panels
-  - Single long linear marks consistent with key scratches or parking contact
-- If you detect a mark that COULD be a goresan but you are uncertain, you MUST still report it with severity "MINOR" and add "(low confidence)" to the description. It is better to over-report a minor scratch than to miss it entirely.
-
-VIDEO ARTIFACTS:
-- Do not confuse motion blur, lens flares, or video compression artifacts with physical damage.
-- Do not guess or infer hidden damage.
-- Assess ONLY the primary subject vehicle. Strictly ignore any vehicles, objects, or reflections in the background.
-- If the overall video quality is too low, consistently blurry, or too dark to make an accurate assessment, set overallCondition to "POOR", confidence to 0, and return an empty damages array.
+ * Real damage remains fixed. Reflections move.
+ * GORESAN EXCEPTION: Scratches change visibility as angle shifts. If visible in 1 frame at a fixed location, it is DAMAGE.
 
 STRICT DICTIONARY (ENUMS)
-You MUST select damageType and location EXCLUSIVELY from the exact lists below. DO NOT use any other words, synonyms, English terms, or extra descriptions.
-
-ALLOWED TYPES (damageType):
-- goresan
-- transfer_cat
-- penyok
-- kaca_retak
-- bagian_pecah
-- panel_bengkok
-- bagian_hilang
-
-ALLOWED LOCATIONS (location):
-- ⁠Bumper Depan Kiri
-- ⁠Bumper Depan Tengah
-- ⁠Bumper Depan Kanan
-- ⁠Bumper / Panel Belakang Kiri 
-- ⁠Bumper Belakang Tengah
-- ⁠Bumper / Panel Belakang Kanan
-- ⁠Pintu Depan Kiri
-- ⁠Pintu Belakang Kiri
-- ⁠Pintu Depan Kanan
-- ⁠Pintu Belakang Kanan
-- ⁠Fender Depan Kiri
-- ⁠Fender Depan Kanan
-- ⁠Atap
-- ⁠Kap Mesin
-- ⁠Bagasi
-- ⁠Spion Kiri
-- ⁠Spion Kanan
-- ⁠Kaca Depan
-- ⁠Kaca Belakang
-- ⁠Roda / Ban
-- ⁠Eksterior Tidak Jelas
-
-
-SEVERITY DEFINITIONS (apply per damage type):
-
-Goresan:
-- MINOR = Surface-level scratch, clear coat only, paint color still intact (Ringan)
-- MODERATE = Scratch reaches base paint layer, color disrupted or exposed (Sedang)
-- MAJOR = Scratch reaches bare metal, OR scratch length exceeds 15cm, OR cluster of multiple scratches in same zone (Berat)
-
-Penyok:
-- MINOR = Minor depression, no paint damage, not visible from 1 meter (Ringan)
-- MODERATE = Clearly visible depression with possible paint cracking (Sedang)
-- MAJOR = Large or deep deformation, structural panel shape compromised (Berat)
-
-Transfer Cat:
-- MINOR = Small paint transfer, surface only, under 5cm (Ringan)
-- MODERATE = Visible transfer with underlying paint disruption (Sedang)
-- MAJOR = Large transfer area or combined with underlying dent or scratch (Berat)
-
-All other types (kaca_retak, bagian_pecah, panel_bengkok, bagian_hilang):
-- MINOR = Minor, localized, does not affect function (Ringan)
-- MODERATE = Moderate, affects appearance significantly (Sedang)
-- MAJOR = Severe, affects safety or structural integrity (Berat)
-
-MANDATORY VISUAL SCAN ORDER
-Analyze the video in sequence but ensure the final deduplicated report accounts for all zones:
-1. Front exterior (bumper, hood, headlights surround, front fenders)
-2. Rear exterior — pay close attention to lower bumper corners
-3. Left side (all doors, fender, rear quarter panel, mirror)
-4. Right side (all doors, fender, rear quarter panel, mirror)
-5. Roof
-6. Glass and mirrors
-7. Wheels and tires
-
-REASONING BEFORE OUTPUT:
-You MUST perform spatial and visual reasoning BEFORE listing damages:
-1. "cameraPath": Trace the chronological camera movement using center anchors (license plate). Example: "Kamera mulai dari Bodi Samping Kanan, lalu menyorot Bumper Belakang Kanan, menyeberangi Plat Nomor Belakang di tengah, lalu berakhir di Bumper Belakang Kiri."
-2. "visualAnalysis": Describe the marks found along that path and confirm whether each is real damage or reflection.
-
-CRITICAL RULE FOR JSON GENERATION (STRICT KEY ORDERING):
-You MUST generate the JSON keys in the EXACT sequential order shown in the template below.
-You are STRICTLY FORBIDDEN from outputting the "damages" array until you have fully generated the reasoning fields: "verificationAnalysis", "cameraPath", and "visualAnalysis". This guarantees your spatial reasoning is established before you classify any damage locations.
-Within EACH damage object, you are STRICTLY FORBIDDEN from outputting "location" until "orientationReason" has been fully generated. Reasoning must precede conclusion at BOTH levels (document-level and per-damage).
+ALLOWED TYPES: goresan, transfer_cat, penyok, kaca_retak, bagian_pecah, panel_bengkok, bagian_hilang
+ALLOWED LOCATIONS: ⁠Bumper Depan Kiri, ⁠Bumper Depan Tengah, ⁠Bumper Depan Kanan, ⁠Bumper / Panel Belakang Kiri, ⁠Bumper Belakang Tengah, ⁠Bumper / Panel Belakang Kanan, ⁠Pintu Depan Kiri, ⁠Pintu Belakang Kiri, ⁠Pintu Depan Kanan, ⁠Pintu Belakang Kanan, ⁠Fender Depan Kiri, ⁠Fender Depan Kanan, ⁠Atap, ⁠Kap Mesin, ⁠Bagasi, ⁠Spion Kiri, ⁠Spion Kanan, ⁠Kaca Depan, ⁠Kaca Belakang, ⁠Roda / Ban, ⁠Eksterior Tidak Jelas
 
 ## Response Format
-Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
+Respond ONLY with a valid, raw JSON object. Do NOT wrap in markdown code blocks. All description fields MUST be in Bahasa Indonesia.
 
 {
-  "cameraPath": "Fase 1: Depan (0:00–0:06). Fase 2: Samping Kanan (0:06–0:12). Fase 3: Belakang — plat nomor belakang terlihat jelas (0:12–0:24). Fase 4: Samping Kiri (0:24–0:30).",
-  "visualAnalysis": "Goresan terdeteksi di sudut belakang kanan pada fase Samping Kanan → Belakang (0:19). Kamera belum menyeberang plat nomor belakang, sehingga sisi = Kanan berdasarkan kontinuitas — anchor dinullkan karena sudut 3D akan menyesatkan komputasi center-x.",
-  "overallCondition": "FAIR",
-  "confidence": 0.88,
+  "cameraPath": "Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri.",
+  "visualAnalysis": "Analisis visual...",
+  "overallCondition": "GOOD",
+  "confidence": 0.0,
   "screenRecaptureDetected": false,
   "damages": [
     {
       "damageType": "goresan",
-      "orientationReason": "Rear Corner. Kamera berada di fase Samping Kanan menuju Belakang di frame 0:19 (sebelum melewati plat nomor belakang). Walaupun taillight kanan terlihat, posisi goresan di layar 2D akan memicu kesalahan komputasi center-x. Berdasarkan kontinuitas = Kanan kendaraan.",
-      "damageBoundingBox": [600, 700, 800, 900],
+      "orientationReason": "Front Corner. Kamera berada di fase Samping Kanan di frame 0:04. Untuk menghindari kesalahan komputasi koordinat (Front Mirror Trap), anchor diabaikan. Berdasarkan kontinuitas = Kanan kendaraan.",
+      "damageBoundingBox": [400, 700, 500, 800],
       "anchor": null,
-      "location": "Bumper / Panel Belakang Kanan",
+      "location": "Fender Depan Kanan",
       "severity": "MINOR",
-      "description": "Lecet hitam pada bagian bawah bumper belakang kanan.",
+      "description": "Goresan halus pada fender depan.",
       "isNewDamage": true,
-      "videoTimestamp": 19
-    },
-    {
-      "damageType": "goresan",
-      "orientationReason": "Rear View. Plat nomor belakang terlihat jelas di frame 0:22 (fase Belakang, head-on). Kerusakan pada panel berada to the right of the plat = Kanan kendaraan.",
-      "damageBoundingBox": [600, 700, 800, 900],
-      "anchor": {
-        "type": "rear-plate",
-        "boundingBox": [500, 450, 650, 600],
-        "frameTimestamp": 22
-      },
-      "location": "Bumper / Panel Belakang Kanan",
-      "severity": "MODERATE",
-      "description": "Goresan dalam pada panel belakang kanan, sekitar 12cm.",
-      "isNewDamage": true,
-      "videoTimestamp": 22
+      "videoTimestamp": 4
     }
   ]
-}
-
-The first damage is a CORNER shot: the camera is at fase Samping Kanan → Belakang (0:19), the view is 3D/diagonal, so emitting anchor coordinates would force a wrong backend flip. The AI sets "anchor": null and relies on continuity reasoning — the location stays "Bumper / Panel Belakang Kanan". The second damage is a HEAD-ON Rear View at 0:22 where the plat is clearly centered — coordinates are safe to emit and the backend verifies the Kanan conclusion via center-x arithmetic. Follow these patterns exactly: anchor coordinates ONLY for head-on views, anchor: null for corner/diagonal views (but continue to emit damageBoundingBox so the damage region renders).
-
-This is a high-recall inspection system. When in doubt, report.`;
+}`;
 
   const hasVehicle = vehicle?.make || vehicle?.model;
   const vehicleInfo = hasVehicle
