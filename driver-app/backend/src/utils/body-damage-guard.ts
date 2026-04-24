@@ -4,7 +4,9 @@ export type SideGuardReason =
   | "missing-conclusion-token"
   | "contradiction-with-reason"
   | "contradiction-with-walking-stage"
-  | "coordinate-override";
+  | "coordinate-override"
+  | "description-override"
+  | "description-promotion";
 
 /**
  * Gemini's native bounding-box format: `[ymin, xmin, ymax, xmax]` normalized
@@ -200,27 +202,210 @@ function applyCoordOverride(damage: BodyDamage): void {
   damage.sideGuardReason = "coordinate-override";
 }
 
+// ---- Description-based derivation ---------------------------------------
+//
+// The AI's free-text Bahasa Indonesia `description` often states the correct
+// panel and side even when its structured `location` field is wrong (the
+// description describes what the model sees; the location goes through the
+// fragile mirror/anchor reasoning step that fails on corner shots). Parsing
+// the description gives us an independent signal grounded in the model's
+// natural observation.
+
+type PanelFamily =
+  | "bumper-depan"
+  | "bumper-belakang"
+  | "pintu-depan"
+  | "pintu-belakang"
+  | "fender-depan"
+  | "spion"
+  | "atap"
+  | "kap-mesin"
+  | "bagasi"
+  | "kaca-depan"
+  | "kaca-belakang"
+  | "roda-ban";
+
+// Ordered longest-match-first so "pintu depan" wins over a bare "pintu".
+const PANEL_PATTERNS: Array<[RegExp, PanelFamily]> = [
+  [/\b(?:bumper|panel)\s+belakang\b/i, "bumper-belakang"],
+  [/\bbumper\s+depan\b/i, "bumper-depan"],
+  [/\bpintu\s+depan\b/i, "pintu-depan"],
+  [/\bpintu\s+belakang\b/i, "pintu-belakang"],
+  [/\bfender\s+depan\b/i, "fender-depan"],
+  [/\bkaca\s+depan\b/i, "kaca-depan"],
+  [/\bkaca\s+belakang\b/i, "kaca-belakang"],
+  [/\bspion\b/i, "spion"],
+  [/\batap\b/i, "atap"],
+  [/\bkap(\s+mesin)?\b/i, "kap-mesin"],
+  [/\bbagasi\b/i, "bagasi"],
+  [/\b(?:roda|ban|velg|pelek)\b/i, "roda-ban"],
+];
+
+// Panel + side → enum location.
+const LOCATION_TABLE: Record<
+  PanelFamily,
+  Partial<Record<Side | "Tengah", string>>
+> = {
+  "bumper-depan": {
+    left: "Bumper Depan Kiri",
+    right: "Bumper Depan Kanan",
+    Tengah: "Bumper Depan Tengah",
+  },
+  "bumper-belakang": {
+    left: "Bumper / Panel Belakang Kiri",
+    right: "Bumper / Panel Belakang Kanan",
+    Tengah: "Bumper Belakang Tengah",
+  },
+  "pintu-depan": {
+    left: "Pintu Depan Kiri",
+    right: "Pintu Depan Kanan",
+  },
+  "pintu-belakang": {
+    left: "Pintu Belakang Kiri",
+    right: "Pintu Belakang Kanan",
+  },
+  "fender-depan": {
+    left: "Fender Depan Kiri",
+    right: "Fender Depan Kanan",
+  },
+  spion: {
+    left: "Spion Kiri",
+    right: "Spion Kanan",
+  },
+  atap: {},
+  "kap-mesin": {},
+  bagasi: {},
+  "kaca-depan": {},
+  "kaca-belakang": {},
+  "roda-ban": {},
+};
+
+const NO_SIDE_LOCATIONS: Partial<Record<PanelFamily, string>> = {
+  atap: "Atap",
+  "kap-mesin": "Kap Mesin",
+  bagasi: "Bagasi",
+  "kaca-depan": "Kaca Depan",
+  "kaca-belakang": "Kaca Belakang",
+  "roda-ban": "Roda / Ban",
+};
+
+function findPanelFamilies(text: string): PanelFamily[] {
+  const found = new Set<PanelFamily>();
+  for (const [pattern, family] of PANEL_PATTERNS) {
+    if (pattern.test(text)) {
+      found.add(family);
+    }
+  }
+  return [...found];
+}
+
+function detectSide(text: string): Side | "Tengah" | "none" {
+  const hasKiri = /\bkiri\b/i.test(text);
+  const hasKanan = /\bkanan\b/i.test(text);
+  const hasTengah = /\btengah\b/i.test(text);
+  // Side keywords take priority over the positional "tengah" which usually
+  // refers to "middle of the panel" rather than the vehicle's center line.
+  if (hasKiri && !hasKanan) return "left";
+  if (hasKanan && !hasKiri) return "right";
+  if (hasKiri && hasKanan) return "none"; // both → ambiguous
+  if (hasTengah) return "Tengah";
+  return "none";
+}
+
 /**
- * Enforces the SPATIAL ORIENTATION RULES (STRICT). Two independent checks
- * run per damage:
+ * Parses a Bahasa Indonesia damage description for panel + side and returns
+ * the canonical enum location, or `null` when the description is ambiguous,
+ * missing, or mentions multiple panel families.
+ */
+export function deriveLocationFromDescription(
+  description: string | null | undefined,
+): string | null {
+  if (!description || typeof description !== "string") return null;
+  const text = description.toLowerCase();
+
+  const families = findPanelFamilies(text);
+  if (families.length === 0) return null;
+  if (families.length > 1) return null; // ambiguous — multiple panels
+
+  const family = families[0];
+
+  // Panels without a side → return directly.
+  const noSide = NO_SIDE_LOCATIONS[family];
+  if (noSide) return noSide;
+
+  const side = detectSide(text);
+  if (side === "none") return null;
+
+  const table = LOCATION_TABLE[family];
+  return table[side] ?? null;
+}
+
+// Maps each enum location back to its panel family so we can tell whether a
+// description override is within-family (safe) or cross-family (skip).
+function locationPanelFamily(location: string): PanelFamily | "unknown" {
+  const normalized = location.trim().toLowerCase();
+  if (/^bumper\s+depan\b/.test(normalized)) return "bumper-depan";
+  if (/^bumper\s*\/?\s*panel\s+belakang|^bumper\s+belakang/.test(normalized))
+    return "bumper-belakang";
+  if (/^pintu\s+depan\b/.test(normalized)) return "pintu-depan";
+  if (/^pintu\s+belakang\b/.test(normalized)) return "pintu-belakang";
+  if (/^fender\s+depan\b/.test(normalized)) return "fender-depan";
+  if (/^spion\b/.test(normalized)) return "spion";
+  if (/^atap\b/.test(normalized)) return "atap";
+  if (/^kap\b/.test(normalized)) return "kap-mesin";
+  if (/^bagasi\b/.test(normalized)) return "bagasi";
+  if (/^kaca\s+depan\b/.test(normalized)) return "kaca-depan";
+  if (/^kaca\s+belakang\b/.test(normalized)) return "kaca-belakang";
+  if (/^roda\s*\/?\s*ban\b|^roda\b|^ban\b/.test(normalized)) return "roda-ban";
+  return "unknown"; // "Eksterior Tidak Jelas" and anything else
+}
+
+function applyDescriptionDerivation(
+  damage: BodyDamage,
+  extracted: string,
+  declared: string,
+): SideGuardReason {
+  damage.originalLocation = declared;
+  damage.location = extracted;
+  damage.sideGuardApplied = true;
+  // Generic-to-specific is a promotion; side conflict within same family is
+  // an override. Logged separately so we can distinguish in observability.
+  const declaredFamily = locationPanelFamily(declared);
+  const reason: SideGuardReason =
+    declaredFamily === "unknown" || /tengah$/i.test(declared.trim())
+      ? "description-promotion"
+      : "description-override";
+  damage.sideGuardReason = reason;
+  return reason;
+}
+
+/**
+ * Enforces the SPATIAL ORIENTATION RULES (STRICT). Four independent signals
+ * run per damage, highest-priority first:
  *
- *   **Text-based** (always): orientationReason must cite an anchor, not be
- *   Uncertain, contain `= Kanan kendaraan` or `= Kiri kendaraan`, and match
- *   the location's side. Failures downgrade to a center/unclear location.
+ *   1. **Description-based** (highest): parses the free-text Bahasa
+ *      Indonesia description for panel + side keywords and maps to an enum
+ *      location. When the description yields a clear, unambiguous result
+ *      within the same panel family as the declared location (or declared
+ *      is generic like "Eksterior Tidak Jelas"), the description wins —
+ *      either as a promotion (generic → specific) or an override (side
+ *      flip). Short-circuits all weaker checks when applied, because the
+ *      description is the AI's natural observation and is not subject to
+ *      the mirror/anchor reasoning failures.
  *
- *   **Coordinate-based** (when `damageBoundingBox` + `anchor` are present):
- *   derives the vehicle side from pixel geometry, applying the mirror rule
- *   for front-facing anchors. If the derivation disagrees with the
- *   location's side, the location is FLIPPED (not downgraded) — the
- *   coordinates are treated as ground truth.
+ *   2. **Text-based**: orientationReason must cite an anchor, not be
+ *      Uncertain, contain `= Kanan kendaraan` or `= Kiri kendaraan`, and
+ *      match the location's side. Failures downgrade to a center/unclear
+ *      location.
  *
- *   **Walking-stage** (when `walkingProtocolDurationSec` is provided):
- *   timestamps in Stage 2 (Samping Kanan) labeled Kiri, or Stage 5 (Samping
- *   Kiri) labeled Kanan, are downgraded.
+ *   3. **Coordinate-based** (when `damageBoundingBox` + `anchor` are
+ *      present): derives the vehicle side from pixel geometry, applying the
+ *      mirror rule for front-facing anchors. If the derivation disagrees
+ *      with the location's side, the location is FLIPPED (not downgraded).
  *
- * The checks run in this order so a valid coordinate derivation supersedes
- * weaker text-only heuristics, while an explicit "= Uncertain" conclusion
- * still forces a downgrade (the AI signalled it couldn't decide).
+ *   4. **Walking-stage** (when `walkingProtocolDurationSec` is provided):
+ *      timestamps in Stage 2 (Samping Kanan) labeled Kiri, or Stage 5
+ *      (Samping Kiri) labeled Kanan, are downgraded.
  *
  * Mutates `damages` in place.
  */
@@ -230,6 +415,35 @@ export function applyBodyDamageSideGuard(
 ): { appliedCount: number } {
   let appliedCount = 0;
   for (const damage of damages) {
+    // PRIMARY CHECK — description-based derivation. The AI's free-text
+    // description tends to correctly name the panel and side it sees even
+    // when the structured `location` field is wrong. When the description
+    // yields a clear, unambiguous enum location, we trust it over every
+    // downstream signal (coord arithmetic, anchor citation, walking stage).
+    const extracted = deriveLocationFromDescription(damage.description);
+    if (extracted) {
+      const declaredNormalized = damage.location.trim();
+      const declaredFamily = locationPanelFamily(declaredNormalized);
+      const extractedFamily = locationPanelFamily(extracted);
+      const sameFamilyOrGeneric =
+        declaredFamily === "unknown" || declaredFamily === extractedFamily;
+
+      if (sameFamilyOrGeneric) {
+        if (extracted !== declaredNormalized) {
+          // Promote (center/generic → specific) or override (flip side).
+          applyDescriptionDerivation(damage, extracted, declaredNormalized);
+          appliedCount++;
+        }
+        // Either way, description has resolved the location — short-circuit
+        // the remaining checks so weaker signals (orientationReason, coord
+        // math on corner shots) don't downgrade the verified location.
+        continue;
+      }
+      // Cross-family mismatch (declared and extracted point at different
+      // panels) — too risky to second-guess which is right. Fall through and
+      // let the existing guard logic run against the declared location.
+    }
+
     const locSide = locationSide(damage.location);
     if (locSide === "none") continue;
 

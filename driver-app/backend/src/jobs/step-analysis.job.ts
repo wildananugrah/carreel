@@ -260,9 +260,12 @@ export class StepAnalysisJob {
                 to: d.location,
                 reason: d.sideGuardReason,
                 action:
-                  d.sideGuardReason === "coordinate-override"
+                  d.sideGuardReason === "coordinate-override" ||
+                  d.sideGuardReason === "description-override"
                     ? "flip"
-                    : "downgrade",
+                    : d.sideGuardReason === "description-promotion"
+                      ? "promote"
+                      : "downgrade",
                 videoTimestamp: d.videoTimestamp,
                 anchorType: d.anchor?.type ?? null,
               }),
