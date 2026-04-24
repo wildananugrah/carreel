@@ -494,7 +494,7 @@ STEP 1: CLARITY & LEGIBILITY ASSESSMENT
 Focus purely on the VIN region. Evaluate if the character clarity, glare, and resolution are sufficient to confidently extract exactly 17 characters without ambiguity. If legibility is poor, skip to outputting status UNCERTAIN with reasoning.
 
 STEP 2: AGGRESSIVE EXTRACTION & SANITIZATION (OCR)
-Locate the 17-character VIN string. Record the characters exactly as they appear (rawDetectedText). COUNT the characters. If the count is NOT exactly 17, skip to status UNCERTAIN. Apply strict ISO 3779 sanitization: DO NOT accept letters 'I' (India), 'O' (Oscar), or 'Q' (Quebec). If you detect these letters, you MUST attempt character correction based on visual similarity (e.g., '0' is '0', 'I' is '1', 'Q' is '0' or 'G'). If ambiguity remains after correction, flag as UNCERTAIN.
+Locate the 17-character VIN string. Record the characters exactly as they appear (rawDetectedText). COUNT the characters. If the count is NOT exactly 17, skip to status UNCERTAIN. Apply strict ISO 3779 sanitization: DO NOT accept letters 'I' (India), 'O' (Oscar), or 'Q' (Quebec) anywhere in the final VIN. If you detect these letters, you MUST attempt character correction based on visual similarity (letter 'O' → digit '0', letter 'I' → digit '1', letter 'Q' → digit '0' or letter 'G'). Note that the image may be rotated 90°/180°/270°; mentally rotate the text as needed so you read the VIN in its natural left-to-right order. If ambiguity remains after correction, flag as UNCERTAIN.
 
 STEP 3: DECODING AND AUDIT LOGIC
 Parse the standardized VIN to extract core identity attributes:
@@ -547,6 +547,13 @@ Your job is to inspect the vehicle's exterior in the provided VIDEO and report a
 Do NOT dismiss marks as dirt, glare, or reflection without multi-frame confirmation. High-contrast marks (e.g., black scuffs on light paint, white scratches on dark paint) in typical impact zones MUST be reported unless you can confirm across multiple frames that it is not fixed to the surface.
 
 ${SCREEN_CAPTURE_VIDEO}
+
+EXHAUSTIVE SCANNING:
+• You MUST analyze the entire video from start to finish (0:00 to end).
+• For EACH camera phase (Depan, Samping Kanan, Belakang, Samping Kiri), ask: "Did I see anything on any panel in this phase?" Only move to the next phase after answering.
+• Do NOT reduce attention after finding the first damage instance.
+• Report all distinct damages including MINOR.
+• After your first scan, perform a second pass focusing ONLY on lower body panels, bumper edges, panel corners, and mirrors — these are the most statistically missed areas.
 
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
@@ -630,10 +637,6 @@ c. Coordinates present but the damage center-x vs anchor center-x disagrees with
 d. Coordinates absent AND "orientationReason" lacks a literal "= Kanan kendaraan" / "= Kiri kendaraan" token → downgrade.
 e. Coordinates absent AND the "videoTimestamp" explicitly contradicts the continuity timeline (e.g., driver is in Samping-Kanan stage but location ends in Kiri) → downgrade.
 
-EXHAUSTIVE SCANNING:
-• You MUST analyze the entire video from start to finish (0:00 to end).
-• Do NOT reduce attention after finding the first damage instance.
-• Report all distinct damages including MINOR.
 • HIGH-PRIORITY SCRATCH ZONES: All 4 door panels, Front fenders, All bumper corners, Side mirrors, Lower body panels.
 
 DEDUPLICATION & MULTIPLE DAMAGES:

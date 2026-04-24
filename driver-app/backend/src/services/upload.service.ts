@@ -16,7 +16,11 @@ const BUCKET_MAP: Record<string, string> = {
   VIDEO: "carreel-videos",
 };
 
-const IMMEDIATE_ANALYSIS_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER"];
+const IMMEDIATE_ANALYSIS_STEPS = [
+  "UNIT_IDENTIFICATION",
+  "VIN_NUMBER",
+  "SPEEDOMETER",
+];
 
 export class UploadService implements IUploadService {
   constructor(

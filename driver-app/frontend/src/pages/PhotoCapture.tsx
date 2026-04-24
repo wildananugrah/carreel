@@ -421,42 +421,76 @@ export function PhotoCapture() {
             </div>
           )}
 
-          <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
-                <svg
-                  aria-hidden="true"
-                  className="w-5 h-5 text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
-                    {inspection.tripType === "PRE_TRIP" ? "2" : "1"}
-                  </span>
-                  <span className="text-xs text-neutral-500 uppercase font-medium">
-                    Speedometer
-                  </span>
-                  {inspection.tripType === "PRE_TRIP" && (
-                    <span className="text-[10px] text-neutral-600">(Opsional)</span>
-                  )}
+          {speedoStep ? (
+            <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center shrink-0">
+                  <svg
+                    aria-hidden="true"
+                    className="w-5 h-5 text-yellow-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
                 </div>
-                <p className="text-sm text-white font-semibold leading-snug">
-                  Tunjukkan SPEEDOMETER dengan jelas agar angka Odometer terlihat dengan jelas
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-5 h-5 rounded-full bg-yellow-400 text-black text-xs font-bold flex items-center justify-center">
+                      {inspection.tripType === "PRE_TRIP" ? "2" : "1"}
+                    </span>
+                    <span className="text-xs text-neutral-500 uppercase font-medium">
+                      Speedometer
+                    </span>
+                    {inspection.tripType === "PRE_TRIP" && (
+                      <span className="text-[10px] text-neutral-600">(Opsional)</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-white font-semibold leading-snug">
+                    Tunjukkan SPEEDOMETER dengan jelas agar angka Odometer terlihat dengan jelas
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : inspection.tripType === "POST_TRIP" ? (
+            <div className="rounded-xl border border-blue-400/40 bg-blue-400/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-400/20 flex items-center justify-center shrink-0">
+                  <svg
+                    aria-hidden="true"
+                    className="w-5 h-5 text-blue-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm text-white font-semibold leading-snug mb-1">
+                    Tidak ada foto yang perlu diambil di halaman ini
+                  </p>
+                  <p className="text-xs text-neutral-400 leading-snug">
+                    Inspeksi Pre-Trip menggunakan VIN Number sebagai identifikasi, jadi Speedometer
+                    tidak perlu difoto lagi di Post-Trip. Silakan tekan{" "}
+                    <span className="text-yellow-400 font-medium">Selanjutnya</span> untuk
+                    melanjutkan ke inspeksi body.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {inspection.tripType === "PRE_TRIP" && (
             <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-4">
