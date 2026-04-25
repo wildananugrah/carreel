@@ -3,7 +3,33 @@ import {
   createUserContent,
   GoogleGenAI,
 } from "@google/genai";
-import type { IAIProvider } from "../interfaces/providers/ai.provider.interface";
+import type {
+  AIAnalysisOptions,
+  IAIProvider,
+} from "../interfaces/providers/ai.provider.interface";
+
+function buildModelConfig(
+  systemInstruction: string | undefined,
+  options: AIAnalysisOptions | undefined,
+): Record<string, unknown> {
+  const config: Record<string, unknown> = {
+    responseMimeType: "application/json",
+  };
+
+  if (options?.temperature !== undefined) {
+    config.temperature = options.temperature;
+  }
+  if (options?.maxOutputTokens !== undefined) {
+    config.maxOutputTokens = options.maxOutputTokens;
+  }
+  if (options?.thinkingLevel) {
+    config.thinkingConfig = { thinkingLevel: options.thinkingLevel };
+  }
+  if (systemInstruction) {
+    config.systemInstruction = systemInstruction;
+  }
+  return config;
+}
 
 export class GeminiProvider implements IAIProvider {
   private ai: GoogleGenAI;
@@ -20,14 +46,12 @@ export class GeminiProvider implements IAIProvider {
     mimeType: string,
     prompt: string,
     systemInstruction?: string,
+    options?: AIAnalysisOptions,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
       model: this.model,
       contents: [{ inlineData: { mimeType, data: base64 } }, { text: prompt }],
-      config: {
-        responseMimeType: "application/json",
-        ...(systemInstruction && { systemInstruction }),
-      },
+      config: buildModelConfig(systemInstruction, options),
     });
     return response.text ?? "";
   }
@@ -37,6 +61,7 @@ export class GeminiProvider implements IAIProvider {
     mimeType: string,
     prompt: string,
     systemInstruction?: string,
+    options?: AIAnalysisOptions,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
       model: this.model,
@@ -44,11 +69,7 @@ export class GeminiProvider implements IAIProvider {
         createPartFromUri(fileUri, mimeType),
         prompt,
       ]),
-      config: {
-        temperature: 0.0,
-        responseMimeType: "application/json",
-        ...(systemInstruction && { systemInstruction }),
-      },
+      config: buildModelConfig(systemInstruction, options),
     });
     return response.text ?? "";
   }
@@ -78,6 +99,7 @@ export class GeminiStubProvider implements IAIProvider {
     _mimeType: string,
     _prompt: string,
     _systemInstruction?: string,
+    _options?: AIAnalysisOptions,
   ): Promise<string> {
     return JSON.stringify({
       licensePlate: "ABC-1234",
@@ -95,6 +117,7 @@ export class GeminiStubProvider implements IAIProvider {
     _mimeType: string,
     _prompt: string,
     _systemInstruction?: string,
+    _options?: AIAnalysisOptions,
   ): Promise<string> {
     return JSON.stringify({
       overallCondition: "GOOD",

@@ -13,6 +13,10 @@ import type {
 import type { IAlertRepository } from "../interfaces/repositories/alert.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
+import {
+  BODY_VERIFICATION_AI_CONFIG,
+  STEP_AI_CONFIG,
+} from "../utils/ai-config";
 import { applyBodyDamageSideGuard } from "../utils/body-damage-guard";
 import {
   type BodyInspectionResult,
@@ -134,6 +138,7 @@ export class StepAnalysisJob {
               primaryMedia.mimeType,
               verificationPair.userPrompt,
               verificationPair.systemInstruction,
+              BODY_VERIFICATION_AI_CONFIG,
             );
 
             const verificationCleaned = verificationRaw
@@ -204,6 +209,7 @@ export class StepAnalysisJob {
             primaryMedia.mimeType,
             userPrompt,
             systemInstruction,
+            STEP_AI_CONFIG[stepType],
           );
         } finally {
           await unlink(tempPath).catch(() => {});
@@ -220,6 +226,7 @@ export class StepAnalysisJob {
           primaryMedia.mimeType,
           userPrompt,
           systemInstruction,
+          STEP_AI_CONFIG[stepType],
         );
       }
 
