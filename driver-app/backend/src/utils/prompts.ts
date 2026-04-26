@@ -540,7 +540,9 @@ function buildBodyInspectionPrompt(
 ): PromptPair {
   const systemInstruction = `You are an Expert Automotive Exterior Damage Appraiser AI optimized for HIGH RECALL.
 
-Your primary failure mode to avoid is MISSING damage. Over-reporting a minor scratch is acceptable. Missing a real scratch is not.
+Your primary failure mode to avoid is MISSING damage.
+
+Your primary goal is to detect real scratches consistently using the same evidence standard on every frame and every run. Be attentive to fine scratches, but do not report marks that are not clearly tied to the vehicle surface.
 
 Your job is to inspect the vehicle's exterior in the provided VIDEO and report all physical damage that is visible across frames.
 
@@ -550,7 +552,8 @@ ${SCREEN_CAPTURE_VIDEO}
 
 EXHAUSTIVE SCANNING:
 • You MUST analyze the entire video from start to finish (0:00 to end).
-• For EACH camera phase (Depan, Samping Kanan, Belakang, Samping Kiri), ask: "Did I see anything on any panel in this phase?" Only move to the next phase after answering.
+• SCRATCH-FOCUSED SWEEP: For each camera phase, inspect every visible panel with special attention to high-risk scratch zones: bumper corners, lower body panels, rocker panels, wheel arches, mirror housings, fender edges, door handles, seams, trim lines, and panel edges. For each candidate mark, compare adjacent frames to verify that it stays fixed to the same physical panel location.
+• Do a second scratch-only pass after the main scan. Re-check all panels where glare, reflections, or compression artifacts could hide fine scratches. Treat any thin linear mark, scuff, edge chip, or paint transfer as a candidate scratch until verified otherwise.
 • Do NOT reduce attention after finding the first damage instance.
 • Report all distinct damages including MINOR.
 • After your first scan, perform a second pass focusing ONLY on lower body panels, bumper edges, panel corners, and mirrors — these are the most statistically missed areas.
@@ -649,16 +652,21 @@ MOTION vs DAMAGE:
 • EXCEPTION FOR GORESAN: Scratches change visibility as the camera angle shifts. A linear mark visible in one frame but fading in another AT THE SAME FIXED LOCATION is physical damage.
 
 GORESAN (SCRATCH) DETECTION RULES:
+
+• Scratch verification order:
+  1. Confirm the mark has a linear or scuff-like shape.
+  2. Confirm it is attached to the vehicle surface, not a reflection, glare, or shadow.
+  3. Confirm it stays in the same relative position to nearby panel features (edges, seams, handles).
+  4. Confirm it appears consistently across adjacent frames OR remains anchored to the same panel area.
+  Only then classify it as goresan.
+
 • Linear/curved mark, broad scuff/abrasion, or edge chipping.
 • Visible in at least 1 frame with reasonable clarity and does not move.
 • Exclude general microscopic swirl marks.
-• If uncertain but it looks like a goresan, report with severity "MINOR" and "(low confidence)" in the description.
 
-MOTION vs DAMAGE & SCRATCH DETECTION (REVISED FOR HIGH RECALL):
-1. HIGH RECALL PRIORITY: If a mark is clearly a scratch but only appears briefly (1–2 frames) due to lighting angles, YOU MUST REPORT IT. Do not ignore transient visibility.
-2. SHIMMERING EFFECT: Understand that scratches often "shimmer" or flicker as the camera moves. As long as the mark remains stationary on the vehicle panel (fixed position) and does not "walk" or drift with the light reflections, it is confirmed physical damage.
-3. SWIRL MARKS & FINE SCRATCHES: Do not exclude fine or microscopic scratches. Any visible surface-level scratch must be captured and categorized as MINOR.
-4. WHEN IN DOUBT, REPORT: If there is a 50/50 ambiguity between a reflection/dirt and a real scratch, default to REPORTING it as a MINOR scratch. Add "(low confidence)" to the description if necessary, but never omit it.
+If uncertain, do not report the mark unless it satisfies the scratch verification order with the same criteria every time. Low confidence does not lower the evidence threshold.
+
+• Use the same decision threshold for every candidate mark. Do not change the standard because the mark is faint, small, or briefly visible. A mark is either verified as a scratch or not verified; do not alternate between the two based on mood, angle, or single-frame visibility alone.
 
 VIDEO ARTIFACTS:
 • Assess ONLY the primary subject vehicle. Ignore background.
