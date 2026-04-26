@@ -12,12 +12,12 @@
  *    wait for it — HIGH is acceptable there. The image steps run inline,
  *    so keep them at LOW/MEDIUM for snappy UX.
  */
-import type { StepType } from "../genera  ted/prisma";
+import type { StepType } from "../generated/prisma";
 import type { AIAnalysisOptions } from "../interfaces/providers/ai.provider.interface";
 
 export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   UNIT_IDENTIFICATION: {
-    thinkingLevel: "LOW",
+    thinkingLevel: "MEDIUM",
     maxOutputTokens: 32000,
     temperature: 0.0,
   },
@@ -27,7 +27,7 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
     temperature: 0.0,
   },
   SPEEDOMETER: {
-    thinkingLevel: "LOW",
+    thinkingLevel: "MEDIUM",
     maxOutputTokens: 32000,
     temperature: 0.0,
   },
