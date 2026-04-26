@@ -12,29 +12,29 @@
  *    wait for it — HIGH is acceptable there. The image steps run inline,
  *    so keep them at LOW/MEDIUM for snappy UX.
  */
-import type { StepType } from "../generated/prisma";
+import type { StepType } from "../genera  ted/prisma";
 import type { AIAnalysisOptions } from "../interfaces/providers/ai.provider.interface";
 
 export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   UNIT_IDENTIFICATION: {
     thinkingLevel: "LOW",
     maxOutputTokens: 32000,
-    temperature: 1.0,
+    temperature: 0.0,
   },
   VIN_NUMBER: {
     thinkingLevel: "MEDIUM",
     maxOutputTokens: 32000,
-    temperature: 1.0,
+    temperature: 0.0,
   },
   SPEEDOMETER: {
     thinkingLevel: "LOW",
     maxOutputTokens: 32000,
-    temperature: 1.0,
+    temperature: 0.0,
   },
   BODY_INSPECTION: {
     thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
-    temperature: 1.0,
+    temperature: 0.0,
   },
 };
 
@@ -46,5 +46,5 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
 export const BODY_VERIFICATION_AI_CONFIG: AIAnalysisOptions = {
   thinkingLevel: "MEDIUM",
   maxOutputTokens: 32000,
-  temperature: 1.0,
+  temperature: 0.0,
 };

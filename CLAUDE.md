@@ -509,6 +509,156 @@ const rawResponse = await this.aiProvider.analyzeImage(
 - **When persisting the prompt** for audit (`promptUsed` in `AIAnalysis`), concatenate both parts as `[SYSTEM]\n${systemInstruction}\n\n[USER]\n${userPrompt}` so the full context is recoverable.
 - **The `systemInstruction` parameter is optional on the interface** for backward compatibility, but all current prompt builders return a `PromptPair` and all callers pass both parts.
 
+### Per-Step AI Tuning (`AIAnalysisOptions` + `ai-config.ts`)
+
+Pro-tier Gemini models default to a **low thinking budget** when called through the API. The web UI (`gemini.google.com`) runs the same models with a HIGH thinking budget by default, which is why an identical prompt produces noticeably more detailed analysis on the web than via API. To close that gap, every analysis call passes a per-step `AIAnalysisOptions` object that explicitly sets the thinking level, output token cap, and temperature.
+
+**Current prompt sizes (reference, measured against a Wuling Air EV vehicle context):**
+
+| Step | system chars | system ≈ tokens | user chars | total chars |
+|---|---|---|---|---|
+| UNIT_IDENTIFICATION | 6,483 | ~1,620 | 89 | 6,572 |
+| VIN_NUMBER | 4,198 | ~1,050 | 71 | 4,269 |
+| SPEEDOMETER | 10,164 | ~2,540 | 217 | 10,381 |
+| BODY_INSPECTION | 14,411 | ~3,600 | 136 | 14,547 |
+
+For context, Gemini's input limit on Pro-tier models is roughly **1,000,000 tokens**. The largest prompt above (BODY_INSPECTION, ~3,600 tokens) uses about **0.36%** of the input budget, so input truncation is never the bottleneck in practice — the model has plenty of room to read the full prompt plus the attached video/image. The actual quality dial is the **thinking budget** (output side), which is what `AIAnalysisOptions.thinkingLevel` controls.
+
+Re-measure any time the prompts change:
+
+```bash
+bun -e '
+import { buildStepPrompt } from "./src/utils/prompts";
+const types = ["UNIT_IDENTIFICATION", "VIN_NUMBER", "SPEEDOMETER", "BODY_INSPECTION"];
+for (const t of types) {
+  const { systemInstruction, userPrompt } = buildStepPrompt(t, {
+    make: "Wuling", model: "Air EV", color: "Sakura Pink", licensePlate: "B 1234 ABC",
+  });
+  const sys = systemInstruction.length, usr = userPrompt.length;
+  console.log(`${t}: system=${sys} chars (~${Math.round(sys/4)} tok), user=${usr} chars, total=${sys+usr}`);
+}
+'
+```
+
+**The interface:**
+
+```typescript
+// interfaces/providers/ai.provider.interface.ts
+export interface AIAnalysisOptions {
+  thinkingLevel?: "MINIMAL" | "LOW" | "MEDIUM" | "HIGH";
+  maxOutputTokens?: number;
+  temperature?: number;
+}
+
+export interface IAIProvider {
+  analyzeImage(
+    base64: string,
+    mimeType: string,
+    prompt: string,
+    systemInstruction?: string,
+    options?: AIAnalysisOptions,
+  ): Promise<string>;
+  analyzeVideo(
+    fileUri: string,
+    mimeType: string,
+    prompt: string,
+    systemInstruction?: string,
+    options?: AIAnalysisOptions,
+  ): Promise<string>;
+  uploadVideoFile(filePath: string, mimeType: string): Promise<string>;
+}
+```
+
+**The provider applies them conditionally:**
+
+```typescript
+// providers/gemini.provider.ts
+function buildModelConfig(systemInstruction?: string, options?: AIAnalysisOptions) {
+  const config: Record<string, unknown> = { responseMimeType: "application/json" };
+  if (options?.temperature !== undefined) config.temperature = options.temperature;
+  if (options?.maxOutputTokens !== undefined) config.maxOutputTokens = options.maxOutputTokens;
+  if (options?.thinkingLevel) {
+    config.thinkingConfig = { thinkingLevel: options.thinkingLevel };
+  }
+  if (systemInstruction) config.systemInstruction = systemInstruction;
+  return config;
+}
+```
+
+**The per-step config lives in one place** — `src/utils/ai-config.ts`. Edit this file to tune any step:
+
+```typescript
+// utils/ai-config.ts
+import type { StepType } from "../generated/prisma";
+import type { AIAnalysisOptions } from "../interfaces/providers/ai.provider.interface";
+
+export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
+  UNIT_IDENTIFICATION: { thinkingLevel: "LOW",    maxOutputTokens: 32000, temperature: 1.0 },
+  VIN_NUMBER:          { thinkingLevel: "MEDIUM", maxOutputTokens: 32000, temperature: 1.0 },
+  SPEEDOMETER:         { thinkingLevel: "LOW",    maxOutputTokens: 32000, temperature: 1.0 },
+  BODY_INSPECTION:     { thinkingLevel: "HIGH",   maxOutputTokens: 32000, temperature: 1.0 },
+};
+
+// The body-inspection pipeline runs a lighter verification pass first
+// (does the video match the claimed vehicle?). HIGH thinking is overkill
+// for that yes/no decision; MEDIUM is plenty.
+export const BODY_VERIFICATION_AI_CONFIG: AIAnalysisOptions = {
+  thinkingLevel: "MEDIUM",
+  maxOutputTokens: 32000,
+  temperature: 1.0,
+};
+```
+
+
+
+**Job handler threads the config through:**
+
+```typescript
+// jobs/step-analysis.job.ts
+import { BODY_VERIFICATION_AI_CONFIG, STEP_AI_CONFIG } from "../utils/ai-config";
+
+// Image steps
+rawResponse = await this.aiProvider.analyzeImage(
+  base64,
+  primaryMedia.mimeType,
+  userPrompt,
+  systemInstruction,
+  STEP_AI_CONFIG[stepType],
+);
+
+// Video steps (BODY_INSPECTION damage pass)
+rawResponse = await this.aiProvider.analyzeVideo(
+  fileUri,
+  primaryMedia.mimeType,
+  userPrompt,
+  systemInstruction,
+  STEP_AI_CONFIG[stepType],
+);
+
+// BODY_INSPECTION verification pass uses the lighter config
+const verificationRaw = await this.aiProvider.analyzeVideo(
+  fileUri,
+  primaryMedia.mimeType,
+  verificationPair.userPrompt,
+  verificationPair.systemInstruction,
+  BODY_VERIFICATION_AI_CONFIG,
+);
+```
+
+**Tradeoffs to remember when tuning:**
+
+- **Higher `thinkingLevel` = better quality, more latency, more cost.** Thinking tokens are billable at the same rate as input tokens. HIGH can roughly double per-request cost on a Pro-tier model.
+- **`BODY_INSPECTION` is acceptable at HIGH** because it runs as a background pgboss job — the driver never waits for it interactively. The latency hit (5-30s extra) is invisible to the user.
+- **Image steps run inline** during the inspection flow, so keep them at LOW/MEDIUM to maintain snappy UX. Bumping `UNIT_IDENTIFICATION` or `SPEEDOMETER` to HIGH adds noticeable wait time.
+- **`maxOutputTokens: 32000` is defensive**, not a typical operating point — it protects against silent response truncation when the model emits many damages at once. Without it, the model uses its built-in default which varies by model and can be as low as 8k.
+
+**Rules:**
+
+- **Never inline the config in a job handler or route.** All AI tuning lives in `ai-config.ts` so it's discoverable and reviewable in one place.
+- **Pass the config explicitly per call.** Don't try to make the provider step-aware — the provider stays domain-agnostic; the caller decides which config applies.
+- **Stub providers must accept the same options parameter** (no-op). This keeps tests passing without conditional logic.
+- **When adding a new step type to the `StepType` enum, you MUST add an entry to `STEP_AI_CONFIG`.** TypeScript's `Record<StepType, AIAnalysisOptions>` enforces this at compile time.
+
 ### Async Processing Pattern (pgboss + WebSocket)
 
 For operations like AI validation that are slow, use this async pattern:
