@@ -46,5 +46,5 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
 export const BODY_VERIFICATION_AI_CONFIG: AIAnalysisOptions = {
   thinkingLevel: "MEDIUM",
   maxOutputTokens: 32000,
-  temperature: 0.0,
+  temperature: 1.0,
 };
