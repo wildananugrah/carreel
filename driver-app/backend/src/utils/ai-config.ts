@@ -19,22 +19,22 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   UNIT_IDENTIFICATION: {
     thinkingLevel: "LOW",
     maxOutputTokens: 32000,
-    temperature: 0.0,
+    temperature: 1.0,
   },
   VIN_NUMBER: {
     thinkingLevel: "MEDIUM",
     maxOutputTokens: 32000,
-    temperature: 0.0,
+    temperature: 1.0,
   },
   SPEEDOMETER: {
     thinkingLevel: "LOW",
     maxOutputTokens: 32000,
-    temperature: 0.0,
+    temperature: 1.0,
   },
   BODY_INSPECTION: {
     thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
-    temperature: 0.0,
+    temperature: 1.0,
   },
 };
 
