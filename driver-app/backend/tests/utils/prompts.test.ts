@@ -62,7 +62,12 @@ describe("Prompt builders return PromptPair", () => {
 
   test("buildStepPrompt BODY_INSPECTION without vehicle has generic userPrompt", () => {
     const result = buildStepPrompt("BODY_INSPECTION");
-    expect(result.systemInstruction).toContain("SCREEN-CAPTURE DETECTION");
+    // Screen-capture detection moved to the verification pre-pass; the
+    // damage-detection prompt no longer carries that protocol.
+    expect(result.systemInstruction).not.toContain("SCREEN-CAPTURE DETECTION");
+    expect(result.systemInstruction).toContain(
+      "Automotive Exterior Damage Appraiser",
+    );
     expect(result.userPrompt).not.toContain("Toyota");
   });
 
@@ -73,6 +78,10 @@ describe("Prompt builders return PromptPair", () => {
     });
     expect(result.systemInstruction).toContain("Automotive Verification AI");
     expect(result.systemInstruction).toContain("VISUAL EVIDENCE HIERARCHY");
+    // Screen-capture detection now lives in the verification prompt and
+    // hard-gates damage detection.
+    expect(result.systemInstruction).toContain("SCREEN-CAPTURE DETECTION");
+    expect(result.systemInstruction).toContain("screenRecaptureDetected");
     expect(result.userPrompt).toContain("Toyota");
     expect(result.userPrompt).toContain("Corolla");
   });

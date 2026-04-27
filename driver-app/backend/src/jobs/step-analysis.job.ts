@@ -153,10 +153,17 @@ export class StepAnalysisJob {
               statusVerifikasi: verification.statusVerifikasi,
               analisisVerifikasi: verification.analisisVerifikasi,
               confidence: verification.confidence,
+              screenRecaptureDetected: verification.screenRecaptureDetected,
             });
 
-            // Mismatch → alert, save analysis, mark FAILED, return
-            if (verification.statusVerifikasi === "Mismatch") {
+            // HARD GATE — either failure short-circuits Pass 2.
+            // (a) Vehicle mismatch    → VEHICLE_MISMATCH alert
+            // (b) Screen recapture    → SCREEN_RECAPTURE alert
+            // Both can fire on the same response if the AI flags both.
+            const isMismatch = verification.statusVerifikasi === "Mismatch";
+            const isRecapture = verification.screenRecaptureDetected === true;
+
+            if (isMismatch || isRecapture) {
               const processingTimeMs = Date.now() - startTime;
 
               await this.aiAnalysisRepository.createAnalysis(JOB_SYSTEM_SCOPE, {
@@ -171,19 +178,26 @@ export class StepAnalysisJob {
                 status: "SUCCESS",
               });
 
-              await this.createAlert(
-                inspectionId,
-                "VEHICLE_MISMATCH",
-                `Video body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
-              );
+              if (isMismatch) {
+                await this.createAlert(
+                  inspectionId,
+                  "VEHICLE_MISMATCH",
+                  `Video body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
+                );
+              }
+              if (isRecapture) {
+                await this.createAlert(
+                  inspectionId,
+                  "SCREEN_RECAPTURE",
+                  "Screen recapture detected in Body Inspection video",
+                );
+              }
 
-              log.warn(
-                "Vehicle verification MISMATCH — skipping damage detection",
-                {
-                  stepType,
-                  statusVerifikasi: verification.statusVerifikasi,
-                },
-              );
+              log.warn("Body verification gated — skipping damage detection", {
+                stepType,
+                statusVerifikasi: verification.statusVerifikasi,
+                screenRecaptureDetected: verification.screenRecaptureDetected,
+              });
 
               await this.inspectionRepository.updateStepStatus(
                 JOB_SYSTEM_SCOPE,
@@ -194,7 +208,7 @@ export class StepAnalysisJob {
               return;
             }
 
-            // Match or Uncertain → proceed to Pass 2 (damage detection)
+            // Match or Uncertain (and not a recapture) → proceed to Pass 2 (damage detection)
             log.info(
               "Vehicle verification passed, proceeding to damage detection",
               {
@@ -288,7 +302,9 @@ export class StepAnalysisJob {
       log.info("AI structured result", {
         stepType,
         confidence: parsed.confidence,
-        screenRecaptureDetected: parsed.screenRecaptureDetected,
+        ...(stepType !== "BODY_INSPECTION" && {
+          screenRecaptureDetected: parsed.screenRecaptureDetected,
+        }),
         ...(stepType === "UNIT_IDENTIFICATION" && {
           licensePlate: parsed.licensePlate,
           make: parsed.make,
@@ -366,16 +382,19 @@ export class StepAnalysisJob {
         },
       );
 
-      // 6. Screen recapture detection alert (all step types)
-      if (parsed.screenRecaptureDetected) {
+      // 6. Screen-recapture alert for IMAGE step types (UNIT_IDENTIFICATION,
+      // VIN_NUMBER, SPEEDOMETER). BODY_INSPECTION's recapture detection
+      // happens in Pass 1 (verification) and hard-gates this entire branch
+      // — by the time we reach this code for BODY_INSPECTION, the video has
+      // already been verified as a real camera recording, so its damage-
+      // detection prompt no longer emits screenRecaptureDetected.
+      if (stepType !== "BODY_INSPECTION" && parsed.screenRecaptureDetected) {
         const stepLabel =
           stepType === "UNIT_IDENTIFICATION"
             ? "Unit Identification photo"
             : stepType === "VIN_NUMBER"
               ? "VIN Number photo"
-              : stepType === "SPEEDOMETER"
-                ? "Speedometer photo"
-                : "Body Inspection video";
+              : "Speedometer photo";
         await this.createAlert(
           inspectionId,
           "SCREEN_RECAPTURE",

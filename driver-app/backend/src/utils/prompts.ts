@@ -64,7 +64,6 @@ export interface BodyInspectionResult {
   visualAnalysis: string;
   overallCondition: "GOOD" | "FAIR" | "POOR";
   confidence: number;
-  screenRecaptureDetected: boolean;
   damages: DamageResult[];
 }
 
@@ -72,6 +71,11 @@ export interface BodyVerificationResult {
   analisisVerifikasi: string;
   statusVerifikasi: "Match" | "Mismatch" | "Uncertain";
   confidence: number;
+  /** Screen-recapture detection moved to Pass 1 so it runs even on
+   * Mismatch responses (where Pass 2 is skipped). Either this flag or
+   * `statusVerifikasi === "Mismatch"` hard-gates the damage-detection
+   * pass. */
+  screenRecaptureDetected: boolean;
 }
 
 /** Vehicle context passed to prompt builders when unit data is available */
@@ -549,7 +553,7 @@ Your job is to inspect the vehicle's exterior in the provided VIDEO and report a
 
 Do NOT dismiss marks as dirt, glare, or reflection without multi-frame confirmation. High-contrast marks (e.g., black scuffs on light paint, white scratches on dark paint) in typical impact zones MUST be reported unless you can confirm across multiple frames that it is not fixed to the surface.
 
-${SCREEN_CAPTURE_VIDEO}
+NOTE: Screen-recapture detection is performed in a separate pre-pass before this prompt runs. By the time you receive this video, it has already been verified as a real camera recording — do NOT spend tokens on screen-capture analysis.
 
 ═══════════════════════════════════════
 1. EXHAUSTIVE SCANNING
@@ -749,7 +753,6 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap in markdown code blocks.
   "visualAnalysis": "Analisis visual singkat...",
   "overallCondition": "GOOD",
   "confidence": 0.0,
-  "screenRecaptureDetected": false,
   "damages": [
     {
       "damageType": "goresan",
@@ -783,7 +786,13 @@ export function buildBodyVerificationPrompt(
   const model = vehicle?.model ?? "UNKNOWN";
 
   const systemInstruction = `You are a strict and highly precise Automotive Verification AI.
-Your primary task is to verify if the vehicle shown in the provided VIDEO physically matches the claimed TARGET VEHICLE.
+Your primary task is TWO gating checks on the provided VIDEO:
+  (1) IDENTITY MATCH — does the vehicle shown match the claimed TARGET VEHICLE?
+  (2) SCREEN-RECAPTURE DETECTION — was the video recorded from a screen/display rather than a real camera?
+
+Either check failing aborts the rest of the body-inspection pipeline (the expensive damage-detection pass is SKIPPED), so be thorough on both.
+
+${SCREEN_CAPTURE_VIDEO}
 
 ABSOLUTE RULES FOR VERIFICATION:
 
@@ -807,7 +816,8 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
 {
   "analisisVerifikasi": "Jelaskan bukti visual yang Anda temukan secara spesifik.",
   "statusVerifikasi": "Match",
-  "confidence": 0.0
+  "confidence": 0.0,
+  "screenRecaptureDetected": false
 }`;
 
   const userPrompt = `Verify if this vehicle matches the target.

@@ -39,12 +39,19 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
 };
 
 /**
- * The body-inspection pipeline runs a lighter verification pass first
- * (does the video match the claimed vehicle?). HIGH thinking is overkill
- * for that yes/no decision; MEDIUM is plenty.
+ * The body-inspection pipeline runs a verification pass first that does TWO
+ * gating checks in one Gemini call:
+ *   (a) Does the video match the claimed vehicle (statusVerifikasi)?
+ *   (b) Is the video a screen recapture (screenRecaptureDetected)?
+ * Either failure short-circuits the expensive HIGH-thinking damage-detection
+ * pass. HIGH thinking is justified here because (b) — screen-recapture
+ * detection — benefits from careful frame-by-frame inspection of subtle
+ * cues (focal flatness, refresh banding, bezels), which MEDIUM tends to
+ * underweight. A false negative on either gate is more expensive than the
+ * extra thinking tokens.
  */
 export const BODY_VERIFICATION_AI_CONFIG: AIAnalysisOptions = {
-  thinkingLevel: "MEDIUM",
+  thinkingLevel: "HIGH",
   maxOutputTokens: 32000,
   temperature: 0.0,
 };

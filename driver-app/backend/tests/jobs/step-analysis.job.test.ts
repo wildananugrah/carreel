@@ -810,7 +810,6 @@ describe("StepAnalysisJob", () => {
         visualAnalysis: "test",
         overallCondition: "FAIR",
         confidence: 0.9,
-        screenRecaptureDetected: false,
         damages: [
           {
             damageType: "goresan",
