@@ -174,6 +174,7 @@ describe("InspectionService", () => {
         inspections.delete(id);
       },
       findUnitByInspectionId: async () => null,
+      getProjectIdByInspectionId: async () => "project-1",
       updateUnitKm: async () => {},
       updateUnitVin: async () => {},
       updateSignatureKey: async () => {},
@@ -448,6 +449,7 @@ describe("InspectionService", () => {
       findStepById: async () => null,
       updateStepStatus: async () => ({}) as any,
       findUnitByInspectionId: async () => null,
+      getProjectIdByInspectionId: async () => "project-1",
       updateUnitKm: async () => {},
       updateUnitVin: async () => {},
       updateSignatureKey: async () => {},

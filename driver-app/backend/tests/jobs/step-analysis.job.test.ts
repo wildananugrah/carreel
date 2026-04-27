@@ -214,6 +214,7 @@ describe("StepAnalysisJob", () => {
       },
       delete: async () => {},
       findUnitByInspectionId: async () => mockUnit,
+      getProjectIdByInspectionId: async () => "project-1",
       updateUnitKm: async () => {},
       updateUnitVin: async () => {},
       updateSignatureKey: async () => {},

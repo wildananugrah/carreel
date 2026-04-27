@@ -17,7 +17,11 @@ import {
   BODY_VERIFICATION_AI_CONFIG,
   STEP_AI_CONFIG,
 } from "../utils/ai-config";
-import { applyBodyDamageSideGuard } from "../utils/body-damage-guard";
+import { clusterAndVoteDamages } from "../utils/body-damage-cluster";
+import {
+  applyBodyDamageSideGuard,
+  type BodyDamage,
+} from "../utils/body-damage-guard";
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
@@ -47,6 +51,29 @@ const WALKING_PROTOCOL_DURATION_SEC = Number(
   process.env.VIDEO_MIN_DURATION ?? 30,
 );
 
+// ---- Body-inspection ensemble configuration -----------------------------
+// Pass 2 (damage detection) runs N times. The N runs are then UNIONed and
+// deduplicated: every damage seen by ANY run is kept, but two damages that
+// share the same panel family + damageType + close timestamps collapse into
+// a single entry (the canonical, picking the un-side-guarded variant when
+// available). With temperature=1.0 each individual run is noisy, so a UNION
+// across N runs trades cost for recall — you catch damages a single noisy
+// run would miss, while exact duplicates don't get reported twice.
+//
+// Set BODY_INSPECTION_ENSEMBLE_RUNS=1 to skip the ensemble entirely.
+const BODY_INSPECTION_ENSEMBLE_RUNS = Math.max(
+  1,
+  Number(process.env.BODY_INSPECTION_ENSEMBLE_RUNS ?? 1),
+);
+const BODY_INSPECTION_ENSEMBLE_TIMESTAMP_TOLERANCE_SEC = Number(
+  process.env.BODY_INSPECTION_ENSEMBLE_TIMESTAMP_TOLERANCE_SEC ?? 3,
+);
+
+interface EnsembleResult {
+  rawResponse: string;
+  parsed: Record<string, unknown> & { damages: BodyDamage[] };
+}
+
 export class StepAnalysisJob {
   constructor(
     private aiProvider: IAIProvider,
@@ -63,6 +90,8 @@ export class StepAnalysisJob {
     const { inspectionId, stepId, stepType, driverId, tripType } = data;
     const log = this.logger.child({
       jobName: "step-analysis",
+      userId: driverId,
+      inspectionId,
       stepId,
       stepType,
     });
@@ -112,6 +141,13 @@ export class StepAnalysisJob {
       // 3. Analyze with Gemini
       let rawResponse: string;
       let fileUri: string | undefined;
+      // For BODY_INSPECTION ensemble runs, the parsed consensus is set inside
+      // the helper. We keep it here so the JSON-parse step below can use it
+      // directly instead of re-parsing the audit `rawResponse` (which has
+      // damages nested under `.consensus.damages`, not `.damages`).
+      let bodyInspectionParsed:
+        | (Record<string, unknown> & { damages: BodyDamage[] })
+        | undefined;
 
       if (isVideo) {
         // Download → temp file → upload to Gemini Files API
@@ -183,6 +219,7 @@ export class StepAnalysisJob {
                   inspectionId,
                   "VEHICLE_MISMATCH",
                   `Video body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
+                  log,
                 );
               }
               if (isRecapture) {
@@ -190,6 +227,7 @@ export class StepAnalysisJob {
                   inspectionId,
                   "SCREEN_RECAPTURE",
                   "Screen recapture detected in Body Inspection video",
+                  log,
                 );
               }
 
@@ -204,7 +242,7 @@ export class StepAnalysisJob {
                 stepId,
                 "FAILED",
               );
-              await this.checkInspectionCompletion(inspectionId, driverId);
+              await this.checkInspectionCompletion(inspectionId, driverId, log);
               return;
             }
 
@@ -217,14 +255,35 @@ export class StepAnalysisJob {
             );
           }
 
-          // Run the main analysis prompt (damage detection for BODY, or the only prompt for other video steps)
-          rawResponse = await this.aiProvider.analyzeVideo(
-            fileUri,
-            primaryMedia.mimeType,
-            userPrompt,
-            systemInstruction,
-            STEP_AI_CONFIG[stepType],
-          );
+          // Run the main analysis prompt. For BODY_INSPECTION we use an
+          // optional N-run ensemble (driven by env vars) that majority-votes
+          // damages across runs — closes the noise gap introduced by
+          // temperature=1.0. For all other video steps it's a single call.
+          if (stepType === "BODY_INSPECTION") {
+            const ensemble = await this.runBodyInspectionEnsemble(
+              fileUri,
+              primaryMedia.mimeType,
+              userPrompt,
+              systemInstruction,
+              log,
+            );
+            rawResponse = ensemble.rawResponse;
+            // Stash the deduped consensus parsed object so we can use it for
+            // structuredData instead of re-parsing the audit JSON below.
+            // (The audit JSON's top level has no `damages` field — damages
+            // live under `consensus.damages` — so re-parsing rawResponse
+            // would produce structuredData.damages = undefined, which is
+            // why the frontend rendered "Tidak ada kerusakan terdeteksi".)
+            bodyInspectionParsed = ensemble.parsed;
+          } else {
+            rawResponse = await this.aiProvider.analyzeVideo(
+              fileUri,
+              primaryMedia.mimeType,
+              userPrompt,
+              systemInstruction,
+              STEP_AI_CONFIG[stepType],
+            );
+          }
         } finally {
           await unlink(tempPath).catch(() => {});
         }
@@ -244,60 +303,25 @@ export class StepAnalysisJob {
         );
       }
 
-      // 4. Parse JSON response (strip markdown fences if present)
-      const cleaned = rawResponse
-        .replace(/```(?:json)?\s*/g, "")
-        .replace(/```\s*/g, "")
-        .trim();
-      const parsed = JSON.parse(cleaned);
+      // 4. Parse JSON response (strip markdown fences if present).
+      // BODY_INSPECTION's `rawResponse` is an audit JSON wrapping per-run
+      // results + the consensus, NOT the consensus itself — re-parsing it
+      // would lose the top-level `damages` field. Use the consensus parsed
+      // object the ensemble helper already produced.
+      const parsed =
+        stepType === "BODY_INSPECTION" && bodyInspectionParsed
+          ? bodyInspectionParsed
+          : JSON.parse(
+              rawResponse
+                .replace(/```(?:json)?\s*/g, "")
+                .replace(/```\s*/g, "")
+                .trim(),
+            );
       const processingTimeMs = Date.now() - startTime;
 
-      // 4a. Enforce single-anchor rule on body inspection damages. The prompt
-      // forbids Kiri/Kanan without a rear-plate-based orientationReason; the
-      // guard downgrades any violations the model emits anyway. Also applies
-      // a walking-protocol cross-check on Stage 2 (Kanan) and Stage 5 (Kiri)
-      // timestamps where the physical side is determined by the driver's
-      // walk, not the AI's derivation.
-      if (
-        stepType === "BODY_INSPECTION" &&
-        Array.isArray(parsed.damages) &&
-        parsed.damages.length > 0
-      ) {
-        const { appliedCount } = applyBodyDamageSideGuard(parsed.damages, {
-          walkingProtocolDurationSec: WALKING_PROTOCOL_DURATION_SEC,
-        });
-        if (appliedCount > 0) {
-          const adjusted = parsed.damages
-            .filter((d: { sideGuardApplied?: boolean }) => d.sideGuardApplied)
-            .map(
-              (d: {
-                originalLocation?: string;
-                location: string;
-                sideGuardReason?: string;
-                videoTimestamp?: number;
-                anchor?: { type?: string } | null;
-              }) => ({
-                from: d.originalLocation,
-                to: d.location,
-                reason: d.sideGuardReason,
-                action:
-                  d.sideGuardReason === "coordinate-override" ||
-                  d.sideGuardReason === "description-override"
-                    ? "flip"
-                    : d.sideGuardReason === "description-promotion"
-                      ? "promote"
-                      : "downgrade",
-                videoTimestamp: d.videoTimestamp,
-                anchorType: d.anchor?.type ?? null,
-              }),
-            );
-          log.warn("Side-guard adjusted damage locations", {
-            appliedCount,
-            total: parsed.damages.length,
-            adjusted,
-          });
-        }
-      }
+      // 4a. Side guard for BODY_INSPECTION damages is now applied per run
+      // inside `runBodyInspectionEnsemble` (so the cluster-and-vote step
+      // sees post-guard variants). No additional guard call needed here.
 
       log.info("AI structured result", {
         stepType,
@@ -399,6 +423,7 @@ export class StepAnalysisJob {
           inspectionId,
           "SCREEN_RECAPTURE",
           `Screen recapture detected in ${stepLabel}`,
+          log,
         );
         log.warn("Screen recapture detected", { stepType });
       }
@@ -411,10 +436,23 @@ export class StepAnalysisJob {
           inspectionId,
           result.damages ?? [],
           "Unit Identification",
+          log,
         );
-        // Create or find the unit and link it to the inspection
+        // Create or find the unit and link it to the inspection.
+        // Pass the parent inspection's projectId so the unit inherits it —
+        // JOB_SYSTEM_SCOPE has empty projects[] and would otherwise throw.
         if (result.licensePlate) {
           try {
+            const inspectionProjectId =
+              await this.inspectionRepository.getProjectIdByInspectionId(
+                JOB_SYSTEM_SCOPE,
+                inspectionId,
+              );
+            if (!inspectionProjectId) {
+              throw new Error(
+                `Inspection ${inspectionId} not found when resolving projectId for unit link`,
+              );
+            }
             const unit = await this.inspectionRepository.findOrCreateUnit(
               JOB_SYSTEM_SCOPE,
               {
@@ -425,6 +463,7 @@ export class StepAnalysisJob {
                 vin: result.vin,
                 type: result.bodyType,
               },
+              inspectionProjectId,
             );
             await this.inspectionRepository.linkUnitToInspection(
               JOB_SYSTEM_SCOPE,
@@ -473,6 +512,7 @@ export class StepAnalysisJob {
             inspectionId,
             "VEHICLE_MISMATCH",
             `VIN mismatch: ${result.validationResult.reasoning}`,
+            log,
           );
         }
       } else if (stepType === "SPEEDOMETER") {
@@ -481,12 +521,14 @@ export class StepAnalysisJob {
           inspectionId,
           result,
           unit,
+          log,
         );
         await this.generateSpeedometerAlerts(
           inspectionId,
           result,
           telemetry,
           tripType,
+          log,
         );
 
         // Vehicle identity mismatch alert
@@ -495,6 +537,7 @@ export class StepAnalysisJob {
             inspectionId,
             "VEHICLE_MISMATCH",
             "Dashboard does not match the expected vehicle make/model",
+            log,
           );
           log.warn("Vehicle mismatch detected", { stepType });
         }
@@ -505,6 +548,7 @@ export class StepAnalysisJob {
           inspectionId,
           result.damages ?? [],
           "Body Inspection",
+          log,
         );
       }
 
@@ -568,17 +612,153 @@ export class StepAnalysisJob {
         inspectionId,
         "AI_FAILURE",
         `AI analysis failed for ${stepType}: ${errorMessage}`,
+        log,
       );
     }
 
     // 8. Check if ALL steps are terminal → transition inspection
-    await this.checkInspectionCompletion(inspectionId, driverId);
+    await this.checkInspectionCompletion(inspectionId, driverId, log);
+  }
+
+  /**
+   * Pass 2 (damage detection) for BODY_INSPECTION, optionally repeated N
+   * times and majority-voted. Side-guards each run before clustering so the
+   * vote operates on post-guard variants (e.g., a coord-override that
+   * flipped Kiri→Kanan in run 2 still clusters with un-flipped Kanan in
+   * run 1, because they share a panel family + timestamp).
+   *
+   * Returns:
+   *  - `parsed`: the consensus structured data (cameraPath / visualAnalysis
+   *    / overallCondition come from the FIRST run; `damages` is the voted
+   *    consensus). Damages are already side-guarded.
+   *  - `rawResponse`: for N=1, the literal Gemini response. For N>1, an
+   *    audit JSON with all runs + the consensus, so reviewers can see what
+   *    the AI saw across attempts.
+   */
+  private async runBodyInspectionEnsemble(
+    fileUri: string,
+    mimeType: string,
+    userPrompt: string,
+    systemInstruction: string,
+    log: ILogger,
+  ): Promise<EnsembleResult> {
+    const N = BODY_INSPECTION_ENSEMBLE_RUNS;
+    // UNION + dedup: every damage from every run survives the cluster step;
+    // the cluster only collapses duplicates. minVotes=1 means "1 vote is
+    // enough" — equivalent to a UNION across runs with same-physical-damage
+    // dedup applied.
+    const minVotes = 1;
+
+    interface PerRun {
+      raw: string;
+      parsed: Record<string, unknown> & { damages: BodyDamage[] };
+      sideGuardAdjusted: number;
+      elapsedMs: number;
+    }
+
+    const runs: PerRun[] = [];
+    for (let i = 1; i <= N; i++) {
+      const start = Date.now();
+      const raw = await this.aiProvider.analyzeVideo(
+        fileUri,
+        mimeType,
+        userPrompt,
+        systemInstruction,
+        STEP_AI_CONFIG.BODY_INSPECTION,
+      );
+      const cleaned = raw
+        .replace(/```(?:json)?\s*/g, "")
+        .replace(/```\s*/g, "")
+        .trim();
+      const parsed = JSON.parse(cleaned) as Record<string, unknown> & {
+        damages?: BodyDamage[];
+      };
+      const damages = Array.isArray(parsed.damages) ? parsed.damages : [];
+      parsed.damages = damages;
+
+      // Side-guard per run BEFORE clustering — so cluster sees post-guard
+      // variants. Same logic as the old single-call post-parse step.
+      const { appliedCount } = applyBodyDamageSideGuard(damages, {
+        walkingProtocolDurationSec: WALKING_PROTOCOL_DURATION_SEC,
+      });
+
+      runs.push({
+        raw,
+        parsed: parsed as Record<string, unknown> & { damages: BodyDamage[] },
+        sideGuardAdjusted: appliedCount,
+        elapsedMs: Date.now() - start,
+      });
+
+      log.info(
+        N === 1
+          ? "BODY_INSPECTION single-run complete"
+          : `BODY_INSPECTION ensemble run ${i}/${N} complete`,
+        {
+          damages: damages.length,
+          sideGuardAdjusted: appliedCount,
+          elapsedMs: Date.now() - start,
+        },
+      );
+    }
+
+    // Single-run path: skip the cluster step entirely.
+    if (N === 1) {
+      return { rawResponse: runs[0].raw, parsed: runs[0].parsed };
+    }
+
+    // Multi-run path: cluster + UNION (minVotes=1 keeps every cluster).
+    const { consensusDamages, debug } = clusterAndVoteDamages(
+      runs.map((r) => r.parsed.damages),
+      {
+        timestampToleranceSec: BODY_INSPECTION_ENSEMBLE_TIMESTAMP_TOLERANCE_SEC,
+        minVotes,
+      },
+    );
+
+    log.info("BODY_INSPECTION ensemble union", {
+      ensembleRuns: N,
+      perRunDamageCounts: runs.map((r) => r.parsed.damages.length),
+      perRunGuardAdjustments: runs.map((r) => r.sideGuardAdjusted),
+      dedupedDamageCount: consensusDamages.length,
+      clusters: debug.map((c) => ({
+        family: c.family,
+        damageType: c.damageType,
+        timestamp: c.timestamp,
+        votes: `${c.votes}/${c.totalRuns}`,
+        survives: c.survives,
+        variants: c.variants.length,
+      })),
+    });
+
+    // Consensus parsed object: take metadata from the first run, swap in
+    // deduped damages.
+    const dedupedParsed = {
+      ...runs[0].parsed,
+      damages: consensusDamages,
+    };
+
+    // Audit-friendly raw response — reviewers can see every run.
+    const rawAudit = JSON.stringify(
+      {
+        ensembleRuns: N,
+        mode: "union-with-dedup",
+        timestampToleranceSec: BODY_INSPECTION_ENSEMBLE_TIMESTAMP_TOLERANCE_SEC,
+        runs: runs.map((r) => r.parsed),
+        clusters: debug,
+        deduped: dedupedParsed,
+      },
+      null,
+      2,
+    );
+
+    return { rawResponse: rawAudit, parsed: dedupedParsed };
   }
 
   private async validateAndSaveTelemetry(
     inspectionId: string,
     result: SpeedometerResult,
     unit: { id: string; lastKnownKm: number | null } | null,
+    log: ILogger,
   ) {
     const odometerKm = result.odometerKm ?? undefined;
     let kmReasonable: boolean | undefined;
@@ -598,7 +778,7 @@ export class StepAnalysisJob {
         await this.inspectionRepository
           .updateUnitKm(JOB_SYSTEM_SCOPE, unit.id, odometerKm)
           .catch((e) => {
-            this.logger.warn("Failed to update unit KM", {
+            log.warn("Failed to update unit KM", {
               error: String(e),
             });
           });
@@ -631,6 +811,7 @@ export class StepAnalysisJob {
       isNewDamage: boolean;
     }>,
     source: string,
+    log: ILogger,
   ): Promise<void> {
     const newDamages = damages.filter((d) => d.isNewDamage);
     if (newDamages.length > 0) {
@@ -638,6 +819,7 @@ export class StepAnalysisJob {
         inspectionId,
         "NEW_DAMAGE_DETECTED",
         `${source}: ${newDamages.length} new damage(s) detected`,
+        log,
       );
     }
 
@@ -647,6 +829,7 @@ export class StepAnalysisJob {
         inspectionId,
         "HIGH_SEVERITY_DAMAGE",
         `${source}: ${majorDamages.length} major damage(s) found`,
+        log,
       );
     }
   }
@@ -659,13 +842,15 @@ export class StepAnalysisJob {
       kmDelta?: number;
       fuelLevelPct?: number;
     },
-    tripType?: string,
+    tripType: string | undefined,
+    log: ILogger,
   ): Promise<void> {
     if (telemetry.kmReasonable === false) {
       await this.createAlert(
         inspectionId,
         "KM_ANOMALY",
         "Odometer reading is unreasonable compared to previous record",
+        log,
       );
     }
 
@@ -679,6 +864,7 @@ export class StepAnalysisJob {
         inspectionId,
         "KM_ANOMALY",
         `Odometer delta (${telemetry.kmDelta} KM) exceeds tolerance of ${KM_TOLERANCE} KM`,
+        log,
       );
     }
 
@@ -688,6 +874,7 @@ export class StepAnalysisJob {
         inspectionId,
         "LOW_FUEL",
         `Low fuel level: ${result.fuelLevelPct}% (threshold: ${fuelThreshold}%)`,
+        log,
       );
     }
   }
@@ -703,11 +890,12 @@ export class StepAnalysisJob {
       | "SCREEN_RECAPTURE"
       | "VEHICLE_MISMATCH",
     message: string,
+    log: ILogger,
   ): Promise<void> {
     await this.alertRepository
       .create(JOB_SYSTEM_SCOPE, { inspectionId, alertType, message })
       .catch((e) => {
-        this.logger.warn("Failed to create alert", {
+        log.warn("Failed to create alert", {
           alertType,
           error: String(e),
         });
@@ -801,6 +989,7 @@ export class StepAnalysisJob {
   private async checkInspectionCompletion(
     inspectionId: string,
     driverId: string,
+    log: ILogger,
   ): Promise<void> {
     const inspection = await this.inspectionRepository.findById(
       JOB_SYSTEM_SCOPE,
@@ -838,7 +1027,7 @@ export class StepAnalysisJob {
       inspectionId,
       "AI_COMPLETE",
     );
-    this.logger.info("All steps terminal, inspection marked AI_COMPLETE", {
+    log.info("All steps terminal, inspection marked AI_COMPLETE", {
       inspectionId,
     });
 
@@ -849,7 +1038,7 @@ export class StepAnalysisJob {
         message: "Your vehicle inspection analysis is complete.",
       })
       .catch((e) => {
-        this.logger.warn("Failed to send completion notification", {
+        log.warn("Failed to send completion notification", {
           inspectionId,
           error: e instanceof Error ? e.message : String(e),
         });

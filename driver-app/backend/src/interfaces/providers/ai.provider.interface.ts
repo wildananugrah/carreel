@@ -17,6 +17,20 @@ export interface AIAnalysisOptions {
   maxOutputTokens?: number;
   /** Sampling temperature. 0.0 for deterministic OCR / structured output. */
   temperature?: number;
+  /**
+   * Nucleus sampling — only consider tokens whose cumulative probability
+   * reaches `topP`. Range 0–1. Lower = narrower / more focused. Gemini's
+   * SDK default is ~0.95; gemini.google.com web UI also uses ~0.95.
+   * Leave undefined to inherit the SDK default.
+   */
+  topP?: number;
+  /**
+   * Top-K sampling — only consider the K most-likely next tokens. Lower =
+   * more focused / less surprising. Gemini's SDK default is ~64; web UI
+   * uses 40. Useful to make output more "obvious" / less creative on
+   * structured tasks. Leave undefined to inherit the SDK default.
+   */
+  topK?: number;
 }
 
 export interface IAIProvider {

@@ -186,8 +186,6 @@ JOIN ai_analyses a ON a."stepId" = s.id
 WHERE i.id IN ('12a69895-1b58-4f0b-86c8-35145430a05b', '2e3016ad-0166-42ec-8c50-82c228a34d20')
 ORDER BY a."createdAt";
 
-
-
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_name = 'ai_analyses'
@@ -211,6 +209,81 @@ SELECT query, calls, total_exec_time, mean_exec_time, rows
 FROM pg_stat_statements
 ORDER BY total_exec_time DESC
 LIMIT 20
+
+-- car body damage detection validation
+
+SELECT
+  i.id            AS inspection_id,
+  i."createdAt"   AS created_at,
+  i."unitId",
+  u."licensePlate",
+  u.make,
+  u.model,
+  u.color,
+  u.vin
+FROM inspections i
+LEFT JOIN units u ON u.id = i."unitId"
+WHERE i."driverId" = 'e51ed029-b9a3-4fce-88e6-c1997ff1d60a'
+ORDER BY i."createdAt" DESC
+LIMIT 5;
+
+SELECT
+  s."inspectionId",
+  s."stepType",
+  s.status,
+  jsonb_array_length(COALESCE(a."structuredData"->'damages','[]'::jsonb)) AS damage_count,
+  a."structuredData"->>'overallCondition' AS overall_condition,
+  a."createdAt"
+FROM inspection_steps s
+LEFT JOIN ai_analyses a ON a."stepId" = s.id
+JOIN inspections i ON i.id = s."inspectionId"
+WHERE s."stepType" = 'BODY_INSPECTION'
+  AND i."driverId" = 'e51ed029-b9a3-4fce-88e6-c1997ff1d60a'
+ORDER BY a."createdAt" DESC
+LIMIT 5;
+
+WITH latest AS (
+  SELECT a.id, a."rawResponse"::jsonb AS raw, a."createdAt"
+  FROM ai_analyses a
+  JOIN inspection_steps s ON s.id = a."stepId"
+  JOIN inspections i ON i.id = s."inspectionId"
+  WHERE s."stepType" = 'BODY_INSPECTION'
+    AND i."driverId" = 'e51ed029-b9a3-4fce-88e6-c1997ff1d60a'
+  ORDER BY a."createdAt" DESC
+  LIMIT 1
+)
+SELECT
+  l."createdAt",
+  l.raw->>'ensembleRuns' AS ensemble_runs,
+  l.raw->>'minVotes'      AS min_votes,
+  jsonb_array_length(COALESCE(l.raw->'consensus'->'damages','[]'::jsonb)) AS consensus_damages,
+  (
+    SELECT jsonb_agg(jsonb_array_length(COALESCE(r->'parsed'->'damages','[]'::jsonb)))
+    FROM jsonb_array_elements(l.raw->'runs') r
+  ) AS per_run_damage_counts
+FROM latest l;
+
+SELECT
+  i.id           AS inspection_id,
+  i."createdAt"  AS inspection_created_utc,
+  i.status       AS inspection_status,
+  s.id           AS step_id,
+  s."stepType",
+  s.status       AS step_status,
+  s."updatedAt"  AS step_updated_utc
+FROM inspections i
+LEFT JOIN inspection_steps s
+       ON s."inspectionId" = i.id AND s."stepType" = 'BODY_INSPECTION'
+WHERE i."driverId" = 'e51ed029-b9a3-4fce-88e6-c1997ff1d60a'
+ORDER BY i."createdAt" DESC
+LIMIT 5
+
+SELECT id, name, state, "created_on", "started_on", "completed_on",
+       output->>'message' AS error_msg
+FROM pgboss.job
+WHERE name = 'step-analysis'
+ORDER BY "created_on" DESC
+LIMIT 5
 
 ```
 

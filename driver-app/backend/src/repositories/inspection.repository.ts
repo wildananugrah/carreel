@@ -400,6 +400,18 @@ export class InspectionRepository implements IInspectionRepository {
     return inspection?.unit ?? null;
   }
 
+  async getProjectIdByInspectionId(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<string | null> {
+    const scopeFilter = buildScopeFilter(scope, { includeDriverFilter: true });
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId, ...(scopeFilter as object) },
+      select: { projectId: true },
+    });
+    return inspection?.projectId ?? null;
+  }
+
   async updateUnitKm(
     scope: UserScope,
     unitId: string,

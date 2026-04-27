@@ -143,6 +143,10 @@ export interface IInspectionRepository {
     },
     projectId?: string,
   ): Promise<Unit>;
+  getProjectIdByInspectionId(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<string | null>;
   linkUnitToInspection(
     scope: UserScope,
     inspectionId: string,

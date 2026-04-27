@@ -11,6 +11,17 @@
  *  - BODY_INSPECTION runs as a background pgboss job, so the user does not
  *    wait for it — HIGH is acceptable there. The image steps run inline,
  *    so keep them at LOW/MEDIUM for snappy UX.
+ *  - temperature: 0.0 = deterministic, locks onto first interpretation.
+ *    Use for OCR-style steps (VIN, plate, odometer) where you want the
+ *    same input to produce the same output. For tasks that require
+ *    weighing alternatives over ambiguous video (BODY_INSPECTION's
+ *    Kiri/Kanan derivation), temperature ≥ 0.7 lets the model explore
+ *    multiple interpretations before committing — closer to web-UI
+ *    behavior. Tradeoff: less reproducible across runs.
+ *  - topP / topK: leave undefined to inherit Gemini's SDK defaults
+ *    (~0.95 / ~64). Set explicitly to match web-UI parity (web UI uses
+ *    topP=0.95, topK=40) or to narrow sampling for more "obvious"
+ *    output on structured tasks.
  */
 import type { StepType } from "../generated/prisma";
 import type { AIAnalysisOptions } from "../interfaces/providers/ai.provider.interface";
@@ -20,6 +31,7 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
     thinkingLevel: "MEDIUM",
     maxOutputTokens: 32000,
     temperature: 0.0,
+    // topP / topK left at SDK defaults — fine for OCR-style extraction.
   },
   VIN_NUMBER: {
     thinkingLevel: "MEDIUM",
@@ -34,7 +46,9 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   BODY_INSPECTION: {
     thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
-    temperature: 0.0,
+    temperature: 1.0,
+    topP: 0.95,
+    topK: 40,
   },
 };
 
@@ -53,5 +67,7 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
 export const BODY_VERIFICATION_AI_CONFIG: AIAnalysisOptions = {
   thinkingLevel: "HIGH",
   maxOutputTokens: 32000,
-  temperature: 0.7,
+  temperature: 1.0,
+  topP: 0.95,
+  topK: 40,
 };

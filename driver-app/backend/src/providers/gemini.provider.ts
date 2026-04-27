@@ -19,6 +19,12 @@ function buildModelConfig(
   if (options?.temperature !== undefined) {
     config.temperature = options.temperature;
   }
+  if (options?.topP !== undefined) {
+    config.topP = options.topP;
+  }
+  if (options?.topK !== undefined) {
+    config.topK = options.topK;
+  }
   if (options?.maxOutputTokens !== undefined) {
     config.maxOutputTokens = options.maxOutputTokens;
   }

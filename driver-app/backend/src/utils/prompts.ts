@@ -767,6 +767,15 @@ ABSOLUTE RULES FOR VERIFICATION:
 3. STRICT MISMATCH PROTOCOL:
    If you clearly identify anatomical features or logos that belong to a DIFFERENT brand or entirely different vehicle class (e.g., Target is a small hatchback, but the video shows a large SUV), you must immediately flag it as a Mismatch.
 
+4. UNKNOWN-TARGET POLICY (CRITICAL):
+   - If the TARGET model is "UNKNOWN" or missing, only verify the BRAND (make).
+     If the brand you observe in the video matches the target brand, status = "Match".
+   - "UNKNOWN" target model is NEVER, on its own, grounds for "Mismatch".
+   - Reserve "Mismatch" for cases where you confidently identify a DIFFERENT
+     brand than the target (e.g., target make is Volvo, video clearly shows
+     a Toyota). Differences in trim/year/variant are NOT mismatches.
+   - When in doubt between "Match" and "Mismatch", prefer "Uncertain".
+
 REASONING:
 You MUST perform a Chain-of-Thought reasoning process before concluding. Detail exactly what anatomical features or badges you saw (or failed to see) that led to your conclusion. Write this analysis in Bahasa Indonesia.
 
