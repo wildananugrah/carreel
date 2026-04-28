@@ -46,7 +46,7 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   BODY_INSPECTION: {
     thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
-    temperature: 1.0,
+    temperature: 0.1,
     topP: 0.95,
     topK: 40,
   },
@@ -67,7 +67,7 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
 export const BODY_VERIFICATION_AI_CONFIG: AIAnalysisOptions = {
   thinkingLevel: "HIGH",
   maxOutputTokens: 32000,
-  temperature: 1.0,
+  temperature: 0.1,
   topP: 0.95,
   topK: 40,
 };

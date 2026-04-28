@@ -87,6 +87,7 @@ export class UploadService implements IUploadService {
     await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
 
     this.logger.info("Media file uploaded", {
+      userId: scope.userId,
       mediaFileId: mediaFile.id,
       inspectionId,
       stepId,
@@ -108,6 +109,7 @@ export class UploadService implements IUploadService {
         tripType: inspection.tripType,
       });
       this.logger.info("Enqueued immediate AI analysis on upload", {
+        userId: scope.userId,
         inspectionId,
         stepId,
         stepType: step.stepType,

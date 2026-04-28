@@ -629,38 +629,6 @@ The backend computes vehicle side from coordinates (damage center-x vs anchor ce
 
 If the view is a 'Rear Corner', 'Front Corner', or 'Side Profile'... YOU MUST SET 'anchor': null. CRITICAL INSTRUCTION FOR LOCATION: Setting 'anchor': null does NOT mean the location is uncertain. You MUST STILL output the exact Left or Right panel in the 'location' field (e.g., 'Bumper Depan Kanan', NOT 'Bumper Depan Tengah'). Do NOT use a 'Tengah' (Center) location just because the anchor is null. Only use 'Tengah' if the damage is physically in the exact middle of the vehicle.
 
-CORNER / PROFILE SIDE DECISION TREE (DETERMINISTIC — APPLY EXACTLY):
-For ANY damage seen during a corner / profile / diagonal shot where you have set anchor=null, derive the side using this tree, in order. Stop at the first rule that fires.
-
-  1. CONTINUITY-FIRST RULE (this is the strongest signal):
-     Compute fraction = videoTimestamp / totalVideoDuration.
-       • fraction < 0.50  → side = Kanan
-         (Standard recording sequence is Depan → Samping Kanan → Belakang →
-          Samping Kiri. The first half of the video is the Kanan-side
-          traversal: Depan, then Samping Kanan, then arriving at Belakang.)
-       • fraction ≥ 0.50  → side = Kiri
-         (The second half is the Kiri-side traversal: leaving Belakang,
-          then Samping Kiri, then a brief return to Depan.)
-
-  2. FUEL-CAP / MIRROR ANATOMICAL CHECK (tie-breaker if continuity is ambiguous):
-     If you can clearly see a fuel cap, RHD steering wheel through a window,
-     or a definitively-identifiable side mirror, use that anatomical anchor
-     to confirm Kiri vs Kanan and overrule rule 1 if it disagrees.
-
-  3. NEVER DEFAULT TO TENGAH on a corner / profile shot. "Tengah" is reserved
-     for damage physically located within ~10% of the vehicle's anatomical
-     center line (e.g., dead-center of the rear bumper between the taillights,
-     or dead-center of the kap mesin between the headlights). If the damage
-     is on a corner panel of any kind, it is Kiri or Kanan — never Tengah.
-
-  4. NEVER DEFAULT TO "Eksterior Tidak Jelas" just because the side is
-     ambiguous. That location is reserved for cases where you cannot tell
-     which PANEL the damage is on at all (e.g., extreme blur). If you can
-     identify the panel (Bumper Depan, Pintu Belakang, etc.) but are unsure
-     about Kiri/Kanan, apply rule 1 above and commit.
-
-This tree is deterministic — given the same video timestamp on the same panel, you should always produce the same side. That is the point: it eliminates a major source of run-to-run variance in side classification.
-
 EXAMPLE 1 (Rear Corner, Kanan):
 "Rear Corner. Kamera berada di fase Samping Kanan menuju Belakang di frame 0:19. Walaupun taillight kanan terlihat, posisi goresan di layar 2D akan memicu kesalahan komputasi. Berdasarkan kontinuitas, sisi = Kanan kendaraan."
 damageBoundingBox: [600, 700, 800, 900]
@@ -702,27 +670,9 @@ GORESAN (SCRATCH) DETECTION RULES:
 • Visible in at least 1 frame with reasonable clarity and does not move.
 • Exclude general microscopic swirl marks.
 
-BORDERLINE / UNCERTAIN MARKS — REPORT THEM (RECALL-FIRST):
-The backend runs this prompt N times and applies a UNION + dedup pass across
-all runs (same panel + same damageType + close timestamps collapse into one
-entry). This means a false positive in a single run is CHEAP — the dedup
-will absorb noise. A MISSED scratch, however, is EXPENSIVE — once skipped,
-it does not come back. Therefore:
+If uncertain, do not report the mark unless it satisfies the scratch verification order with the same criteria every time. Low confidence does not lower the evidence threshold.
 
-• If you are 50/50 on whether a faint linear mark is a real scratch,
-  REPORT IT with the "confidence" field lowered to 0.5–0.7 to signal uncertainty.
-• "Borderline" includes: marks at the visibility limit of the camera, marks
-  partially occluded by glare/shadow that you can barely confirm fixed to
-  the surface, and marks visible in only 1–2 frames before the camera moves
-  on. Do not silently drop these — emit them with low confidence.
-• A high-confidence (≥0.85) damage requires multi-frame surface anchoring
-  per the verification order above. A borderline (0.5–0.7) damage requires
-  ONLY: linear/scuff shape AND apparent surface attachment in at least one
-  clear frame.
-• Apply ONE of these two thresholds consistently. Do not skip a faint scratch
-  just because you are unsure — lower confidence and report. The only marks
-  you should drop entirely are those that are clearly reflections, shadows,
-  dirt, or moving artifacts (verified via cross-frame motion check).
+• Use the same decision threshold for every candidate mark. Do not change the standard because the mark is faint, small, or briefly visible. A mark is either verified as a scratch or not verified; do not alternate between the two based on mood, angle, or single-frame visibility alone.
 
 VIDEO ARTIFACTS:
 • Assess ONLY the primary subject vehicle. Ignore background.
