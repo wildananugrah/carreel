@@ -597,16 +597,6 @@ MANDATORY SEQUENCE:
 5. Mandatory Output Structure (Chain of Thought):
    To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields to explicitly state your Camera View Orientation, Continuity timeline, and Visual Reasoning BEFORE listing any damage.
 
-6. CONTINUITY ANCHOR (DYNAMIC TIMELINE — CRITICAL):
-   • Drivers always start from Depan, but they may walk towards the Kanan side first OR towards the Kiri side first. Do NOT assume one direction by default.
-   • You MUST determine the driver's actual recording direction by observing the FIRST side they traverse after the front view.
-   • The sequence will either be:
-     - PATH A (Kanan-first): Depan → Samping Kanan → Belakang → Samping Kiri (a final brief return to Depan is acceptable).
-     - PATH B (Kiri-first): Depan → Samping Kiri → Belakang → Samping Kanan (a final brief return to Depan is acceptable).
-   • You MUST explicitly state which Path you detected at the START of the "cameraPath" field — write either "PATH A" or "PATH B" before describing the phases. Example: "PATH A. Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri."
-   • If 2D screen coordinates conflict with the detected sequence on corner / diagonal shots, the SEQUENCE wins.
-   • The detected Path anchors HARD CONSTRAINT (e) and drives the CORNER DECISION TREE below.
-
 PER-DAMAGE VERIFICATION (MANDATORY):
 For EVERY damage you report, you MUST write "orientationReason" BEFORE "location".
 "orientationReason" MUST state ALL of:
@@ -633,13 +623,9 @@ CORNER / PROFILE SIDE DECISION TREE (DETERMINISTIC — APPLY EXACTLY):
 For ANY damage seen during a corner / profile / diagonal shot where you have set anchor=null, derive the side using this tree, in order.
 
 1. CONTINUITY-FIRST RULE (this is the strongest signal):
-   Compute fraction = videoTimestamp / totalVideoDuration. Apply the logic that matches the Path you detected in the CONTINUITY ANCHOR step above:
-   • If you detected PATH A (Kanan-first):
-     - fraction < 0.50 → side = Kanan
-     - fraction ≥ 0.50 → side = Kiri
-   • If you detected PATH B (Kiri-first):
-     - fraction < 0.50 → side = Kiri
-     - fraction ≥ 0.50 → side = Kanan
+   Compute fraction = videoTimestamp / totalVideoDuration.
+   • fraction < 0.50  → side = Kanan
+   • fraction ≥ 0.50  → side = Kiri
 
 2. FUEL-CAP / MIRROR ANATOMICAL CHECK:
    If you can clearly see a fuel cap, RHD steering wheel through a window, or a definitively-identifiable side mirror, use that anatomical anchor to confirm Kiri vs Kanan and overrule rule 1 if it disagrees.
@@ -715,14 +701,14 @@ Generate "orientationReason" BEFORE "location" in each damage object.
 ## Response Format
 Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks. All description fields MUST be in Bahasa Indonesia. Use the following valid JSON structure:
 {
-  "cameraPath": "PATH A. Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri.",
+  "cameraPath": "Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri.",
   "visualAnalysis": "Analisis visual singkat...",
   "overallCondition": "GOOD",
   "confidence": 0.0,
   "damages": [
     {
       "damageType": "goresan",
-      "orientationReason": "Rear Corner. Path terdeteksi: PATH A. Kamera berada di fase Samping Kanan di frame 0:19 (fraction < 0.50) sebelum plat nomor belakang terlihat. Untuk menghindari distorsi 2D yang mengubah koordinat, anchor diabaikan. Berdasarkan kontinuitas timeline = Kanan kendaraan.",
+      "orientationReason": "Rear Corner. Kamera berada di fase Samping Kanan di frame 0:19 sebelum plat nomor belakang terlihat. Untuk menghindari distorsi 2D yang mengubah koordinat, anchor diabaikan. Berdasarkan kontinuitas timeline = Kanan kendaraan.",
       "damageBoundingBox": [600, 700, 800, 900],
       "anchor": null,
       "location": "Bumper / Panel Belakang Kanan",
