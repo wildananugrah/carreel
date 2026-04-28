@@ -75,6 +75,7 @@ export function MediaLightbox({ src, type, alt, startTime, onClose }: MediaLight
           alt={alt ?? ""}
           className="max-h-[90vh] max-w-[95vw] object-contain"
           onClick={(e) => e.stopPropagation()}
+          decoding="async"
         />
       ) : (
         <video

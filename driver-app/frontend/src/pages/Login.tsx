@@ -29,7 +29,7 @@ export function Login() {
   return (
     <div className="min-h-screen flex flex-col justify-center px-6 bg-[#0f0f0f]">
       <div className="mb-8 text-center">
-        <img src="/car-reel-logo.png" alt="Carreel" className="h-16 mx-auto" />
+        <img src="/car-reel-logo.png" alt="Carreel" className="h-16 mx-auto" loading="eager" decoding="async" />
         <p className="text-neutral-500 mt-2">Vehicle Inspection Platform</p>
       </div>
 

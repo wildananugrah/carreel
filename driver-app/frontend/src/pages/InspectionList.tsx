@@ -114,7 +114,7 @@ export function InspectionList() {
         ) : (
           <>
             <div className="w-10" />
-            <img src="/car-reel-logo.png" alt="Car Reel" className="h-8 w-auto" />
+            <img src="/car-reel-logo.png" alt="Car Reel" className="h-8 w-auto" loading="eager" decoding="async" />
             <button
               type="button"
               className="w-10 h-10 flex items-center justify-center text-[#F5C842]"

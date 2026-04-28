@@ -344,6 +344,7 @@ export function StepCard({
                 alt={step.mediaFiles[0].fileName}
                 className="w-full h-full object-cover cursor-pointer"
                 loading="lazy"
+                decoding="async"
                 onClick={() =>
                   setLightbox({ src: `/api/media/${step.mediaFiles[0].id}/url`, type: "image" })
                 }

@@ -604,6 +604,8 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
               src={`/api/media/${speedoId}/url`}
               alt="Speedometer"
               className="w-full h-full rounded-lg object-cover cursor-pointer"
+              loading="lazy"
+              decoding="async"
               onClick={() => setLightbox({ src: `/api/media/${speedoId}/url`, type: "image" })}
             />
           ) : (
@@ -657,6 +659,8 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
               src={`/api/media/key/${inspection.signatureKey}`}
               alt="Signature"
               className="w-full h-full rounded-lg object-contain cursor-pointer"
+              loading="lazy"
+              decoding="async"
               onClick={() =>
                 setLightbox({ src: `/api/media/key/${inspection.signatureKey}`, type: "image" })
               }

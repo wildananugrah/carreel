@@ -110,6 +110,8 @@ export function InspectionCard({ inspection }: InspectionCardProps) {
             src={`/api/media/${thumbnailId}/url`}
             alt={unitName}
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <svg

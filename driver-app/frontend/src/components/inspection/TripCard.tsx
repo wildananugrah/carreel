@@ -100,6 +100,8 @@ export function TripCard({ trip }: TripCardProps) {
             src={`/api/media/${trip.thumbnailMediaId}/url`}
             alt={trip.unitName}
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <svg

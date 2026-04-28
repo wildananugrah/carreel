@@ -13,5 +13,10 @@ bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carre
   --make Volvo --model "740 GLE" --color "Hitam" \
   --license-plate "B 1691 SES"
 
+bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body5.mp4 \
+  --runs 2 \
+  --make Wuling --model "Air EV" --color "Pink" \
+  --license-plate "B 1261 SNO"
+
 # Mirror production exactly (Pass 1 + Pass 2 + side guard)
 bun run scripts/compare-body-damages.ts /path/to/video.mp4 --with-verification
