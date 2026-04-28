@@ -2,6 +2,36 @@ import winston from "winston";
 import LokiTransport from "winston-loki";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
 
+// User-Agent strings are noisy ("Mozilla/5.0 (Macintosh; Intel Mac OS X
+// 10.15; rv:150.0) Gecko/20100101 Firefox/150.0"). Compact them to a
+// single Browser/Version token so they fit inline on the log line.
+function compactUserAgent(ua: string): string {
+  if (!ua || ua === "unknown") return ua;
+  const patterns: Array<[RegExp, string]> = [
+    [/Edg\/([\d.]+)/, "Edge"],
+    [/OPR\/([\d.]+)/, "Opera"],
+    [/Firefox\/([\d.]+)/, "Firefox"],
+    [/Chrome\/([\d.]+)/, "Chrome"],
+    [/Version\/([\d.]+).*Safari\//, "Safari"],
+  ];
+  for (const [pattern, name] of patterns) {
+    const match = ua.match(pattern);
+    if (match) return `${name}/${match[1]}`;
+  }
+  return ua.slice(0, 40);
+}
+
+// Referer URLs include origin which is redundant when we already know
+// which app emitted the request. Keep just the path + querystring.
+function compactReferer(referer: string): string {
+  try {
+    const url = new URL(referer);
+    return url.pathname + url.search;
+  } catch {
+    return referer.slice(0, 60);
+  }
+}
+
 const simpleLineFormat = winston.format.printf(
   ({ timestamp, level, message, ...meta }) => {
     const txn = meta.transactionId ? ` [txn:${meta.transactionId}]` : "";
@@ -17,12 +47,21 @@ const simpleLineFormat = winston.format.printf(
     const httpPart = method || uri ? ` ${method} ${uri} ${status}${time}` : "";
     const messagePart = !httpPart && message ? ` ${message}` : "";
 
-    const mainLine =
-      `${timestamp} [${level.toUpperCase()}]${txn}${trace}${user}${ip}${httpPart}${messagePart}`.trim();
+    // Inline UA + referer as compact bracket fields on the main line.
+    const ua = meta.userAgent
+      ? ` [ua:${compactUserAgent(meta.userAgent as string)}]`
+      : "";
+    const ref = meta.referer
+      ? ` [ref:${compactReferer(meta.referer as string)}]`
+      : "";
 
+    const mainLine =
+      `${timestamp} [${level.toUpperCase()}]${txn}${trace}${user}${ip}${httpPart}${messagePart}${ua}${ref}`.trim();
+
+    // Extras line is reserved for fields too large to inline. UA and
+    // referer used to live here but moved to the main line above so every
+    // log entry has a uniform "${timestamp} [LEVEL] [...]"-prefixed shape.
     const extras: Record<string, unknown> = {};
-    if (meta.userAgent) extras.userAgent = meta.userAgent;
-    if (meta.referer) extras.referer = meta.referer;
     if (meta.requestBody) extras.requestBody = meta.requestBody;
     if (meta.responseBody) extras.responseBody = meta.responseBody;
     if (meta.error) extras.error = meta.error;

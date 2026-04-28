@@ -106,6 +106,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
     });
 
     this.logger.info("Chunked upload initiated", {
+      userId: scope.userId,
       sessionId: session.id,
       inspectionId: dto.inspectionId,
       stepId: dto.stepId,
@@ -181,6 +182,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
     const uploadedChunks = session.parts.length + 1;
 
     this.logger.info("Chunk uploaded", {
+      userId: scope.userId,
       sessionId,
       partNumber,
       uploadedChunks,
@@ -270,6 +272,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
     );
 
     this.logger.info("Chunked upload completed", {
+      userId: scope.userId,
       sessionId,
       mediaFileId: mediaFile.id,
       inspectionId: session.inspectionId,
@@ -321,7 +324,10 @@ export class ChunkedUploadService implements IChunkedUploadService {
       "CANCELLED",
     );
 
-    this.logger.info("Chunked upload cancelled", { sessionId });
+    this.logger.info("Chunked upload cancelled", {
+      userId: scope.userId,
+      sessionId,
+    });
   }
 
   async getStatus(

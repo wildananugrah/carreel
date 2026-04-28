@@ -58,6 +58,7 @@ export class InspectionService implements IInspectionService {
       data,
     );
     this.logger.info("Inspection created with steps", {
+      userId: scope.userId,
       inspectionId: inspection.id,
       driverId,
       tripType: data.tripType,
@@ -114,6 +115,7 @@ export class InspectionService implements IInspectionService {
     });
 
     this.logger.info("Post-trip inspection created", {
+      userId: scope.userId,
       postTripId: postTrip.id,
       preTripId,
       driverId,
@@ -196,7 +198,11 @@ export class InspectionService implements IInspectionService {
       );
     }
 
-    this.logger.info("Inspection updated", { inspectionId: id, driverId });
+    this.logger.info("Inspection updated", {
+      userId: scope.userId,
+      inspectionId: id,
+      driverId,
+    });
     return updated;
   }
 
@@ -287,6 +293,7 @@ export class InspectionService implements IInspectionService {
         "AI_COMPLETE",
       );
       this.logger.info("Inspection submitted (AI disabled, skipped analysis)", {
+        userId: scope.userId,
         inspectionId: id,
         driverId,
       });
@@ -307,7 +314,7 @@ export class InspectionService implements IInspectionService {
       );
       this.logger.info(
         "Inspection submitted — all steps already analyzed, skipping to AI_COMPLETE",
-        { inspectionId: id, driverId },
+        { userId: scope.userId, inspectionId: id, driverId },
       );
       return submitted;
     }
@@ -318,6 +325,7 @@ export class InspectionService implements IInspectionService {
       "PENDING_AI",
     );
     this.logger.info("Inspection submitted for AI processing", {
+      userId: scope.userId,
       inspectionId: id,
       driverId,
     });
@@ -334,6 +342,7 @@ export class InspectionService implements IInspectionService {
         });
       }
       this.logger.info("Enqueued step analysis jobs", {
+        userId: scope.userId,
         inspectionId: id,
         jobCount: uploadedSteps.length,
       });
@@ -386,6 +395,7 @@ export class InspectionService implements IInspectionService {
     }
 
     this.logger.info("Enqueued early analysis jobs", {
+      userId: scope.userId,
       inspectionId: id,
       jobCount: enqueuedSteps.length,
       stepTypes: enqueuedSteps,
@@ -407,7 +417,11 @@ export class InspectionService implements IInspectionService {
     }
 
     await this.inspectionRepository.delete(scope, id);
-    this.logger.info("Inspection deleted", { inspectionId: id, driverId });
+    this.logger.info("Inspection deleted", {
+      userId: scope.userId,
+      inspectionId: id,
+      driverId,
+    });
   }
 
   async updateStepStatus(

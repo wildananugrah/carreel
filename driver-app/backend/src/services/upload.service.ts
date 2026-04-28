@@ -209,6 +209,7 @@ export class UploadService implements IUploadService {
       .delete(media.minioBucket, media.minioKey)
       .catch((e) => {
         this.logger.warn("Failed to delete from storage", {
+          userId: scope.userId,
           error: String(e),
           mediaId,
         });
@@ -220,6 +221,7 @@ export class UploadService implements IUploadService {
         .deleteByStepId(scope, stepId)
         .catch((e) => {
           this.logger.warn("Failed to delete AI analysis", {
+            userId: scope.userId,
             error: String(e),
             stepId,
           });
@@ -242,7 +244,12 @@ export class UploadService implements IUploadService {
       );
     }
 
-    this.logger.info("Media file deleted", { mediaId, inspectionId, stepId });
+    this.logger.info("Media file deleted", {
+      userId: scope.userId,
+      mediaId,
+      inspectionId,
+      stepId,
+    });
   }
 
   async uploadSignature(
@@ -274,7 +281,12 @@ export class UploadService implements IUploadService {
       signerName,
     );
 
-    this.logger.info("Signature uploaded", { inspectionId, key, signerName });
+    this.logger.info("Signature uploaded", {
+      userId: scope.userId,
+      inspectionId,
+      key,
+      signerName,
+    });
 
     return { signatureKey: key };
   }
