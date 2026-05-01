@@ -67,4 +67,14 @@ export interface IDamageEditingService {
     inspectionId: string,
     damageId: string,
   ): Promise<void>;
+
+  /**
+   * Driver-side list — returns non-deleted damages with verification
+   * status PASSED or NOT_REQUIRED. The planner-app uses a separate
+   * read path that includes deleted + FAILED rows for fraud audit.
+   */
+  listForDriver(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<DamageMarker[]>;
 }

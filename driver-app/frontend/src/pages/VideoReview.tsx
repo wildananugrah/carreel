@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { AddDamageFlow } from "../components/inspection/AddDamageFlow";
+import { EditDamageModal } from "../components/inspection/EditDamageModal";
 import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
 import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
 import { TopBar } from "../components/layout/TopBar";
@@ -8,6 +10,7 @@ import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
 import { useUploadSources } from "../hooks/useUploadSources";
 import { api } from "../lib/api";
+import { type DamageMarker, damageApi } from "../lib/damage-api";
 import type { InspectionDetail } from "../lib/types";
 
 const DAMAGE_SEEK_ENABLED = import.meta.env.VITE_DAMAGE_SEEK_ENABLED === "true";
@@ -52,12 +55,32 @@ interface AIDetectedInfo {
 }
 
 interface AIFlag {
+  /** When present, the flag is backed by a real DamageMarker row and
+   * supports edit/delete actions. AI-only flags (the legacy fallback
+   * from aiAnalysis.structuredData) leave this undefined. */
+  damageId?: string;
   area: string;
   location: string;
   severity: "MINOR" | "MODERATE" | "MAJOR";
   description: string;
   confidence: number;
   videoTimestamp?: number;
+  source?: "AI" | "DRIVER_ADDED";
+  editedAt?: string | null;
+}
+
+function damageMarkerToFlag(d: DamageMarker): AIFlag {
+  return {
+    damageId: d.id,
+    area: d.damageType,
+    location: d.location ?? "",
+    severity: d.severity,
+    description: d.description,
+    confidence: 1,
+    videoTimestamp: d.videoTimestamp ?? undefined,
+    source: d.source,
+    editedAt: d.editedAt,
+  };
 }
 
 function extractUnitInfo(
@@ -317,6 +340,54 @@ export function VideoReview() {
     (s) => s.stepType === "VIN_NUMBER" && s.status !== "PENDING" && s.status !== "SKIPPED",
   );
   const aiFlags = inspection ? extractAIFlags(inspection) : [];
+  // Phase 5: damages from the dedicated /damages endpoint (driver-side
+  // view: non-deleted, PASSED + NOT_REQUIRED). Falls back to aiFlags
+  // (legacy, derived from aiAnalysis.structuredData) if the fetch hasn't
+  // completed yet — keeps the page rendering during the brief window.
+  const [damages, setDamages] = useState<DamageMarker[]>([]);
+  const [damagesLoaded, setDamagesLoaded] = useState(false);
+  const [editingDamage, setEditingDamage] = useState<DamageMarker | null>(null);
+  const [showAddDamage, setShowAddDamage] = useState(false);
+  const [deletingDamageId, setDeletingDamageId] = useState<string | null>(null);
+
+  const refreshDamages = useCallback(async () => {
+    if (!id) return;
+    try {
+      const result = await damageApi.list(id);
+      setDamages(result.damages);
+      setDamagesLoaded(true);
+    } catch {
+      // Non-critical — wizard still functions; damages list shows empty.
+      setDamagesLoaded(true);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    refreshDamages();
+  }, [refreshDamages]);
+
+  // Unified list rendered by the damage section. Prefer the API-fetched
+  // damages once loaded so edit/delete actions have a real damageId; fall
+  // back to aiFlags during the brief load window so the page doesn't
+  // flash an empty state.
+  const displayFlags: AIFlag[] = damagesLoaded ? damages.map(damageMarkerToFlag) : aiFlags;
+
+  const handleDeleteDamage = useCallback(
+    async (damageId: string) => {
+      if (!id) return;
+      if (!window.confirm("Hapus kerusakan ini?")) return;
+      setDeletingDamageId(damageId);
+      try {
+        await damageApi.remove(id, damageId);
+        setDamages((prev) => prev.filter((d) => d.id !== damageId));
+      } catch (e) {
+        window.alert(e instanceof Error ? e.message : "Gagal menghapus kerusakan");
+      } finally {
+        setDeletingDamageId(null);
+      }
+    },
+    [id],
+  );
   const isPostTrip = inspection?.tripType === "POST_TRIP";
 
   // Damage similarity comparison from backend
@@ -1015,9 +1086,9 @@ export function VideoReview() {
                       </div>
                     </div>
                   </div>
-                ) : aiFlags.length > 0 ? (
+                ) : displayFlags.length > 0 ? (
                   <div className="divide-y divide-[#2a2a2a]">
-                    {aiFlags.map((flag, idx) => {
+                    {displayFlags.map((flag, idx) => {
                       const postVideoMediaId = bodyStep.mediaFiles[0]?.id;
                       const canSeek =
                         DAMAGE_SEEK_ENABLED &&
@@ -1026,7 +1097,7 @@ export function VideoReview() {
                         flag.videoTimestamp > 0;
                       return (
                         <div
-                          key={`${flag.area}-${flag.location}-${idx}`}
+                          key={flag.damageId ?? `legacy-${flag.area}-${flag.location}-${idx}`}
                           className="flex items-start gap-3 px-4 py-3"
                         >
                           <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
@@ -1039,7 +1110,7 @@ export function VideoReview() {
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
+                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                               <p className="text-sm font-bold text-white">
                                 {damageLabel(flag.area)}
                               </p>
@@ -1058,6 +1129,16 @@ export function VideoReview() {
                                     ? "Sedang"
                                     : "Ringan"}
                               </span>
+                              {flag.source === "DRIVER_ADDED" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">
+                                  Manual
+                                </span>
+                              )}
+                              {flag.editedAt && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-500/20 text-neutral-400">
+                                  Edited
+                                </span>
+                              )}
                             </div>
                             {flag.location && (
                               <p className="text-[10px] text-neutral-400 mb-0.5">{flag.location}</p>
@@ -1083,6 +1164,30 @@ export function VideoReview() {
                               {"\u25B6"} {formatVideoTimestamp(flag.videoTimestamp as number)}
                             </button>
                           )}
+                          {flag.damageId && inspection?.status === "DRAFT" && (
+                            <div className="flex gap-1 shrink-0 self-center ml-2">
+                              <button
+                                type="button"
+                                aria-label="Edit kerusakan"
+                                onClick={() => {
+                                  const target = damages.find((x) => x.id === flag.damageId);
+                                  if (target) setEditingDamage(target);
+                                }}
+                                className="w-7 h-7 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-neutral-400 hover:bg-[#222222]"
+                              >
+                                {"E"}
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="Hapus kerusakan"
+                                disabled={deletingDamageId === flag.damageId}
+                                onClick={() => flag.damageId && handleDeleteDamage(flag.damageId)}
+                                className="w-7 h-7 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-red-400 hover:bg-red-500/10 disabled:opacity-40 text-base font-bold"
+                              >
+                                {"-"}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -1096,6 +1201,17 @@ export function VideoReview() {
                       </p>
                     </div>
                   </div>
+                )}
+
+                {bodyStep.status === "COMPLETED" && inspection?.status === "DRAFT" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddDamage(true)}
+                    className="w-full px-4 py-3 border-t border-dashed border-[#2a2a2a] text-sm font-bold text-yellow-400 hover:bg-[#1a1a1a] transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="text-base">+</span>
+                    Tambah Kerusakan Baru
+                  </button>
                 )}
               </div>
             </div>
@@ -1288,6 +1404,29 @@ export function VideoReview() {
           type="video"
           startTime={seekLightbox.startTime}
           onClose={() => setSeekLightbox(null)}
+        />
+      )}
+
+      {/* Damage edit modal */}
+      {editingDamage && id && (
+        <EditDamageModal
+          inspectionId={id}
+          damage={editingDamage}
+          onClose={() => setEditingDamage(null)}
+          onSaved={(updated) => {
+            setDamages((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+          }}
+        />
+      )}
+
+      {/* Add new damage flow */}
+      {showAddDamage && id && (
+        <AddDamageFlow
+          inspectionId={id}
+          onClose={() => setShowAddDamage(false)}
+          onAdded={(damage) => {
+            setDamages((prev) => [...prev, damage]);
+          }}
         />
       )}
 

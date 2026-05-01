@@ -25,6 +25,7 @@ export interface CreateDamageMarkerDTO {
   damageType: string;
   severity: DamageSeverity;
   description: string;
+  location?: string | null;
   videoTimestamp?: number;
   boundingBox?: unknown;
   isNewDamage: boolean;

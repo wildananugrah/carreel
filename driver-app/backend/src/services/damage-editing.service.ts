@@ -248,6 +248,33 @@ export class DamageEditingService implements IDamageEditingService {
     });
   }
 
+  async listForDriver(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<DamageMarker[]> {
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
+    if (!inspection) throw notFound("Inspection not found");
+    if (!hasPlatformBypass(scope) && inspection.driverId !== scope.userId) {
+      throw notFound("Inspection not found");
+    }
+
+    const all = await this.damageMarkerRepository.findByInspectionId(
+      scope,
+      inspectionId,
+      { excludeDeleted: true },
+    );
+    // Only damages that passed verification (or that didn't need it —
+    // i.e., AI-detected damages that bypassed Phase 3 verification).
+    return all.filter(
+      (d) =>
+        d.verificationStatus === "PASSED" ||
+        d.verificationStatus === "NOT_REQUIRED",
+    );
+  }
+
   /** Snapshot helper — captures the planner-relevant subset of a damage
    * row for inclusion in audit-log before/after JSON. */
   private snapshot(d: DamageMarker): Record<string, unknown> {

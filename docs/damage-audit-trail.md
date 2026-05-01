@@ -21,7 +21,7 @@ Branch: `feat/damage-audit-trail`. Driver-editable AI-detected damages with anti
 - [x] Phase 2 — backend service + repositories
 - [x] Phase 3 — AI verification prompt + result type
 - [x] Phase 4 — backend routes
-- [ ] Phase 5 — driver frontend
+- [x] Phase 5 — driver frontend
 - [ ] Phase 6 — planner frontend
 - [ ] Phase 7 — tests
 
@@ -211,6 +211,61 @@ Soft delete. Returns `204 No Content`. Sets `deletedAt`, `deletedById` on the ro
 - `bunx tsc --noEmit` — clean
 - `bun run lint` — clean (5 pre-existing test-file warnings, unchanged)
 - `bun test` — 189 pass / 2 pre-existing failures unchanged
+
+---
+
+## Phase 5 — driver frontend ✅
+
+### Backend additions
+
+- New `GET /api/inspections/:id/damages` endpoint (driver-side: non-deleted, PASSED + NOT_REQUIRED). Implemented as `DamageEditingService.listForDriver`.
+- `damage_markers.location` is now populated by the body-inspection AI job (`saveDamageMarkers` was previously dropping the `location` field from the AI response). The schema column was added in Phase 1; this connects the AI write path to it.
+
+### Frontend additions
+
+| File | Purpose |
+|---|---|
+| `lib/damage-api.ts` | API client for the four damage endpoints. Special-cases 422 verification-failure responses as a normal outcome instead of throwing. |
+| `lib/damage-locations.ts` | The 21-value `DAMAGE_LOCATIONS` enum + Indonesian severity labels (Ringan/Sedang/Berat) |
+| `components/inspection/DamageFormFields.tsx` | Severity pills + searchable location dropdown + description textarea. Shared between EditDamageModal and AddDamageFlow. |
+| `components/inspection/EditDamageModal.tsx` | Bottom-sheet modal for editing severity / location / description on an existing damage |
+| `components/inspection/AddDamageFlow.tsx` | Multi-step flow: choose source → camera/file → form → verifying spinner → success or verification-failed |
+| `components/inspection/PhotoCaptureOverlay.tsx` | Reusable rear-camera photo capture using `getUserMedia` (separate from StepCard's inline camera so the damage flow doesn't depend on private internals) |
+
+### Frontend updates
+
+- `pages/VideoReview.tsx`:
+  - Fetches damages from `damageApi.list(inspectionId)` after mount; falls back to legacy `aiFlags` during the brief load window.
+  - Each damage card now renders edit (✏) and delete (−) buttons when the inspection is DRAFT and the damage has a real `damageId` (i.e., backed by a DamageMarker row, not the legacy AI-only fallback).
+  - Added "Manual" and "Edited" badges so the driver can see which damages are theirs and which were edited.
+  - Added the "Tambah Kerusakan Baru" button at the bottom of the damage list (only when the inspection is still DRAFT).
+  - Mounts `EditDamageModal` and `AddDamageFlow` at the page root.
+
+### Add-new-damage UX
+
+Driver flow:
+
+1. Tap "Tambah Kerusakan Baru" → bottom sheet opens with a Buka Kamera / Pilih dari Galeri / Batal choice (gated by `VITE_UPLOAD_SOURCE` via `useUploadSources`).
+2. Camera or file picker → captures the photo, returns to the bottom sheet.
+3. Form: severity pills (Ringan / Sedang / Berat), searchable location dropdown over 21 enum values, description textarea. Photo preview at the top; "Ambil ulang foto" link to retake.
+4. Tap "Verifikasi & Simpan" → spinner ("AI sedang memverifikasi foto…") for ~5–15s while the POST awaits Gemini.
+5. On 201 (PASSED): bottom sheet closes, the new damage is prepended to the list with a "Manual" badge.
+6. On 422 (FAILED_*): bottom sheet shows a red error card with the AI's reason ("Foto terdeteksi sebagai tangkapan layar" / "Foto tidak cocok dengan kendaraan inspeksi ini"). Two buttons: Tutup or Coba Lagi (which resets the flow back to the choose step).
+
+### Edit-damage UX
+
+1. Tap pencil button on any damage card → bottom sheet opens with the form pre-filled from the damage's current values.
+2. Update severity / location / description. Save button is disabled until at least one field has changed and description is non-empty.
+3. Tap Simpan → PATCH request, success closes the sheet and updates the in-place damage card.
+
+### Delete-damage UX
+
+1. Tap minus button on any damage card → browser confirm dialog ("Hapus kerusakan ini?"). Yes → DELETE request → row disappears from driver view. Server keeps the row with `deletedAt` for the planner audit trail.
+
+### Validation
+
+- Backend: `bunx tsc --noEmit` clean, `bun run lint` clean (5 pre-existing test warnings), `bun test` 189 pass / 2 pre-existing failures unchanged.
+- Frontend: `bunx tsc --noEmit` clean. `bun run lint` shows 2 pre-existing errors (`PhotoCapture.tsx:544` non-null assertion, `VideoReview.tsx:833` array-index key on the pre-trip damages map) — both unrelated to Phase 5 work.
 
 ---
 

@@ -908,6 +908,7 @@ export class StepAnalysisJob {
       damageType: string;
       severity: string;
       description: string;
+      location?: string;
       isNewDamage: boolean;
       videoTimestamp?: number;
       boundingBox?: unknown;
@@ -920,6 +921,7 @@ export class StepAnalysisJob {
       damageType: d.damageType,
       severity: d.severity as "MINOR" | "MODERATE" | "MAJOR",
       description: d.description,
+      location: d.location ?? null,
       isNewDamage: d.isNewDamage,
       videoTimestamp: d.videoTimestamp,
       boundingBox: d.boundingBox,

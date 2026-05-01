@@ -19,6 +19,19 @@ export function createDamageRoutes(
 
   app.use("*", authMiddleware);
 
+  // GET /api/inspections/:inspectionId/damages — driver-side list
+  // (excludes soft-deleted; only PASSED + NOT_REQUIRED verification status)
+  app.get("/:inspectionId/damages", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const inspectionId = c.req.param("inspectionId");
+    const damages = await damageEditingService.listForDriver(
+      scope,
+      inspectionId,
+    );
+    return c.json({ damages });
+  });
+
   // POST /api/inspections/:inspectionId/damages
   // Multipart form: photo (File) + metadata (JSON string).
   // Inline blocking: returns 201 on PASSED, 422 on FAILED_*.
