@@ -12,6 +12,7 @@ import { StepAnalysisJob } from "./jobs/step-analysis.job";
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
+import { DamagePhotoVerificationStubProvider } from "./providers/damage-photo-verification.stub.provider";
 import {
   GeminiProvider,
   GeminiStubProvider,
@@ -23,6 +24,8 @@ import { WebSocketNotificationProvider } from "./providers/websocket-notificatio
 import { WinstonLogger } from "./providers/winston-logger.provider";
 import { AIAnalysisRepository } from "./repositories/ai-analysis.repository";
 import { AlertRepository } from "./repositories/alert.repository";
+import { DamageAuditLogRepository } from "./repositories/damage-audit-log.repository";
+import { DamageMarkerRepository } from "./repositories/damage-marker.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
 import { MediaFileRepository } from "./repositories/media-file.repository";
 import { ScopeRepository } from "./repositories/scope.repository";
@@ -41,6 +44,7 @@ import { createWorkspaceRoutes } from "./routes/workspace.route";
 // Services
 import { AuthService } from "./services/auth.service";
 import { ChunkedUploadService } from "./services/chunked-upload.service";
+import { DamageEditingService } from "./services/damage-editing.service";
 import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
 import { UploadService } from "./services/upload.service";
@@ -81,6 +85,13 @@ const aiProvider = process.env.GEMINI_API_KEY
     )
   : new GeminiStubProvider();
 
+// Phase 2: stub provider — Phase 3 replaces this with the Gemini-backed
+// implementation that runs screen-capture detection + vehicle identity
+// match on the driver's evidence photo. Keeping it as a stub for now so
+// edit/delete flows can be exercised without a real Gemini call.
+const damagePhotoVerificationProvider =
+  new DamagePhotoVerificationStubProvider();
+
 const notificationProvider = new WebSocketNotificationProvider(
   process.env.WEBSOCKET_URL ?? "http://localhost:3003",
   logger,
@@ -92,6 +103,8 @@ const inspectionRepository = new InspectionRepository(prisma);
 const mediaFileRepository = new MediaFileRepository(prisma);
 const uploadSessionRepository = new UploadSessionRepository(prisma);
 const aiAnalysisRepository = new AIAnalysisRepository(prisma);
+const damageMarkerRepository = new DamageMarkerRepository(prisma);
+const damageAuditLogRepository = new DamageAuditLogRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
 const scopeRepository = new ScopeRepository(prisma);
 const workspaceRepository = new WorkspaceRepository(prisma);
@@ -137,6 +150,17 @@ const chunkedUploadService = new ChunkedUploadService(
 const mediaStreamService = new MediaStreamService(
   storageProvider,
   mediaFileRepository,
+);
+
+// biome-ignore lint/correctness/noUnusedVariables: wired by Phase 4 routes
+const damageEditingService = new DamageEditingService(
+  inspectionRepository,
+  mediaFileRepository,
+  damageMarkerRepository,
+  damageAuditLogRepository,
+  storageProvider,
+  damagePhotoVerificationProvider,
+  logger,
 );
 
 const workspaceService = new WorkspaceService(workspaceRepository);

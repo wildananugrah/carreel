@@ -18,7 +18,7 @@ Branch: `feat/damage-audit-trail`. Driver-editable AI-detected damages with anti
 ## Phase status
 
 - [x] Phase 1 — schema migration
-- [ ] Phase 2 — backend service + repositories
+- [x] Phase 2 — backend service + repositories
 - [ ] Phase 3 — AI verification prompt + result type
 - [ ] Phase 4 — backend routes
 - [ ] Phase 5 — driver frontend
@@ -95,3 +95,60 @@ Indexes: `damageMarkerId`, `inspectionId`, `projectId`, `createdAt`.
 - `prisma generate` — both backends regenerated automatically (planner client + driver client)
 - `bunx tsc --noEmit` — clean on both `driver-app/backend` and `planner-app/backend`
 - `bun test` — 189 pass / 2 pre-existing `InspectionService` failures unchanged
+
+---
+
+## Phase 2 — backend service + repositories ✅
+
+Files added (driver-app backend):
+
+| File | Purpose |
+|---|---|
+| `interfaces/repositories/damage-marker.repository.interface.ts` | Read/edit/soft-delete contract for `DamageMarker` |
+| `repositories/damage-marker.repository.ts` | Prisma impl with `buildScopeFilter` + `canWriteToEntity` checks |
+| `interfaces/repositories/damage-audit-log.repository.interface.ts` | Audit-log contract |
+| `repositories/damage-audit-log.repository.ts` | Prisma impl |
+| `interfaces/services/damage-editing.service.interface.ts` | Service contract (add/edit/delete) |
+| `services/damage-editing.service.ts` | Orchestrator: photo upload → verify → persist → audit-log |
+| `interfaces/providers/damage-photo-verification.provider.interface.ts` | Phase 3 contract |
+| `providers/damage-photo-verification.stub.provider.ts` | Always-PASS stub; Phase 3 replaces it |
+
+Files updated:
+
+- `index.ts` — wired the two repositories, the service, and the stub verification provider into the composition root.
+
+### Behavior summary
+
+**`addDriverDamage`** — inline blocking:
+
+1. Validate inspection ownership + DRAFT status (otherwise 404 / 400).
+2. Find the BODY_INSPECTION step.
+3. Upload evidence photo to MinIO at `inspections/<id>/DAMAGE_EVIDENCE/<uuid>.<ext>` and create `MediaFile` row attached to the body step. (We do NOT touch the body step's `status` — the walk-around video remains the primary media.)
+4. Synchronously call `verificationProvider.verify(...)` (~5–15s in production; instant with stub).
+5. Persist `DamageMarker` with `source: DRIVER_ADDED` and `verificationStatus: PASSED | FAILED_*`.
+6. Persist `DamageAuditLog` with `action: CREATED, before: null, after: snapshot`.
+7. Return `{ status, damage, reason? }` outcome — Phase 4 route layer maps PASSED → 201, FAILED_* → 422.
+
+**`editDamage`** — text only:
+
+- Snapshots the AI-original `severity / location / description` into `originalX` columns **only on the first edit** (subsequent edits keep the original AI value, not the previous edit).
+- Writes `DamageAuditLog` with `action: EDITED, before: snapshot(existing), after: snapshot(updated)`.
+
+**`deleteDamage`** — soft delete:
+
+- Sets `deletedAt`, `deletedById` on the row. Existing read queries should pass `excludeDeleted: true` to filter on the driver side; the planner sees deleted rows for fraud audit.
+- Writes `DamageAuditLog` with `action: DELETED, before: snapshot(existing), after: null`.
+
+### Verification persistence policy
+
+When `verificationProvider` returns `FAILED_*`, the damage row IS persisted (with `verificationStatus = FAILED_*` and the AI's reason). This is intentional for fraud audit — the planner should see failed attempts. The route layer returns 422 to the driver so the driver UI shows "verification failed, please retry"; the driver-side query filter excludes `FAILED_*` from the visible damage list. Repeated failures pile up as fraud signals on the planner side.
+
+### Validation
+
+- `bunx tsc --noEmit` — clean
+- `bun run lint` — clean (5 pre-existing test-file warnings, unchanged)
+- `bun test` — 189 pass / 2 pre-existing failures unchanged
+
+### Pending for Phase 4
+
+- `damageEditingService` is wired but unused (silenced via `biome-ignore`). Phase 4 wires it into `POST/PATCH/DELETE /api/inspections/:id/damages` routes and the lint suppression goes away.
