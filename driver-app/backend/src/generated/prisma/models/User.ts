@@ -212,6 +212,9 @@ export type UserWhereInput = {
   projectMemberships?: Prisma.ProjectMemberListRelationFilter
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentListRelationFilter
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentListRelationFilter
+  damageMarkersEdited?: Prisma.DamageMarkerListRelationFilter
+  damageMarkersDeleted?: Prisma.DamageMarkerListRelationFilter
+  damageAuditLogs?: Prisma.DamageAuditLogListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -229,6 +232,9 @@ export type UserOrderByWithRelationInput = {
   projectMemberships?: Prisma.ProjectMemberOrderByRelationAggregateInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentOrderByRelationAggregateInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentOrderByRelationAggregateInput
+  damageMarkersEdited?: Prisma.DamageMarkerOrderByRelationAggregateInput
+  damageMarkersDeleted?: Prisma.DamageMarkerOrderByRelationAggregateInput
+  damageAuditLogs?: Prisma.DamageAuditLogOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -249,6 +255,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   projectMemberships?: Prisma.ProjectMemberListRelationFilter
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentListRelationFilter
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentListRelationFilter
+  damageMarkersEdited?: Prisma.DamageMarkerListRelationFilter
+  damageMarkersDeleted?: Prisma.DamageMarkerListRelationFilter
+  damageAuditLogs?: Prisma.DamageAuditLogListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -294,6 +303,9 @@ export type UserCreateInput = {
   projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -311,6 +323,9 @@ export type UserUncheckedCreateInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserUpdateInput = {
@@ -328,6 +343,9 @@ export type UserUpdateInput = {
   projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -345,6 +363,9 @@ export type UserUncheckedUpdateInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -453,6 +474,52 @@ export type UserUpdateOneRequiredWithoutInspectionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutInspectionsInput, Prisma.UserUpdateWithoutInspectionsInput>, Prisma.UserUncheckedUpdateWithoutInspectionsInput>
 }
 
+export type UserCreateNestedOneWithoutDamageMarkersEditedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersEditedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersEditedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDamageMarkersEditedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutDamageMarkersDeletedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersDeletedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersDeletedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDamageMarkersDeletedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutDamageMarkersEditedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersEditedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersEditedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDamageMarkersEditedInput
+  upsert?: Prisma.UserUpsertWithoutDamageMarkersEditedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDamageMarkersEditedInput, Prisma.UserUpdateWithoutDamageMarkersEditedInput>, Prisma.UserUncheckedUpdateWithoutDamageMarkersEditedInput>
+}
+
+export type UserUpdateOneWithoutDamageMarkersDeletedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersDeletedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersDeletedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDamageMarkersDeletedInput
+  upsert?: Prisma.UserUpsertWithoutDamageMarkersDeletedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDamageMarkersDeletedInput, Prisma.UserUpdateWithoutDamageMarkersDeletedInput>, Prisma.UserUncheckedUpdateWithoutDamageMarkersDeletedInput>
+}
+
+export type UserCreateNestedOneWithoutDamageAuditLogsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDamageAuditLogsInput, Prisma.UserUncheckedCreateWithoutDamageAuditLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDamageAuditLogsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutDamageAuditLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDamageAuditLogsInput, Prisma.UserUncheckedCreateWithoutDamageAuditLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDamageAuditLogsInput
+  upsert?: Prisma.UserUpsertWithoutDamageAuditLogsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDamageAuditLogsInput, Prisma.UserUpdateWithoutDamageAuditLogsInput>, Prisma.UserUncheckedUpdateWithoutDamageAuditLogsInput>
+}
+
 export type UserCreateNestedOneWithoutReviewsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutReviewsInput, Prisma.UserUncheckedCreateWithoutReviewsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewsInput
@@ -539,6 +606,9 @@ export type UserCreateWithoutInspectionsInput = {
   projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutInspectionsInput = {
@@ -555,6 +625,9 @@ export type UserUncheckedCreateWithoutInspectionsInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutInspectionsInput = {
@@ -587,6 +660,9 @@ export type UserUpdateWithoutInspectionsInput = {
   projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInspectionsInput = {
@@ -603,6 +679,285 @@ export type UserUncheckedUpdateWithoutInspectionsInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutDamageMarkersEditedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
+}
+
+export type UserUncheckedCreateWithoutDamageMarkersEditedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutDamageMarkersEditedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersEditedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersEditedInput>
+}
+
+export type UserCreateWithoutDamageMarkersDeletedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
+}
+
+export type UserUncheckedCreateWithoutDamageMarkersDeletedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutDamageMarkersDeletedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersDeletedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersDeletedInput>
+}
+
+export type UserUpsertWithoutDamageMarkersEditedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDamageMarkersEditedInput, Prisma.UserUncheckedUpdateWithoutDamageMarkersEditedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersEditedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersEditedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDamageMarkersEditedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDamageMarkersEditedInput, Prisma.UserUncheckedUpdateWithoutDamageMarkersEditedInput>
+}
+
+export type UserUpdateWithoutDamageMarkersEditedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDamageMarkersEditedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserUpsertWithoutDamageMarkersDeletedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDamageMarkersDeletedInput, Prisma.UserUncheckedUpdateWithoutDamageMarkersDeletedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDamageMarkersDeletedInput, Prisma.UserUncheckedCreateWithoutDamageMarkersDeletedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDamageMarkersDeletedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDamageMarkersDeletedInput, Prisma.UserUncheckedUpdateWithoutDamageMarkersDeletedInput>
+}
+
+export type UserUpdateWithoutDamageMarkersDeletedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDamageMarkersDeletedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutDamageAuditLogsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+}
+
+export type UserUncheckedCreateWithoutDamageAuditLogsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  role: $Enums.UserRole
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  systemRole?: $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutDriverInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutReviewerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+}
+
+export type UserCreateOrConnectWithoutDamageAuditLogsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDamageAuditLogsInput, Prisma.UserUncheckedCreateWithoutDamageAuditLogsInput>
+}
+
+export type UserUpsertWithoutDamageAuditLogsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDamageAuditLogsInput, Prisma.UserUncheckedUpdateWithoutDamageAuditLogsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDamageAuditLogsInput, Prisma.UserUncheckedCreateWithoutDamageAuditLogsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDamageAuditLogsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDamageAuditLogsInput, Prisma.UserUncheckedUpdateWithoutDamageAuditLogsInput>
+}
+
+export type UserUpdateWithoutDamageAuditLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDamageAuditLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  inspections?: Prisma.InspectionUncheckedUpdateManyWithoutDriverNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutReviewerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -619,6 +974,9 @@ export type UserCreateWithoutReviewsInput = {
   projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -635,6 +993,9 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -667,6 +1028,9 @@ export type UserUpdateWithoutReviewsInput = {
   projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -683,6 +1047,9 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutAuditLogsInput = {
@@ -699,6 +1066,9 @@ export type UserCreateWithoutAuditLogsInput = {
   projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -715,6 +1085,9 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -747,6 +1120,9 @@ export type UserUpdateWithoutAuditLogsInput = {
   projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -763,6 +1139,9 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutProjectMembershipsInput = {
@@ -779,6 +1158,9 @@ export type UserCreateWithoutProjectMembershipsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutProjectMembershipsInput = {
@@ -795,6 +1177,9 @@ export type UserUncheckedCreateWithoutProjectMembershipsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutProjectMembershipsInput = {
@@ -827,6 +1212,9 @@ export type UserUpdateWithoutProjectMembershipsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProjectMembershipsInput = {
@@ -843,6 +1231,9 @@ export type UserUncheckedUpdateWithoutProjectMembershipsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutDriverAssignmentsAsDriverInput = {
@@ -859,6 +1250,9 @@ export type UserCreateWithoutDriverAssignmentsAsDriverInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutDriverAssignmentsAsDriverInput = {
@@ -875,6 +1269,9 @@ export type UserUncheckedCreateWithoutDriverAssignmentsAsDriverInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutPlannerInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutDriverAssignmentsAsDriverInput = {
@@ -896,6 +1293,9 @@ export type UserCreateWithoutDriverAssignmentsAsPlannerInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   projectMemberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentCreateNestedManyWithoutDriverInput
+  damageMarkersEdited?: Prisma.DamageMarkerCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutDriverAssignmentsAsPlannerInput = {
@@ -912,6 +1312,9 @@ export type UserUncheckedCreateWithoutDriverAssignmentsAsPlannerInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   projectMemberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedCreateNestedManyWithoutDriverInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutDriverAssignmentsAsPlannerInput = {
@@ -944,6 +1347,9 @@ export type UserUpdateWithoutDriverAssignmentsAsDriverInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDriverAssignmentsAsDriverInput = {
@@ -960,6 +1366,9 @@ export type UserUncheckedUpdateWithoutDriverAssignmentsAsDriverInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   driverAssignmentsAsPlanner?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutPlannerNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserUpsertWithoutDriverAssignmentsAsPlannerInput = {
@@ -987,6 +1396,9 @@ export type UserUpdateWithoutDriverAssignmentsAsPlannerInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   projectMemberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUpdateManyWithoutDriverNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDriverAssignmentsAsPlannerInput = {
@@ -1003,6 +1415,9 @@ export type UserUncheckedUpdateWithoutDriverAssignmentsAsPlannerInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   projectMemberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   driverAssignmentsAsDriver?: Prisma.DriverAssignmentUncheckedUpdateManyWithoutDriverNestedInput
+  damageMarkersEdited?: Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput
+  damageMarkersDeleted?: Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 
@@ -1017,6 +1432,9 @@ export type UserCountOutputType = {
   projectMemberships: number
   driverAssignmentsAsDriver: number
   driverAssignmentsAsPlanner: number
+  damageMarkersEdited: number
+  damageMarkersDeleted: number
+  damageAuditLogs: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1026,6 +1444,9 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   projectMemberships?: boolean | UserCountOutputTypeCountProjectMembershipsArgs
   driverAssignmentsAsDriver?: boolean | UserCountOutputTypeCountDriverAssignmentsAsDriverArgs
   driverAssignmentsAsPlanner?: boolean | UserCountOutputTypeCountDriverAssignmentsAsPlannerArgs
+  damageMarkersEdited?: boolean | UserCountOutputTypeCountDamageMarkersEditedArgs
+  damageMarkersDeleted?: boolean | UserCountOutputTypeCountDamageMarkersDeletedArgs
+  damageAuditLogs?: boolean | UserCountOutputTypeCountDamageAuditLogsArgs
 }
 
 /**
@@ -1080,6 +1501,27 @@ export type UserCountOutputTypeCountDriverAssignmentsAsPlannerArgs<ExtArgs exten
   where?: Prisma.DriverAssignmentWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDamageMarkersEditedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DamageMarkerWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDamageMarkersDeletedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DamageMarkerWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDamageAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DamageAuditLogWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1096,6 +1538,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   projectMemberships?: boolean | Prisma.User$projectMembershipsArgs<ExtArgs>
   driverAssignmentsAsDriver?: boolean | Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs>
   driverAssignmentsAsPlanner?: boolean | Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs>
+  damageMarkersEdited?: boolean | Prisma.User$damageMarkersEditedArgs<ExtArgs>
+  damageMarkersDeleted?: boolean | Prisma.User$damageMarkersDeletedArgs<ExtArgs>
+  damageAuditLogs?: boolean | Prisma.User$damageAuditLogsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1140,6 +1585,9 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   projectMemberships?: boolean | Prisma.User$projectMembershipsArgs<ExtArgs>
   driverAssignmentsAsDriver?: boolean | Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs>
   driverAssignmentsAsPlanner?: boolean | Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs>
+  damageMarkersEdited?: boolean | Prisma.User$damageMarkersEditedArgs<ExtArgs>
+  damageMarkersDeleted?: boolean | Prisma.User$damageMarkersDeletedArgs<ExtArgs>
+  damageAuditLogs?: boolean | Prisma.User$damageAuditLogsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1154,6 +1602,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     projectMemberships: Prisma.$ProjectMemberPayload<ExtArgs>[]
     driverAssignmentsAsDriver: Prisma.$DriverAssignmentPayload<ExtArgs>[]
     driverAssignmentsAsPlanner: Prisma.$DriverAssignmentPayload<ExtArgs>[]
+    damageMarkersEdited: Prisma.$DamageMarkerPayload<ExtArgs>[]
+    damageMarkersDeleted: Prisma.$DamageMarkerPayload<ExtArgs>[]
+    damageAuditLogs: Prisma.$DamageAuditLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1564,6 +2015,9 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   projectMemberships<T extends Prisma.User$projectMembershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$projectMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   driverAssignmentsAsDriver<T extends Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$driverAssignmentsAsDriverArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DriverAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   driverAssignmentsAsPlanner<T extends Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$driverAssignmentsAsPlannerArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DriverAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  damageMarkersEdited<T extends Prisma.User$damageMarkersEditedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$damageMarkersEditedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DamageMarkerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  damageMarkersDeleted<T extends Prisma.User$damageMarkersDeletedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$damageMarkersDeletedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DamageMarkerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  damageAuditLogs<T extends Prisma.User$damageAuditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$damageAuditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DamageAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2135,6 +2589,78 @@ export type User$driverAssignmentsAsPlannerArgs<ExtArgs extends runtime.Types.Ex
   take?: number
   skip?: number
   distinct?: Prisma.DriverAssignmentScalarFieldEnum | Prisma.DriverAssignmentScalarFieldEnum[]
+}
+
+/**
+ * User.damageMarkersEdited
+ */
+export type User$damageMarkersEditedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DamageMarker
+   */
+  select?: Prisma.DamageMarkerSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DamageMarker
+   */
+  omit?: Prisma.DamageMarkerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DamageMarkerInclude<ExtArgs> | null
+  where?: Prisma.DamageMarkerWhereInput
+  orderBy?: Prisma.DamageMarkerOrderByWithRelationInput | Prisma.DamageMarkerOrderByWithRelationInput[]
+  cursor?: Prisma.DamageMarkerWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DamageMarkerScalarFieldEnum | Prisma.DamageMarkerScalarFieldEnum[]
+}
+
+/**
+ * User.damageMarkersDeleted
+ */
+export type User$damageMarkersDeletedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DamageMarker
+   */
+  select?: Prisma.DamageMarkerSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DamageMarker
+   */
+  omit?: Prisma.DamageMarkerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DamageMarkerInclude<ExtArgs> | null
+  where?: Prisma.DamageMarkerWhereInput
+  orderBy?: Prisma.DamageMarkerOrderByWithRelationInput | Prisma.DamageMarkerOrderByWithRelationInput[]
+  cursor?: Prisma.DamageMarkerWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DamageMarkerScalarFieldEnum | Prisma.DamageMarkerScalarFieldEnum[]
+}
+
+/**
+ * User.damageAuditLogs
+ */
+export type User$damageAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DamageAuditLog
+   */
+  select?: Prisma.DamageAuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DamageAuditLog
+   */
+  omit?: Prisma.DamageAuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DamageAuditLogInclude<ExtArgs> | null
+  where?: Prisma.DamageAuditLogWhereInput
+  orderBy?: Prisma.DamageAuditLogOrderByWithRelationInput | Prisma.DamageAuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.DamageAuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DamageAuditLogScalarFieldEnum | Prisma.DamageAuditLogScalarFieldEnum[]
 }
 
 /**

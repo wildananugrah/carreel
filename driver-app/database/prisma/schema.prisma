@@ -23,23 +23,27 @@ enum UserRole {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
+  id           String   @id @default(uuid())
+  email        String   @unique
   passwordHash String
   fullName     String
   role         UserRole
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   systemRole SystemRole @default(USER)
 
-  inspections Inspection[] @relation("DriverInspections")
+  inspections Inspection[]       @relation("DriverInspections")
   reviews     InspectionReview[] @relation("ReviewerReviews")
   auditLogs   AuditLog[]
 
-  projectMemberships          ProjectMember[]
-  driverAssignmentsAsDriver   DriverAssignment[] @relation("DriverAssignments_driver")
-  driverAssignmentsAsPlanner  DriverAssignment[] @relation("DriverAssignments_planner")
+  projectMemberships         ProjectMember[]
+  driverAssignmentsAsDriver  DriverAssignment[] @relation("DriverAssignments_driver")
+  driverAssignmentsAsPlanner DriverAssignment[] @relation("DriverAssignments_planner")
+
+  damageMarkersEdited  DamageMarker[]   @relation("DamageMarkerEditedBy")
+  damageMarkersDeleted DamageMarker[]   @relation("DamageMarkerDeletedBy")
+  damageAuditLogs      DamageAuditLog[]
 
   @@map("users")
 }
@@ -126,13 +130,14 @@ model Inspection {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  driver             User              @relation("DriverInspections", fields: [driverId], references: [id])
-  unit               Unit?             @relation(fields: [unitId], references: [id])
-  linkedInspection   Inspection?       @relation("LinkedInspection", fields: [linkedInspectionId], references: [id])
-  linkedFrom         Inspection?       @relation("LinkedInspection")
-  steps              InspectionStep[]
-  reviews            InspectionReview[]
-  auditLogs          AuditLog[]
+  driver           User               @relation("DriverInspections", fields: [driverId], references: [id])
+  unit             Unit?              @relation(fields: [unitId], references: [id])
+  linkedInspection Inspection?        @relation("LinkedInspection", fields: [linkedInspectionId], references: [id])
+  linkedFrom       Inspection?        @relation("LinkedInspection")
+  steps            InspectionStep[]
+  reviews          InspectionReview[]
+  auditLogs        AuditLog[]
+  damageAuditLogs  DamageAuditLog[]
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
@@ -257,23 +262,88 @@ enum DamageSeverity {
   MAJOR
 }
 
+enum DamageSource {
+  AI
+  DRIVER_ADDED
+}
+
+enum DamageVerificationStatus {
+  NOT_REQUIRED
+  PENDING
+  PASSED
+  FAILED_SCREEN_CAPTURE
+  FAILED_VEHICLE_MISMATCH
+  FAILED_OTHER
+}
+
+enum DamageAuditAction {
+  CREATED
+  EDITED
+  DELETED
+  RESTORED
+}
+
 model DamageMarker {
   id             String         @id @default(uuid())
   mediaFileId    String
   damageType     String
   severity       DamageSeverity
   description    String
-  videoTimestamp  Float?
+  location       String?
+  videoTimestamp Float?
   boundingBox    Json?
   isNewDamage    Boolean        @default(false)
   createdAt      DateTime       @default(now())
 
-  mediaFile MediaFile @relation(fields: [mediaFileId], references: [id], onDelete: Cascade)
+  // Provenance + audit trail. AI-detected damages stay at default values
+  // for these columns; DRIVER_ADDED ones go through inline AI verification
+  // before being saved as PASSED, and edits snapshot the original AI value
+  // so the planner can see what the driver changed.
+  source              DamageSource             @default(AI)
+  verificationStatus  DamageVerificationStatus @default(NOT_REQUIRED)
+  verificationReason  String?
+  originalSeverity    DamageSeverity?
+  originalLocation    String?
+  originalDescription String?
+  editedAt            DateTime?
+  editedById          String?
+  deletedAt           DateTime?
+  deletedById         String?
+
+  mediaFile MediaFile        @relation(fields: [mediaFileId], references: [id], onDelete: Cascade)
+  editedBy  User?            @relation("DamageMarkerEditedBy", fields: [editedById], references: [id])
+  deletedBy User?            @relation("DamageMarkerDeletedBy", fields: [deletedById], references: [id])
+  auditLogs DamageAuditLog[]
 
   projectId String
 
   @@index([projectId])
+  @@index([source])
+  @@index([deletedAt])
   @@map("damage_markers")
+}
+
+model DamageAuditLog {
+  id             String            @id @default(uuid())
+  damageMarkerId String
+  inspectionId   String
+  actorId        String
+  action         DamageAuditAction
+  before         Json?
+  after          Json?
+  createdAt      DateTime          @default(now())
+
+  damageMarker DamageMarker @relation(fields: [damageMarkerId], references: [id], onDelete: Cascade)
+  inspection   Inspection   @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  actor        User         @relation(fields: [actorId], references: [id])
+
+  projectId String
+
+  @@index([damageMarkerId])
+  @@index([inspectionId])
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("damage_audit_logs")
 }
 
 // ========================
@@ -444,11 +514,11 @@ enum OutboxEventStatus {
 }
 
 model OutboxEvent {
-  id        String             @id @default(uuid())
+  id        String            @id @default(uuid())
   eventType String
   payload   Json
-  status    OutboxEventStatus  @default(PENDING)
-  createdAt DateTime           @default(now())
+  status    OutboxEventStatus @default(PENDING)
+  createdAt DateTime          @default(now())
 
   @@index([status, createdAt])
   @@map("outbox_events")
@@ -513,7 +583,7 @@ model DriverAssignment {
   createdAt  DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  driver  User    @relation("DriverAssignments_driver",  fields: [driverId],  references: [id], onDelete: Cascade)
+  driver  User    @relation("DriverAssignments_driver", fields: [driverId], references: [id], onDelete: Cascade)
   planner User    @relation("DriverAssignments_planner", fields: [plannerId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, driverId, plannerId])

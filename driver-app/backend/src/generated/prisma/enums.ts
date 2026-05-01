@@ -114,6 +114,36 @@ export const DamageSeverity = {
 export type DamageSeverity = (typeof DamageSeverity)[keyof typeof DamageSeverity]
 
 
+export const DamageSource = {
+  AI: 'AI',
+  DRIVER_ADDED: 'DRIVER_ADDED'
+} as const
+
+export type DamageSource = (typeof DamageSource)[keyof typeof DamageSource]
+
+
+export const DamageVerificationStatus = {
+  NOT_REQUIRED: 'NOT_REQUIRED',
+  PENDING: 'PENDING',
+  PASSED: 'PASSED',
+  FAILED_SCREEN_CAPTURE: 'FAILED_SCREEN_CAPTURE',
+  FAILED_VEHICLE_MISMATCH: 'FAILED_VEHICLE_MISMATCH',
+  FAILED_OTHER: 'FAILED_OTHER'
+} as const
+
+export type DamageVerificationStatus = (typeof DamageVerificationStatus)[keyof typeof DamageVerificationStatus]
+
+
+export const DamageAuditAction = {
+  CREATED: 'CREATED',
+  EDITED: 'EDITED',
+  DELETED: 'DELETED',
+  RESTORED: 'RESTORED'
+} as const
+
+export type DamageAuditAction = (typeof DamageAuditAction)[keyof typeof DamageAuditAction]
+
+
 export const ReviewDecision = {
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',

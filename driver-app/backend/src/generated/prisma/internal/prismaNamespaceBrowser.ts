@@ -58,6 +58,7 @@ export const ModelName = {
   MediaFile: 'MediaFile',
   AIAnalysis: 'AIAnalysis',
   DamageMarker: 'DamageMarker',
+  DamageAuditLog: 'DamageAuditLog',
   TelemetryData: 'TelemetryData',
   InspectionReview: 'InspectionReview',
   Alert: 'Alert',
@@ -201,14 +202,40 @@ export const DamageMarkerScalarFieldEnum = {
   damageType: 'damageType',
   severity: 'severity',
   description: 'description',
+  location: 'location',
   videoTimestamp: 'videoTimestamp',
   boundingBox: 'boundingBox',
   isNewDamage: 'isNewDamage',
   createdAt: 'createdAt',
+  source: 'source',
+  verificationStatus: 'verificationStatus',
+  verificationReason: 'verificationReason',
+  originalSeverity: 'originalSeverity',
+  originalLocation: 'originalLocation',
+  originalDescription: 'originalDescription',
+  editedAt: 'editedAt',
+  editedById: 'editedById',
+  deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   projectId: 'projectId'
 } as const
 
 export type DamageMarkerScalarFieldEnum = (typeof DamageMarkerScalarFieldEnum)[keyof typeof DamageMarkerScalarFieldEnum]
+
+
+export const DamageAuditLogScalarFieldEnum = {
+  id: 'id',
+  damageMarkerId: 'damageMarkerId',
+  inspectionId: 'inspectionId',
+  actorId: 'actorId',
+  action: 'action',
+  before: 'before',
+  after: 'after',
+  createdAt: 'createdAt',
+  projectId: 'projectId'
+} as const
+
+export type DamageAuditLogScalarFieldEnum = (typeof DamageAuditLogScalarFieldEnum)[keyof typeof DamageAuditLogScalarFieldEnum]
 
 
 export const TelemetryDataScalarFieldEnum = {

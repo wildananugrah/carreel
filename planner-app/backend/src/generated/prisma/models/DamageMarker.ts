@@ -40,9 +40,20 @@ export type DamageMarkerMinAggregateOutputType = {
   damageType: string | null
   severity: $Enums.DamageSeverity | null
   description: string | null
+  location: string | null
   videoTimestamp: number | null
   isNewDamage: boolean | null
   createdAt: Date | null
+  source: $Enums.DamageSource | null
+  verificationStatus: $Enums.DamageVerificationStatus | null
+  verificationReason: string | null
+  originalSeverity: $Enums.DamageSeverity | null
+  originalLocation: string | null
+  originalDescription: string | null
+  editedAt: Date | null
+  editedById: string | null
+  deletedAt: Date | null
+  deletedById: string | null
   projectId: string | null
 }
 
@@ -52,9 +63,20 @@ export type DamageMarkerMaxAggregateOutputType = {
   damageType: string | null
   severity: $Enums.DamageSeverity | null
   description: string | null
+  location: string | null
   videoTimestamp: number | null
   isNewDamage: boolean | null
   createdAt: Date | null
+  source: $Enums.DamageSource | null
+  verificationStatus: $Enums.DamageVerificationStatus | null
+  verificationReason: string | null
+  originalSeverity: $Enums.DamageSeverity | null
+  originalLocation: string | null
+  originalDescription: string | null
+  editedAt: Date | null
+  editedById: string | null
+  deletedAt: Date | null
+  deletedById: string | null
   projectId: string | null
 }
 
@@ -64,10 +86,21 @@ export type DamageMarkerCountAggregateOutputType = {
   damageType: number
   severity: number
   description: number
+  location: number
   videoTimestamp: number
   boundingBox: number
   isNewDamage: number
   createdAt: number
+  source: number
+  verificationStatus: number
+  verificationReason: number
+  originalSeverity: number
+  originalLocation: number
+  originalDescription: number
+  editedAt: number
+  editedById: number
+  deletedAt: number
+  deletedById: number
   projectId: number
   _all: number
 }
@@ -87,9 +120,20 @@ export type DamageMarkerMinAggregateInputType = {
   damageType?: true
   severity?: true
   description?: true
+  location?: true
   videoTimestamp?: true
   isNewDamage?: true
   createdAt?: true
+  source?: true
+  verificationStatus?: true
+  verificationReason?: true
+  originalSeverity?: true
+  originalLocation?: true
+  originalDescription?: true
+  editedAt?: true
+  editedById?: true
+  deletedAt?: true
+  deletedById?: true
   projectId?: true
 }
 
@@ -99,9 +143,20 @@ export type DamageMarkerMaxAggregateInputType = {
   damageType?: true
   severity?: true
   description?: true
+  location?: true
   videoTimestamp?: true
   isNewDamage?: true
   createdAt?: true
+  source?: true
+  verificationStatus?: true
+  verificationReason?: true
+  originalSeverity?: true
+  originalLocation?: true
+  originalDescription?: true
+  editedAt?: true
+  editedById?: true
+  deletedAt?: true
+  deletedById?: true
   projectId?: true
 }
 
@@ -111,10 +166,21 @@ export type DamageMarkerCountAggregateInputType = {
   damageType?: true
   severity?: true
   description?: true
+  location?: true
   videoTimestamp?: true
   boundingBox?: true
   isNewDamage?: true
   createdAt?: true
+  source?: true
+  verificationStatus?: true
+  verificationReason?: true
+  originalSeverity?: true
+  originalLocation?: true
+  originalDescription?: true
+  editedAt?: true
+  editedById?: true
+  deletedAt?: true
+  deletedById?: true
   projectId?: true
   _all?: true
 }
@@ -211,10 +277,21 @@ export type DamageMarkerGroupByOutputType = {
   damageType: string
   severity: $Enums.DamageSeverity
   description: string
+  location: string | null
   videoTimestamp: number | null
   boundingBox: runtime.JsonValue | null
   isNewDamage: boolean
   createdAt: Date
+  source: $Enums.DamageSource
+  verificationStatus: $Enums.DamageVerificationStatus
+  verificationReason: string | null
+  originalSeverity: $Enums.DamageSeverity | null
+  originalLocation: string | null
+  originalDescription: string | null
+  editedAt: Date | null
+  editedById: string | null
+  deletedAt: Date | null
+  deletedById: string | null
   projectId: string
   _count: DamageMarkerCountAggregateOutputType | null
   _avg: DamageMarkerAvgAggregateOutputType | null
@@ -247,12 +324,26 @@ export type DamageMarkerWhereInput = {
   damageType?: Prisma.StringFilter<"DamageMarker"> | string
   severity?: Prisma.EnumDamageSeverityFilter<"DamageMarker"> | $Enums.DamageSeverity
   description?: Prisma.StringFilter<"DamageMarker"> | string
+  location?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
   videoTimestamp?: Prisma.FloatNullableFilter<"DamageMarker"> | number | null
   boundingBox?: Prisma.JsonNullableFilter<"DamageMarker">
   isNewDamage?: Prisma.BoolFilter<"DamageMarker"> | boolean
   createdAt?: Prisma.DateTimeFilter<"DamageMarker"> | Date | string
+  source?: Prisma.EnumDamageSourceFilter<"DamageMarker"> | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFilter<"DamageMarker"> | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  originalSeverity?: Prisma.EnumDamageSeverityNullableFilter<"DamageMarker"> | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  originalDescription?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  editedAt?: Prisma.DateTimeNullableFilter<"DamageMarker"> | Date | string | null
+  editedById?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"DamageMarker"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
   projectId?: Prisma.StringFilter<"DamageMarker"> | string
   mediaFile?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>
+  editedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  deletedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  auditLogs?: Prisma.DamageAuditLogListRelationFilter
 }
 
 export type DamageMarkerOrderByWithRelationInput = {
@@ -261,12 +352,26 @@ export type DamageMarkerOrderByWithRelationInput = {
   damageType?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  location?: Prisma.SortOrderInput | Prisma.SortOrder
   videoTimestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   boundingBox?: Prisma.SortOrderInput | Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  source?: Prisma.SortOrder
+  verificationStatus?: Prisma.SortOrder
+  verificationReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalSeverity?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalLocation?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalDescription?: Prisma.SortOrderInput | Prisma.SortOrder
+  editedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  editedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   projectId?: Prisma.SortOrder
   mediaFile?: Prisma.MediaFileOrderByWithRelationInput
+  editedBy?: Prisma.UserOrderByWithRelationInput
+  deletedBy?: Prisma.UserOrderByWithRelationInput
+  auditLogs?: Prisma.DamageAuditLogOrderByRelationAggregateInput
 }
 
 export type DamageMarkerWhereUniqueInput = Prisma.AtLeast<{
@@ -278,12 +383,26 @@ export type DamageMarkerWhereUniqueInput = Prisma.AtLeast<{
   damageType?: Prisma.StringFilter<"DamageMarker"> | string
   severity?: Prisma.EnumDamageSeverityFilter<"DamageMarker"> | $Enums.DamageSeverity
   description?: Prisma.StringFilter<"DamageMarker"> | string
+  location?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
   videoTimestamp?: Prisma.FloatNullableFilter<"DamageMarker"> | number | null
   boundingBox?: Prisma.JsonNullableFilter<"DamageMarker">
   isNewDamage?: Prisma.BoolFilter<"DamageMarker"> | boolean
   createdAt?: Prisma.DateTimeFilter<"DamageMarker"> | Date | string
+  source?: Prisma.EnumDamageSourceFilter<"DamageMarker"> | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFilter<"DamageMarker"> | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  originalSeverity?: Prisma.EnumDamageSeverityNullableFilter<"DamageMarker"> | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  originalDescription?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  editedAt?: Prisma.DateTimeNullableFilter<"DamageMarker"> | Date | string | null
+  editedById?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"DamageMarker"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
   projectId?: Prisma.StringFilter<"DamageMarker"> | string
   mediaFile?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>
+  editedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  deletedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  auditLogs?: Prisma.DamageAuditLogListRelationFilter
 }, "id">
 
 export type DamageMarkerOrderByWithAggregationInput = {
@@ -292,10 +411,21 @@ export type DamageMarkerOrderByWithAggregationInput = {
   damageType?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  location?: Prisma.SortOrderInput | Prisma.SortOrder
   videoTimestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   boundingBox?: Prisma.SortOrderInput | Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  source?: Prisma.SortOrder
+  verificationStatus?: Prisma.SortOrder
+  verificationReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalSeverity?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalLocation?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalDescription?: Prisma.SortOrderInput | Prisma.SortOrder
+  editedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  editedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   projectId?: Prisma.SortOrder
   _count?: Prisma.DamageMarkerCountOrderByAggregateInput
   _avg?: Prisma.DamageMarkerAvgOrderByAggregateInput
@@ -313,10 +443,21 @@ export type DamageMarkerScalarWhereWithAggregatesInput = {
   damageType?: Prisma.StringWithAggregatesFilter<"DamageMarker"> | string
   severity?: Prisma.EnumDamageSeverityWithAggregatesFilter<"DamageMarker"> | $Enums.DamageSeverity
   description?: Prisma.StringWithAggregatesFilter<"DamageMarker"> | string
+  location?: Prisma.StringNullableWithAggregatesFilter<"DamageMarker"> | string | null
   videoTimestamp?: Prisma.FloatNullableWithAggregatesFilter<"DamageMarker"> | number | null
   boundingBox?: Prisma.JsonNullableWithAggregatesFilter<"DamageMarker">
   isNewDamage?: Prisma.BoolWithAggregatesFilter<"DamageMarker"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DamageMarker"> | Date | string
+  source?: Prisma.EnumDamageSourceWithAggregatesFilter<"DamageMarker"> | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusWithAggregatesFilter<"DamageMarker"> | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.StringNullableWithAggregatesFilter<"DamageMarker"> | string | null
+  originalSeverity?: Prisma.EnumDamageSeverityNullableWithAggregatesFilter<"DamageMarker"> | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.StringNullableWithAggregatesFilter<"DamageMarker"> | string | null
+  originalDescription?: Prisma.StringNullableWithAggregatesFilter<"DamageMarker"> | string | null
+  editedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"DamageMarker"> | Date | string | null
+  editedById?: Prisma.StringNullableWithAggregatesFilter<"DamageMarker"> | string | null
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"DamageMarker"> | Date | string | null
+  deletedById?: Prisma.StringNullableWithAggregatesFilter<"DamageMarker"> | string | null
   projectId?: Prisma.StringWithAggregatesFilter<"DamageMarker"> | string
 }
 
@@ -325,12 +466,24 @@ export type DamageMarkerCreateInput = {
   damageType: string
   severity: $Enums.DamageSeverity
   description: string
+  location?: string | null
   videoTimestamp?: number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  deletedAt?: Date | string | null
   projectId: string
   mediaFile: Prisma.MediaFileCreateNestedOneWithoutDamageMarkersInput
+  editedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersEditedInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersDeletedInput
+  auditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutDamageMarkerInput
 }
 
 export type DamageMarkerUncheckedCreateInput = {
@@ -339,11 +492,23 @@ export type DamageMarkerUncheckedCreateInput = {
   damageType: string
   severity: $Enums.DamageSeverity
   description: string
+  location?: string | null
   videoTimestamp?: number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  editedById?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   projectId: string
+  auditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutDamageMarkerInput
 }
 
 export type DamageMarkerUpdateInput = {
@@ -351,12 +516,24 @@ export type DamageMarkerUpdateInput = {
   damageType?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaFile?: Prisma.MediaFileUpdateOneRequiredWithoutDamageMarkersNestedInput
+  editedBy?: Prisma.UserUpdateOneWithoutDamageMarkersEditedNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDamageMarkersDeletedNestedInput
+  auditLogs?: Prisma.DamageAuditLogUpdateManyWithoutDamageMarkerNestedInput
 }
 
 export type DamageMarkerUncheckedUpdateInput = {
@@ -365,11 +542,23 @@ export type DamageMarkerUncheckedUpdateInput = {
   damageType?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  editedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  auditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutDamageMarkerNestedInput
 }
 
 export type DamageMarkerCreateManyInput = {
@@ -378,10 +567,21 @@ export type DamageMarkerCreateManyInput = {
   damageType: string
   severity: $Enums.DamageSeverity
   description: string
+  location?: string | null
   videoTimestamp?: number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  editedById?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   projectId: string
 }
 
@@ -390,10 +590,19 @@ export type DamageMarkerUpdateManyMutationInput = {
   damageType?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
@@ -403,10 +612,21 @@ export type DamageMarkerUncheckedUpdateManyInput = {
   damageType?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  editedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
@@ -426,10 +646,21 @@ export type DamageMarkerCountOrderByAggregateInput = {
   damageType?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  location?: Prisma.SortOrder
   videoTimestamp?: Prisma.SortOrder
   boundingBox?: Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  source?: Prisma.SortOrder
+  verificationStatus?: Prisma.SortOrder
+  verificationReason?: Prisma.SortOrder
+  originalSeverity?: Prisma.SortOrder
+  originalLocation?: Prisma.SortOrder
+  originalDescription?: Prisma.SortOrder
+  editedAt?: Prisma.SortOrder
+  editedById?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
 }
 
@@ -443,9 +674,20 @@ export type DamageMarkerMaxOrderByAggregateInput = {
   damageType?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  location?: Prisma.SortOrder
   videoTimestamp?: Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  source?: Prisma.SortOrder
+  verificationStatus?: Prisma.SortOrder
+  verificationReason?: Prisma.SortOrder
+  originalSeverity?: Prisma.SortOrder
+  originalLocation?: Prisma.SortOrder
+  originalDescription?: Prisma.SortOrder
+  editedAt?: Prisma.SortOrder
+  editedById?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
 }
 
@@ -455,14 +697,114 @@ export type DamageMarkerMinOrderByAggregateInput = {
   damageType?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  location?: Prisma.SortOrder
   videoTimestamp?: Prisma.SortOrder
   isNewDamage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  source?: Prisma.SortOrder
+  verificationStatus?: Prisma.SortOrder
+  verificationReason?: Prisma.SortOrder
+  originalSeverity?: Prisma.SortOrder
+  originalLocation?: Prisma.SortOrder
+  originalDescription?: Prisma.SortOrder
+  editedAt?: Prisma.SortOrder
+  editedById?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
 }
 
 export type DamageMarkerSumOrderByAggregateInput = {
   videoTimestamp?: Prisma.SortOrder
+}
+
+export type DamageMarkerScalarRelationFilter = {
+  is?: Prisma.DamageMarkerWhereInput
+  isNot?: Prisma.DamageMarkerWhereInput
+}
+
+export type DamageMarkerCreateNestedManyWithoutEditedByInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutEditedByInput, Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput> | Prisma.DamageMarkerCreateWithoutEditedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput | Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyEditedByInputEnvelope
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+}
+
+export type DamageMarkerCreateNestedManyWithoutDeletedByInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput> | Prisma.DamageMarkerCreateWithoutDeletedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput | Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyDeletedByInputEnvelope
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+}
+
+export type DamageMarkerUncheckedCreateNestedManyWithoutEditedByInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutEditedByInput, Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput> | Prisma.DamageMarkerCreateWithoutEditedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput | Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyEditedByInputEnvelope
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+}
+
+export type DamageMarkerUncheckedCreateNestedManyWithoutDeletedByInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput> | Prisma.DamageMarkerCreateWithoutDeletedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput | Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyDeletedByInputEnvelope
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+}
+
+export type DamageMarkerUpdateManyWithoutEditedByNestedInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutEditedByInput, Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput> | Prisma.DamageMarkerCreateWithoutEditedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput | Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput[]
+  upsert?: Prisma.DamageMarkerUpsertWithWhereUniqueWithoutEditedByInput | Prisma.DamageMarkerUpsertWithWhereUniqueWithoutEditedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyEditedByInputEnvelope
+  set?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  disconnect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  delete?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  update?: Prisma.DamageMarkerUpdateWithWhereUniqueWithoutEditedByInput | Prisma.DamageMarkerUpdateWithWhereUniqueWithoutEditedByInput[]
+  updateMany?: Prisma.DamageMarkerUpdateManyWithWhereWithoutEditedByInput | Prisma.DamageMarkerUpdateManyWithWhereWithoutEditedByInput[]
+  deleteMany?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
+}
+
+export type DamageMarkerUpdateManyWithoutDeletedByNestedInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput> | Prisma.DamageMarkerCreateWithoutDeletedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput | Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput[]
+  upsert?: Prisma.DamageMarkerUpsertWithWhereUniqueWithoutDeletedByInput | Prisma.DamageMarkerUpsertWithWhereUniqueWithoutDeletedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyDeletedByInputEnvelope
+  set?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  disconnect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  delete?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  update?: Prisma.DamageMarkerUpdateWithWhereUniqueWithoutDeletedByInput | Prisma.DamageMarkerUpdateWithWhereUniqueWithoutDeletedByInput[]
+  updateMany?: Prisma.DamageMarkerUpdateManyWithWhereWithoutDeletedByInput | Prisma.DamageMarkerUpdateManyWithWhereWithoutDeletedByInput[]
+  deleteMany?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
+}
+
+export type DamageMarkerUncheckedUpdateManyWithoutEditedByNestedInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutEditedByInput, Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput> | Prisma.DamageMarkerCreateWithoutEditedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput | Prisma.DamageMarkerCreateOrConnectWithoutEditedByInput[]
+  upsert?: Prisma.DamageMarkerUpsertWithWhereUniqueWithoutEditedByInput | Prisma.DamageMarkerUpsertWithWhereUniqueWithoutEditedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyEditedByInputEnvelope
+  set?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  disconnect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  delete?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  update?: Prisma.DamageMarkerUpdateWithWhereUniqueWithoutEditedByInput | Prisma.DamageMarkerUpdateWithWhereUniqueWithoutEditedByInput[]
+  updateMany?: Prisma.DamageMarkerUpdateManyWithWhereWithoutEditedByInput | Prisma.DamageMarkerUpdateManyWithWhereWithoutEditedByInput[]
+  deleteMany?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
+}
+
+export type DamageMarkerUncheckedUpdateManyWithoutDeletedByNestedInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput> | Prisma.DamageMarkerCreateWithoutDeletedByInput[] | Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput | Prisma.DamageMarkerCreateOrConnectWithoutDeletedByInput[]
+  upsert?: Prisma.DamageMarkerUpsertWithWhereUniqueWithoutDeletedByInput | Prisma.DamageMarkerUpsertWithWhereUniqueWithoutDeletedByInput[]
+  createMany?: Prisma.DamageMarkerCreateManyDeletedByInputEnvelope
+  set?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  disconnect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  delete?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  connect?: Prisma.DamageMarkerWhereUniqueInput | Prisma.DamageMarkerWhereUniqueInput[]
+  update?: Prisma.DamageMarkerUpdateWithWhereUniqueWithoutDeletedByInput | Prisma.DamageMarkerUpdateWithWhereUniqueWithoutDeletedByInput[]
+  updateMany?: Prisma.DamageMarkerUpdateManyWithWhereWithoutDeletedByInput | Prisma.DamageMarkerUpdateManyWithWhereWithoutDeletedByInput[]
+  deleteMany?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
 }
 
 export type DamageMarkerCreateNestedManyWithoutMediaFileInput = {
@@ -515,16 +857,229 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type EnumDamageSourceFieldUpdateOperationsInput = {
+  set?: $Enums.DamageSource
+}
+
+export type EnumDamageVerificationStatusFieldUpdateOperationsInput = {
+  set?: $Enums.DamageVerificationStatus
+}
+
+export type NullableEnumDamageSeverityFieldUpdateOperationsInput = {
+  set?: $Enums.DamageSeverity | null
+}
+
+export type DamageMarkerCreateNestedOneWithoutAuditLogsInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutAuditLogsInput, Prisma.DamageMarkerUncheckedCreateWithoutAuditLogsInput>
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutAuditLogsInput
+  connect?: Prisma.DamageMarkerWhereUniqueInput
+}
+
+export type DamageMarkerUpdateOneRequiredWithoutAuditLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.DamageMarkerCreateWithoutAuditLogsInput, Prisma.DamageMarkerUncheckedCreateWithoutAuditLogsInput>
+  connectOrCreate?: Prisma.DamageMarkerCreateOrConnectWithoutAuditLogsInput
+  upsert?: Prisma.DamageMarkerUpsertWithoutAuditLogsInput
+  connect?: Prisma.DamageMarkerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DamageMarkerUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.DamageMarkerUpdateWithoutAuditLogsInput>, Prisma.DamageMarkerUncheckedUpdateWithoutAuditLogsInput>
+}
+
+export type DamageMarkerCreateWithoutEditedByInput = {
+  id?: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  projectId: string
+  mediaFile: Prisma.MediaFileCreateNestedOneWithoutDamageMarkersInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersDeletedInput
+  auditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutDamageMarkerInput
+}
+
+export type DamageMarkerUncheckedCreateWithoutEditedByInput = {
+  id?: string
+  mediaFileId: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  projectId: string
+  auditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutDamageMarkerInput
+}
+
+export type DamageMarkerCreateOrConnectWithoutEditedByInput = {
+  where: Prisma.DamageMarkerWhereUniqueInput
+  create: Prisma.XOR<Prisma.DamageMarkerCreateWithoutEditedByInput, Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput>
+}
+
+export type DamageMarkerCreateManyEditedByInputEnvelope = {
+  data: Prisma.DamageMarkerCreateManyEditedByInput | Prisma.DamageMarkerCreateManyEditedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type DamageMarkerCreateWithoutDeletedByInput = {
+  id?: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  projectId: string
+  mediaFile: Prisma.MediaFileCreateNestedOneWithoutDamageMarkersInput
+  editedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersEditedInput
+  auditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutDamageMarkerInput
+}
+
+export type DamageMarkerUncheckedCreateWithoutDeletedByInput = {
+  id?: string
+  mediaFileId: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  editedById?: string | null
+  deletedAt?: Date | string | null
+  projectId: string
+  auditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutDamageMarkerInput
+}
+
+export type DamageMarkerCreateOrConnectWithoutDeletedByInput = {
+  where: Prisma.DamageMarkerWhereUniqueInput
+  create: Prisma.XOR<Prisma.DamageMarkerCreateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput>
+}
+
+export type DamageMarkerCreateManyDeletedByInputEnvelope = {
+  data: Prisma.DamageMarkerCreateManyDeletedByInput | Prisma.DamageMarkerCreateManyDeletedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type DamageMarkerUpsertWithWhereUniqueWithoutEditedByInput = {
+  where: Prisma.DamageMarkerWhereUniqueInput
+  update: Prisma.XOR<Prisma.DamageMarkerUpdateWithoutEditedByInput, Prisma.DamageMarkerUncheckedUpdateWithoutEditedByInput>
+  create: Prisma.XOR<Prisma.DamageMarkerCreateWithoutEditedByInput, Prisma.DamageMarkerUncheckedCreateWithoutEditedByInput>
+}
+
+export type DamageMarkerUpdateWithWhereUniqueWithoutEditedByInput = {
+  where: Prisma.DamageMarkerWhereUniqueInput
+  data: Prisma.XOR<Prisma.DamageMarkerUpdateWithoutEditedByInput, Prisma.DamageMarkerUncheckedUpdateWithoutEditedByInput>
+}
+
+export type DamageMarkerUpdateManyWithWhereWithoutEditedByInput = {
+  where: Prisma.DamageMarkerScalarWhereInput
+  data: Prisma.XOR<Prisma.DamageMarkerUpdateManyMutationInput, Prisma.DamageMarkerUncheckedUpdateManyWithoutEditedByInput>
+}
+
+export type DamageMarkerScalarWhereInput = {
+  AND?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
+  OR?: Prisma.DamageMarkerScalarWhereInput[]
+  NOT?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
+  id?: Prisma.StringFilter<"DamageMarker"> | string
+  mediaFileId?: Prisma.StringFilter<"DamageMarker"> | string
+  damageType?: Prisma.StringFilter<"DamageMarker"> | string
+  severity?: Prisma.EnumDamageSeverityFilter<"DamageMarker"> | $Enums.DamageSeverity
+  description?: Prisma.StringFilter<"DamageMarker"> | string
+  location?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  videoTimestamp?: Prisma.FloatNullableFilter<"DamageMarker"> | number | null
+  boundingBox?: Prisma.JsonNullableFilter<"DamageMarker">
+  isNewDamage?: Prisma.BoolFilter<"DamageMarker"> | boolean
+  createdAt?: Prisma.DateTimeFilter<"DamageMarker"> | Date | string
+  source?: Prisma.EnumDamageSourceFilter<"DamageMarker"> | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFilter<"DamageMarker"> | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  originalSeverity?: Prisma.EnumDamageSeverityNullableFilter<"DamageMarker"> | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  originalDescription?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  editedAt?: Prisma.DateTimeNullableFilter<"DamageMarker"> | Date | string | null
+  editedById?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"DamageMarker"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"DamageMarker"> | string | null
+  projectId?: Prisma.StringFilter<"DamageMarker"> | string
+}
+
+export type DamageMarkerUpsertWithWhereUniqueWithoutDeletedByInput = {
+  where: Prisma.DamageMarkerWhereUniqueInput
+  update: Prisma.XOR<Prisma.DamageMarkerUpdateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedUpdateWithoutDeletedByInput>
+  create: Prisma.XOR<Prisma.DamageMarkerCreateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedCreateWithoutDeletedByInput>
+}
+
+export type DamageMarkerUpdateWithWhereUniqueWithoutDeletedByInput = {
+  where: Prisma.DamageMarkerWhereUniqueInput
+  data: Prisma.XOR<Prisma.DamageMarkerUpdateWithoutDeletedByInput, Prisma.DamageMarkerUncheckedUpdateWithoutDeletedByInput>
+}
+
+export type DamageMarkerUpdateManyWithWhereWithoutDeletedByInput = {
+  where: Prisma.DamageMarkerScalarWhereInput
+  data: Prisma.XOR<Prisma.DamageMarkerUpdateManyMutationInput, Prisma.DamageMarkerUncheckedUpdateManyWithoutDeletedByInput>
+}
+
 export type DamageMarkerCreateWithoutMediaFileInput = {
   id?: string
   damageType: string
   severity: $Enums.DamageSeverity
   description: string
+  location?: string | null
   videoTimestamp?: number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  deletedAt?: Date | string | null
   projectId: string
+  editedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersEditedInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersDeletedInput
+  auditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutDamageMarkerInput
 }
 
 export type DamageMarkerUncheckedCreateWithoutMediaFileInput = {
@@ -532,11 +1087,23 @@ export type DamageMarkerUncheckedCreateWithoutMediaFileInput = {
   damageType: string
   severity: $Enums.DamageSeverity
   description: string
+  location?: string | null
   videoTimestamp?: number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  editedById?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   projectId: string
+  auditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutDamageMarkerInput
 }
 
 export type DamageMarkerCreateOrConnectWithoutMediaFileInput = {
@@ -565,20 +1132,304 @@ export type DamageMarkerUpdateManyWithWhereWithoutMediaFileInput = {
   data: Prisma.XOR<Prisma.DamageMarkerUpdateManyMutationInput, Prisma.DamageMarkerUncheckedUpdateManyWithoutMediaFileInput>
 }
 
-export type DamageMarkerScalarWhereInput = {
-  AND?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
-  OR?: Prisma.DamageMarkerScalarWhereInput[]
-  NOT?: Prisma.DamageMarkerScalarWhereInput | Prisma.DamageMarkerScalarWhereInput[]
-  id?: Prisma.StringFilter<"DamageMarker"> | string
-  mediaFileId?: Prisma.StringFilter<"DamageMarker"> | string
-  damageType?: Prisma.StringFilter<"DamageMarker"> | string
-  severity?: Prisma.EnumDamageSeverityFilter<"DamageMarker"> | $Enums.DamageSeverity
-  description?: Prisma.StringFilter<"DamageMarker"> | string
-  videoTimestamp?: Prisma.FloatNullableFilter<"DamageMarker"> | number | null
-  boundingBox?: Prisma.JsonNullableFilter<"DamageMarker">
-  isNewDamage?: Prisma.BoolFilter<"DamageMarker"> | boolean
-  createdAt?: Prisma.DateTimeFilter<"DamageMarker"> | Date | string
-  projectId?: Prisma.StringFilter<"DamageMarker"> | string
+export type DamageMarkerCreateWithoutAuditLogsInput = {
+  id?: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  projectId: string
+  mediaFile: Prisma.MediaFileCreateNestedOneWithoutDamageMarkersInput
+  editedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersEditedInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDamageMarkersDeletedInput
+}
+
+export type DamageMarkerUncheckedCreateWithoutAuditLogsInput = {
+  id?: string
+  mediaFileId: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  editedById?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  projectId: string
+}
+
+export type DamageMarkerCreateOrConnectWithoutAuditLogsInput = {
+  where: Prisma.DamageMarkerWhereUniqueInput
+  create: Prisma.XOR<Prisma.DamageMarkerCreateWithoutAuditLogsInput, Prisma.DamageMarkerUncheckedCreateWithoutAuditLogsInput>
+}
+
+export type DamageMarkerUpsertWithoutAuditLogsInput = {
+  update: Prisma.XOR<Prisma.DamageMarkerUpdateWithoutAuditLogsInput, Prisma.DamageMarkerUncheckedUpdateWithoutAuditLogsInput>
+  create: Prisma.XOR<Prisma.DamageMarkerCreateWithoutAuditLogsInput, Prisma.DamageMarkerUncheckedCreateWithoutAuditLogsInput>
+  where?: Prisma.DamageMarkerWhereInput
+}
+
+export type DamageMarkerUpdateToOneWithWhereWithoutAuditLogsInput = {
+  where?: Prisma.DamageMarkerWhereInput
+  data: Prisma.XOR<Prisma.DamageMarkerUpdateWithoutAuditLogsInput, Prisma.DamageMarkerUncheckedUpdateWithoutAuditLogsInput>
+}
+
+export type DamageMarkerUpdateWithoutAuditLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFile?: Prisma.MediaFileUpdateOneRequiredWithoutDamageMarkersNestedInput
+  editedBy?: Prisma.UserUpdateOneWithoutDamageMarkersEditedNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDamageMarkersDeletedNestedInput
+}
+
+export type DamageMarkerUncheckedUpdateWithoutAuditLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  editedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
+export type DamageMarkerCreateManyEditedByInput = {
+  id?: string
+  mediaFileId: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  projectId: string
+}
+
+export type DamageMarkerCreateManyDeletedByInput = {
+  id?: string
+  mediaFileId: string
+  damageType: string
+  severity: $Enums.DamageSeverity
+  description: string
+  location?: string | null
+  videoTimestamp?: number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: boolean
+  createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  editedById?: string | null
+  deletedAt?: Date | string | null
+  projectId: string
+}
+
+export type DamageMarkerUpdateWithoutEditedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFile?: Prisma.MediaFileUpdateOneRequiredWithoutDamageMarkersNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDamageMarkersDeletedNestedInput
+  auditLogs?: Prisma.DamageAuditLogUpdateManyWithoutDamageMarkerNestedInput
+}
+
+export type DamageMarkerUncheckedUpdateWithoutEditedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  auditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutDamageMarkerNestedInput
+}
+
+export type DamageMarkerUncheckedUpdateManyWithoutEditedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
+export type DamageMarkerUpdateWithoutDeletedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFile?: Prisma.MediaFileUpdateOneRequiredWithoutDamageMarkersNestedInput
+  editedBy?: Prisma.UserUpdateOneWithoutDamageMarkersEditedNestedInput
+  auditLogs?: Prisma.DamageAuditLogUpdateManyWithoutDamageMarkerNestedInput
+}
+
+export type DamageMarkerUncheckedUpdateWithoutDeletedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  editedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  auditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutDamageMarkerNestedInput
+}
+
+export type DamageMarkerUncheckedUpdateManyWithoutDeletedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaFileId?: Prisma.StringFieldUpdateOperationsInput | string
+  damageType?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  editedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type DamageMarkerCreateManyMediaFileInput = {
@@ -586,10 +1437,21 @@ export type DamageMarkerCreateManyMediaFileInput = {
   damageType: string
   severity: $Enums.DamageSeverity
   description: string
+  location?: string | null
   videoTimestamp?: number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: boolean
   createdAt?: Date | string
+  source?: $Enums.DamageSource
+  verificationStatus?: $Enums.DamageVerificationStatus
+  verificationReason?: string | null
+  originalSeverity?: $Enums.DamageSeverity | null
+  originalLocation?: string | null
+  originalDescription?: string | null
+  editedAt?: Date | string | null
+  editedById?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   projectId: string
 }
 
@@ -598,11 +1460,23 @@ export type DamageMarkerUpdateWithoutMediaFileInput = {
   damageType?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  editedBy?: Prisma.UserUpdateOneWithoutDamageMarkersEditedNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDamageMarkersDeletedNestedInput
+  auditLogs?: Prisma.DamageAuditLogUpdateManyWithoutDamageMarkerNestedInput
 }
 
 export type DamageMarkerUncheckedUpdateWithoutMediaFileInput = {
@@ -610,11 +1484,23 @@ export type DamageMarkerUncheckedUpdateWithoutMediaFileInput = {
   damageType?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  editedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  auditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutDamageMarkerNestedInput
 }
 
 export type DamageMarkerUncheckedUpdateManyWithoutMediaFileInput = {
@@ -622,13 +1508,53 @@ export type DamageMarkerUncheckedUpdateManyWithoutMediaFileInput = {
   damageType?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   videoTimestamp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   boundingBox?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isNewDamage?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  source?: Prisma.EnumDamageSourceFieldUpdateOperationsInput | $Enums.DamageSource
+  verificationStatus?: Prisma.EnumDamageVerificationStatusFieldUpdateOperationsInput | $Enums.DamageVerificationStatus
+  verificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSeverity?: Prisma.NullableEnumDamageSeverityFieldUpdateOperationsInput | $Enums.DamageSeverity | null
+  originalLocation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  editedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
+
+/**
+ * Count Type DamageMarkerCountOutputType
+ */
+
+export type DamageMarkerCountOutputType = {
+  auditLogs: number
+}
+
+export type DamageMarkerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  auditLogs?: boolean | DamageMarkerCountOutputTypeCountAuditLogsArgs
+}
+
+/**
+ * DamageMarkerCountOutputType without action
+ */
+export type DamageMarkerCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DamageMarkerCountOutputType
+   */
+  select?: Prisma.DamageMarkerCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * DamageMarkerCountOutputType without action
+ */
+export type DamageMarkerCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DamageAuditLogWhereInput
+}
 
 
 export type DamageMarkerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -637,12 +1563,27 @@ export type DamageMarkerSelect<ExtArgs extends runtime.Types.Extensions.Internal
   damageType?: boolean
   severity?: boolean
   description?: boolean
+  location?: boolean
   videoTimestamp?: boolean
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  source?: boolean
+  verificationStatus?: boolean
+  verificationReason?: boolean
+  originalSeverity?: boolean
+  originalLocation?: boolean
+  originalDescription?: boolean
+  editedAt?: boolean
+  editedById?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   projectId?: boolean
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
+  editedBy?: boolean | Prisma.DamageMarker$editedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.DamageMarker$deletedByArgs<ExtArgs>
+  auditLogs?: boolean | Prisma.DamageMarker$auditLogsArgs<ExtArgs>
+  _count?: boolean | Prisma.DamageMarkerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["damageMarker"]>
 
 export type DamageMarkerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -651,12 +1592,25 @@ export type DamageMarkerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   damageType?: boolean
   severity?: boolean
   description?: boolean
+  location?: boolean
   videoTimestamp?: boolean
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  source?: boolean
+  verificationStatus?: boolean
+  verificationReason?: boolean
+  originalSeverity?: boolean
+  originalLocation?: boolean
+  originalDescription?: boolean
+  editedAt?: boolean
+  editedById?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   projectId?: boolean
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
+  editedBy?: boolean | Prisma.DamageMarker$editedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.DamageMarker$deletedByArgs<ExtArgs>
 }, ExtArgs["result"]["damageMarker"]>
 
 export type DamageMarkerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -665,12 +1619,25 @@ export type DamageMarkerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   damageType?: boolean
   severity?: boolean
   description?: boolean
+  location?: boolean
   videoTimestamp?: boolean
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  source?: boolean
+  verificationStatus?: boolean
+  verificationReason?: boolean
+  originalSeverity?: boolean
+  originalLocation?: boolean
+  originalDescription?: boolean
+  editedAt?: boolean
+  editedById?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   projectId?: boolean
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
+  editedBy?: boolean | Prisma.DamageMarker$editedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.DamageMarker$deletedByArgs<ExtArgs>
 }, ExtArgs["result"]["damageMarker"]>
 
 export type DamageMarkerSelectScalar = {
@@ -679,28 +1646,50 @@ export type DamageMarkerSelectScalar = {
   damageType?: boolean
   severity?: boolean
   description?: boolean
+  location?: boolean
   videoTimestamp?: boolean
   boundingBox?: boolean
   isNewDamage?: boolean
   createdAt?: boolean
+  source?: boolean
+  verificationStatus?: boolean
+  verificationReason?: boolean
+  originalSeverity?: boolean
+  originalLocation?: boolean
+  originalDescription?: boolean
+  editedAt?: boolean
+  editedById?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   projectId?: boolean
 }
 
-export type DamageMarkerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mediaFileId" | "damageType" | "severity" | "description" | "videoTimestamp" | "boundingBox" | "isNewDamage" | "createdAt" | "projectId", ExtArgs["result"]["damageMarker"]>
+export type DamageMarkerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mediaFileId" | "damageType" | "severity" | "description" | "location" | "videoTimestamp" | "boundingBox" | "isNewDamage" | "createdAt" | "source" | "verificationStatus" | "verificationReason" | "originalSeverity" | "originalLocation" | "originalDescription" | "editedAt" | "editedById" | "deletedAt" | "deletedById" | "projectId", ExtArgs["result"]["damageMarker"]>
 export type DamageMarkerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
+  editedBy?: boolean | Prisma.DamageMarker$editedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.DamageMarker$deletedByArgs<ExtArgs>
+  auditLogs?: boolean | Prisma.DamageMarker$auditLogsArgs<ExtArgs>
+  _count?: boolean | Prisma.DamageMarkerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DamageMarkerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
+  editedBy?: boolean | Prisma.DamageMarker$editedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.DamageMarker$deletedByArgs<ExtArgs>
 }
 export type DamageMarkerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   mediaFile?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>
+  editedBy?: boolean | Prisma.DamageMarker$editedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.DamageMarker$deletedByArgs<ExtArgs>
 }
 
 export type $DamageMarkerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "DamageMarker"
   objects: {
     mediaFile: Prisma.$MediaFilePayload<ExtArgs>
+    editedBy: Prisma.$UserPayload<ExtArgs> | null
+    deletedBy: Prisma.$UserPayload<ExtArgs> | null
+    auditLogs: Prisma.$DamageAuditLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -708,10 +1697,21 @@ export type $DamageMarkerPayload<ExtArgs extends runtime.Types.Extensions.Intern
     damageType: string
     severity: $Enums.DamageSeverity
     description: string
+    location: string | null
     videoTimestamp: number | null
     boundingBox: runtime.JsonValue | null
     isNewDamage: boolean
     createdAt: Date
+    source: $Enums.DamageSource
+    verificationStatus: $Enums.DamageVerificationStatus
+    verificationReason: string | null
+    originalSeverity: $Enums.DamageSeverity | null
+    originalLocation: string | null
+    originalDescription: string | null
+    editedAt: Date | null
+    editedById: string | null
+    deletedAt: Date | null
+    deletedById: string | null
     projectId: string
   }, ExtArgs["result"]["damageMarker"]>
   composites: {}
@@ -1108,6 +2108,9 @@ readonly fields: DamageMarkerFieldRefs;
 export interface Prisma__DamageMarkerClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   mediaFile<T extends Prisma.MediaFileDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaFileDefaultArgs<ExtArgs>>): Prisma.Prisma__MediaFileClient<runtime.Types.Result.GetResult<Prisma.$MediaFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  editedBy<T extends Prisma.DamageMarker$editedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DamageMarker$editedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  deletedBy<T extends Prisma.DamageMarker$deletedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DamageMarker$deletedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  auditLogs<T extends Prisma.DamageMarker$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DamageMarker$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DamageAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1142,10 +2145,21 @@ export interface DamageMarkerFieldRefs {
   readonly damageType: Prisma.FieldRef<"DamageMarker", 'String'>
   readonly severity: Prisma.FieldRef<"DamageMarker", 'DamageSeverity'>
   readonly description: Prisma.FieldRef<"DamageMarker", 'String'>
+  readonly location: Prisma.FieldRef<"DamageMarker", 'String'>
   readonly videoTimestamp: Prisma.FieldRef<"DamageMarker", 'Float'>
   readonly boundingBox: Prisma.FieldRef<"DamageMarker", 'Json'>
   readonly isNewDamage: Prisma.FieldRef<"DamageMarker", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"DamageMarker", 'DateTime'>
+  readonly source: Prisma.FieldRef<"DamageMarker", 'DamageSource'>
+  readonly verificationStatus: Prisma.FieldRef<"DamageMarker", 'DamageVerificationStatus'>
+  readonly verificationReason: Prisma.FieldRef<"DamageMarker", 'String'>
+  readonly originalSeverity: Prisma.FieldRef<"DamageMarker", 'DamageSeverity'>
+  readonly originalLocation: Prisma.FieldRef<"DamageMarker", 'String'>
+  readonly originalDescription: Prisma.FieldRef<"DamageMarker", 'String'>
+  readonly editedAt: Prisma.FieldRef<"DamageMarker", 'DateTime'>
+  readonly editedById: Prisma.FieldRef<"DamageMarker", 'String'>
+  readonly deletedAt: Prisma.FieldRef<"DamageMarker", 'DateTime'>
+  readonly deletedById: Prisma.FieldRef<"DamageMarker", 'String'>
   readonly projectId: Prisma.FieldRef<"DamageMarker", 'String'>
 }
     
@@ -1545,6 +2559,68 @@ export type DamageMarkerDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many DamageMarkers to delete.
    */
   limit?: number
+}
+
+/**
+ * DamageMarker.editedBy
+ */
+export type DamageMarker$editedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * DamageMarker.deletedBy
+ */
+export type DamageMarker$deletedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * DamageMarker.auditLogs
+ */
+export type DamageMarker$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DamageAuditLog
+   */
+  select?: Prisma.DamageAuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DamageAuditLog
+   */
+  omit?: Prisma.DamageAuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DamageAuditLogInclude<ExtArgs> | null
+  where?: Prisma.DamageAuditLogWhereInput
+  orderBy?: Prisma.DamageAuditLogOrderByWithRelationInput | Prisma.DamageAuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.DamageAuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DamageAuditLogScalarFieldEnum | Prisma.DamageAuditLogScalarFieldEnum[]
 }
 
 /**

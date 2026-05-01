@@ -391,6 +391,7 @@ export const ModelName = {
   MediaFile: 'MediaFile',
   AIAnalysis: 'AIAnalysis',
   DamageMarker: 'DamageMarker',
+  DamageAuditLog: 'DamageAuditLog',
   TelemetryData: 'TelemetryData',
   InspectionReview: 'InspectionReview',
   Alert: 'Alert',
@@ -417,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "unit" | "inspection" | "inspectionStep" | "mediaFile" | "aIAnalysis" | "damageMarker" | "telemetryData" | "inspectionReview" | "alert" | "auditLog" | "uploadSession" | "uploadedPart" | "outboxEvent" | "workspace" | "project" | "projectMember" | "driverAssignment"
+    modelProps: "user" | "unit" | "inspection" | "inspectionStep" | "mediaFile" | "aIAnalysis" | "damageMarker" | "damageAuditLog" | "telemetryData" | "inspectionReview" | "alert" | "auditLog" | "uploadSession" | "uploadedPart" | "outboxEvent" | "workspace" | "project" | "projectMember" | "driverAssignment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -936,6 +937,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.DamageMarkerCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.DamageMarkerCountAggregateOutputType> | number
+        }
+      }
+    }
+    DamageAuditLog: {
+      payload: Prisma.$DamageAuditLogPayload<ExtArgs>
+      fields: Prisma.DamageAuditLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DamageAuditLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DamageAuditLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>
+        }
+        findFirst: {
+          args: Prisma.DamageAuditLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DamageAuditLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>
+        }
+        findMany: {
+          args: Prisma.DamageAuditLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>[]
+        }
+        create: {
+          args: Prisma.DamageAuditLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>
+        }
+        createMany: {
+          args: Prisma.DamageAuditLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DamageAuditLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>[]
+        }
+        delete: {
+          args: Prisma.DamageAuditLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>
+        }
+        update: {
+          args: Prisma.DamageAuditLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.DamageAuditLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DamageAuditLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DamageAuditLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.DamageAuditLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DamageAuditLogPayload>
+        }
+        aggregate: {
+          args: Prisma.DamageAuditLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDamageAuditLog>
+        }
+        groupBy: {
+          args: Prisma.DamageAuditLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DamageAuditLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DamageAuditLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DamageAuditLogCountAggregateOutputType> | number
         }
       }
     }
@@ -1906,14 +1981,40 @@ export const DamageMarkerScalarFieldEnum = {
   damageType: 'damageType',
   severity: 'severity',
   description: 'description',
+  location: 'location',
   videoTimestamp: 'videoTimestamp',
   boundingBox: 'boundingBox',
   isNewDamage: 'isNewDamage',
   createdAt: 'createdAt',
+  source: 'source',
+  verificationStatus: 'verificationStatus',
+  verificationReason: 'verificationReason',
+  originalSeverity: 'originalSeverity',
+  originalLocation: 'originalLocation',
+  originalDescription: 'originalDescription',
+  editedAt: 'editedAt',
+  editedById: 'editedById',
+  deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   projectId: 'projectId'
 } as const
 
 export type DamageMarkerScalarFieldEnum = (typeof DamageMarkerScalarFieldEnum)[keyof typeof DamageMarkerScalarFieldEnum]
+
+
+export const DamageAuditLogScalarFieldEnum = {
+  id: 'id',
+  damageMarkerId: 'damageMarkerId',
+  inspectionId: 'inspectionId',
+  actorId: 'actorId',
+  action: 'action',
+  before: 'before',
+  after: 'after',
+  createdAt: 'createdAt',
+  projectId: 'projectId'
+} as const
+
+export type DamageAuditLogScalarFieldEnum = (typeof DamageAuditLogScalarFieldEnum)[keyof typeof DamageAuditLogScalarFieldEnum]
 
 
 export const TelemetryDataScalarFieldEnum = {
@@ -2339,6 +2440,48 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'DamageSource'
+ */
+export type EnumDamageSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DamageSource'>
+    
+
+
+/**
+ * Reference to a field of type 'DamageSource[]'
+ */
+export type ListEnumDamageSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DamageSource[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DamageVerificationStatus'
+ */
+export type EnumDamageVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DamageVerificationStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'DamageVerificationStatus[]'
+ */
+export type ListEnumDamageVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DamageVerificationStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DamageAuditAction'
+ */
+export type EnumDamageAuditActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DamageAuditAction'>
+    
+
+
+/**
+ * Reference to a field of type 'DamageAuditAction[]'
+ */
+export type ListEnumDamageAuditActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DamageAuditAction[]'>
+    
+
+
+/**
  * Reference to a field of type 'ReviewDecision'
  */
 export type EnumReviewDecisionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReviewDecision'>
@@ -2509,6 +2652,7 @@ export type GlobalOmitConfig = {
   mediaFile?: Prisma.MediaFileOmit
   aIAnalysis?: Prisma.AIAnalysisOmit
   damageMarker?: Prisma.DamageMarkerOmit
+  damageAuditLog?: Prisma.DamageAuditLogOmit
   telemetryData?: Prisma.TelemetryDataOmit
   inspectionReview?: Prisma.InspectionReviewOmit
   alert?: Prisma.AlertOmit

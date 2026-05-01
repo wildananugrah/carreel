@@ -323,6 +323,7 @@ export type InspectionWhereInput = {
   steps?: Prisma.InspectionStepListRelationFilter
   reviews?: Prisma.InspectionReviewListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
+  damageAuditLogs?: Prisma.DamageAuditLogListRelationFilter
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
 }
 
@@ -351,6 +352,7 @@ export type InspectionOrderByWithRelationInput = {
   steps?: Prisma.InspectionStepOrderByRelationAggregateInput
   reviews?: Prisma.InspectionReviewOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
+  damageAuditLogs?: Prisma.DamageAuditLogOrderByRelationAggregateInput
   project?: Prisma.ProjectOrderByWithRelationInput
 }
 
@@ -382,6 +384,7 @@ export type InspectionWhereUniqueInput = Prisma.AtLeast<{
   steps?: Prisma.InspectionStepListRelationFilter
   reviews?: Prisma.InspectionReviewListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
+  damageAuditLogs?: Prisma.DamageAuditLogListRelationFilter
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
 }, "id" | "linkedInspectionId">
 
@@ -454,6 +457,7 @@ export type InspectionCreateInput = {
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -479,6 +483,7 @@ export type InspectionUncheckedCreateInput = {
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionUpdateInput = {
@@ -502,6 +507,7 @@ export type InspectionUpdateInput = {
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -527,6 +533,7 @@ export type InspectionUncheckedUpdateInput = {
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionCreateManyInput = {
@@ -841,6 +848,20 @@ export type InspectionUpdateOneRequiredWithoutStepsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.InspectionUpdateToOneWithWhereWithoutStepsInput, Prisma.InspectionUpdateWithoutStepsInput>, Prisma.InspectionUncheckedUpdateWithoutStepsInput>
 }
 
+export type InspectionCreateNestedOneWithoutDamageAuditLogsInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutDamageAuditLogsInput, Prisma.InspectionUncheckedCreateWithoutDamageAuditLogsInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutDamageAuditLogsInput
+  connect?: Prisma.InspectionWhereUniqueInput
+}
+
+export type InspectionUpdateOneRequiredWithoutDamageAuditLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.InspectionCreateWithoutDamageAuditLogsInput, Prisma.InspectionUncheckedCreateWithoutDamageAuditLogsInput>
+  connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutDamageAuditLogsInput
+  upsert?: Prisma.InspectionUpsertWithoutDamageAuditLogsInput
+  connect?: Prisma.InspectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InspectionUpdateToOneWithWhereWithoutDamageAuditLogsInput, Prisma.InspectionUpdateWithoutDamageAuditLogsInput>, Prisma.InspectionUncheckedUpdateWithoutDamageAuditLogsInput>
+}
+
 export type InspectionCreateNestedOneWithoutReviewsInput = {
   create?: Prisma.XOR<Prisma.InspectionCreateWithoutReviewsInput, Prisma.InspectionUncheckedCreateWithoutReviewsInput>
   connectOrCreate?: Prisma.InspectionCreateOrConnectWithoutReviewsInput
@@ -933,6 +954,7 @@ export type InspectionCreateWithoutDriverInput = {
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -957,6 +979,7 @@ export type InspectionUncheckedCreateWithoutDriverInput = {
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutDriverInput = {
@@ -1028,6 +1051,7 @@ export type InspectionCreateWithoutUnitInput = {
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -1052,6 +1076,7 @@ export type InspectionUncheckedCreateWithoutUnitInput = {
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutUnitInput = {
@@ -1100,6 +1125,7 @@ export type InspectionCreateWithoutLinkedFromInput = {
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -1124,6 +1150,7 @@ export type InspectionUncheckedCreateWithoutLinkedFromInput = {
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutLinkedFromInput = {
@@ -1151,6 +1178,7 @@ export type InspectionCreateWithoutLinkedInspectionInput = {
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -1175,6 +1203,7 @@ export type InspectionUncheckedCreateWithoutLinkedInspectionInput = {
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutLinkedInspectionInput = {
@@ -1213,6 +1242,7 @@ export type InspectionUpdateWithoutLinkedFromInput = {
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -1237,6 +1267,7 @@ export type InspectionUncheckedUpdateWithoutLinkedFromInput = {
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionUpsertWithoutLinkedInspectionInput = {
@@ -1270,6 +1301,7 @@ export type InspectionUpdateWithoutLinkedInspectionInput = {
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -1294,6 +1326,7 @@ export type InspectionUncheckedUpdateWithoutLinkedInspectionInput = {
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionCreateWithoutStepsInput = {
@@ -1316,6 +1349,7 @@ export type InspectionCreateWithoutStepsInput = {
   linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -1340,6 +1374,7 @@ export type InspectionUncheckedCreateWithoutStepsInput = {
   linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutStepsInput = {
@@ -1378,6 +1413,7 @@ export type InspectionUpdateWithoutStepsInput = {
   linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -1402,6 +1438,119 @@ export type InspectionUncheckedUpdateWithoutStepsInput = {
   linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+}
+
+export type InspectionCreateWithoutDamageAuditLogsInput = {
+  id?: string
+  tripType: $Enums.TripType
+  status?: $Enums.InspectionStatus
+  startedAt?: Date | string
+  completedAt?: Date | string | null
+  latitude?: number | null
+  longitude?: number | null
+  signatureKey?: string | null
+  signerName?: string | null
+  signedAt?: Date | string | null
+  driverComment?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  driver: Prisma.UserCreateNestedOneWithoutInspectionsInput
+  unit?: Prisma.UnitCreateNestedOneWithoutInspectionsInput
+  linkedInspection?: Prisma.InspectionCreateNestedOneWithoutLinkedFromInput
+  linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
+  steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
+  reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
+}
+
+export type InspectionUncheckedCreateWithoutDamageAuditLogsInput = {
+  id?: string
+  driverId: string
+  unitId?: string | null
+  tripType: $Enums.TripType
+  status?: $Enums.InspectionStatus
+  linkedInspectionId?: string | null
+  startedAt?: Date | string
+  completedAt?: Date | string | null
+  latitude?: number | null
+  longitude?: number | null
+  signatureKey?: string | null
+  signerName?: string | null
+  signedAt?: Date | string | null
+  driverComment?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projectId: string
+  linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
+  steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
+  reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+}
+
+export type InspectionCreateOrConnectWithoutDamageAuditLogsInput = {
+  where: Prisma.InspectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.InspectionCreateWithoutDamageAuditLogsInput, Prisma.InspectionUncheckedCreateWithoutDamageAuditLogsInput>
+}
+
+export type InspectionUpsertWithoutDamageAuditLogsInput = {
+  update: Prisma.XOR<Prisma.InspectionUpdateWithoutDamageAuditLogsInput, Prisma.InspectionUncheckedUpdateWithoutDamageAuditLogsInput>
+  create: Prisma.XOR<Prisma.InspectionCreateWithoutDamageAuditLogsInput, Prisma.InspectionUncheckedCreateWithoutDamageAuditLogsInput>
+  where?: Prisma.InspectionWhereInput
+}
+
+export type InspectionUpdateToOneWithWhereWithoutDamageAuditLogsInput = {
+  where?: Prisma.InspectionWhereInput
+  data: Prisma.XOR<Prisma.InspectionUpdateWithoutDamageAuditLogsInput, Prisma.InspectionUncheckedUpdateWithoutDamageAuditLogsInput>
+}
+
+export type InspectionUpdateWithoutDamageAuditLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
+  status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  driver?: Prisma.UserUpdateOneRequiredWithoutInspectionsNestedInput
+  unit?: Prisma.UnitUpdateOneWithoutInspectionsNestedInput
+  linkedInspection?: Prisma.InspectionUpdateOneWithoutLinkedFromNestedInput
+  linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
+  steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
+  reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
+}
+
+export type InspectionUncheckedUpdateWithoutDamageAuditLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  unitId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tripType?: Prisma.EnumTripTypeFieldUpdateOperationsInput | $Enums.TripType
+  status?: Prisma.EnumInspectionStatusFieldUpdateOperationsInput | $Enums.InspectionStatus
+  linkedInspectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  signatureKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  driverComment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
+  steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
+  reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionCreateWithoutReviewsInput = {
@@ -1424,6 +1573,7 @@ export type InspectionCreateWithoutReviewsInput = {
   linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -1448,6 +1598,7 @@ export type InspectionUncheckedCreateWithoutReviewsInput = {
   linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutReviewsInput = {
@@ -1486,6 +1637,7 @@ export type InspectionUpdateWithoutReviewsInput = {
   linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -1510,6 +1662,7 @@ export type InspectionUncheckedUpdateWithoutReviewsInput = {
   linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionCreateWithoutAuditLogsInput = {
@@ -1532,6 +1685,7 @@ export type InspectionCreateWithoutAuditLogsInput = {
   linkedFrom?: Prisma.InspectionCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
   project: Prisma.ProjectCreateNestedOneWithoutInspectionsInput
 }
 
@@ -1556,6 +1710,7 @@ export type InspectionUncheckedCreateWithoutAuditLogsInput = {
   linkedFrom?: Prisma.InspectionUncheckedCreateNestedOneWithoutLinkedInspectionInput
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutAuditLogsInput = {
@@ -1594,6 +1749,7 @@ export type InspectionUpdateWithoutAuditLogsInput = {
   linkedFrom?: Prisma.InspectionUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -1618,6 +1774,7 @@ export type InspectionUncheckedUpdateWithoutAuditLogsInput = {
   linkedFrom?: Prisma.InspectionUncheckedUpdateOneWithoutLinkedInspectionNestedInput
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionCreateWithoutProjectInput = {
@@ -1641,6 +1798,7 @@ export type InspectionCreateWithoutProjectInput = {
   steps?: Prisma.InspectionStepCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionUncheckedCreateWithoutProjectInput = {
@@ -1664,6 +1822,7 @@ export type InspectionUncheckedCreateWithoutProjectInput = {
   steps?: Prisma.InspectionStepUncheckedCreateNestedManyWithoutInspectionInput
   reviews?: Prisma.InspectionReviewUncheckedCreateNestedManyWithoutInspectionInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutInspectionInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedCreateNestedManyWithoutInspectionInput
 }
 
 export type InspectionCreateOrConnectWithoutProjectInput = {
@@ -1731,6 +1890,7 @@ export type InspectionUpdateWithoutDriverInput = {
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -1755,6 +1915,7 @@ export type InspectionUncheckedUpdateWithoutDriverInput = {
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionUncheckedUpdateManyWithoutDriverInput = {
@@ -1815,6 +1976,7 @@ export type InspectionUpdateWithoutUnitInput = {
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutInspectionsNestedInput
 }
 
@@ -1839,6 +2001,7 @@ export type InspectionUncheckedUpdateWithoutUnitInput = {
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionUncheckedUpdateManyWithoutUnitInput = {
@@ -1900,6 +2063,7 @@ export type InspectionUpdateWithoutProjectInput = {
   steps?: Prisma.InspectionStepUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionUncheckedUpdateWithoutProjectInput = {
@@ -1923,6 +2087,7 @@ export type InspectionUncheckedUpdateWithoutProjectInput = {
   steps?: Prisma.InspectionStepUncheckedUpdateManyWithoutInspectionNestedInput
   reviews?: Prisma.InspectionReviewUncheckedUpdateManyWithoutInspectionNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutInspectionNestedInput
+  damageAuditLogs?: Prisma.DamageAuditLogUncheckedUpdateManyWithoutInspectionNestedInput
 }
 
 export type InspectionUncheckedUpdateManyWithoutProjectInput = {
@@ -1953,12 +2118,14 @@ export type InspectionCountOutputType = {
   steps: number
   reviews: number
   auditLogs: number
+  damageAuditLogs: number
 }
 
 export type InspectionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   steps?: boolean | InspectionCountOutputTypeCountStepsArgs
   reviews?: boolean | InspectionCountOutputTypeCountReviewsArgs
   auditLogs?: boolean | InspectionCountOutputTypeCountAuditLogsArgs
+  damageAuditLogs?: boolean | InspectionCountOutputTypeCountDamageAuditLogsArgs
 }
 
 /**
@@ -1992,6 +2159,13 @@ export type InspectionCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.
   where?: Prisma.AuditLogWhereInput
 }
 
+/**
+ * InspectionCountOutputType without action
+ */
+export type InspectionCountOutputTypeCountDamageAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DamageAuditLogWhereInput
+}
+
 
 export type InspectionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2018,6 +2192,7 @@ export type InspectionSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   steps?: boolean | Prisma.Inspection$stepsArgs<ExtArgs>
   reviews?: boolean | Prisma.Inspection$reviewsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Inspection$auditLogsArgs<ExtArgs>
+  damageAuditLogs?: boolean | Prisma.Inspection$damageAuditLogsArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.InspectionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspection"]>
@@ -2099,6 +2274,7 @@ export type InspectionInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   steps?: boolean | Prisma.Inspection$stepsArgs<ExtArgs>
   reviews?: boolean | Prisma.Inspection$reviewsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Inspection$auditLogsArgs<ExtArgs>
+  damageAuditLogs?: boolean | Prisma.Inspection$damageAuditLogsArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.InspectionCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -2125,6 +2301,7 @@ export type $InspectionPayload<ExtArgs extends runtime.Types.Extensions.Internal
     steps: Prisma.$InspectionStepPayload<ExtArgs>[]
     reviews: Prisma.$InspectionReviewPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
+    damageAuditLogs: Prisma.$DamageAuditLogPayload<ExtArgs>[]
     project: Prisma.$ProjectPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -2546,6 +2723,7 @@ export interface Prisma__InspectionClient<T, Null = never, ExtArgs extends runti
   steps<T extends Prisma.Inspection$stepsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$stepsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InspectionStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.Inspection$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InspectionReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.Inspection$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  damageAuditLogs<T extends Prisma.Inspection$damageAuditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Inspection$damageAuditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DamageAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   project<T extends Prisma.ProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -3120,6 +3298,30 @@ export type Inspection$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
+}
+
+/**
+ * Inspection.damageAuditLogs
+ */
+export type Inspection$damageAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DamageAuditLog
+   */
+  select?: Prisma.DamageAuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DamageAuditLog
+   */
+  omit?: Prisma.DamageAuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DamageAuditLogInclude<ExtArgs> | null
+  where?: Prisma.DamageAuditLogWhereInput
+  orderBy?: Prisma.DamageAuditLogOrderByWithRelationInput | Prisma.DamageAuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.DamageAuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DamageAuditLogScalarFieldEnum | Prisma.DamageAuditLogScalarFieldEnum[]
 }
 
 /**

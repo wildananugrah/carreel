@@ -53,6 +53,11 @@ export type AIAnalysis = Prisma.AIAnalysisModel
  */
 export type DamageMarker = Prisma.DamageMarkerModel
 /**
+ * Model DamageAuditLog
+ * 
+ */
+export type DamageAuditLog = Prisma.DamageAuditLogModel
+/**
  * Model TelemetryData
  * 
  */
