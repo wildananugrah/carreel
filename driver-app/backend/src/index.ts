@@ -17,6 +17,7 @@ import {
   GeminiProvider,
   GeminiStubProvider,
 } from "./providers/gemini.provider";
+import { GeminiDamagePhotoVerificationProvider } from "./providers/gemini-damage-photo-verification.provider";
 import { MinIOProvider } from "./providers/minio.provider";
 import { PgBossQueueProvider } from "./providers/pgboss-queue.provider";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
@@ -85,12 +86,12 @@ const aiProvider = process.env.GEMINI_API_KEY
     )
   : new GeminiStubProvider();
 
-// Phase 2: stub provider — Phase 3 replaces this with the Gemini-backed
-// implementation that runs screen-capture detection + vehicle identity
-// match on the driver's evidence photo. Keeping it as a stub for now so
-// edit/delete flows can be exercised without a real Gemini call.
-const damagePhotoVerificationProvider =
-  new DamagePhotoVerificationStubProvider();
+// Driver-added damage photo verification: real Gemini-backed when AI is
+// enabled, stub (always-PASS) otherwise so the dev/test flow without a
+// Gemini API key still functions end-to-end.
+const damagePhotoVerificationProvider = process.env.GEMINI_API_KEY
+  ? new GeminiDamagePhotoVerificationProvider(aiProvider, logger)
+  : new DamagePhotoVerificationStubProvider();
 
 const notificationProvider = new WebSocketNotificationProvider(
   process.env.WEBSOCKET_URL ?? "http://localhost:3003",

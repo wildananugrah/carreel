@@ -19,7 +19,7 @@ Branch: `feat/damage-audit-trail`. Driver-editable AI-detected damages with anti
 
 - [x] Phase 1 — schema migration
 - [x] Phase 2 — backend service + repositories
-- [ ] Phase 3 — AI verification prompt + result type
+- [x] Phase 3 — AI verification prompt + result type
 - [ ] Phase 4 — backend routes
 - [ ] Phase 5 — driver frontend
 - [ ] Phase 6 — planner frontend
@@ -152,3 +152,67 @@ When `verificationProvider` returns `FAILED_*`, the damage row IS persisted (wit
 ### Pending for Phase 4
 
 - `damageEditingService` is wired but unused (silenced via `biome-ignore`). Phase 4 wires it into `POST/PATCH/DELETE /api/inspections/:id/damages` routes and the lint suppression goes away.
+
+---
+
+## Phase 3 — AI verification (real Gemini-backed) ✅
+
+Files added:
+
+| File | Purpose |
+|---|---|
+| `utils/prompts.ts` (additions) | New `DamageEvidencePhotoVerificationResult` interface + `buildDamageEvidencePhotoVerificationPrompt(vehicle)` builder |
+| `providers/gemini-damage-photo-verification.provider.ts` | Real Gemini-backed `IDamagePhotoVerificationProvider` implementation |
+
+Files updated:
+
+- `index.ts` — composition root selects `GeminiDamagePhotoVerificationProvider` when `GEMINI_API_KEY` is set, otherwise the stub.
+
+### Prompt design
+
+`buildDamageEvidencePhotoVerificationPrompt(vehicle)` bundles two gating checks into a single Gemini call:
+
+1. **Screen-recapture detection** — reuses the existing `SCREEN_CAPTURE_IMAGE` protocol (rounded corners, uniform black padding, photo-within-a-photo, etc.).
+2. **Vehicle identity check** — lighter than `buildBodyVerificationPrompt` because we have only one still photo. Uses an explicit evidence-tier table:
+   - **Primary** (logo / badge) — must match brand or it's a Mismatch
+   - **Secondary** (anatomical features) — must match
+   - **Tertiary** (color + body silhouette) — only flags Mismatch on clear contradiction (wrong color AND wrong body style)
+   - **None** (extreme close-up) — `identityConfidence = "Uncertain"`, NOT a mismatch (we don't penalize legitimate close-ups; the body-inspection video already covered global identity)
+3. **UNKNOWN-target policy** — if the inspection's unit has no model, only verify the brand. Trim/year differences are not mismatches.
+
+Result interface:
+
+```ts
+export interface DamageEvidencePhotoVerificationResult {
+  analysis: string;
+  screenRecaptureDetected: boolean;
+  vehicleMismatchDetected: boolean;
+  identityConfidence: "High" | "Low" | "Uncertain";
+  reasoning: string;
+}
+```
+
+### Provider behavior
+
+`GeminiDamagePhotoVerificationProvider.verify(input)`:
+
+1. Build the prompt pair from the vehicle context.
+2. Call `aiProvider.analyzeImage(base64, mimeType, userPrompt, systemInstruction, VERIFICATION_AI_CONFIG)` where the AI config is `thinkingLevel: HIGH, maxOutputTokens: 8000, temperature: 0.0` — deterministic gating decision.
+3. Parse the JSON response (strip markdown fences if present).
+4. Hard gate ordering — screen-capture takes priority over vehicle mismatch over pass:
+   - `screenRecaptureDetected: true` → `FAILED_SCREEN_CAPTURE`
+   - `vehicleMismatchDetected: true` → `FAILED_VEHICLE_MISMATCH`
+   - both false → `PASSED`
+5. On AI call error or JSON parse error → `FAILED_OTHER` with the underlying error message as the reason.
+
+### Cost
+
+- One image input at default Gemini resolution (~258 tokens) + ~2,500 tokens of system instruction = ~2,800 input tokens per verification call.
+- Plus thinking-budget output tokens (HIGH thinking).
+- Latency ~5–15s per call. The driver waits inline.
+
+### Validation
+
+- `bunx tsc --noEmit` — clean
+- `bun run lint` — clean (5 pre-existing test-file warnings, unchanged)
+- `bun test` — 189 pass / 2 pre-existing failures unchanged
