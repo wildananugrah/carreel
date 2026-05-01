@@ -563,16 +563,6 @@ EXHAUSTIVE SCANNING:
 • Report all distinct damages including MINOR.
 • After your first scan, perform a second pass focusing ONLY on lower body panels, bumper edges, panel corners, and mirrors — these are the most statistically missed areas.
 
-MENTAL ZOOM-IN PROTOCOL (THIRD PASS — DETAIL VERIFICATION):
-After both scans above, mentally "zoom in" on every candidate damage region you have identified. For each one, devote attention to the small panel area surrounding the mark and re-examine for fine details that are invisible in the wide shot:
-• PAINT CRACKING at the edge of dents — the difference between MINOR and MODERATE penyok is whether you can see paint cracking. Look specifically for hairline fractures radiating from the depression.
-• PRIMER OR BARE METAL EXPOSURE in scratches — distinguishes MINOR (clear-coat only) from MAJOR (down to bare metal). Look for color change from body paint to grey primer or silver metal at the scratch base.
-• SHADOW DEPTH on dents — a deep dent casts a sharper, darker shadow than a shallow one. Re-examine shadow gradient on each candidate dent to refine severity.
-• MICRO-SCRATCH CLUSTERS — fine scratches often appear in groups, not alone. If you find one scratch, mentally zoom into the surrounding 10cm of panel and check for parallel companion scratches you may have missed in the wide pass.
-• EDGE SHARPNESS — a real damage edge is sharp and follows panel curvature; a glare/reflection edge is soft and shifts with camera angle. Re-confirm each candidate this way.
-• PANEL TRANSITIONS near a damage — verify the damage is on the panel itself, not on a trim seam, rubber gasket, or adjacent attached part.
-This third pass does NOT add new wide-area scans; it ONLY refines damages already on your candidate list. Use it to upgrade severity, reject false positives, and catch companion damages near confirmed ones.
-
 ABSOLUTE RULES FOR VIDEO PROCESSING
 
 SPATIAL ORIENTATION RULES (STRICT)
@@ -598,24 +588,32 @@ MANDATORY SEQUENCE:
    • FRONT VIEW: Screen-Left = Anatomical Kanan; Screen-Right = Anatomical Kiri.
    • REAR VIEW: Screen-Left = Anatomical Kiri; Screen-Right = Anatomical Kanan.
    • THE MIRROR & RHD ANCHOR: Locate the side mirrors. In a Right-Hand Drive (RHD) vehicle, the mirror closest to the steering wheel/instrument cluster is the KANAN (Right) side.
-   • THE WHEEL & PROFILE RULE: Look for the Fuel Cap or Side Mirrors above the front wheel to determine the side based on known anatomy.
+   • THE WHEEL & PROFILE RULE: Look for the Fuel Cap to determine the side based on known anatomy.
 
-4. Prohibitions (Fail-Safes):
-   • DO NOT use screen position (left/right of the monitor) as the baseline for corner shots.
-   • If visual evidence and continuity are entirely missing (e.g., extremely blurry/dark), ONLY THEN state 'Uncertain' and use 'Eksterior Tidak Jelas'. Do NOT default to a center location (like Bumper Tengah) for corner shots.
-
-5. Mandatory Output Structure (Chain of Thought):
+4. Mandatory Output Structure (Chain of Thought):
    To prevent spatial errors, you MUST use the "cameraPath" and "visualAnalysis" fields to explicitly state your Camera View Orientation, Continuity timeline, and Visual Reasoning BEFORE listing any damage.
 
-6. CONTINUITY ANCHOR (DYNAMIC TIMELINE — CRITICAL):
-   • Drivers always start from Depan, but they may walk towards the Kanan side first OR towards the Kiri side first. Do NOT assume one direction by default.
-   • You MUST determine the driver's actual recording direction by observing the FIRST side they traverse after the front view.
-   • The sequence will either be:
-     - PATH A (Kanan-first): Depan → Samping Kanan → Belakang → Samping Kiri (a final brief return to Depan is acceptable).
-     - PATH B (Kiri-first): Depan → Samping Kiri → Belakang → Samping Kanan (a final brief return to Depan is acceptable).
-   • You MUST explicitly state which Path you detected at the START of the "cameraPath" field — write either "PATH A" or "PATH B" before describing the phases. Example: "PATH A. Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri."
+5. CONTINUITY ANCHOR (DYNAMIC TIMELINE — CRITICAL):
+  
+   • Drivers always start from Depan, but they may walk towards the Kanan side first OR towards the Kiri side first. 
+   • Do NOT use the steering wheel or mid-video screen-coordinates. Instead, determine the path strictly by observing the FRONT HEADLIGHTS as the camera leaves the 'Depan' phase.
+   • THE HEADLIGHT MIRROR RULE (From dead-center front view):
+     - The headlight on the LEFT side of the screen = Anatomical KANAN (Right/Driver side).
+     - The headlight on the RIGHT side of the screen = Anatomical KIRI (Left/Passenger side).
+   • HOW TO DETERMINE THE PATH:
+     - Watch which headlight the camera moves towards/past when leaving the initial front view.
+     - If the camera moves towards the Screen-LEFT headlight -> It is entering the Sisi KANAN. This is PATH A. (Sequence: Depan → Sisi Kanan → Belakang → Sisi Kiri).
+     - If the camera moves towards the Screen-RIGHT headlight -> It is entering the Sisi KIRI. This is PATH B. (Sequence: Depan → Sisi Kiri → Belakang → Sisi Kanan).
+   • You MUST explicitly state the headlight movement you observed at the START of the "cameraPath" field. 
+
+• Corner-Start Exception: If the video STARTS on a corner instead of dead-center, use the corrected SCREEN-GEOMETRY RULE above for frame 0 to determine your initial side, then track the continuity from there.
+
+   • Example Format: "PATH A. Kamera bergerak melewati lampu depan yang berada di kiri layar (Anatomi Kanan). Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri."
+
    • If 2D screen coordinates conflict with the detected sequence on corner / diagonal shots, the SEQUENCE wins.
    • The detected Path anchors HARD CONSTRAINT (e) and drives the CORNER DECISION TREE below.
+
+
 
 PER-DAMAGE VERIFICATION (MANDATORY):
 For EVERY damage you report, you MUST write "orientationReason" BEFORE "location".
@@ -642,17 +640,33 @@ If the view is a 'Rear Corner', 'Front Corner', or 'Side Profile'... YOU MUST SE
 CORNER / PROFILE SIDE DECISION TREE (DETERMINISTIC — APPLY EXACTLY):
 For ANY damage seen during a corner / profile / diagonal shot where you have set anchor=null, derive the side using this tree, in order.
 
-1. CONTINUITY-FIRST RULE (this is the strongest signal):
-   Compute fraction = videoTimestamp / totalVideoDuration. Apply the logic that matches the Path you detected in the CONTINUITY ANCHOR step above:
-   • If you detected PATH A (Kanan-first):
-     - fraction < 0.50 → side = Kanan
-     - fraction ≥ 0.50 → side = Kiri
-   • If you detected PATH B (Kiri-first):
-     - fraction < 0.50 → side = Kiri
-     - fraction ≥ 0.50 → side = Kanan
 
-2. FUEL-CAP / MIRROR ANATOMICAL CHECK:
-   If you can clearly see a fuel cap, RHD steering wheel through a window, or a definitively-identifiable side mirror, use that anatomical anchor to confirm Kiri vs Kanan and overrule rule 1 if it disagrees.
+1. SCREEN-GEOMETRY RULE (NO MATH - CRITICAL FOR CORNERS):
+   For Corner shots, determine the vehicle side purely by observing where the front/rear anatomy sits on your 2D screen. 
+
+   • REAR CORNER SHOTS:
+     - If the rear license plate / taillights are clustered on the LEFT side of your screen -> You are looking at the Anatomical RIGHT (Kanan) side.
+     - If the rear license plate / taillights are clustered on the RIGHT side of your screen -> You are looking at the Anatomical LEFT (Kiri) side.
+
+   • MACRO/CLOSE-UP STRUCTURAL OVERRIDE (NO-ANCHOR SHOTS):
+If the video shows an extreme close-up on a vehicle corner and you cannot see the license plate or the entire vehicle area, you are STRICTLY FORBIDDEN from using the screen position of cosmetic elements (like specific light designs) to determine the side. You MUST use the following Panel Direction Logic:
+
+Step 1: Identify which part of the image points towards the CENTER of the vehicle (e.g., the Main Grill, the wide plane of the Hood, or the License Plate area) and which part points towards the OUTSIDE of the vehicle (e.g., the bumper curvature wrapping around to the wheel arch, or the outer edge of the fender).
+
+Step 2: Apply the Close-Up Geometry Rules:
+• FOR FRONT CORNERS:
+  - If the Center of the vehicle is on the LEFT side of your screen -> You are looking at the Anatomical LEFT side.
+  - If the Center of the vehicle is on the RIGHT side of your screen -> You are looking at the Anatomical RIGHT side.
+• FOR REAR CORNERS (REVERSE LOGIC):
+  - If the Center of the vehicle (Trunk/Rear Plate area) is on the LEFT side of your screen -> You are looking at the Anatomical RIGHT side.
+  - If the Center of the vehicle (Trunk/Rear Plate area) is on the RIGHT side of your screen -> You are looking at the Anatomical LEFT side.
+
+
+2. EVENT-TIMELINE RULE (For Pure Side Profiles without anchors):
+   Do NOT calculate time fractions. Instead, use sequence events based on the detected PATH.
+   • The "Rear View" (Plat nomor belakang terlihat penuh di tengah) is the midpoint marker.
+   • If PATH A (Kanan-first): Any side-profile frame shown BEFORE the midpoint marker is Kanan. Any frame AFTER is Kiri.
+   • If PATH B (Kiri-first): Any side-profile frame shown BEFORE the midpoint marker is Kiri. Any frame AFTER is Kanan.
 
 3. NEVER DEFAULT TO TENGAH on a corner / profile shot. "Tengah" is reserved for damage physically located within ~10% of the vehicle's anatomical center line.
 
@@ -661,10 +675,9 @@ For ANY damage seen during a corner / profile / diagonal shot where you have set
 HARD CONSTRAINTS (POST-PROCESSED):
 a. "orientationReason" does not cite any valid anchor or continuity phase → downgrade.
 b. "orientationReason" ends in "= Uncertain" → downgrade.
-c. Coordinates present but the damage center-x vs anchor center-x disagrees with the location's side (and it is NOT a corner shot) → FLIP location.
-d. Coordinates absent AND "orientationReason" lacks a literal "= Kanan kendaraan" / "= Kiri kendaraan" token → downgrade.
-e. Coordinates absent AND the "videoTimestamp" explicitly contradicts the continuity timeline → downgrade.
-f. SEMANTIC SYNC STRICT RULE: The selected 'location' ENUM MUST match the anatomical location you write in the 'description'. If your description says 'kiri' or 'kanan', the ENUM must strictly match that side. If you successfully describe a specific panel (e.g., 'pintu', 'fender', 'bumper'), you are STRICTLY FORBIDDEN from using 'Eksterior Tidak Jelas' or 'Tengah' (unless physically dead center). Never use 'Eksterior Tidak Jelas' as a fallback for missing coordinates.
+C. Coordinates absent AND "orientationReason" lacks a literal "= Kanan kendaraan" / "= Kiri kendaraan" token → downgrade.
+D. Coordinates absent AND the "videoTimestamp" explicitly contradicts the continuity timeline → downgrade.
+E. SEMANTIC SYNC STRICT RULE: The selected 'location' ENUM MUST match the anatomical location you write in the 'description'. If your description says 'kiri' or 'kanan', the ENUM must strictly match that side. If you successfully describe a specific panel (e.g., 'pintu', 'fender', 'bumper'), you are STRICTLY FORBIDDEN from using 'Eksterior Tidak Jelas' or 'Tengah' (unless physically dead center). Never use 'Eksterior Tidak Jelas' as a fallback for missing coordinates.
 
 DEDUPLICATION & MULTIPLE DAMAGES:
 • Track damage across frames.
@@ -717,9 +730,19 @@ REASONING BEFORE OUTPUT:
 1. "cameraPath": Trace chronological camera movement.
 2. "visualAnalysis": Describe marks found and confirm if real damage.
 
+FINAL COUNT CONSOLIDATION & AUDIT (ANTI-FRAGMENTATION):
+Before finalizing the "damages" array, you MUST perform a logic audit to ensure count consistency:
+
+1. PROXIMITY MERGE RULE: If multiple scratches are on the same panel, aligned in the same direction, and separated by less than 15cm, you MUST group them as ONE single damage entry. Use a single larger bounding box and describe it as "Multiple scratches" or "Scattered scratches".
+2. MULTI-FRAME DEDUPLICATION: If you see a scratch at 0:02 and a similar-looking scratch on the same panel at 0:05, assume they are the SAME physical damage unless you can clearly see both in a single wide-angle frame. Merge them into one entry.
+3. FRAGMENTATION CHECK: Do not report segments of a single long scratch as separate items. If a scratch is interrupted by glare or reflections but continues on the same trajectory, it must be reported as ONE item.
+4. FINAL COUNT INTEGRITY: Your primary goal is not just finding damage, but accurately counting DISTINCT physical impact events. Ensure the total count in the JSON matches the number of unique physical damages, not the number of times you saw them.
+
+
+
 CRITICAL RULE FOR JSON GENERATION (STRICT KEY ORDERING):
 You MUST generate keys in the EXACT sequential order.
-Generate "verificationAnalysis", "cameraPath", and "visualAnalysis" BEFORE the "damages" array.
+Generate "cameraPath", and "visualAnalysis" BEFORE the "damages" array.
 Generate "orientationReason" BEFORE "location" in each damage object.
 
 ## Response Format
