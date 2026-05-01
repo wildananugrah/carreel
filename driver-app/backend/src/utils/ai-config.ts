@@ -54,8 +54,8 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
     thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
     temperature: 0.2,
-    topP: 0.1,
-    topK: 1,
+    topP: 0.95,
+    topK: 40,
     // HIGH = 280 tokens/frame (vs 70 at LOW). 4× per-frame cost on the
     // damage-detection pass, which is what gives the model real visual
     // resolution to see fine scratches, paint cracking, and dent shadow
