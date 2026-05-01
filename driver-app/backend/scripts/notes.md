@@ -18,6 +18,11 @@ bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carre
   --make Wuling --model "Air EV" --color "Pink" \
   --license-plate "B 1261 SNO"
 
+bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body2.mp4 \
+  --runs 2 \
+  --make Wuling --model "Air EV" --color "Pink" \
+  --license-plate "B 1261 SNO"
+
 bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body6-left.mp4 \
   --runs 2 \
   --make Wuling --model "Air EV" --color "Pink" \
@@ -32,6 +37,11 @@ bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carre
   --runs 2 \
   --make Toyota --model "Yaris" --color "White" \
   --license-plate "B 1570 DKO"
+
+bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body9.mp4 \
+  --runs 5 \
+  --make Daihatsu --model "Siegra" --color "Black" \
+  --license-plate "B 1824 WIQ"
 
 # Mirror production exactly (Pass 1 + Pass 2 + side guard)
 bun run scripts/compare-body-damages.ts /path/to/video.mp4 --with-verification

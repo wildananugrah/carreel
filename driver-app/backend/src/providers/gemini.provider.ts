@@ -2,11 +2,21 @@ import {
   createPartFromUri,
   createUserContent,
   GoogleGenAI,
+  MediaResolution,
 } from "@google/genai";
 import type {
   AIAnalysisOptions,
   IAIProvider,
 } from "../interfaces/providers/ai.provider.interface";
+
+const MEDIA_RESOLUTION_MAP: Record<
+  NonNullable<AIAnalysisOptions["mediaResolution"]>,
+  MediaResolution
+> = {
+  LOW: MediaResolution.MEDIA_RESOLUTION_LOW,
+  MEDIUM: MediaResolution.MEDIA_RESOLUTION_MEDIUM,
+  HIGH: MediaResolution.MEDIA_RESOLUTION_HIGH,
+};
 
 function buildModelConfig(
   systemInstruction: string | undefined,
@@ -30,6 +40,9 @@ function buildModelConfig(
   }
   if (options?.thinkingLevel) {
     config.thinkingConfig = { thinkingLevel: options.thinkingLevel };
+  }
+  if (options?.mediaResolution) {
+    config.mediaResolution = MEDIA_RESOLUTION_MAP[options.mediaResolution];
   }
   if (systemInstruction) {
     config.systemInstruction = systemInstruction;

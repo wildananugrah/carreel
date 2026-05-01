@@ -31,6 +31,19 @@ export interface AIAnalysisOptions {
    * structured tasks. Leave undefined to inherit the SDK default.
    */
   topK?: number;
+  /**
+   * How much visual detail Gemini extracts per media input. Maps to the
+   * SDK's `mediaResolution` enum.
+   *  - LOW    — 70 tokens per video frame (~64 px tile). Cheapest. Default.
+   *  - MEDIUM — also 70 tokens/frame for video; for PDFs, 560 tokens/page.
+   *             Web UI default for most tasks.
+   *  - HIGH   — 280 tokens/frame for video, 1120 tokens for an image.
+   *             Use ONLY when the task needs fine detail: dense OCR, small
+   *             features in a video frame (e.g. fine scratches, paint
+   *             cracking at dent edges). Costs roughly 4× LOW for video.
+   * Leave undefined to inherit Gemini's default.
+   */
+  mediaResolution?: "LOW" | "MEDIUM" | "HIGH";
 }
 
 export interface IAIProvider {

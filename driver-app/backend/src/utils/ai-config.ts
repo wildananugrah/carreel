@@ -22,6 +22,13 @@
  *    (~0.95 / ~64). Set explicitly to match web-UI parity (web UI uses
  *    topP=0.95, topK=40) or to narrow sampling for more "obvious"
  *    output on structured tasks.
+ *  - mediaResolution: how much visual detail Gemini extracts per media
+ *    input. LOW (default) = 70 tokens/video-frame, fine for OCR plates and
+ *    odometers; HIGH = 280 tokens/video-frame (4× the cost) and is needed
+ *    to see fine-grain features like hairline scratches, paint cracking
+ *    at dent edges, and bare-metal exposure inside a scratch. Use HIGH
+ *    only on BODY_INSPECTION where the detail gain is task-critical;
+ *    leaving image OCR steps at default is a deliberate cost decision.
  */
 import type { StepType } from "../generated/prisma";
 import type { AIAnalysisOptions } from "../interfaces/providers/ai.provider.interface";
@@ -46,9 +53,16 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   BODY_INSPECTION: {
     thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
-    temperature: 0.1,
+    temperature: 1.0,
     topP: 0.95,
     topK: 40,
+    // HIGH = 280 tokens/frame (vs 70 at LOW). 4× per-frame cost on the
+    // damage-detection pass, which is what gives the model real visual
+    // resolution to see fine scratches, paint cracking, and dent shadow
+    // gradients. Without this, the prompt's "mental zoom-in" guidance can
+    // only redirect attention; with this, it can actually access more
+    // pixel detail.
+    mediaResolution: "HIGH",
   },
 };
 
