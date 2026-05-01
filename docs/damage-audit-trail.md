@@ -20,7 +20,7 @@ Branch: `feat/damage-audit-trail`. Driver-editable AI-detected damages with anti
 - [x] Phase 1 — schema migration
 - [x] Phase 2 — backend service + repositories
 - [x] Phase 3 — AI verification prompt + result type
-- [ ] Phase 4 — backend routes
+- [x] Phase 4 — backend routes
 - [ ] Phase 5 — driver frontend
 - [ ] Phase 6 — planner frontend
 - [ ] Phase 7 — tests
@@ -152,6 +152,65 @@ When `verificationProvider` returns `FAILED_*`, the damage row IS persisted (wit
 ### Pending for Phase 4
 
 - `damageEditingService` is wired but unused (silenced via `biome-ignore`). Phase 4 wires it into `POST/PATCH/DELETE /api/inspections/:id/damages` routes and the lint suppression goes away.
+
+---
+
+## Phase 4 — backend routes ✅
+
+Files added:
+
+| File | Purpose |
+|---|---|
+| `routes/damage.route.ts` | POST/PATCH/DELETE handlers, mounted under `/api/inspections` |
+
+Files updated:
+
+- `index.ts` — imports `createDamageRoutes`, mounts it under `/api/inspections` (Hono supports stacking multiple routers under the same prefix), removes the Phase 2 biome-ignore on `damageEditingService` since it's now used.
+
+### API surface
+
+#### `POST /api/inspections/:inspectionId/damages`
+
+**Multipart form-data**:
+
+| Field | Type | Notes |
+|---|---|---|
+| `photo` | `File` | The driver's evidence photo (JPEG/PNG, single image) |
+| `metadata` | `string` (JSON-encoded) | `{ damageType, severity, description, location?, isNewDamage? }` |
+
+**`metadata` shape**:
+
+```jsonc
+{
+  "damageType": "goresan",                    // required, string
+  "severity": "MINOR" | "MODERATE" | "MAJOR", // required, enum
+  "description": "Lecet panjang...",          // required, string
+  "location": "Bumper Depan Kanan",           // optional, string from enum
+  "isNewDamage": true                         // optional, boolean (default false)
+}
+```
+
+**Responses**:
+
+- `201 Created` — verification PASSED. Body: `{ status: "PASSED", damage: <DamageMarker> }`
+- `422 Unprocessable Entity` — verification FAILED. Body: `{ status: "FAILED_*", reason: <string>, damage: <DamageMarker> }`. Note that the damage row IS persisted with the FAILED status for fraud audit; the driver UI shows the reason and prompts a retry.
+- `400` — invalid multipart shape, missing required fields, invalid enum
+- `404` — inspection not found / not accessible to caller
+- `500` — internal error (caught by `app.onError` → generic message)
+
+#### `PATCH /api/inspections/:inspectionId/damages/:damageId`
+
+JSON body, any subset of `{ severity?, location?, description? }`. At least one must be provided. Snapshots the AI-original values into `originalSeverity / Location / Description` on the first edit only (subsequent edits keep the original). Returns the updated `DamageMarker` row.
+
+#### `DELETE /api/inspections/:inspectionId/damages/:damageId`
+
+Soft delete. Returns `204 No Content`. Sets `deletedAt`, `deletedById` on the row; planner queries still see it for fraud audit.
+
+### Phase-4 validation
+
+- `bunx tsc --noEmit` — clean
+- `bun run lint` — clean (5 pre-existing test-file warnings, unchanged)
+- `bun test` — 189 pass / 2 pre-existing failures unchanged
 
 ---
 

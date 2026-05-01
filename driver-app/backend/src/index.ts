@@ -37,6 +37,7 @@ import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
 import { createAuthRoutes } from "./routes/auth.route";
 import { createChunkedUploadRoutes } from "./routes/chunked-upload.route";
+import { createDamageRoutes } from "./routes/damage.route";
 import { createHealthRoutes } from "./routes/health.route";
 import { createInspectionRoutes } from "./routes/inspection.route";
 import { createMediaRoutes } from "./routes/media.route";
@@ -153,7 +154,6 @@ const mediaStreamService = new MediaStreamService(
   mediaFileRepository,
 );
 
-// biome-ignore lint/correctness/noUnusedVariables: wired by Phase 4 routes
 const damageEditingService = new DamageEditingService(
   inspectionRepository,
   mediaFileRepository,
@@ -235,6 +235,13 @@ app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
   createInspectionRoutes(inspectionService, uploadService, authMiddleware),
+);
+// Damage editing endpoints are namespaced under /api/inspections — Hono
+// supports stacking multiple routers under the same prefix; routes inside
+// this router declare paths starting with `/:inspectionId/damages...`.
+app.route(
+  "/api/inspections",
+  createDamageRoutes(damageEditingService, authMiddleware),
 );
 app.route("/api/upload", createUploadRoutes(uploadService, authMiddleware));
 app.route("/api/media", createMediaRoutes(uploadService, mediaStreamService));
