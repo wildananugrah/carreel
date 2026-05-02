@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AIResultView } from "../components/inspection/AIResultView";
 import { ComparisonView } from "../components/inspection/ComparisonView";
+import { DamageAuditPanel } from "../components/inspection/DamageAuditPanel";
 import { MediaThumbnail } from "../components/inspection/MediaThumbnail";
 import { ReviewForm } from "../components/inspection/ReviewForm";
 import { ReviewHistory } from "../components/inspection/ReviewHistory";
@@ -308,6 +309,13 @@ export function InspectionDetail() {
               onClose={() => setShowComparison(false)}
             />
           )}
+
+          {/* Damage audit panel — surfaces driver edits, deletes, manual
+              additions and verification-failures for fraud review. */}
+          <Card>
+            <h2 className="text-lg font-semibold text-white mb-3">Audit Kerusakan</h2>
+            <DamageAuditPanel inspectionId={inspection.id} />
+          </Card>
         </div>
 
         {/* Sidebar */}

@@ -22,7 +22,7 @@ Branch: `feat/damage-audit-trail`. Driver-editable AI-detected damages with anti
 - [x] Phase 3 — AI verification prompt + result type
 - [x] Phase 4 — backend routes
 - [x] Phase 5 — driver frontend
-- [ ] Phase 6 — planner frontend
+- [x] Phase 6 — planner frontend
 - [ ] Phase 7 — tests
 
 ---
@@ -266,6 +266,59 @@ Driver flow:
 
 - Backend: `bunx tsc --noEmit` clean, `bun run lint` clean (5 pre-existing test warnings), `bun test` 189 pass / 2 pre-existing failures unchanged.
 - Frontend: `bunx tsc --noEmit` clean. `bun run lint` shows 2 pre-existing errors (`PhotoCapture.tsx:544` non-null assertion, `VideoReview.tsx:833` array-index key on the pre-trip damages map) — both unrelated to Phase 5 work.
+
+---
+
+## Phase 6 — planner frontend ✅
+
+### Backend additions (planner-app)
+
+| File | Purpose |
+|---|---|
+| `interfaces/repositories/damage-audit.repository.interface.ts` | `IDamageAuditRepository.findByInspectionId(scope, inspectionId)` returns `{ damages, auditLogsByDamageId }` |
+| `repositories/damage-audit.repository.ts` | Prisma impl that includes soft-deleted + FAILED rows (planner needs the full picture for fraud audit) |
+
+Files updated:
+
+- `routes/inspection.route.ts` — new `GET /api/inspections/:id/damages-audit` endpoint
+- `index.ts` — wires `DamageAuditRepository` and threads it into `createInspectionRoutes`
+
+### Frontend additions (planner-app)
+
+| File | Purpose |
+|---|---|
+| `lib/damage-audit-api.ts` | API client for the audit-view endpoint |
+| `components/inspection/DamageAuditPanel.tsx` | The audit-trail panel |
+
+Files updated:
+
+- `pages/InspectionDetail.tsx` — mounts `<DamageAuditPanel inspectionId={...} />` in a new "Audit Kerusakan" card
+
+### What the planner sees per inspection
+
+A summary header with five badges showing counts:
+
+- **AI** — number of AI-detected damages
+- **Manual** — driver-added damages (yellow if >0)
+- **Edited** — damages where the driver changed the AI value (yellow if >0)
+- **Deleted** — soft-deleted damages (yellow if >0)
+- **Verifikasi gagal** — `FAILED_*` rows (red if >0 — the strongest fraud signal)
+
+Then a list of every damage row, each with:
+
+- The current values: damageType, severity (Ringan/Sedang/Berat), location, description.
+- Badges: `Manual` (driver-added), `Edited`, `Deleted`, and a verification-status badge (`PASSED` green, `FAILED_*` red with the specific reason).
+- Evidence photo thumbnail for `DRIVER_ADDED` damages — pulled from `/api/media/<mediaFileId>/url`.
+- Original-vs-current diff in a yellow card when the damage was edited (shows only the fields that actually changed).
+- AI's verification reason in a red card when `FAILED_*`.
+- Collapsible "Riwayat" section listing every audit-log entry with action + timestamp.
+
+Soft-deleted rows render at 60% opacity so they're visually distinct.
+
+### Validation
+
+- Backend (planner): `bunx tsc --noEmit` clean
+- Frontend (planner): `bunx tsc --noEmit` clean. New files lint clean. Pre-existing lint errors in unrelated files (Header.tsx fragments, VehicleDetailPanel.tsx non-null assertions, App.tsx import order) are unchanged.
 
 ---
 

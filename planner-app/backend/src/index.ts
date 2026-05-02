@@ -15,6 +15,7 @@ import { WinstonLogger } from "./providers/winston-logger.provider";
 import { AdminUserRepository } from "./repositories/admin-user.repository";
 import { AlertRepository } from "./repositories/alert.repository";
 import { AuditLogRepository } from "./repositories/audit-log.repository";
+import { DamageAuditRepository } from "./repositories/damage-audit.repository";
 import { DashboardRepository } from "./repositories/dashboard.repository";
 import { DriverAssignmentRepository } from "./repositories/driver-assignment.repository";
 import { InspectionRepository } from "./repositories/inspection.repository";
@@ -86,6 +87,7 @@ const notificationProvider = new WebSocketNotificationProvider(
 // Repositories
 const userRepository = new UserRepository(prisma);
 const inspectionRepository = new InspectionRepository(prisma);
+const damageAuditRepository = new DamageAuditRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const alertRepository = new AlertRepository(prisma);
 const auditLogRepository = new AuditLogRepository(prisma);
@@ -185,7 +187,12 @@ app.route("/health", createHealthRoutes(prisma, storageProvider));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
-  createInspectionRoutes(inspectionService, authMiddleware, storageProvider),
+  createInspectionRoutes(
+    inspectionService,
+    authMiddleware,
+    storageProvider,
+    damageAuditRepository,
+  ),
 );
 app.route("/api/alerts", createAlertRoutes(alertService, authMiddleware));
 app.route(

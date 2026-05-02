@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import type { InspectionStatus } from "../generated/prisma";
 import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IDamageAuditRepository } from "../interfaces/repositories/damage-audit.repository.interface";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
 import type { AppEnv } from "../types/dto";
 import { SYSTEM_SCOPE } from "../utils/system-scope";
@@ -10,6 +11,7 @@ export function createInspectionRoutes(
   inspectionService: IInspectionService,
   authMiddleware: MiddlewareHandler<AppEnv>,
   storageProvider: IStorageProvider,
+  damageAuditRepository: IDamageAuditRepository,
 ) {
   const app = new Hono<AppEnv>();
 
@@ -60,6 +62,19 @@ export function createInspectionRoutes(
     const id = c.req.param("id");
     const inspection = await inspectionService.getById(scope, id);
     return c.json(inspection);
+  });
+
+  // GET /api/inspections/:id/damages-audit
+  // Returns the full damage audit view: every damage row (including
+  // soft-deleted and FAILED_*) plus the audit log entries grouped by
+  // damageMarkerId. Used by the planner UI to surface fraud signals
+  // (driver edits, deletes, repeated verification failures).
+  app.get("/:id/damages-audit", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const id = c.req.param("id");
+    const view = await damageAuditRepository.findByInspectionId(scope, id);
+    return c.json(view);
   });
 
   // GET /api/inspections/:id/comparison
