@@ -23,7 +23,9 @@ Branch: `feat/damage-audit-trail`. Driver-editable AI-detected damages with anti
 - [x] Phase 4 — backend routes
 - [x] Phase 5 — driver frontend
 - [x] Phase 6 — planner frontend
-- [ ] Phase 7 — tests
+- [x] Phase 7 — tests
+
+**All phases complete.** Branch ready for review and merge.
 
 ---
 
@@ -319,6 +321,47 @@ Soft-deleted rows render at 60% opacity so they're visually distinct.
 
 - Backend (planner): `bunx tsc --noEmit` clean
 - Frontend (planner): `bunx tsc --noEmit` clean. New files lint clean. Pre-existing lint errors in unrelated files (Header.tsx fragments, VehicleDetailPanel.tsx non-null assertions, App.tsx import order) are unchanged.
+
+---
+
+## Phase 7 — tests ✅
+
+Files added:
+
+| File | Coverage |
+|---|---|
+| `tests/services/damage-editing.service.test.ts` | 6 unit tests for `DamageEditingService` |
+
+### Test cases
+
+1. **`addDriverDamage` on PASSED** — verifies the service uploads to MinIO with the `DAMAGE_EVIDENCE/` key prefix, persists a damage row with `source: DRIVER_ADDED, verificationStatus: PASSED`, and writes a CREATED audit log entry with `before: null` and a non-null `after`.
+2. **`addDriverDamage` on FAILED** — verifies the FAILED row IS persisted (the fraud-audit policy: every attempt is recorded), with `verificationStatus: FAILED_VEHICLE_MISMATCH` and the AI's reason in `verificationReason`. The CREATED audit entry is still written.
+3. **`addDriverDamage` rejects non-DRAFT** — when the inspection is `AI_COMPLETE`, the service throws `HttpError` (badRequest).
+4. **`editDamage` snapshots AI-original on first edit only** — confirms `originalSeverity / Location / Description` get set on the first edit, and that subsequent edits do NOT overwrite them (so the planner always sees the AI value). Two EDITED audit logs.
+5. **`deleteDamage` soft-deletes** — confirms `deletedAt` and `deletedById` are set, and a DELETED audit log is written with the row snapshot in `before` and `null` in `after`.
+6. **`listForDriver` excludes FAILED_*** — confirms the driver-side list filter drops `FAILED_*` rows. (The repo-level `excludeDeleted` flag is tested implicitly via the integration assumption — see notes below.)
+
+### Mock strategy
+
+The test uses `setup()` to wire:
+
+- `inspectionRepo.findById` — returns a fixed DRAFT inspection
+- `damageMarkerRepository` — backed by an in-memory `Map<string, DamageMarker>` so each test starts with a clean store
+- `damageAuditLogRepository` — collects audit log entries into an array for direct assertion
+- `IDamagePhotoVerificationProvider` — returns whatever outcome `setVerificationOutcome` was last called with (toggled per test)
+- `IStorageProvider.upload` — records the MinIO key in an array
+
+This lets tests assert on:
+
+1. side effects (uploads happened with the right prefix)
+2. row state (damage row written with the right fields)
+3. audit-log writes (action + before/after snapshots match expectations)
+
+### Validation
+
+- `bunx tsc --noEmit` — clean
+- `bun run lint` — clean (5 pre-existing test-file warnings unchanged)
+- `bun test` — **195 pass / 2 fail** — the 2 failures are the same pre-existing `InspectionService` failures from before this work; the 6 new damage-editing tests all pass.
 
 ---
 
