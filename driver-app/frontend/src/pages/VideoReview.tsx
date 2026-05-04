@@ -824,16 +824,20 @@ export function VideoReview() {
               {unitData.damages.length > 0 && (
                 <div className="divide-y divide-[#2a2a2a]">
                   {unitData.damages.map((d, idx) => {
-                    // Always show a timestamp (default 0:00) so manual
-                    // damages and AI damages with no recorded timestamp
-                    // both render a seek button.
+                    // Manual (driver-added) damages came from a static
+                    // photo and have no meaningful video timestamp — hide
+                    // it. AI damages always show one (default 0:00 when
+                    // the model omitted videoTimestamp).
+                    const isManual = d.source === "DRIVER_ADDED";
                     const seekTime =
                       typeof d.videoTimestamp === "number"
                         ? d.videoTimestamp
                         : 0;
                     const canSeek =
+                      !isManual &&
                       DAMAGE_SEEK_ENABLED &&
                       unitData.bodyVideoMediaId != null;
+                    const showStaticTimestamp = !isManual && !canSeek;
                     return (
                       <div
                         key={`pre-${d.area}-${d.location}-${idx}`}
@@ -876,7 +880,7 @@ export function VideoReview() {
                             <p className="text-[10px] text-neutral-400 mb-0.5">{d.location}</p>
                           )}
                           <p className="text-xs text-neutral-500">{d.description}</p>
-                          {!canSeek && (
+                          {showStaticTimestamp && (
                             <p className="text-[10px] text-neutral-600 mt-0.5">
                               {"\u23F1"} {formatVideoTimestamp(seekTime)}
                             </p>
@@ -1101,17 +1105,21 @@ export function VideoReview() {
                   <div className="divide-y divide-[#2a2a2a]">
                     {displayFlags.map((flag, idx) => {
                       const postVideoMediaId = bodyStep.mediaFiles[0]?.id;
-                      // Always show a timestamp on every damage card, even
-                      // when the AI omitted videoTimestamp or the damage
-                      // was driver-added from a static photo. Default to 0
-                      // (start of video) so the seek button takes the
-                      // viewer to the beginning of the body video.
+                      // Driver-added (Manual) damages have no meaningful
+                      // video timestamp — they came from a static photo,
+                      // not a video frame — so we hide the timestamp
+                      // entirely. AI damages always show one (default 0:00
+                      // when the model omitted videoTimestamp).
+                      const isManual = flag.source === "DRIVER_ADDED";
                       const seekTime =
                         typeof flag.videoTimestamp === "number"
                           ? flag.videoTimestamp
                           : 0;
                       const canSeek =
-                        DAMAGE_SEEK_ENABLED && postVideoMediaId != null;
+                        !isManual &&
+                        DAMAGE_SEEK_ENABLED &&
+                        postVideoMediaId != null;
+                      const showStaticTimestamp = !isManual && !canSeek;
                       return (
                         <div
                           key={flag.damageId ?? `legacy-${flag.area}-${flag.location}-${idx}`}
@@ -1161,7 +1169,7 @@ export function VideoReview() {
                               <p className="text-[10px] text-neutral-400 mb-0.5">{flag.location}</p>
                             )}
                             <p className="text-xs text-neutral-500">{flag.description}</p>
-                            {!canSeek && (
+                            {showStaticTimestamp && (
                               <p className="text-[10px] text-neutral-600 mt-0.5">
                                 {"\u23F1"} {formatVideoTimestamp(seekTime)}
                               </p>
