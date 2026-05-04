@@ -130,6 +130,7 @@ const inspectionService = new InspectionService(
   logger,
   jobQueue,
   aiEnabled,
+  damageMarkerRepository,
 );
 
 const uploadService = new UploadService(

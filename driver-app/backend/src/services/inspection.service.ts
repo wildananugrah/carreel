@@ -5,6 +5,7 @@ import type {
 } from "../generated/prisma";
 import type { IJobQueue } from "../interfaces/providers/job-queue.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
+import type { IDamageMarkerRepository } from "../interfaces/repositories/damage-marker.repository.interface";
 import type {
   IInspectionRepository,
   InspectionListItem,
@@ -31,6 +32,7 @@ export class InspectionService implements IInspectionService {
     private logger: ILogger,
     private jobQueue?: IJobQueue,
     private aiEnabled = true,
+    private damageMarkerRepository?: IDamageMarkerRepository,
   ) {}
 
   async create(
@@ -508,24 +510,53 @@ export class InspectionService implements IInspectionService {
     const odometerKm =
       speedoData?.odometerKm != null ? Number(speedoData.odometerKm) : null;
 
-    // Extract body damages from BODY_INSPECTION AI analysis
+    // Extract body damages — source-of-truth is the damage_markers table
+    // (driver edits/deletes/manual additions need to flow through to the
+    // post-trip pre-check view). Filter to non-deleted + PASSED/NOT_REQUIRED
+    // so the planner-only fraud signals (FAILED_*, deleted) stay hidden
+    // from the post-trip driver view, matching the driver-side list rules.
     const bodyStep = preTrip.steps.find(
       (s) => s.stepType === "BODY_INSPECTION",
     );
-    const bodyData = bodyStep?.aiAnalysis?.structuredData as Record<
-      string,
-      unknown
-    > | null;
-    const rawDamages =
-      (bodyData?.damages as Array<Record<string, unknown>>) ?? [];
-    const damages: PreTripDamage[] = rawDamages.map((d) => ({
-      area: (d.damageType as string) || (d.area as string) || "Unknown",
-      location: (d.location as string) || "",
-      severity: (d.severity as string) || "MINOR",
-      description: (d.description as string) || "",
-      confidence: Number(d.confidence ?? d.confidenceScore ?? 0),
-      videoTimestamp: d.videoTimestamp as number | undefined,
-    }));
+    let damages: PreTripDamage[];
+    if (this.damageMarkerRepository) {
+      const rows = await this.damageMarkerRepository.findByInspectionId(
+        scope,
+        preTrip.id,
+        { excludeDeleted: true },
+      );
+      damages = rows
+        .filter(
+          (d) =>
+            d.verificationStatus === "PASSED" ||
+            d.verificationStatus === "NOT_REQUIRED",
+        )
+        .map((d) => ({
+          area: d.damageType,
+          location: d.location ?? "",
+          severity: d.severity,
+          description: d.description,
+          confidence: 1,
+          videoTimestamp: d.videoTimestamp ?? undefined,
+        }));
+    } else {
+      // Fallback for tests / older wiring that didn't pass the
+      // damage-marker repo: read straight from the AI structuredData.
+      const bodyData = bodyStep?.aiAnalysis?.structuredData as Record<
+        string,
+        unknown
+      > | null;
+      const rawDamages =
+        (bodyData?.damages as Array<Record<string, unknown>>) ?? [];
+      damages = rawDamages.map((d) => ({
+        area: (d.damageType as string) || (d.area as string) || "Unknown",
+        location: (d.location as string) || "",
+        severity: (d.severity as string) || "MINOR",
+        description: (d.description as string) || "",
+        confidence: Number(d.confidence ?? d.confidenceScore ?? 0),
+        videoTimestamp: d.videoTimestamp as number | undefined,
+      }));
+    }
 
     // Extract body video media ID
     const bodyVideoMediaId = bodyStep?.mediaFiles?.[0]?.id ?? null;
