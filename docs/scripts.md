@@ -292,3 +292,114 @@ curl http://localhost:3001/api/media/b6501217-adb5-49b9-9218-8f6faca344ea/url
 
 curl https://driver.carreel.id/api/media/b6501217-adb5-49b9-9218-8f6faca344ea/url
 ```
+
+## Unit history by license plate
+
+Lookup a vehicle's full inspection + damage history given its license plate. Useful for fraud auditing — surfaces total inspections, AI-detected vs driver-added damages, verification failures, edits, and soft-deletes.
+
+Replace `<PLATE>` with the plate (e.g. `B 1824 WIQ`).
+
+### Aggregate summary (one row per unit)
+
+```bash
+psql "postgresql://carreel:carreel_secret@localhost:5432/carreel_driver" -c "
+SELECT
+  u.\"licensePlate\",
+  u.make,
+  u.model,
+  u.color,
+  u.vin,
+  u.\"lastKnownKm\"                                                                AS last_km,
+  COUNT(DISTINCT i.id)                                                             AS total_inspections,
+  COUNT(DISTINCT i.id) FILTER (WHERE i.\"tripType\" = 'PRE_TRIP')                   AS pre_trips,
+  COUNT(DISTINCT i.id) FILTER (WHERE i.\"tripType\" = 'POST_TRIP')                  AS post_trips,
+  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'AI'
+                        AND d.\"verificationStatus\" IN ('PASSED','NOT_REQUIRED'))  AS damages_by_ai,
+  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'DRIVER_ADDED'
+                        AND d.\"verificationStatus\" = 'PASSED')                    AS damages_manual,
+  COUNT(d.id) FILTER (WHERE d.\"verificationStatus\" LIKE 'FAILED_%')               AS verification_failures,
+  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NOT NULL)                            AS soft_deleted,
+  COUNT(d.id) FILTER (WHERE d.\"editedAt\" IS NOT NULL)                             AS edited
+FROM units u
+LEFT JOIN inspections i        ON i.\"unitId\" = u.id
+LEFT JOIN inspection_steps s   ON s.\"inspectionId\" = i.id
+LEFT JOIN media_files m        ON m.\"stepId\" = s.id
+LEFT JOIN damage_markers d     ON d.\"mediaFileId\" = m.id
+WHERE u.\"licensePlate\" = '<PLATE>'
+GROUP BY u.id, u.\"licensePlate\", u.make, u.model, u.color, u.vin, u.\"lastKnownKm\";
+"
+```
+
+| Column | Meaning |
+| --- | --- |
+| `total_inspections` | Distinct inspections (pre + post combined) |
+| `pre_trips` / `post_trips` | Breakdown by trip type |
+| `damages_by_ai` | Active AI-detected damages (excludes deleted/failed) |
+| `damages_manual` | Active driver-added damages that passed AI verification |
+| `verification_failures` | `FAILED_*` rows — fraud signal (driver tried to add but AI rejected) |
+| `soft_deleted` | Rows the driver deleted — fraud signal (driver hid an AI detection) |
+| `edited` | Damages where the driver changed AI's severity / location / description |
+
+### Per-inspection breakdown
+
+One row per inspection (newest first), so you can see how the damage profile evolves trip-by-trip and where fraud signals cluster:
+
+```bash
+psql "postgresql://carreel:carreel_secret@localhost:5432/carreel_driver" -c "
+SELECT
+  i.id                                                                              AS inspection_id,
+  i.\"createdAt\"                                                                    AS created_at,
+  i.\"tripType\",
+  i.status,
+  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'AI'
+                        AND d.\"verificationStatus\" IN ('PASSED','NOT_REQUIRED'))  AS ai_damages,
+  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'DRIVER_ADDED'
+                        AND d.\"verificationStatus\" = 'PASSED')                    AS manual_damages,
+  COUNT(d.id) FILTER (WHERE d.\"verificationStatus\" LIKE 'FAILED_%')               AS verification_failures,
+  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NOT NULL)                            AS deleted_damages,
+  COUNT(d.id) FILTER (WHERE d.\"editedAt\" IS NOT NULL)                             AS edited_damages
+FROM inspections i
+JOIN units u                  ON u.id = i.\"unitId\"
+LEFT JOIN inspection_steps s  ON s.\"inspectionId\" = i.id
+LEFT JOIN media_files m       ON m.\"stepId\" = s.id
+LEFT JOIN damage_markers d    ON d.\"mediaFileId\" = m.id
+WHERE u.\"licensePlate\" = '<PLATE>'
+GROUP BY i.id, i.\"createdAt\", i.\"tripType\", i.status
+ORDER BY i.\"createdAt\" DESC;
+"
+```
+
+### Full damage detail listing
+
+One row per damage (no aggregation), with every audit field exposed:
+
+```bash
+psql "postgresql://carreel:carreel_secret@localhost:5432/carreel_driver" -c "
+SELECT
+  i.id                AS inspection_id,
+  i.\"tripType\",
+  i.\"createdAt\"      AS inspection_at,
+  d.id                AS damage_id,
+  d.source,
+  d.\"damageType\",
+  d.severity,
+  d.location,
+  d.description,
+  d.\"videoTimestamp\",
+  d.\"verificationStatus\",
+  d.\"verificationReason\",
+  d.\"editedAt\",
+  d.\"deletedAt\",
+  d.\"originalSeverity\",
+  d.\"originalLocation\"
+FROM damage_markers d
+JOIN media_files m       ON m.id = d.\"mediaFileId\"
+JOIN inspection_steps s  ON s.id = m.\"stepId\"
+JOIN inspections i       ON i.id = s.\"inspectionId\"
+JOIN units u             ON u.id = i.\"unitId\"
+WHERE u.\"licensePlate\" = '<PLATE>'
+ORDER BY i.\"createdAt\" DESC, d.\"createdAt\" ASC;
+"
+```
+
+The `source`, `verificationStatus`, `editedAt`, `deletedAt`, and `originalSeverity` / `originalLocation` columns make every fraud signal explicit per row.
