@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
+import { damageApi, type DamageMarker } from "../lib/damage-api";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
 import type { InspectionDetail as InspectionDetailType, InspectionStatus } from "../lib/types";
@@ -19,6 +20,10 @@ interface DamageFlag {
   confidence?: number;
   videoTimestamp?: number | null;
   videoMediaId?: string | null;
+  source?: "AI" | "DRIVER_ADDED";
+  /** For DRIVER_ADDED damages, the MediaFile id of the captured photo
+   * (so the AI Alert panel can render a clickable photo preview). */
+  evidenceMediaId?: string | null;
 }
 
 interface BodyInspectionData {
@@ -200,6 +205,14 @@ export function InspectionDetail() {
   const [activeTab, setActiveTab] = useState<Tab>("pre");
   const [endingTrip, setEndingTrip] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Damage markers for the two inspections — used by AI Alert tab to
+  // surface DRIVER_ADDED (Manual) damages with their evidence photo.
+  // Falls back to aiAnalysis.structuredData.damages when these are still
+  // loading or fail to fetch.
+  const [thisMarkers, setThisMarkers] = useState<DamageMarker[] | null>(null);
+  const [linkedMarkers, setLinkedMarkers] = useState<DamageMarker[] | null>(
+    null,
+  );
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -231,6 +244,28 @@ export function InspectionDetail() {
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
+
+  // Fetch damage markers for this inspection (and the linked counterpart
+  // when available) so the AI Alert tab can render Manual damages with a
+  // clickable evidence photo. Non-critical: failures fall back to the
+  // legacy aiAnalysis.structuredData source.
+  useEffect(() => {
+    if (!id) return;
+    damageApi
+      .list(id)
+      .then((r) => setThisMarkers(r.damages))
+      .catch(() => setThisMarkers([]));
+  }, [id]);
+  useEffect(() => {
+    if (!linkedDetail?.id) {
+      setLinkedMarkers(null);
+      return;
+    }
+    damageApi
+      .list(linkedDetail.id)
+      .then((r) => setLinkedMarkers(r.damages))
+      .catch(() => setLinkedMarkers([]));
+  }, [linkedDetail?.id]);
 
   // Poll for AI results when inspection is in PENDING_AI status
   useEffect(() => {
@@ -324,20 +359,47 @@ export function InspectionDetail() {
   const preBodyVideoId = preInspection ? getVideoMediaId(preInspection) : null;
   const postBodyVideoId = postInspection ? getVideoMediaId(postInspection) : null;
 
-  const preFlags: DamageFlag[] = [
-    ...(preBodyAI?.damages ?? []).map((d) => ({
-      ...d,
-      videoMediaId: preBodyVideoId,
-    })),
-    ...(preInspection ? (getUnitAI(preInspection)?.damages ?? []) : []),
-  ];
-  const postFlags: DamageFlag[] = [
-    ...(postBodyAI?.damages ?? []).map((d) => ({
-      ...d,
-      videoMediaId: postBodyVideoId,
-    })),
-    ...(postInspection ? (getUnitAI(postInspection)?.damages ?? []) : []),
-  ];
+  // Markers for the pre/post inspections (whichever one is in the URL
+  // is `thisMarkers`; the linked counterpart is `linkedMarkers`).
+  const preMarkers = isPreTrip ? thisMarkers : linkedMarkers;
+  const postMarkers = isPreTrip ? linkedMarkers : thisMarkers;
+
+  function markerToFlag(d: DamageMarker, videoMediaId: string | null): DamageFlag {
+    return {
+      damageType: d.damageType,
+      severity: d.severity,
+      description: d.description,
+      location: d.location ?? undefined,
+      isNewDamage: d.isNewDamage,
+      confidence: undefined,
+      videoTimestamp: d.videoTimestamp,
+      videoMediaId,
+      source: d.source,
+      evidenceMediaId: d.source === "DRIVER_ADDED" ? d.mediaFileId : null,
+    };
+  }
+
+  // Prefer the damage_markers list (includes Manual damages) over the
+  // legacy aiAnalysis.structuredData. Fall back to AI source while the
+  // markers are still loading or if the fetch failed.
+  const preFlags: DamageFlag[] = preMarkers
+    ? preMarkers.map((d) => markerToFlag(d, preBodyVideoId))
+    : [
+        ...(preBodyAI?.damages ?? []).map((d) => ({
+          ...d,
+          videoMediaId: preBodyVideoId,
+        })),
+        ...(preInspection ? (getUnitAI(preInspection)?.damages ?? []) : []),
+      ];
+  const postFlags: DamageFlag[] = postMarkers
+    ? postMarkers.map((d) => markerToFlag(d, postBodyVideoId))
+    : [
+        ...(postBodyAI?.damages ?? []).map((d) => ({
+          ...d,
+          videoMediaId: postBodyVideoId,
+        })),
+        ...(postInspection ? (getUnitAI(postInspection)?.damages ?? []) : []),
+      ];
   const totalAlerts = preFlags.length + postFlags.length;
 
   const statusLabel =
@@ -734,6 +796,11 @@ function AIAlertPanel({
     src: string;
     startTime: number;
   } | null>(null);
+  const [photoLightbox, setPhotoLightbox] = useState<string | null>(null);
+
+  const handleShowPhoto = (mediaId: string) => {
+    setPhotoLightbox(`/api/media/${mediaId}/url`);
+  };
 
   return (
     <>
@@ -788,6 +855,7 @@ function AIAlertPanel({
             });
           }
         }}
+        onShowPhoto={handleShowPhoto}
       />
 
       {/* POST-CHECK AI FLAGS */}
@@ -806,6 +874,7 @@ function AIAlertPanel({
               });
             }
           }}
+          onShowPhoto={handleShowPhoto}
         />
       )}
 
@@ -841,6 +910,15 @@ function AIAlertPanel({
           onClose={() => setSeekLightbox(null)}
         />
       )}
+
+      {photoLightbox && (
+        <MediaLightbox
+          src={photoLightbox}
+          type="image"
+          alt="Bukti kerusakan manual"
+          onClose={() => setPhotoLightbox(null)}
+        />
+      )}
     </>
   );
 }
@@ -853,6 +931,7 @@ function FlagSection({
   borderColor,
   labelColor,
   onSeek,
+  onShowPhoto,
 }: {
   label: string;
   flags: DamageFlag[];
@@ -860,6 +939,7 @@ function FlagSection({
   borderColor: string;
   labelColor: string;
   onSeek?: (flag: DamageFlag) => void;
+  onShowPhoto?: (mediaId: string) => void;
 }) {
   return (
     <div className="mb-3">
@@ -871,11 +951,18 @@ function FlagSection({
           </div>
         ) : (
           flags.map((flag, i) => {
+            const isManual = flag.source === "DRIVER_ADDED";
+            // Manual damages don't have a meaningful video timestamp;
+            // clicking the row opens the captured evidence photo instead.
+            const canShowPhoto =
+              isManual && onShowPhoto != null && flag.evidenceMediaId != null;
             const canSeek =
+              !isManual &&
               DAMAGE_SEEK_ENABLED &&
               onSeek != null &&
               flag.videoMediaId != null &&
               typeof flag.videoTimestamp === "number";
+            const isClickable = canSeek || canShowPhoto;
 
             const rowContent = (
               <>
@@ -883,9 +970,16 @@ function FlagSection({
                   {damageEmoji(flag.damageType)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white mb-0.5">
-                    {damageLabel(flag.damageType)}
-                  </p>
+                  <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                    <p className="text-sm font-bold text-white">
+                      {damageLabel(flag.damageType)}
+                    </p>
+                    {isManual && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">
+                        Manual
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-[#888] leading-relaxed break-words">
                     {flag.location ? `${flag.location} — ${flag.description}` : flag.description}
                   </p>
@@ -895,7 +989,32 @@ function FlagSection({
                     ▶ {formatVideoTimestamp(flag.videoTimestamp as number)}
                   </span>
                 )}
-                {!canSeek && flag.confidence != null && (
+                {canShowPhoto && (
+                  <span className="text-[10px] px-2 py-1 rounded-lg bg-yellow-400/20 text-yellow-300 font-bold shrink-0 flex items-center gap-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.8}
+                      stroke="currentColor"
+                      className="w-3.5 h-3.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"
+                      />
+                    </svg>
+                    Foto
+                  </span>
+                )}
+                {!isClickable && flag.confidence != null && (
                   <span className="text-xs px-2.5 py-1 rounded-lg bg-[#1a1a1a] text-[#C0C0C0] font-bold shrink-0">
                     {Math.round(flag.confidence * 100)}%
                   </span>
@@ -905,15 +1024,21 @@ function FlagSection({
 
             const rowClasses = `flex items-center gap-3 px-3.5 py-3 bg-[#141414] ${
               i < flags.length - 1 ? "border-b border-[#1a1a1a]" : ""
-            } ${canSeek ? "cursor-pointer hover:bg-[#1a1a1a] transition-colors active:bg-[#222222]" : ""}`;
+            } ${isClickable ? "cursor-pointer hover:bg-[#1a1a1a] transition-colors active:bg-[#222222]" : ""}`;
 
-            if (canSeek) {
+            if (isClickable) {
               return (
                 <button
                   // biome-ignore lint/suspicious/noArrayIndexKey: position disambiguates flags with identical damageType/severity/description
                   key={`${flag.damageType}-${flag.severity}-${flag.description}-${i}`}
                   type="button"
-                  onClick={() => onSeek?.(flag)}
+                  onClick={() => {
+                    if (canShowPhoto && flag.evidenceMediaId) {
+                      onShowPhoto?.(flag.evidenceMediaId);
+                    } else if (canSeek) {
+                      onSeek?.(flag);
+                    }
+                  }}
                   className={`${rowClasses} text-left w-full`}
                 >
                   {rowContent}
