@@ -1090,11 +1090,17 @@ export function VideoReview() {
                   <div className="divide-y divide-[#2a2a2a]">
                     {displayFlags.map((flag, idx) => {
                       const postVideoMediaId = bodyStep.mediaFiles[0]?.id;
+                      // Always show a timestamp on every damage card, even
+                      // when the AI omitted videoTimestamp or the damage
+                      // was driver-added from a static photo. Default to 0
+                      // (start of video) so the seek button takes the
+                      // viewer to the beginning of the body video.
+                      const seekTime =
+                        typeof flag.videoTimestamp === "number"
+                          ? flag.videoTimestamp
+                          : 0;
                       const canSeek =
-                        DAMAGE_SEEK_ENABLED &&
-                        postVideoMediaId != null &&
-                        typeof flag.videoTimestamp === "number" &&
-                        flag.videoTimestamp > 0;
+                        DAMAGE_SEEK_ENABLED && postVideoMediaId != null;
                       return (
                         <div
                           key={flag.damageId ?? `legacy-${flag.area}-${flag.location}-${idx}`}
@@ -1144,9 +1150,9 @@ export function VideoReview() {
                               <p className="text-[10px] text-neutral-400 mb-0.5">{flag.location}</p>
                             )}
                             <p className="text-xs text-neutral-500">{flag.description}</p>
-                            {!canSeek && flag.videoTimestamp != null && flag.videoTimestamp > 0 && (
+                            {!canSeek && (
                               <p className="text-[10px] text-neutral-600 mt-0.5">
-                                {"\u23F1"} {formatVideoTimestamp(flag.videoTimestamp)}
+                                {"\u23F1"} {formatVideoTimestamp(seekTime)}
                               </p>
                             )}
                           </div>
@@ -1157,11 +1163,11 @@ export function VideoReview() {
                               onClick={() =>
                                 setSeekLightbox({
                                   src: `/api/media/${postVideoMediaId}/stream`,
-                                  startTime: flag.videoTimestamp as number,
+                                  startTime: seekTime,
                                 })
                               }
                             >
-                              {"\u25B6"} {formatVideoTimestamp(flag.videoTimestamp as number)}
+                              {"\u25B6"} {formatVideoTimestamp(seekTime)}
                             </button>
                           )}
                           {flag.damageId && inspection?.status === "DRAFT" && (
