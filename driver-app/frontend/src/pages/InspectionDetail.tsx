@@ -848,10 +848,13 @@ function AIAlertPanel({
         borderColor="border-[#3a2800]"
         labelColor="text-[#F5C842]"
         onSeek={(flag) => {
-          if (flag.videoMediaId != null && typeof flag.videoTimestamp === "number") {
+          if (flag.videoMediaId != null) {
             setSeekLightbox({
               src: `/api/media/${flag.videoMediaId}/stream`,
-              startTime: flag.videoTimestamp,
+              startTime:
+                typeof flag.videoTimestamp === "number"
+                  ? flag.videoTimestamp
+                  : 0,
             });
           }
         }}
@@ -956,12 +959,18 @@ function FlagSection({
             // clicking the row opens the captured evidence photo instead.
             const canShowPhoto =
               isManual && onShowPhoto != null && flag.evidenceMediaId != null;
+            // For AI damages, fall back to 0:00 when the model omitted
+            // videoTimestamp so the seek button always renders. Tapping
+            // it opens the body video at the start.
+            const seekTime =
+              typeof flag.videoTimestamp === "number"
+                ? flag.videoTimestamp
+                : 0;
             const canSeek =
               !isManual &&
               DAMAGE_SEEK_ENABLED &&
               onSeek != null &&
-              flag.videoMediaId != null &&
-              typeof flag.videoTimestamp === "number";
+              flag.videoMediaId != null;
             const isClickable = canSeek || canShowPhoto;
 
             const rowContent = (
@@ -986,7 +995,7 @@ function FlagSection({
                 </div>
                 {canSeek && (
                   <span className="text-[10px] px-2 py-1 rounded-lg bg-yellow-400 text-black font-bold shrink-0">
-                    ▶ {formatVideoTimestamp(flag.videoTimestamp as number)}
+                    ▶ {formatVideoTimestamp(seekTime)}
                   </span>
                 )}
                 {canShowPhoto && (
