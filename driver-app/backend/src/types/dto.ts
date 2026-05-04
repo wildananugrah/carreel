@@ -217,6 +217,10 @@ export interface PreTripDamage {
   description: string;
   confidence: number;
   videoTimestamp?: number;
+  /** Provenance flag — present only when sourced from the damage_markers
+   * table (post Phase 5). The driver UI uses this to render a "Manual"
+   * badge on driver-added entries in the post-trip pre-check view. */
+  source?: "AI" | "DRIVER_ADDED";
 }
 
 export interface PreTripReferenceData {

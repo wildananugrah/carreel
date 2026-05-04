@@ -538,6 +538,7 @@ export class InspectionService implements IInspectionService {
           description: d.description,
           confidence: 1,
           videoTimestamp: d.videoTimestamp ?? undefined,
+          source: d.source,
         }));
     } else {
       // Fallback for tests / older wiring that didn't pass the

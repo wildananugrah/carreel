@@ -33,6 +33,7 @@ interface PreTripDamage {
   description: string;
   confidence: number;
   videoTimestamp?: number;
+  source?: "AI" | "DRIVER_ADDED";
 }
 
 interface PreTripUnitData {
@@ -823,11 +824,16 @@ export function VideoReview() {
               {unitData.damages.length > 0 && (
                 <div className="divide-y divide-[#2a2a2a]">
                   {unitData.damages.map((d, idx) => {
+                    // Always show a timestamp (default 0:00) so manual
+                    // damages and AI damages with no recorded timestamp
+                    // both render a seek button.
+                    const seekTime =
+                      typeof d.videoTimestamp === "number"
+                        ? d.videoTimestamp
+                        : 0;
                     const canSeek =
                       DAMAGE_SEEK_ENABLED &&
-                      unitData.bodyVideoMediaId != null &&
-                      typeof d.videoTimestamp === "number" &&
-                      d.videoTimestamp > 0;
+                      unitData.bodyVideoMediaId != null;
                     return (
                       <div
                         key={`pre-${d.area}-${d.location}-${idx}`}
@@ -843,7 +849,7 @@ export function VideoReview() {
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                             <p className="text-sm font-bold text-white">{damageLabel(d.area)}</p>
                             <span
                               className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
@@ -860,14 +866,19 @@ export function VideoReview() {
                                   ? "Sedang"
                                   : "Ringan"}
                             </span>
+                            {d.source === "DRIVER_ADDED" && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">
+                                Manual
+                              </span>
+                            )}
                           </div>
                           {d.location && (
                             <p className="text-[10px] text-neutral-400 mb-0.5">{d.location}</p>
                           )}
                           <p className="text-xs text-neutral-500">{d.description}</p>
-                          {!canSeek && d.videoTimestamp != null && d.videoTimestamp > 0 && (
+                          {!canSeek && (
                             <p className="text-[10px] text-neutral-600 mt-0.5">
-                              {"\u23F1"} {formatVideoTimestamp(d.videoTimestamp)}
+                              {"\u23F1"} {formatVideoTimestamp(seekTime)}
                             </p>
                           )}
                         </div>
@@ -878,11 +889,11 @@ export function VideoReview() {
                             onClick={() =>
                               setSeekLightbox({
                                 src: `/api/media/${unitData.bodyVideoMediaId}/stream`,
-                                startTime: d.videoTimestamp as number,
+                                startTime: seekTime,
                               })
                             }
                           >
-                            {"\u25B6"} {formatVideoTimestamp(d.videoTimestamp as number)}
+                            {"\u25B6"} {formatVideoTimestamp(seekTime)}
                           </button>
                         )}
                       </div>
