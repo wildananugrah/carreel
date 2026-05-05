@@ -141,3 +141,6 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
 ## Upcoming
 
 - [ ] Phase 11: Deployment (Docker images, CI/CD, cloud hosting)
+
+## enhancement / bugs
+- [ ]

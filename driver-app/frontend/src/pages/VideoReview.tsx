@@ -905,7 +905,7 @@ export function VideoReview() {
                             type="button"
                             aria-label="Lihat foto bukti"
                             onClick={() => setPhotoLightbox(`/api/media/${d.mediaFileId}/url`)}
-                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center inline-flex items-center"
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center inline-flex items-center justify-center min-w-[60px]"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1213,7 +1213,7 @@ export function VideoReview() {
                               type="button"
                               aria-label="Lihat foto bukti"
                               onClick={() => setPhotoLightbox(`/api/media/${flag.mediaFileId}/url`)}
-                              className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center inline-flex items-center"
+                              className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center inline-flex items-center justify-center min-w-[60px]"
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
