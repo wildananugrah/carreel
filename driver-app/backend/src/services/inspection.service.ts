@@ -539,6 +539,10 @@ export class InspectionService implements IInspectionService {
           confidence: 1,
           videoTimestamp: d.videoTimestamp ?? undefined,
           source: d.source,
+          // Only emit the photo id for DRIVER_ADDED rows. For AI rows the
+          // mediaFileId points at the body video, not a photo, and the
+          // driver UI already exposes the video via the timestamp button.
+          mediaFileId: d.source === "DRIVER_ADDED" ? d.mediaFileId : undefined,
         }));
     } else {
       // Fallback for tests / older wiring that didn't pass the

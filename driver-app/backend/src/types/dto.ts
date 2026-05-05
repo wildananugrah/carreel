@@ -221,6 +221,12 @@ export interface PreTripDamage {
    * table (post Phase 5). The driver UI uses this to render a "Manual"
    * badge on driver-added entries in the post-trip pre-check view. */
   source?: "AI" | "DRIVER_ADDED";
+  /** For DRIVER_ADDED damages, the MediaFile id of the evidence photo
+   * the driver captured when adding the damage. Used by the driver UI
+   * to render an eye icon that opens the photo in a lightbox. Omitted
+   * for AI damages (their mediaFileId points at the body video, not a
+   * photo, and the timestamp seek button covers that case already). */
+  mediaFileId?: string | null;
 }
 
 export interface PreTripReferenceData {

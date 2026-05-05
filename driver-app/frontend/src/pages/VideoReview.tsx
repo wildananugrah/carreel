@@ -34,6 +34,9 @@ interface PreTripDamage {
   confidence: number;
   videoTimestamp?: number;
   source?: "AI" | "DRIVER_ADDED";
+  /** Evidence photo id for DRIVER_ADDED damages — opens in a lightbox
+   * when the driver taps the eye icon. */
+  mediaFileId?: string | null;
 }
 
 interface PreTripUnitData {
@@ -68,6 +71,9 @@ interface AIFlag {
   videoTimestamp?: number;
   source?: "AI" | "DRIVER_ADDED";
   editedAt?: string | null;
+  /** Evidence photo id for DRIVER_ADDED damages — only set when sourced
+   * from a damage_markers row (not from the legacy aiAnalysis fallback). */
+  mediaFileId?: string;
 }
 
 function damageMarkerToFlag(d: DamageMarker): AIFlag {
@@ -81,6 +87,7 @@ function damageMarkerToFlag(d: DamageMarker): AIFlag {
     videoTimestamp: d.videoTimestamp ?? undefined,
     source: d.source,
     editedAt: d.editedAt,
+    mediaFileId: d.source === "DRIVER_ADDED" ? d.mediaFileId : undefined,
   };
 }
 
@@ -229,6 +236,7 @@ export function VideoReview() {
     src: string;
     startTime: number;
   } | null>(null);
+  const [photoLightbox, setPhotoLightbox] = useState<string | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -829,14 +837,9 @@ export function VideoReview() {
                     // it. AI damages always show one (default 0:00 when
                     // the model omitted videoTimestamp).
                     const isManual = d.source === "DRIVER_ADDED";
-                    const seekTime =
-                      typeof d.videoTimestamp === "number"
-                        ? d.videoTimestamp
-                        : 0;
+                    const seekTime = typeof d.videoTimestamp === "number" ? d.videoTimestamp : 0;
                     const canSeek =
-                      !isManual &&
-                      DAMAGE_SEEK_ENABLED &&
-                      unitData.bodyVideoMediaId != null;
+                      !isManual && DAMAGE_SEEK_ENABLED && unitData.bodyVideoMediaId != null;
                     const showStaticTimestamp = !isManual && !canSeek;
                     return (
                       <div
@@ -898,6 +901,35 @@ export function VideoReview() {
                             }
                           >
                             {"\u25B6"} {formatVideoTimestamp(seekTime)}
+                          </button>
+                        )}
+                        {isManual && d.mediaFileId && (
+                          <button
+                            type="button"
+                            aria-label="Lihat foto bukti"
+                            onClick={() => setPhotoLightbox(`/api/media/${d.mediaFileId}/url`)}
+                            className="w-7 h-7 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-neutral-300 hover:bg-[#222222] shrink-0 self-center"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                              />
+                            </svg>
                           </button>
                         )}
                       </div>
@@ -1112,13 +1144,8 @@ export function VideoReview() {
                       // when the model omitted videoTimestamp).
                       const isManual = flag.source === "DRIVER_ADDED";
                       const seekTime =
-                        typeof flag.videoTimestamp === "number"
-                          ? flag.videoTimestamp
-                          : 0;
-                      const canSeek =
-                        !isManual &&
-                        DAMAGE_SEEK_ENABLED &&
-                        postVideoMediaId != null;
+                        typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : 0;
+                      const canSeek = !isManual && DAMAGE_SEEK_ENABLED && postVideoMediaId != null;
                       const showStaticTimestamp = !isManual && !canSeek;
                       return (
                         <div
@@ -1187,6 +1214,35 @@ export function VideoReview() {
                               }
                             >
                               {"\u25B6"} {formatVideoTimestamp(seekTime)}
+                            </button>
+                          )}
+                          {isManual && flag.mediaFileId && (
+                            <button
+                              type="button"
+                              aria-label="Lihat foto bukti"
+                              onClick={() => setPhotoLightbox(`/api/media/${flag.mediaFileId}/url`)}
+                              className="w-7 h-7 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-neutral-300 hover:bg-[#222222] shrink-0 self-center"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-4 h-4"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                />
+                              </svg>
                             </button>
                           )}
                           {flag.damageId && inspection?.status === "DRAFT" && (
@@ -1443,6 +1499,16 @@ export function VideoReview() {
           type="video"
           startTime={seekLightbox.startTime}
           onClose={() => setSeekLightbox(null)}
+        />
+      )}
+
+      {/* Manual-damage evidence photo lightbox */}
+      {photoLightbox && (
+        <MediaLightbox
+          src={photoLightbox}
+          type="image"
+          alt="Foto bukti kerusakan"
+          onClose={() => setPhotoLightbox(null)}
         />
       )}
 
