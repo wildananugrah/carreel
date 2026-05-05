@@ -905,15 +905,15 @@ export function VideoReview() {
                             type="button"
                             aria-label="Lihat foto bukti"
                             onClick={() => setPhotoLightbox(`/api/media/${d.mediaFileId}/url`)}
-                            className="w-7 h-7 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-neutral-300 hover:bg-[#222222] shrink-0 self-center"
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center inline-flex items-center"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
                               viewBox="0 0 24 24"
-                              strokeWidth={1.5}
+                              strokeWidth={2}
                               stroke="currentColor"
-                              className="w-4 h-4"
+                              className="w-3.5 h-3.5"
                               aria-hidden="true"
                             >
                               <path
@@ -1213,15 +1213,15 @@ export function VideoReview() {
                               type="button"
                               aria-label="Lihat foto bukti"
                               onClick={() => setPhotoLightbox(`/api/media/${flag.mediaFileId}/url`)}
-                              className="w-7 h-7 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-neutral-300 hover:bg-[#222222] shrink-0 self-center"
+                              className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1a1600] text-[#F5C842] hover:bg-[#2a2200] transition-colors shrink-0 self-center inline-flex items-center"
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
                                 viewBox="0 0 24 24"
-                                strokeWidth={1.5}
+                                strokeWidth={2}
                                 stroke="currentColor"
-                                className="w-4 h-4"
+                                className="w-3.5 h-3.5"
                                 aria-hidden="true"
                               >
                                 <path
