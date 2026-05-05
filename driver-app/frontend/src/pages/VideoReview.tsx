@@ -856,10 +856,12 @@ export function VideoReview() {
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <p className="text-sm font-bold text-white">{damageLabel(d.area)}</p>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-bold text-white truncate min-w-0">
+                              {damageLabel(d.area)}
+                            </p>
                             <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
                                 d.severity === "MAJOR"
                                   ? "bg-red-500/20 text-red-400"
                                   : d.severity === "MODERATE"
@@ -873,11 +875,6 @@ export function VideoReview() {
                                   ? "Sedang"
                                   : "Ringan"}
                             </span>
-                            {d.source === "DRIVER_ADDED" && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">
-                                Manual
-                              </span>
-                            )}
                           </div>
                           {d.location && (
                             <p className="text-[10px] text-neutral-400 mb-0.5">{d.location}</p>
@@ -1162,12 +1159,12 @@ export function VideoReview() {
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                              <p className="text-sm font-bold text-white">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <p className="text-sm font-bold text-white truncate min-w-0">
                                 {damageLabel(flag.area)}
                               </p>
                               <span
-                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
                                   flag.severity === "MAJOR"
                                     ? "bg-red-500/20 text-red-400"
                                     : flag.severity === "MODERATE"
@@ -1181,13 +1178,8 @@ export function VideoReview() {
                                     ? "Sedang"
                                     : "Ringan"}
                               </span>
-                              {flag.source === "DRIVER_ADDED" && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">
-                                  Manual
-                                </span>
-                              )}
                               {flag.editedAt && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-500/20 text-neutral-400">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-500/20 text-neutral-400 shrink-0">
                                   Edited
                                 </span>
                               )}
