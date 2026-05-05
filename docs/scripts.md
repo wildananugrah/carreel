@@ -301,32 +301,31 @@ Replace `<PLATE>` with the plate (e.g. `B 1824 WIQ`).
 
 ### Aggregate summary (one row per unit)
 
-```bash
-psql "postgresql://carreel:carreel_secret@localhost:5432/carreel_driver" -c "
+```sql
 SELECT
-  u.\"licensePlate\",
+  u."licensePlate",
   u.make,
   u.model,
   u.color,
   u.vin,
-  u.\"lastKnownKm\"                                                                AS last_km,
+  u."lastKnownKm"                                                                AS last_km,
   COUNT(DISTINCT i.id)                                                             AS total_inspections,
-  COUNT(DISTINCT i.id) FILTER (WHERE i.\"tripType\" = 'PRE_TRIP')                   AS pre_trips,
-  COUNT(DISTINCT i.id) FILTER (WHERE i.\"tripType\" = 'POST_TRIP')                  AS post_trips,
-  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'AI'
-                        AND d.\"verificationStatus\" IN ('PASSED','NOT_REQUIRED'))  AS damages_by_ai,
-  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'DRIVER_ADDED'
-                        AND d.\"verificationStatus\" = 'PASSED')                    AS damages_manual,
-  COUNT(d.id) FILTER (WHERE d.\"verificationStatus\" LIKE 'FAILED_%')               AS verification_failures,
-  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NOT NULL)                            AS soft_deleted,
-  COUNT(d.id) FILTER (WHERE d.\"editedAt\" IS NOT NULL)                             AS edited
+  COUNT(DISTINCT i.id) FILTER (WHERE i."tripType" = 'PRE_TRIP')                   AS pre_trips,
+  COUNT(DISTINCT i.id) FILTER (WHERE i."tripType" = 'POST_TRIP')                  AS post_trips,
+  COUNT(d.id) FILTER (WHERE d."deletedAt" IS NULL AND d.source = 'AI'
+                        AND d."verificationStatus" IN ('PASSED','NOT_REQUIRED'))  AS damages_by_ai,
+  COUNT(d.id) FILTER (WHERE d."deletedAt" IS NULL AND d.source = 'DRIVER_ADDED'
+                        AND d."verificationStatus" = 'PASSED')                    AS damages_manual,
+  COUNT(d.id) FILTER (WHERE d."verificationStatus"::text LIKE 'FAILED_%')               AS verification_failures,
+  COUNT(d.id) FILTER (WHERE d."deletedAt" IS NOT NULL)                            AS soft_deleted,
+  COUNT(d.id) FILTER (WHERE d."editedAt" IS NOT NULL)                             AS edited
 FROM units u
-LEFT JOIN inspections i        ON i.\"unitId\" = u.id
-LEFT JOIN inspection_steps s   ON s.\"inspectionId\" = i.id
-LEFT JOIN media_files m        ON m.\"stepId\" = s.id
-LEFT JOIN damage_markers d     ON d.\"mediaFileId\" = m.id
-WHERE u.\"licensePlate\" = '<PLATE>'
-GROUP BY u.id, u.\"licensePlate\", u.make, u.model, u.color, u.vin, u.\"lastKnownKm\";
+LEFT JOIN inspections i        ON i."unitId" = u.id
+LEFT JOIN inspection_steps s   ON s."inspectionId" = i.id
+LEFT JOIN media_files m        ON m."stepId" = s.id
+LEFT JOIN damage_markers d     ON d."mediaFileId" = m.id
+WHERE u."licensePlate" like '%1261%'
+GROUP BY u.id, u."licensePlate", u.make, u.model, u.color, u.vin, u."lastKnownKm" LIMIT 100
 "
 ```
 
@@ -344,28 +343,27 @@ GROUP BY u.id, u.\"licensePlate\", u.make, u.model, u.color, u.vin, u.\"lastKnow
 
 One row per inspection (newest first), so you can see how the damage profile evolves trip-by-trip and where fraud signals cluster:
 
-```bash
-psql "postgresql://carreel:carreel_secret@localhost:5432/carreel_driver" -c "
+```sql
 SELECT
   i.id                                                                              AS inspection_id,
-  i.\"createdAt\"                                                                    AS created_at,
-  i.\"tripType\",
+  i."createdAt"                                                                    AS created_at,
+  i."tripType",
   i.status,
-  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'AI'
-                        AND d.\"verificationStatus\" IN ('PASSED','NOT_REQUIRED'))  AS ai_damages,
-  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NULL AND d.source = 'DRIVER_ADDED'
-                        AND d.\"verificationStatus\" = 'PASSED')                    AS manual_damages,
-  COUNT(d.id) FILTER (WHERE d.\"verificationStatus\" LIKE 'FAILED_%')               AS verification_failures,
-  COUNT(d.id) FILTER (WHERE d.\"deletedAt\" IS NOT NULL)                            AS deleted_damages,
-  COUNT(d.id) FILTER (WHERE d.\"editedAt\" IS NOT NULL)                             AS edited_damages
+  COUNT(d.id) FILTER (WHERE d."deletedAt" IS NULL AND d.source = 'AI'
+                        AND d."verificationStatus" IN ('PASSED','NOT_REQUIRED'))  AS ai_damages,
+  COUNT(d.id) FILTER (WHERE d."deletedAt" IS NULL AND d.source = 'DRIVER_ADDED'
+                        AND d."verificationStatus" = 'PASSED')                    AS manual_damages,
+  COUNT(d.id) FILTER (WHERE d."verificationStatus"::text LIKE 'FAILED_%')        AS verification_failures,
+  COUNT(d.id) FILTER (WHERE d."deletedAt" IS NOT NULL)                            AS deleted_damages,
+  COUNT(d.id) FILTER (WHERE d."editedAt" IS NOT NULL)                             AS edited_damages
 FROM inspections i
-JOIN units u                  ON u.id = i.\"unitId\"
-LEFT JOIN inspection_steps s  ON s.\"inspectionId\" = i.id
-LEFT JOIN media_files m       ON m.\"stepId\" = s.id
-LEFT JOIN damage_markers d    ON d.\"mediaFileId\" = m.id
-WHERE u.\"licensePlate\" = '<PLATE>'
-GROUP BY i.id, i.\"createdAt\", i.\"tripType\", i.status
-ORDER BY i.\"createdAt\" DESC;
+JOIN units u                  ON u.id = i."unitId"
+LEFT JOIN inspection_steps s  ON s."inspectionId" = i.id
+LEFT JOIN media_files m       ON m."stepId" = s.id
+LEFT JOIN damage_markers d    ON d."mediaFileId" = m.id
+WHERE u."licensePlate" like '%1261%'
+GROUP BY i.id, i."createdAt", i."tripType", i.status
+ORDER BY i."createdAt" DESC;
 "
 ```
 
@@ -373,32 +371,31 @@ ORDER BY i.\"createdAt\" DESC;
 
 One row per damage (no aggregation), with every audit field exposed:
 
-```bash
-psql "postgresql://carreel:carreel_secret@localhost:5432/carreel_driver" -c "
+```sql
 SELECT
   i.id                AS inspection_id,
-  i.\"tripType\",
-  i.\"createdAt\"      AS inspection_at,
+  i."tripType",
+  i."createdAt"      AS inspection_at,
   d.id                AS damage_id,
   d.source,
-  d.\"damageType\",
+  d."damageType",
   d.severity,
   d.location,
   d.description,
-  d.\"videoTimestamp\",
-  d.\"verificationStatus\",
-  d.\"verificationReason\",
-  d.\"editedAt\",
-  d.\"deletedAt\",
-  d.\"originalSeverity\",
-  d.\"originalLocation\"
+  d."videoTimestamp",
+  d."verificationStatus",
+  d."verificationReason",
+  d."editedAt",
+  d."deletedAt",
+  d."originalSeverity",
+  d."originalLocation"
 FROM damage_markers d
-JOIN media_files m       ON m.id = d.\"mediaFileId\"
-JOIN inspection_steps s  ON s.id = m.\"stepId\"
-JOIN inspections i       ON i.id = s.\"inspectionId\"
-JOIN units u             ON u.id = i.\"unitId\"
-WHERE u.\"licensePlate\" = '<PLATE>'
-ORDER BY i.\"createdAt\" DESC, d.\"createdAt\" ASC;
+JOIN media_files m       ON m.id = d."mediaFileId"
+JOIN inspection_steps s  ON s.id = m."stepId"
+JOIN inspections i       ON i.id = s."inspectionId"
+JOIN units u             ON u.id = i."unitId"
+WHERE u."licensePlate" like '%1261%'
+ORDER BY i."createdAt" DESC, d."createdAt" ASC;
 "
 ```
 
