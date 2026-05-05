@@ -13,6 +13,7 @@ import type {
 import type { IAlertRepository } from "../interfaces/repositories/alert.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
+import { VinAlreadyAssignedError } from "../repositories/inspection.repository";
 import {
   BODY_VERIFICATION_AI_CONFIG,
   STEP_AI_CONFIG,
@@ -484,26 +485,45 @@ export class StepAnalysisJob {
       } else if (stepType === "VIN_NUMBER") {
         const result = parsed as VinNumberResult;
 
+        // Wrap the persist in try/catch so a soft conflict (e.g. another
+        // Unit row already owns this VIN) doesn't escalate to step failure.
+        // The AI extraction succeeded — only the side-effect failed. Mirrors
+        // UNIT_IDENTIFICATION's unit-link block above.
         if (result.vinExtraction.sanitizedVin) {
-          const vinUnit =
-            await this.inspectionRepository.findUnitByInspectionId(
-              JOB_SYSTEM_SCOPE,
-              inspectionId,
-            );
-          if (vinUnit) {
-            await this.inspectionRepository.updateUnitVin(
-              JOB_SYSTEM_SCOPE,
-              vinUnit.id,
-              result.vinExtraction.sanitizedVin,
-            );
-            log.info("Updated unit VIN from VIN_NUMBER step", {
-              unitId: vinUnit.id,
-              vin: result.vinExtraction.sanitizedVin,
-            });
-          } else {
-            log.warn("No unit linked to inspection for VIN update", {
-              inspectionId,
-            });
+          try {
+            const vinUnit =
+              await this.inspectionRepository.findUnitByInspectionId(
+                JOB_SYSTEM_SCOPE,
+                inspectionId,
+              );
+            if (vinUnit) {
+              await this.inspectionRepository.updateUnitVin(
+                JOB_SYSTEM_SCOPE,
+                vinUnit.id,
+                result.vinExtraction.sanitizedVin,
+              );
+              log.info("Updated unit VIN from VIN_NUMBER step", {
+                unitId: vinUnit.id,
+                vin: result.vinExtraction.sanitizedVin,
+              });
+            } else {
+              log.warn("No unit linked to inspection for VIN update", {
+                inspectionId,
+              });
+            }
+          } catch (e) {
+            if (e instanceof VinAlreadyAssignedError) {
+              log.warn("VIN already assigned to a different unit; skipping", {
+                vin: e.vin,
+                existingUnitId: e.existingUnitId,
+                inspectionId,
+              });
+            } else {
+              log.warn("Failed to update unit VIN", {
+                error: e instanceof Error ? e.message : String(e),
+                inspectionId,
+              });
+            }
           }
         }
 

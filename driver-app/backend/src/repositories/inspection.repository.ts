@@ -24,6 +24,23 @@ import type {
 import type { UserScope } from "../types/scope";
 import { buildScopeFilter, canWriteToEntity } from "../utils/scope-filter";
 
+/** Thrown by `updateUnitVin` when the extracted VIN is already assigned
+ * to a different Unit row (Unit.vin is @unique globally). Callers should
+ * catch this, log a warning with both unit ids, and continue — the AI
+ * step is still considered successful since the VIN was decoded; only the
+ * persist failed because of an existing duplicate registration. */
+export class VinAlreadyAssignedError extends Error {
+  constructor(
+    public readonly vin: string,
+    public readonly existingUnitId: string,
+  ) {
+    super(
+      `VIN ${vin} is already assigned to unit ${existingUnitId}; refusing to overwrite`,
+    );
+    this.name = "VinAlreadyAssignedError";
+  }
+}
+
 export class InspectionRepository implements IInspectionRepository {
   constructor(private prisma: PrismaClient) {}
 
@@ -444,7 +461,7 @@ export class InspectionRepository implements IInspectionRepository {
   ): Promise<void> {
     const unit = await this.prisma.unit.findUnique({
       where: { id: unitId },
-      select: { projectId: true },
+      select: { projectId: true, vin: true },
     });
     if (!unit?.projectId) throw new Error("Unit not found");
     if (
@@ -455,6 +472,20 @@ export class InspectionRepository implements IInspectionRepository {
       )
     ) {
       throw new Error("Unit not found");
+    }
+    // No-op when the VIN is already what we'd write — avoids re-running the
+    // @unique check unnecessarily.
+    if (unit.vin === vin) return;
+    // Unit.vin is @unique globally. If a *different* unit already owns this
+    // VIN, treat the write as a soft conflict — don't overwrite or merge,
+    // since the same physical car may have been registered twice (e.g. plate
+    // re-issued or driver re-onboarded). Caller logs and moves on.
+    const owner = await this.prisma.unit.findUnique({
+      where: { vin },
+      select: { id: true },
+    });
+    if (owner && owner.id !== unitId) {
+      throw new VinAlreadyAssignedError(vin, owner.id);
     }
     await this.prisma.unit.update({
       where: { id: unitId },
