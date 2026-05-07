@@ -1284,7 +1284,9 @@ export function VideoReview() {
                     <div className="flex items-center gap-3">
                       <span className="text-lg shrink-0">{"\u2705"}</span>
                       <p className="text-sm text-neutral-400">
-                        Tidak ada kerusakan terdeteksi oleh AI
+                        {isPostTrip
+                          ? "Tidak ada kerusakan baru"
+                          : "Tidak ada kerusakan terdeteksi oleh AI"}
                       </p>
                     </div>
                   </div>
