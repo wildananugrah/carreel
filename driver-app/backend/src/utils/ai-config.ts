@@ -53,7 +53,7 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   BODY_INSPECTION: {
     thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
-    temperature: 0.2,
+    temperature: 0.4,
     topP: 0.95,
     topK: 40,
     // HIGH = 280 tokens/frame (vs 70 at LOW). 4× per-frame cost on the

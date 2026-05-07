@@ -43,5 +43,15 @@ bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carre
   --make Daihatsu --model "Siegra" --color "Black" \
   --license-plate "B 1824 WIQ"
 
+bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body10.mp4 \
+  --runs 5 \
+  --make Toyota --model "Corolla" --color "Cream" \
+  --license-plate "B 1563 KBC"
+
+bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body11.mp4 \
+  --runs 5 \
+  --make Toyota --model "Corolla" --color "Cream" \
+  --license-plate "B 1563 KBC"
+
 # Mirror production exactly (Pass 1 + Pass 2 + side guard)
 bun run scripts/compare-body-damages.ts /path/to/video.mp4 --with-verification

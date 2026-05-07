@@ -1,0 +1,546 @@
+{
+  "runAt": "2026-05-07T06:55:14.270Z",
+  "model": "gemini-3.1-pro-preview",
+  "withVerification": false,
+  "sideGuard": true,
+  "bodyInspectionConfig": {
+    "thinkingLevel": "HIGH",
+    "maxOutputTokens": 32000,
+    "temperature": 0.4,
+    "topP": 0.95,
+    "topK": 40,
+    "mediaResolution": "HIGH"
+  },
+  "bodyVerificationConfig": {
+    "thinkingLevel": "HIGH",
+    "maxOutputTokens": 32000,
+    "temperature": 0.1,
+    "topP": 0.95,
+    "topK": 40
+  },
+  "summaries": [
+    {
+      "label": "Volvo 740 GLE",
+      "vehicle": "Volvo · 740 GLE · Hitam · B 1691 SES",
+      "videoPath": "/Users/bellinnn/Documents/projects/carreel/tests/video/test-video2.mp4",
+      "totalRuns": 2,
+      "successfulRuns": 2,
+      "errored": 0,
+      "gated": 0,
+      "damageCounts": [
+        2,
+        0
+      ],
+      "damageMean": 1,
+      "damageStddev": 1,
+      "damageMin": 0,
+      "damageMax": 2,
+      "stableCount": 0,
+      "frequentCount": 2,
+      "occasionalCount": 0,
+      "flakyCount": 0,
+      "directionConsistent": false,
+      "directionStandard": 1,
+      "directionInverted": 1,
+      "directionUnknown": 0,
+      "sideGuardTotal": 0,
+      "totalElapsedSec": 134,
+      "perRun": [
+        {
+          "index": 1,
+          "cameraPath": "PATH A. Kamera bergerak melewati lampu depan yang berada di kiri layar (Anatomi Kanan). Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri.",
+          "visualAnalysis": "Pemindaian mendetail pada eksterior kendaraan menunjukkan kondisi cat yang umumnya baik, namun terdapat beberapa lecet pada bagian trim plastik bumper. Ditemukan goresan/lecet berwarna putih pada sudut kanan bumper depan dan sudut kiri bumper belakang. Panel bodi utama, pintu, dan atap tidak menunjukkan kerusakan yang signifikan.",
+          "overallCondition": "GOOD",
+          "confidence": 0.9,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Front Corner view. Anchor plat nomor depan terlihat. Berdasarkan kontinuitas timeline, kamera baru saja bergerak dari fase Depan menuju Sisi Kanan (PATH A) di frame 0:03. = Kanan kendaraan.",
+              "damageBoundingBox": [
+                810,
+                150,
+                860,
+                250
+              ],
+              "anchor": {
+                "type": "front-plate",
+                "boundingBox": [
+                  350,
+                  450,
+                  600,
+                  550
+                ],
+                "frameTimestamp": 3
+              },
+              "location": "Bumper Depan Kanan",
+              "severity": "MINOR",
+              "description": "Lecet/goresan putih pada trim plastik hitam di sudut kanan bawah bumper depan.",
+              "isNewDamage": true,
+              "videoTimestamp": 3
+            },
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear Corner view. Anchor plat nomor belakang terlihat. Berdasarkan kontinuitas timeline, kamera berada di fase Samping Kiri setelah melewati bagian Belakang (PATH A) di frame 0:22. = Kiri kendaraan.",
+              "damageBoundingBox": [
+                680,
+                750,
+                750,
+                850
+              ],
+              "anchor": {
+                "type": "rear-plate",
+                "boundingBox": [
+                  250,
+                  400,
+                  550,
+                  500
+                ],
+                "frameTimestamp": 22
+              },
+              "location": "Bumper / Panel Belakang Kiri",
+              "severity": "MINOR",
+              "description": "Lecet putih pada trim plastik hitam di sudut kiri bumper belakang.",
+              "isNewDamage": true,
+              "videoTimestamp": 22
+            }
+          ],
+          "elapsedMs": 68107,
+          "sideGuardAdjusted": 0
+        },
+        {
+          "index": 2,
+          "cameraPath": "PATH B. Kamera bergerak melewati lampu depan yang berada di kanan layar (Anatomi Kiri). Fase 1: Depan. Fase 2: Samping Kiri. Fase 3: Belakang. Fase 4: Samping Kanan. Fase 5: Depan.",
+          "visualAnalysis": "Pemindaian menyeluruh dilakukan pada seluruh panel eksterior kendaraan. Cat terlihat mengkilap dan dalam kondisi sangat baik. Tidak ditemukan goresan, penyok, atau kerusakan lain yang terlihat jelas pada bumper, pintu, fender, kap mesin, maupun bagasi.",
+          "overallCondition": "GOOD",
+          "confidence": 0.95,
+          "damages": [],
+          "elapsedMs": 56825,
+          "sideGuardAdjusted": 0
+        }
+      ]
+    },
+    {
+      "label": "Wuling Air EV · body6-left",
+      "vehicle": "Wuling · Air EV · Pink · B 1261 SNO",
+      "videoPath": "/Users/bellinnn/Documents/projects/carreel/tests/video/body6-left.mp4",
+      "totalRuns": 2,
+      "successfulRuns": 2,
+      "errored": 0,
+      "gated": 0,
+      "damageCounts": [
+        1,
+        1
+      ],
+      "damageMean": 1,
+      "damageStddev": 0,
+      "damageMin": 1,
+      "damageMax": 1,
+      "stableCount": 1,
+      "frequentCount": 0,
+      "occasionalCount": 0,
+      "flakyCount": 0,
+      "directionConsistent": false,
+      "directionStandard": 0,
+      "directionInverted": 1,
+      "directionUnknown": 1,
+      "sideGuardTotal": 0,
+      "totalElapsedSec": 180,
+      "perRun": [
+        {
+          "index": 1,
+          "cameraPath": "PATH A. Kamera memulai dari sudut depan kanan dan bergerak menyusuri sisi dengan kemudi (Anatomi Kanan). Fase 1: Depan/Sudut Depan Kanan. Fase 2: Samping Kanan. Fase 3: Belakang.",
+          "visualAnalysis": "Pemindaian dimulai dari sudut depan kanan, menyusuri sisi kanan kendaraan. Sisi kanan (fender, pintu, spion) tampak bersih. Saat mencapai sudut belakang kanan, terdapat goresan/lecet berwarna hitam yang kontras pada bagian bawah bumper belakang kanan. Kamera kemudian bergerak ke bagian belakang kendaraan yang tampak kotor namun tidak ada kerusakan fisik yang jelas.",
+          "overallCondition": "GOOD",
+          "confidence": 0.95,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear Corner. Path terdeteksi: PATH A. Kamera berada di fase Samping Kanan di frame 0:11 sebelum plat nomor belakang terlihat penuh. Menggunakan Screen-Geometry Rule untuk sudut belakang, lampu belakang berada di sisi kiri layar. Berdasarkan kontinuitas timeline dan geometri layar = Kanan kendaraan.",
+              "damageBoundingBox": [
+                650,
+                500,
+                750,
+                650
+              ],
+              "anchor": null,
+              "location": "Bumper / Panel Belakang Kanan",
+              "severity": "MINOR",
+              "description": "Terdapat goresan atau lecet berwarna hitam pada bagian bawah sudut bumper belakang kanan.",
+              "isNewDamage": true,
+              "videoTimestamp": 11
+            }
+          ],
+          "elapsedMs": 113267,
+          "sideGuardAdjusted": 0
+        },
+        {
+          "index": 2,
+          "cameraPath": "PATH A. Kamera bergerak dari arah depan ke sisi kiri layar (Anatomi Kanan). Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang.",
+          "visualAnalysis": "Kendaraan secara umum dalam kondisi baik. Pemindaian pada area berisiko tinggi menemukan satu kerusakan yang jelas berupa lecet/goresan berwarna hitam pada sudut bawah bumper belakang kanan. Panel lain seperti pintu, fender, dan kap mesin tampak bersih dari goresan yang signifikan, meskipun terdapat sedikit kotoran di bagian belakang.",
+          "overallCondition": "GOOD",
+          "confidence": 0.9,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear Corner. Path terdeteksi: PATH A. Kamera berada di fase Samping Kanan di frame 0:11 sebelum plat nomor belakang terlihat penuh. Untuk menghindari distorsi 2D yang mengubah koordinat pada pengambilan gambar sudut, anchor diabaikan. Berdasarkan kontinuitas timeline = Kanan kendaraan.",
+              "damageBoundingBox": [
+                650,
+                600,
+                850,
+                750
+              ],
+              "anchor": null,
+              "location": "Bumper / Panel Belakang Kanan",
+              "severity": "MINOR",
+              "description": "Terdapat lecet atau goresan berwarna hitam yang cukup jelas pada bagian bawah sudut bumper belakang kanan.",
+              "isNewDamage": true,
+              "videoTimestamp": 11
+            }
+          ],
+          "elapsedMs": 58005,
+          "sideGuardAdjusted": 0
+        }
+      ]
+    },
+    {
+      "label": "Wuling Air EV · body7-right",
+      "vehicle": "Wuling · Air EV · Pink · B 1261 SNO",
+      "videoPath": "/Users/bellinnn/Documents/projects/carreel/tests/video/body7-right.mp4",
+      "totalRuns": 2,
+      "successfulRuns": 2,
+      "errored": 0,
+      "gated": 0,
+      "damageCounts": [
+        2,
+        2
+      ],
+      "damageMean": 2,
+      "damageStddev": 0,
+      "damageMin": 2,
+      "damageMax": 2,
+      "stableCount": 2,
+      "frequentCount": 0,
+      "occasionalCount": 0,
+      "flakyCount": 0,
+      "directionConsistent": false,
+      "directionStandard": 1,
+      "directionInverted": 1,
+      "directionUnknown": 0,
+      "sideGuardTotal": 0,
+      "totalElapsedSec": 184,
+      "perRun": [
+        {
+          "index": 1,
+          "cameraPath": "PATH B. Kamera bergerak melewati lampu depan yang berada di kanan layar (Anatomi Kiri). Fase 1: Depan. Fase 2: Samping Kiri. Fase 3: Belakang. Fase 4: Samping Kanan.",
+          "visualAnalysis": "Hasil pemindaian menunjukkan kendaraan secara umum dalam kondisi baik. Namun, ditemukan dua titik kerusakan minor. Pertama, terdapat lecet kecil berwarna hitam pada bagian bawah bumper belakang sisi kiri. Kedua, ditemukan beberapa lecet/goresan hitam pada sudut atas panel belakang sisi kanan, tepat di perbatasan dengan trim plastik lampu belakang.",
+          "overallCondition": "GOOD",
+          "confidence": 0.9,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear View. Anchor yang terlihat adalah lampu belakang kiri. Berdasarkan timeline PATH B, kamera sedang berada di fase Belakang. Posisi kerusakan berada di sisi kiri dari bagian belakang kendaraan = Kiri kendaraan.",
+              "damageBoundingBox": [
+                680,
+                250,
+                720,
+                290
+              ],
+              "anchor": {
+                "type": "rear-taillight",
+                "boundingBox": [
+                  150,
+                  100,
+                  450,
+                  400
+                ],
+                "frameTimestamp": 19
+              },
+              "location": "Bumper / Panel Belakang Kiri",
+              "severity": "MINOR",
+              "description": "Lecet kecil berwarna hitam pada bagian bawah bumper belakang kiri, di dekat reflektor merah.",
+              "isNewDamage": true,
+              "videoTimestamp": 19
+            },
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear Corner. Berdasarkan timeline PATH B, kamera baru saja melewati fase Belakang dan memasuki Sisi Kanan. Untuk menghindari distorsi 2D pada sudut, anchor diabaikan. Berdasarkan aturan geometri close-up (pusat kendaraan di kiri layar) dan kontinuitas = Kanan kendaraan.",
+              "damageBoundingBox": [
+                240,
+                350,
+                280,
+                460
+              ],
+              "anchor": null,
+              "location": "Bumper / Panel Belakang Kanan",
+              "severity": "MINOR",
+              "description": "Beberapa lecet hitam pada sudut atas panel belakang kanan, berbatasan dengan trim plastik hitam lampu belakang.",
+              "isNewDamage": true,
+              "videoTimestamp": 25
+            }
+          ],
+          "elapsedMs": 66927,
+          "sideGuardAdjusted": 0
+        },
+        {
+          "index": 2,
+          "cameraPath": "PATH B. Video dimulai dari sudut depan kiri (Anatomi Kiri). Fase 1: Samping Kiri. Fase 2: Belakang. Fase 3: Samping Kanan. Fase 4: Sudut Depan Kanan.",
+          "visualAnalysis": "Pemindaian eksterior menunjukkan kendaraan secara umum dalam kondisi baik. Sisi kiri dan depan tampak bersih tanpa kerusakan yang signifikan. Pada bagian belakang, ditemukan goresan sangat kecil di bumper kiri bawah. Kerusakan paling jelas terlihat pada sudut bumper belakang kanan, di mana terdapat beberapa lecet hitam pada area plastik dan tepi panel sewarna bodi.",
+          "overallCondition": "GOOD",
+          "confidence": 0.9,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear view. Path terdeteksi: PATH B. Kamera berada di fase Belakang di frame 0:19. Anchor plat nomor belakang terlihat. Posisi kerusakan berada di sebelah kiri dari plat nomor = Kiri kendaraan.",
+              "location": "Bumper / Panel Belakang Kiri",
+              "damageBoundingBox": [
+                750,
+                150,
+                800,
+                250
+              ],
+              "anchor": {
+                "type": "rear-plate",
+                "boundingBox": [
+                  500,
+                  600,
+                  700,
+                  950
+                ],
+                "frameTimestamp": 19
+              },
+              "severity": "MINOR",
+              "description": "Goresan kecil berwarna putih pada bagian bawah bumper belakang kiri, area plastik hitam dekat reflektor.",
+              "isNewDamage": true,
+              "videoTimestamp": 19
+            },
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear Corner view. Path terdeteksi: PATH B. Kamera berada di transisi menuju fase Samping Kanan di frame 0:25. Untuk menghindari distorsi 2D pada sudut, anchor disetel null. Berdasarkan aturan geometri layar close-up, pusat kendaraan (area bagasi) berada di sebelah kiri layar = Kanan kendaraan.",
+              "location": "Bumper / Panel Belakang Kanan",
+              "damageBoundingBox": [
+                280,
+                400,
+                350,
+                500
+              ],
+              "anchor": null,
+              "severity": "MINOR",
+              "description": "Beberapa lecet atau goresan hitam pada sudut atas bumper belakang kanan, mengenai area plastik hitam dan tepi panel sewarna bodi.",
+              "isNewDamage": true,
+              "videoTimestamp": 25
+            }
+          ],
+          "elapsedMs": 107269,
+          "sideGuardAdjusted": 0
+        }
+      ]
+    },
+    {
+      "label": "Toyota Yaris · body8",
+      "vehicle": "Toyota · Yaris · White · B 1570 DKO",
+      "videoPath": "/Users/bellinnn/Documents/projects/carreel/tests/video/body8.mp4",
+      "totalRuns": 2,
+      "successfulRuns": 2,
+      "errored": 0,
+      "gated": 0,
+      "damageCounts": [
+        2,
+        2
+      ],
+      "damageMean": 2,
+      "damageStddev": 0,
+      "damageMin": 2,
+      "damageMax": 2,
+      "stableCount": 2,
+      "frequentCount": 0,
+      "occasionalCount": 0,
+      "flakyCount": 0,
+      "directionConsistent": false,
+      "directionStandard": 0,
+      "directionInverted": 2,
+      "directionUnknown": 0,
+      "sideGuardTotal": 0,
+      "totalElapsedSec": 220,
+      "perRun": [
+        {
+          "index": 1,
+          "cameraPath": "PATH A. Kamera bergerak melewati lampu depan yang berada di kiri layar (Anatomi Kanan). Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri. Fase 5: Depan.",
+          "visualAnalysis": "Pemindaian menunjukkan kendaraan secara umum dalam kondisi baik. Ditemukan lecet/goresan hitam pada bagian bawah bumper belakang kanan dan lecet serupa pada bibir bawah bumper depan kiri. Keduanya merupakan area rawan benturan ringan.",
+          "overallCondition": "GOOD",
+          "confidence": 0.9,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear Corner. Path terdeteksi: PATH A. Kamera berada di fase Samping Kanan di frame 0:12 sebelum plat nomor belakang terlihat penuh. Untuk menghindari distorsi 2D yang mengubah koordinat, anchor diabaikan. Berdasarkan kontinuitas timeline = Kanan kendaraan.",
+              "damageBoundingBox": [
+                700,
+                250,
+                750,
+                300
+              ],
+              "anchor": null,
+              "location": "Bumper / Panel Belakang Kanan",
+              "severity": "MINOR",
+              "description": "Lecet hitam pada bagian bawah bumper belakang kanan dekat lengkung roda.",
+              "isNewDamage": true,
+              "videoTimestamp": 12
+            },
+            {
+              "damageType": "goresan",
+              "orientationReason": "Front Corner. Path terdeteksi: PATH A. Kamera berada di fase Samping Kiri di frame 0:33 setelah melewati bagian belakang. Untuk menghindari distorsi 2D yang mengubah koordinat, anchor diabaikan. Berdasarkan kontinuitas timeline = Kiri kendaraan.",
+              "damageBoundingBox": [
+                780,
+                220,
+                830,
+                270
+              ],
+              "anchor": null,
+              "location": "Bumper Depan Kiri",
+              "severity": "MINOR",
+              "description": "Lecet hitam pada bibir bawah bumper depan kiri.",
+              "isNewDamage": true,
+              "videoTimestamp": 33
+            }
+          ],
+          "elapsedMs": 73997,
+          "sideGuardAdjusted": 0
+        },
+        {
+          "index": 2,
+          "cameraPath": "PATH A. Kamera bergerak melewati lampu depan yang berada di kiri layar (Anatomi Kanan). Fase 1: Depan. Fase 2: Samping Kanan. Fase 3: Belakang. Fase 4: Samping Kiri.",
+          "visualAnalysis": "Pemindaian mendetail dilakukan pada seluruh area eksterior. Ditemukan lecet ringan pada bagian bawah bumper belakang kanan dan goresan/lecet yang lebih jelas pada bagian bawah bumper depan kiri. Panel bodi lainnya, kaca, dan atap tampak dalam kondisi baik tanpa kerusakan yang signifikan.",
+          "overallCondition": "GOOD",
+          "confidence": 0.85,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Rear Corner. Path terdeteksi: PATH A. Kamera berada di fase Samping Kanan di frame 0:12. Untuk menghindari distorsi 2D yang mengubah koordinat, anchor diabaikan. Berdasarkan kontinuitas timeline = Kanan kendaraan.",
+              "damageBoundingBox": [
+                750,
+                250,
+                850,
+                350
+              ],
+              "anchor": null,
+              "location": "Bumper / Panel Belakang Kanan",
+              "severity": "MINOR",
+              "description": "Terdapat goresan/lecet berwarna gelap pada bagian bawah bumper belakang kanan.",
+              "isNewDamage": true,
+              "videoTimestamp": 12
+            },
+            {
+              "damageType": "goresan",
+              "orientationReason": "Front Corner. Path terdeteksi: PATH A. Kamera berada di fase Samping Kiri di frame 0:33. Untuk menghindari distorsi 2D yang mengubah koordinat, anchor diabaikan. Berdasarkan kontinuitas timeline = Kiri kendaraan.",
+              "damageBoundingBox": [
+                650,
+                250,
+                750,
+                400
+              ],
+              "anchor": null,
+              "location": "Bumper Depan Kiri",
+              "severity": "MINOR",
+              "description": "Terdapat goresan/lecet berwarna gelap pada bagian bawah bumper depan kiri, tepat di atas lip spoiler hitam.",
+              "isNewDamage": true,
+              "videoTimestamp": 33
+            }
+          ],
+          "elapsedMs": 136953,
+          "sideGuardAdjusted": 0
+        }
+      ]
+    },
+    {
+      "label": "Daihatsu Sigra · body9",
+      "vehicle": "Daihatsu · Siegra · Black · B 1824 WIQ",
+      "videoPath": "/Users/bellinnn/Documents/projects/carreel/tests/video/body9.mp4",
+      "totalRuns": 2,
+      "successfulRuns": 2,
+      "errored": 0,
+      "gated": 0,
+      "damageCounts": [
+        1,
+        1
+      ],
+      "damageMean": 1,
+      "damageStddev": 0,
+      "damageMin": 1,
+      "damageMax": 1,
+      "stableCount": 1,
+      "frequentCount": 0,
+      "occasionalCount": 0,
+      "flakyCount": 0,
+      "directionConsistent": false,
+      "directionStandard": 0,
+      "directionInverted": 2,
+      "directionUnknown": 0,
+      "sideGuardTotal": 0,
+      "totalElapsedSec": 277,
+      "perRun": [
+        {
+          "index": 1,
+          "cameraPath": "Kamera mulai dari sudut belakang kiri, bergerak sepanjang Sisi Kiri ke Depan, lalu bergerak melewati lampu depan yang berada di kiri layar (Anatomi Kanan) menuju Sisi Kanan. Fase 1: Samping Kiri. Fase 2: Depan. Fase 3: Samping Kanan.",
+          "visualAnalysis": "Pemindaian menunjukkan kondisi kendaraan secara umum baik dengan cat hitam yang sangat reflektif. Ditemukan sekumpulan goresan putih yang cukup jelas pada bagian bawah bumper depan sebelah kanan. Panel bodi lainnya, kaca, dan roda tampak utuh tanpa kerusakan yang signifikan.",
+          "overallCondition": "GOOD",
+          "confidence": 0.95,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Front Corner view. Anchor yang terlihat adalah lampu depan kanan (berada di kiri layar). Timeline menunjukkan kamera bergerak dari Sisi Kiri, ke Depan, lalu memasuki Sisi Kanan. Berdasarkan pergerakan melewati lampu depan di kiri layar = Kanan kendaraan.",
+              "damageBoundingBox": [
+                700,
+                250,
+                950,
+                550
+              ],
+              "anchor": {
+                "type": "front-headlight",
+                "boundingBox": [
+                  250,
+                  50,
+                  550,
+                  450
+                ],
+                "frameTimestamp": 15
+              },
+              "location": "Bumper Depan Kanan",
+              "severity": "MODERATE",
+              "description": "Terdapat beberapa goresan putih yang saling berdekatan pada bagian bawah bumper depan kanan.",
+              "isNewDamage": true,
+              "videoTimestamp": 15
+            }
+          ],
+          "elapsedMs": 119807,
+          "sideGuardAdjusted": 0
+        },
+        {
+          "index": 2,
+          "cameraPath": "Video dimulai dari sisi kiri kendaraan, bergerak ke depan. Dari tampilan depan tengah, kamera bergerak melewati lampu depan yang berada di kiri layar (Anatomi Kanan), menandakan PATH A. Fase 1: Samping Kiri. Fase 2: Depan. Fase 3: Samping Kanan.",
+          "visualAnalysis": "Pemindaian eksterior menunjukkan kendaraan secara umum dalam kondisi baik dengan cat yang mengkilap. Namun, ditemukan satu area kerusakan yang jelas berupa kumpulan goresan pada bagian bawah bumper depan sebelah kanan.",
+          "overallCondition": "GOOD",
+          "confidence": 0.95,
+          "damages": [
+            {
+              "damageType": "goresan",
+              "orientationReason": "Front Corner. Path terdeteksi: PATH A. Kamera bergerak melewati lampu depan yang berada di kiri layar (Anatomi Kanan) dan memasuki fase Samping Kanan. Karena ini adalah pengambilan gambar sudut (corner shot), anchor diabaikan untuk menghindari distorsi 2D. Berdasarkan kontinuitas timeline = Kanan kendaraan.",
+              "damageBoundingBox": [
+                800,
+                200,
+                950,
+                500
+              ],
+              "anchor": null,
+              "location": "Bumper Depan Kanan",
+              "severity": "MINOR",
+              "description": "Terdapat beberapa goresan putih yang cukup jelas pada bagian bawah bumper depan kanan, dekat area fog lamp.",
+              "isNewDamage": true,
+              "videoTimestamp": 15
+            }
+          ],
+          "elapsedMs": 149141,
+          "sideGuardAdjusted": 0
+        }
+      ]
+    }
+  ]
+}
