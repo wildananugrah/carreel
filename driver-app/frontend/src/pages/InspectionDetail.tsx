@@ -153,9 +153,9 @@ function damageLabel(type: string): string {
     transfer_cat: "Transfer Cat",
     penyok: "Penyok",
     kaca_retak: "Kaca Retak",
-    bagian_pecah: "Bagian Pecah",
-    panel_bengkok: "Panel Bengkok",
-    bagian_hilang: "Bagian Hilang",
+    bagian_pecah: "Pecah",
+    panel_bengkok: "Bengkok",
+    bagian_hilang: "Hilang",
     // Legacy English values (backward compat)
     deep_scratch: "Goresan Dalam",
     light_scratch: "Goresan Ringan",
