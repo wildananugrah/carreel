@@ -371,9 +371,23 @@ export function VideoReview() {
     }
   }, [id]);
 
+  // Re-fetch damages whenever a damage-producing step transitions. Without
+  // this, the wizard captures whatever was in the DB at mount time — which
+  // misses the ~3–4 minute window where BODY_INSPECTION is still running
+  // and only the unit-identification damage exists. Tying to the joined
+  // status string covers UNIT_IDENTIFICATION → COMPLETED (early) and
+  // BODY_INSPECTION → COMPLETED (much later), keeping displayFlags fresh.
+  const damageStepStatusKey = inspection?.steps
+    .filter(
+      (s) =>
+        s.stepType === "BODY_INSPECTION" ||
+        s.stepType === "UNIT_IDENTIFICATION",
+    )
+    .map((s) => `${s.stepType}:${s.status}`)
+    .join("|");
   useEffect(() => {
     refreshDamages();
-  }, [refreshDamages]);
+  }, [refreshDamages, damageStepStatusKey]);
 
   // Unified list rendered by the damage section. Prefer the API-fetched
   // damages once loaded so edit/delete actions have a real damageId; fall
