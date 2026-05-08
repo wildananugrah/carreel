@@ -598,22 +598,26 @@ export class InspectionService implements IInspectionService {
     const postRawDamages =
       (postData.damages as Array<Record<string, unknown>>) ?? [];
 
-    // The flag is "noNewDamage" — does post-trip contain any damage that
-    // wasn't already in pre-trip? It's strictly one-directional: damages
-    // present in pre but absent in post don't count as "new" (the damage
-    // either got fixed in-between, the AI missed it on post, or pre was
-    // over-detecting). This matches the per-row isNewDamage semantics
-    // computed in step-analysis.job.ts → overrideIsNewDamage.
-    if (postRawDamages.length === 0) return true;
-    if (preDamages.length === 0) return false;
+    // Both have no damages = no new damage
+    if (preDamages.length === 0 && postRawDamages.length === 0) return true;
+    // One has damages, other doesn't = there's a change
+    if (preDamages.length === 0 && postRawDamages.length > 0) return false;
+    if (preDamages.length > 0 && postRawDamages.length === 0) return false;
 
     const normalize = (s: string) => s.toLowerCase().trim();
     const preKeys = new Set(
       preDamages.map((d) => `${normalize(d.area)}|${normalize(d.location)}`),
     );
-    return postRawDamages.every((d) => {
-      const key = `${normalize((d.damageType as string) || (d.area as string) || "")}|${normalize((d.location as string) || "")}`;
-      return preKeys.has(key);
-    });
+    const postKeys = postRawDamages.map(
+      (d) =>
+        `${normalize((d.damageType as string) || (d.area as string) || "")}|${normalize((d.location as string) || "")}`,
+    );
+
+    const matchedCount = postKeys.filter((k) => preKeys.has(k)).length;
+    const total = Math.max(preDamages.length, postRawDamages.length);
+    const similarity = matchedCount / total;
+
+    const threshold = Number(process.env.DAMAGE_SIMILARITY_THRESHOLD ?? 0.9);
+    return similarity >= threshold;
   }
 }

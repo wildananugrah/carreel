@@ -1322,7 +1322,7 @@ export function VideoReview() {
                       </div>
                     </div>
                   </div>
-                ) : aiFlags.length > 0 && unitData ? (
+                ) : displayFlags.length > 0 && unitData ? (
                   <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-3">
                     <div className="flex items-start gap-3">
                       <svg
