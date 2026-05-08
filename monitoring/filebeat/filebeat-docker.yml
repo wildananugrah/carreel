@@ -1,0 +1,61 @@
+# ============================== Filebeat inputs ===============================
+
+filebeat.inputs:
+  - type: filestream
+    id: docker-containers
+    enabled: true
+    paths:
+      - /var/lib/docker/containers/*/*.log
+
+    # Docker json-file logs biasanya newline-delimited JSON
+    parsers:
+      - ndjson:
+          target: ""
+          add_error_key: true
+
+    fields:
+      env: prod
+      app: docker-workloads
+      source_type: docker-container-log
+    fields_under_root: true
+
+    ignore_older: 72h
+    clean_inactive: 168h
+    scan_frequency: 10s
+
+# Optional: enrich metadata container (kalau socket docker ada)
+processors:
+  - add_host_metadata: ~
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+
+# ============================ Elasticsearch output ============================
+
+output.elasticsearch:
+  hosts: ["https://es.harismawan.com:443"]
+  protocol: https
+  username: "filebeat"
+  password: "vs4Aaq_T3oC-jp#_qUjRswiU"
+
+  ssl.verification_mode: full
+  ssl.certificate_authorities: ["/etc/filebeat/certs/es-ca.crt"]
+
+  # Sesuaikan naming index
+  index: "logs-docker-%{+yyyy.MM.dd}"
+
+# =============================== Logging ======================================
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# =============================== Queue ========================================
+
+queue.mem:
+  events: 4096
+  flush.min_events: 512
+  flush.timeout: 5s
