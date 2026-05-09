@@ -391,7 +391,11 @@ export function InspectionDetail() {
         })),
         ...(preInspection ? (getUnitAI(preInspection)?.damages ?? []) : []),
       ];
-  const postFlags: DamageFlag[] = postMarkers
+  // Hide post-trip damages that match a pre-trip damage (isNewDamage===false).
+  // Driver/planner only need to see *new* findings; duplicates of pre-trip
+  // damages already appear in the PRE-CHECK section and would clutter
+  // POST-CHECK with redundant entries.
+  const postFlagsAll: DamageFlag[] = postMarkers
     ? postMarkers.map((d) => markerToFlag(d, postBodyVideoId))
     : [
         ...(postBodyAI?.damages ?? []).map((d) => ({
@@ -400,6 +404,9 @@ export function InspectionDetail() {
         })),
         ...(postInspection ? (getUnitAI(postInspection)?.damages ?? []) : []),
       ];
+  const postFlags: DamageFlag[] = postFlagsAll.filter(
+    (f) => f.isNewDamage !== false,
+  );
   const totalAlerts = preFlags.length + postFlags.length;
 
   const statusLabel =
@@ -869,6 +876,7 @@ function AIAlertPanel({
           comment={postInspection?.driverComment}
           borderColor="border-[#2a2a2a]"
           labelColor="text-[#C0C0C0]"
+          emptyMessage="Tidak terdapat perubahan kondisi kendaraan"
           onSeek={(flag) => {
             if (flag.videoMediaId != null && typeof flag.videoTimestamp === "number") {
               setSeekLightbox({
@@ -933,6 +941,7 @@ function FlagSection({
   comment,
   borderColor,
   labelColor,
+  emptyMessage,
   onSeek,
   onShowPhoto,
 }: {
@@ -941,6 +950,9 @@ function FlagSection({
   comment: string | null | undefined;
   borderColor: string;
   labelColor: string;
+  /** Override empty-state copy. Defaults to the generic
+   * "Tidak ada flag terdeteksi". */
+  emptyMessage?: string;
   onSeek?: (flag: DamageFlag) => void;
   onShowPhoto?: (mediaId: string) => void;
 }) {
@@ -950,7 +962,9 @@ function FlagSection({
       <div className={`bg-[#0A0A0A] border ${borderColor} rounded-xl overflow-hidden`}>
         {flags.length === 0 ? (
           <div className="px-3.5 py-4 text-center">
-            <p className="text-xs text-[#555]">Tidak ada flag terdeteksi</p>
+            <p className="text-xs text-[#555]">
+              {emptyMessage ?? "Tidak ada flag terdeteksi"}
+            </p>
           </div>
         ) : (
           flags.map((flag, i) => {

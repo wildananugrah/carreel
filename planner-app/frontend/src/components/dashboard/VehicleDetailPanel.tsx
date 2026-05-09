@@ -161,7 +161,12 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
   const preBodyAI = preDetail ? getBodyAI(preDetail) : null;
   const postBodyAI = postDetail ? getBodyAI(postDetail) : null;
   const preFlags = preBodyAI?.damages ?? [];
-  const postFlags = postBodyAI?.damages ?? [];
+  // Hide post-trip damages that match a pre-trip damage (isNewDamage===false).
+  // The planner only needs to see *new* findings on POST-CHECK; matched
+  // entries already show in PRE-CHECK and would clutter the section.
+  const postFlags = (postBodyAI?.damages ?? []).filter(
+    (f) => f.isNewDamage !== false,
+  );
   const totalAlerts = preFlags.length + postFlags.length;
 
   const lowFuel = vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 25;

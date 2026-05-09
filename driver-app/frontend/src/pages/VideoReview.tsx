@@ -74,6 +74,10 @@ interface AIFlag {
   /** Evidence photo id for DRIVER_ADDED damages — only set when sourced
    * from a damage_markers row (not from the legacy aiAnalysis fallback). */
   mediaFileId?: string;
+  /** Backend-computed: false when the damage matches a pre-trip damage
+   * (same damageType + similar location, ≥ DAMAGE_SIMILARITY_THRESHOLD).
+   * Drives the POST_TRIP filter that hides duplicates. */
+  isNewDamage?: boolean;
 }
 
 function damageMarkerToFlag(d: DamageMarker): AIFlag {
@@ -88,6 +92,7 @@ function damageMarkerToFlag(d: DamageMarker): AIFlag {
     source: d.source,
     editedAt: d.editedAt,
     mediaFileId: d.source === "DRIVER_ADDED" ? d.mediaFileId : undefined,
+    isNewDamage: d.isNewDamage,
   };
 }
 
@@ -194,6 +199,7 @@ function extractAIFlags(inspection: InspectionDetail): AIFlag[] {
     description: (d.description as string) || "",
     confidence: Number(d.confidence ?? d.confidenceScore ?? 0),
     videoTimestamp: d.videoTimestamp as number | undefined,
+    isNewDamage: d.isNewDamage as boolean | undefined,
   }));
 }
 
@@ -392,8 +398,15 @@ export function VideoReview() {
   // Unified list rendered by the damage section. Prefer the API-fetched
   // damages once loaded so edit/delete actions have a real damageId; fall
   // back to aiFlags during the brief load window so the page doesn't
-  // flash an empty state.
-  const displayFlags: AIFlag[] = damagesLoaded ? damages.map(damageMarkerToFlag) : aiFlags;
+  // flash an empty state. On POST_TRIP, hide flags that match a pre-trip
+  // damage (isNewDamage === false) — the driver only needs to see the
+  // *new* findings on post-check. Manual additions and legacy entries
+  // without isNewDamage stay visible.
+  const allFlags: AIFlag[] = damagesLoaded ? damages.map(damageMarkerToFlag) : aiFlags;
+  const displayFlags: AIFlag[] =
+    inspection?.tripType === "POST_TRIP"
+      ? allFlags.filter((f) => f.isNewDamage !== false)
+      : allFlags;
 
   const handleDeleteDamage = useCallback(
     async (damageId: string) => {
@@ -1299,7 +1312,7 @@ export function VideoReview() {
                       <span className="text-lg shrink-0">{"\u2705"}</span>
                       <p className="text-sm text-neutral-400">
                         {isPostTrip
-                          ? "Tidak ada kerusakan baru"
+                          ? "AI Tidak mendeteksi kerusakan baru"
                           : "Tidak ada kerusakan terdeteksi oleh AI"}
                       </p>
                     </div>

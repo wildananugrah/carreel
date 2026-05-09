@@ -987,9 +987,20 @@ export class StepAnalysisJob {
   }
 
   /**
-   * Override AI-guessed isNewDamage by comparing post-trip damages against
-   * pre-trip damages. A damage is "new" only if no pre-trip damage has
-   * the same damageType AND location.
+   * Override AI-guessed isNewDamage by comparing each post-trip damage
+   * against pre-trip damages. A post damage is considered "matching" a pre
+   * damage when they share the same damageType AND the location strings
+   * have token-Jaccard similarity ≥ DAMAGE_SIMILARITY_THRESHOLD (default
+   * 0.9, same env var as the set-level rollup). The damage is flagged
+   * isNewDamage = true only when NO pre damage matches it.
+   *
+   * Why Jaccard on tokens rather than exact string equality: the AI's
+   * location wording drifts slightly run-to-run (e.g. "Bumper Depan Kiri"
+   * vs "Bumper / Panel Depan Kiri"). Punctuation/whitespace differences
+   * shouldn't count as new damage. Tokenize → set → Jaccard keeps the
+   * comparison position-agnostic and tolerant of small wording variation,
+   * while still requiring substantial overlap before treating two
+   * descriptions as "the same panel".
    */
   private overrideIsNewDamage(
     postDamages: Array<{
@@ -999,12 +1010,37 @@ export class StepAnalysisJob {
     }>,
     preDamages: Array<{ damageType: string; location: string }>,
   ): void {
-    const preKeys = new Set(
-      preDamages.map((d) => `${d.damageType}|${d.location}`),
-    );
-    for (const damage of postDamages) {
-      const key = `${damage.damageType.toLowerCase().trim()}|${(damage.location ?? "").toLowerCase().trim()}`;
-      damage.isNewDamage = !preKeys.has(key);
+    const threshold = Number(process.env.DAMAGE_SIMILARITY_THRESHOLD ?? 0.9);
+
+    const tokenize = (s: string): Set<string> => {
+      const tokens = s
+        .toLowerCase()
+        .replace(/[/(){},.\-]/g, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+      return new Set(tokens);
+    };
+
+    const jaccard = (a: Set<string>, b: Set<string>): number => {
+      if (a.size === 0 && b.size === 0) return 1;
+      let intersection = 0;
+      for (const t of a) if (b.has(t)) intersection++;
+      const union = a.size + b.size - intersection;
+      return union === 0 ? 1 : intersection / union;
+    };
+
+    for (const post of postDamages) {
+      const postType = post.damageType.toLowerCase().trim();
+      const postTokens = tokenize(post.location ?? "");
+      let matched = false;
+      for (const pre of preDamages) {
+        if (pre.damageType.toLowerCase().trim() !== postType) continue;
+        if (jaccard(postTokens, tokenize(pre.location)) >= threshold) {
+          matched = true;
+          break;
+        }
+      }
+      post.isNewDamage = !matched;
     }
   }
 

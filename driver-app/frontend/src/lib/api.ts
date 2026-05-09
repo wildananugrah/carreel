@@ -59,7 +59,12 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     throw new ApiError(response.status, message);
   }
 
-  return response.json() as Promise<T>;
+  // 204 No Content (e.g. DELETE) and empty bodies have no JSON to parse —
+  // short-circuit before response.json() throws "unexpected end of data".
+  if (response.status === 204) return undefined as T;
+  const text = await response.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 function getUploadSessionKey(inspectionId: string, stepId: string): string {
