@@ -21,6 +21,50 @@ class ApiError extends Error {
   }
 }
 
+/**
+ * Fetch wrapper that retries on transient failures with exponential backoff.
+ * Specifically handles the "user backgrounds the app mid-upload" scenario:
+ * iOS Safari and Chrome on Android can pause the page and kill in-flight
+ * fetches. When the page resumes, the request rejects with TypeError. We
+ * retry up to 4 times (500ms, 1s, 2s, 4s ≈ 7.5s total) which usually rides
+ * out the backgrounding window.
+ *
+ * Retries on:
+ *   - TypeError / network errors (browser killed the connection)
+ *   - HTTP 502, 503, 504 (transient server failure)
+ *
+ * Does NOT retry on:
+ *   - User-cancelled aborts (signal.aborted) — bubbles up immediately
+ *   - 4xx errors (caller bug, retry won't help)
+ *   - Other 5xx (500/501/505+) — likely a real server problem
+ */
+async function fetchWithRetry(
+  input: RequestInfo,
+  init?: RequestInit,
+  opts: { retries?: number; baseDelayMs?: number } = {},
+): Promise<Response> {
+  const retries = opts.retries ?? 4;
+  const baseDelayMs = opts.baseDelayMs ?? 500;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (init?.signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+    try {
+      const res = await fetch(input, init);
+      const isTransient5xx =
+        res.status === 502 || res.status === 503 || res.status === 504;
+      if (!isTransient5xx || attempt === retries) return res;
+    } catch (err) {
+      if (init?.signal?.aborted) throw err;
+      if (attempt === retries) throw err;
+    }
+    await new Promise((r) => setTimeout(r, baseDelayMs * 2 ** attempt));
+  }
+  // Unreachable — loop either returns or throws.
+  throw new Error("fetchWithRetry: exhausted retries");
+}
+
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -36,7 +80,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(path, {
+  const response = await fetchWithRetry(path, {
     ...options,
     headers,
   });
@@ -154,12 +198,15 @@ export const api = {
       const buffer = await chunk.arrayBuffer();
 
       const token = getToken();
-      const res = await fetch(`/api/chunked-upload/${sessionId}/chunk?partNumber=${partNumber}`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: buffer,
-        signal,
-      });
+      const res = await fetchWithRetry(
+        `/api/chunked-upload/${sessionId}/chunk?partNumber=${partNumber}`,
+        {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: buffer,
+          signal,
+        },
+      );
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -218,12 +265,15 @@ export const api = {
       const buffer = await chunk.arrayBuffer();
 
       const token = getToken();
-      const res = await fetch(`/api/chunked-upload/${sessionId}/chunk?partNumber=${partNumber}`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: buffer,
-        signal,
-      });
+      const res = await fetchWithRetry(
+        `/api/chunked-upload/${sessionId}/chunk?partNumber=${partNumber}`,
+        {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: buffer,
+          signal,
+        },
+      );
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
