@@ -302,11 +302,17 @@ export function VideoReview() {
     if (!inspection) return;
     const info = extractUnitInfo(inspection, unitData);
     if (info) {
+      // Synthetic plate (UNKNOWN-*) is a placeholder; show it as empty so the
+      // driver fills in the real plate instead of editing the placeholder.
+      const seedPlate =
+        info.licensePlate && !info.licensePlate.startsWith("UNKNOWN-")
+          ? info.licensePlate
+          : "";
       setUnitForm((prev) => ({
         make: prev.make || info.make || "",
         model: prev.model || info.model || "",
         year: prev.year || info.year || "",
-        licensePlate: prev.licensePlate || info.licensePlate || "",
+        licensePlate: prev.licensePlate || seedPlate,
         odometerKm: prev.odometerKm || (info.odometerKm != null ? String(info.odometerKm) : ""),
         vin: prev.vin || info.vin || "",
       }));

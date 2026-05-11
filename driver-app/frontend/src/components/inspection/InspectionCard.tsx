@@ -85,10 +85,15 @@ function getThumbnailId(inspection: Inspection): string | null {
 export function InspectionCard({ inspection }: InspectionCardProps) {
   const navigate = useNavigate();
   const unit = inspection.unit;
+  // Synthetic plates (created when the AI extracted make/model but couldn't
+  // OCR the plate) start with "UNKNOWN-". Treat them as missing for display
+  // so the home card shows the placeholder instead of the placeholder string.
+  const hasRealPlate = !!unit?.licensePlate && !unit.licensePlate.startsWith("UNKNOWN-");
   const unitName = unit
-    ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") || unit.licensePlate
+    ? [unit.make, unit.model, unit.type].filter(Boolean).join(" ") ||
+      (hasRealPlate ? unit.licensePlate : `Inspection #${inspection.id.slice(0, 8)}`)
     : `Inspection #${inspection.id.slice(0, 8)}`;
-  const plate = unit?.licensePlate ?? "X XXXX XXX";
+  const plate = hasRealPlate ? unit.licensePlate : "X XXXX XXX";
   const km = formatKm(unit?.lastKnownKm);
   const statusLabel = getStatusLabel(inspection.status);
   const statusColor = getStatusColor(inspection.status);

@@ -440,9 +440,20 @@ export class StepAnalysisJob {
           log,
         );
         // Create or find the unit and link it to the inspection.
-        // Pass the parent inspection's projectId so the unit inherits it —
-        // JOB_SYSTEM_SCOPE has empty projects[] and would otherwise throw.
-        if (result.licensePlate) {
+        // Trigger on ANY identifying info — not just licensePlate — so that
+        // make/model the AI extracted aren't dropped when the plate OCR
+        // fails. `Unit.licensePlate` is @unique non-null in the schema, so
+        // when the AI couldn't read a plate we synthesize a placeholder
+        // `UNKNOWN-<inspectionId8>` that the driver can edit in the wizard
+        // unit-info form. The frontend treats `UNKNOWN-*` plates as missing
+        // and shows the placeholder UI instead of the literal value.
+        const hasIdentifyingInfo = !!(
+          result.licensePlate ||
+          result.make ||
+          result.model ||
+          result.vin
+        );
+        if (hasIdentifyingInfo) {
           try {
             const inspectionProjectId =
               await this.inspectionRepository.getProjectIdByInspectionId(
@@ -454,10 +465,13 @@ export class StepAnalysisJob {
                 `Inspection ${inspectionId} not found when resolving projectId for unit link`,
               );
             }
+            const plateForLookup =
+              result.licensePlate ??
+              `UNKNOWN-${inspectionId.slice(0, 8).toUpperCase()}`;
             const unit = await this.inspectionRepository.findOrCreateUnit(
               JOB_SYSTEM_SCOPE,
               {
-                licensePlate: result.licensePlate,
+                licensePlate: plateForLookup,
                 make: result.make,
                 model: result.model,
                 color: result.color,
@@ -473,7 +487,8 @@ export class StepAnalysisJob {
             );
             log.info("Unit linked to inspection", {
               unitId: unit.id,
-              licensePlate: result.licensePlate,
+              licensePlate: plateForLookup,
+              plateSynthesized: !result.licensePlate,
             });
           } catch (e) {
             log.warn("Failed to link unit to inspection", {
