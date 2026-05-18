@@ -9,13 +9,28 @@ import type {
 import type { UserScope } from "../types/scope";
 import { buildScopeFilter } from "../utils/scope-filter";
 
+const KPI_TTL_MS = 10_000;
+
+interface KpiCacheEntry {
+  value: DashboardKPIs;
+  expiresAt: number;
+}
+
 export class DashboardService implements IDashboardService {
+  // Key: userId — each planner gets their own scoped cache entry so one
+  // user's access-controlled view doesn't leak into another's.
+  private kpiCache = new Map<string, KpiCacheEntry>();
+
   constructor(
     private prisma: PrismaClient,
     private dashboardRepository: IDashboardRepository,
   ) {}
 
   async getKPIs(scope: UserScope): Promise<DashboardKPIs> {
+    const cacheKey = scope.userId;
+    const cached = this.kpiCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -103,7 +118,7 @@ export class DashboardService implements IDashboardService {
       alertsByType[group.alertType] = group._count.id;
     }
 
-    return {
+    const result: DashboardKPIs = {
       inspectionsByStatus,
       totalInspections,
       avgConfidenceScore: avgConfidence._avg.confidenceScore,
@@ -112,6 +127,8 @@ export class DashboardService implements IDashboardService {
       alertsByType,
       unreadAlertCount,
     };
+    this.kpiCache.set(cacheKey, { value: result, expiresAt: Date.now() + KPI_TTL_MS });
+    return result;
   }
 
   async getOverview(

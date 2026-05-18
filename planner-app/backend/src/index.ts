@@ -62,7 +62,12 @@ import { HttpError } from "./utils/http-error";
 // ========================
 
 const databaseUrl = process.env.DATABASE_URL!;
-const adapter = new PrismaPg({ connectionString: databaseUrl });
+const adapter = new PrismaPg({
+  connectionString: databaseUrl,
+  max: Number(process.env.DB_POOL_SIZE ?? 25),
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
 const prisma = new PrismaClient({ adapter });
 
 // Providers

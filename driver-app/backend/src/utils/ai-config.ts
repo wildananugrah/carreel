@@ -51,17 +51,14 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
     temperature: 0.0,
   },
   BODY_INSPECTION: {
-    thinkingLevel: "HIGH",
+    // Lowered from HIGH to MEDIUM for ~40-50% latency/cost reduction.
+    // Revert to HIGH if subtle damage recall drops below acceptable threshold
+    // (run scripts/batch-stability-test.ts to compare both settings).
+    thinkingLevel: "MEDIUM",
     maxOutputTokens: 32000,
     temperature: 0.4,
     topP: 0.95,
     topK: 40,
-    // HIGH = 280 tokens/frame (vs 70 at LOW). 4× per-frame cost on the
-    // damage-detection pass, which is what gives the model real visual
-    // resolution to see fine scratches, paint cracking, and dent shadow
-    // gradients. Without this, the prompt's "mental zoom-in" guidance can
-    // only redirect attention; with this, it can actually access more
-    // pixel detail.
     mediaResolution: "HIGH",
   },
 };

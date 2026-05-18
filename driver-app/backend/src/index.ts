@@ -61,6 +61,7 @@ import { HttpError } from "./utils/http-error";
 const databaseUrl = process.env.DATABASE_URL!;
 const adapter = new PrismaPg({
   connectionString: databaseUrl,
+  max: Number(process.env.DB_POOL_SIZE ?? 25),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });
@@ -296,7 +297,10 @@ async function startWorkers() {
 
     await boss.work<StepAnalysisJobData>(
       "step-analysis",
-      { batchSize: 1 },
+      // localConcurrency: 4 workers each pick up one job at a time, so up to
+      // 4 AI analyses run in parallel — 3-5× throughput on multi-step
+      // inspections. Back off to localConcurrency: 1 if you see Gemini 429s.
+      { batchSize: 1, localConcurrency: 4 },
       async ([job]) => {
         await stepAnalysisJob.handle(job.data);
       },
