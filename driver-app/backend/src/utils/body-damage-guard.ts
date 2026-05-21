@@ -85,14 +85,26 @@ const SIDE_FLIP: Record<string, string> = {
   "Pintu Belakang Kanan": "Pintu Belakang Kiri",
   "Fender Depan Kiri": "Fender Depan Kanan",
   "Fender Depan Kanan": "Fender Depan Kiri",
+  "Lampu Depan Kiri": "Lampu Depan Kanan",
+  "Lampu Depan Kanan": "Lampu Depan Kiri",
+  "Lampu Belakang Kiri": "Lampu Belakang Kanan",
+  "Lampu Belakang Kanan": "Lampu Belakang Kiri",
+  "Foglamp Depan Kiri": "Foglamp Depan Kanan",
+  "Foglamp Depan Kanan": "Foglamp Depan Kiri",
   "Spion Kiri": "Spion Kanan",
   "Spion Kanan": "Spion Kiri",
 };
 
 const FALLBACK_LOCATION = "Eksterior Tidak Jelas";
 
+// Original set: plate/logo/headlight/taillight (coordinate-based reasoning).
+// Extended to include local-anatomy markers that the new lamp/foglamp prompt
+// section asks the AI to cite in orientationReason (grille direction, fender
+// edge, bumper corner, wheel arch). Without these, every lamp damage that
+// correctly cites "grille + fender → Kanan kendaraan" would trigger
+// missing-anchor-citation and be downgraded to Eksterior Tidak Jelas.
 const ANCHOR_MENTION =
-  /\b(plat\s+nomor\s+belakang|plat\s+belakang|plat\s+nomor\s+depan|plat\s+depan|logo\s+depan|rear\s+(license\s+)?plate|front\s+(license\s+)?plate|front\s+logo|taillight|tail[-\s]?light|lampu\s+(belakang|rem)|headlight|head[-\s]?light|lampu\s+(depan|utama))\b/i;
+  /\b(plat\s+nomor\s+belakang|plat\s+belakang|plat\s+nomor\s+depan|plat\s+depan|logo\s+depan|rear\s+(license\s+)?plate|front\s+(license\s+)?plate|front\s+logo|taillight|tail[-\s]?light|lampu\s+(belakang|rem)|headlight|head[-\s]?light|lampu\s+(depan|utama)|grill[e]?|grille?\s+depan|bumper\s+(center|tengah|corner|sudut)|sudut\s+bumper|fender(\s+edge|\s+depan)?|wheel\s+arch|lengkungan\s+roda|kap\s+mesin|hood\s+center)\b/i;
 
 const CONCLUSION_KANAN = /=\s*Kanan\s+kendaraan\b/i;
 const CONCLUSION_KIRI = /=\s*Kiri\s+kendaraan\b/i;
@@ -217,6 +229,9 @@ type PanelFamily =
   | "pintu-depan"
   | "pintu-belakang"
   | "fender-depan"
+  | "lampu-depan"
+  | "lampu-belakang"
+  | "foglamp-depan"
   | "spion"
   | "atap"
   | "kap-mesin"
@@ -225,13 +240,18 @@ type PanelFamily =
   | "kaca-belakang"
   | "roda-ban";
 
-// Ordered longest-match-first so "pintu depan" wins over a bare "pintu".
+// Ordered longest-match-first so "pintu depan" wins over a bare "pintu",
+// and "lampu depan" wins over the bare "lampu" fragment.
 const PANEL_PATTERNS: Array<[RegExp, PanelFamily]> = [
   [/\b(?:bumper|panel)\s+belakang\b/i, "bumper-belakang"],
   [/\bbumper\s+depan\b/i, "bumper-depan"],
   [/\bpintu\s+depan\b/i, "pintu-depan"],
   [/\bpintu\s+belakang\b/i, "pintu-belakang"],
   [/\bfender\s+depan\b/i, "fender-depan"],
+  // Lamp families must come before kaca so "lampu belakang" doesn't match kaca.
+  [/\blampu\s+belakang\b|\btaillight\b|\blampu\s+rem\b/i, "lampu-belakang"],
+  [/\blampu\s+depan\b|\bheadlight\b|\blampu\s+utama\b/i, "lampu-depan"],
+  [/\bfoglamp\b|\bfog\s+lamp\b|\blampu\s+kabut\b/i, "foglamp-depan"],
   [/\bkaca\s+depan\b/i, "kaca-depan"],
   [/\bkaca\s+belakang\b/i, "kaca-belakang"],
   [/\bspion\b/i, "spion"],
@@ -267,6 +287,18 @@ const LOCATION_TABLE: Record<
   "fender-depan": {
     left: "Fender Depan Kiri",
     right: "Fender Depan Kanan",
+  },
+  "lampu-depan": {
+    left: "Lampu Depan Kiri",
+    right: "Lampu Depan Kanan",
+  },
+  "lampu-belakang": {
+    left: "Lampu Belakang Kiri",
+    right: "Lampu Belakang Kanan",
+  },
+  "foglamp-depan": {
+    left: "Foglamp Depan Kiri",
+    right: "Foglamp Depan Kanan",
   },
   spion: {
     left: "Spion Kiri",
@@ -350,6 +382,9 @@ function locationPanelFamily(location: string): PanelFamily | "unknown" {
   if (/^pintu\s+depan\b/.test(normalized)) return "pintu-depan";
   if (/^pintu\s+belakang\b/.test(normalized)) return "pintu-belakang";
   if (/^fender\s+depan\b/.test(normalized)) return "fender-depan";
+  if (/^lampu\s+depan\b/.test(normalized)) return "lampu-depan";
+  if (/^lampu\s+belakang\b/.test(normalized)) return "lampu-belakang";
+  if (/^foglamp\s+depan\b/.test(normalized)) return "foglamp-depan";
   if (/^spion\b/.test(normalized)) return "spion";
   if (/^atap\b/.test(normalized)) return "atap";
   if (/^kap\b/.test(normalized)) return "kap-mesin";
