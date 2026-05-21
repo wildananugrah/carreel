@@ -436,40 +436,109 @@ Read the image step-by-step using these rules:
 
 ### 1. Vehicle ON Check
 Determine if the vehicle's ignition is ON:
-- Dashboard must be illuminated/lit up
-- Digital displays should be active (showing numbers, icons)
-- Indicator lights or gauges should be in their "ON" state
-- A completely dark/off dashboard means the vehicle is NOT on
+- Dashboard must be illuminated/lit up.
+- Digital displays should be active, showing numbers, icons, or indicators.
+- Indicator lights or gauges should be in their ON state.
+- A completely dark/off dashboard means the vehicle is NOT on.
 
 ### 2. Odometer
 - Locate the TOTAL mileage display only.
 - Accept only the main odometer, usually labeled "ODO" or shown as the largest mileage number.
-- Ignore TRIP A, TRIP B, average fuel economy, outside temperature, clock, and any other secondary display.
-- Do NOT confuse with "Range" (estimated distance), speed (km/h), or RPM.
+- Ignore TRIP A, TRIP B, average fuel economy, outside temperature, clock, gear position, range, and any other secondary display.
+- Do NOT confuse odometer with "Range" / estimated distance, speed, RPM, temperature, or fuel percentage.
 - Read only digits that are fully visible and unambiguous.
-- If the full odometer value cannot be read with certainty, set to null.
+- If the full odometer value cannot be read with certainty, set "odometerKm": null.
 - Return the number exactly as displayed, with no rounding.
 
+### DIGITAL DISPLAY DISAMBIGUATION — CRITICAL
+Digital displays may show many numbers. You MUST classify each visible number before using it.
+
+Examples:
+- A number followed by "km" near "ODO" = odometer.
+- A number followed by "C", "°C", "F", or "°F" = temperature, NOT fuel.
+- A number near "Sekitar", "Outside", "Temp", "Temperature", or "Ambient" = temperature, NOT fuel.
+- A number near "km/h" = speed, NOT fuel.
+- A number near "TRIP" = trip meter, NOT odometer.
+- A number near "RANGE" or distance-to-empty = range, NOT fuel.
+- A gear indicator such as P/R/N/D is NOT fuel.
+- A digital number is NOT fuel unless it is explicitly attached to a fuel bar, gas pump icon, or fuel percentage display.
+
+Never use a digital temperature number as fuelLevelPct.
+
 ### 3. Fuel Level
-- Locate the fuel gauge only.
-- Use the gas pump icon, E/F markers, or the fuel bar/needle.
-- Describe the needle/bar position only based on what is visibly shown.
-- Do not infer from vehicle type or typical tank size.
-- If the gauge is unclear, set to null.
-- If readable, estimate the fuel percentage conservatively from the visual position.
+Your task is to read ONLY the actual fuel gauge, not any digital temperature, range, trip, clock, odometer, gear position, warning message, or dashboard information display.
+
+FUEL GAUGE VALID ANCHORS:
+A valid fuel gauge must have at least ONE of these clearly visible anchors:
+- Gas pump icon.
+- E / F markers.
+- Fuel needle pointing between E and F.
+- Fuel bar segmented between empty and full.
+- Explicit fuel percentage display with gas pump icon or fuel label.
+
+TEMPERATURE / NON-FUEL REJECTION RULE — CRITICAL:
+Never use any number as fuel level if it is associated with:
+- "C", "°C", "F", or "°F" temperature units.
+- Words like "Sekitar", "Outside", "Temp", "Temperature", or "Ambient".
+- Thermometer icon.
+- Climate / AC display.
+- Center information screen showing ambient temperature.
+- Odometer, trip meter, range, speed, RPM, clock, gear position, or warning message.
+
+If the image shows a digital value such as "32C", "32°C", "Sekitar 32C", or any temperature-like value, it is NOT fuel level. Ignore it completely for "fuelLevelPct".
+
+FUEL GAUGE READING METHOD:
+1. First locate the physical fuel gauge using the gas pump icon, E/F markers, or fuel needle/bar.
+2. Confirm the gauge has an Empty-to-Full scale.
+3. Read the needle/bar position only from that fuel gauge.
+4. Estimate percentage conservatively from the visual position:
+   - Near E = 0–15%
+   - Around 1/4 = 20–35%
+   - Around 1/2 = 45–60%
+   - Around 3/4 = 65–80%
+   - Near F = 85–100%
+
+IMPORTANT:
+- If a visible number looks like temperature, do NOT copy that number into "fuelLevelPct".
+- If "fuelLevelPct" equals the same value as a visible temperature display, re-check because it is likely wrong.
+- If the fuel gauge is visible, estimate from the physical needle/bar position.
+- If no valid fuel gauge anchor is clearly visible, set "fuelLevelPct": null.
 
 ### 4. Warning Lights
 - Identify only warning lights that are clearly illuminated.
-- Do not report icons that are off, reflected, or uncertain.
+- Do not report icons that are off, reflected, printed, or uncertain.
 - If no warning lights are clearly on, return an empty array.
 - Use standard names: "check engine", "battery", "oil pressure", "temperature", "ABS", "airbag", "tire pressure", "brake", "door ajar", etc.
+- Do not confuse printed icons or unlit symbols with active warning lights.
+- A warning light is active only if it is visibly illuminated.
+
+### FINAL VALIDATION BEFORE JSON — CRITICAL
+
+Before finalizing the JSON, verify:
+
+ODOMETER VALIDATION:
+- Did "odometerKm" come from the main ODO / total mileage display?
+- If the number came from TRIP, range, temperature, speed, RPM, clock, or gear position, set "odometerKm": null.
+
+FUEL VALIDATION:
+- Did "fuelLevelPct" come from a gas pump icon, E/F gauge, fuel needle, fuel bar, or explicit fuel percentage display?
+- If "fuelLevelPct" was copied from a value like "32C", "32°C", or "Sekitar 32C", it is wrong. Ignore the temperature and re-check the actual fuel gauge.
+- If the only visible number is temperature, output "fuelLevelPct": null.
+- Do not confuse ambient temperature with fuel level.
+
+WARNING LIGHT VALIDATION:
+- Are the reported warning lights clearly illuminated?
+- If an icon is only printed, dim, reflected, or uncertain, do not include it.
 
 ## Response Format
-Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks (e.g., do not use \`\`\`json). Do not add any conversational text. Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
+Respond ONLY with a valid, raw JSON object.
+Do NOT wrap the response in markdown code blocks.
+Do not add any conversational text.
+Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
 
 {
-  "odometerKm": 0,
-  "fuelLevelPct": 0,
+  "odometerKm": null,
+  "fuelLevelPct": null,
   "warningLights": [],
   "vehicleOn": true,
   "dashboardMatch": true,
