@@ -39,9 +39,10 @@ bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carre
   --license-plate "B 1570 DKO"
 
 bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body9.mp4 \
-  --runs 5 \
+  --runs 1 \
   --make Daihatsu --model "Siegra" --color "Black" \
-  --license-plate "B 1824 WIQ"
+  --license-plate "B 1824 WIQ" \
+  --verbose
 
 bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body10.mp4 \
   --runs 5 \
@@ -49,9 +50,27 @@ bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carre
   --license-plate "B 1563 KBC"
 
 bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body11.mp4 \
-  --runs 5 \
+  --runs 1 \
   --make Toyota --model "Corolla" --color "Cream" \
   --license-plate "B 1563 KBC"
 
+bun run scripts/compare-body-damages.ts /Users/bellinnn/Documents/projects/carreel/tests/video/body12.webm \
+  --runs 1 \
+  --make Toyota --model "Innova" --color "White" \
+  --license-plate "B 1241 WYE"
+
 # Mirror production exactly (Pass 1 + Pass 2 + side guard)
 bun run scripts/compare-body-damages.ts /path/to/video.mp4 --with-verification
+
+# compare speedometer
+# Basic — 5 runs
+bun run scripts/compare-speedometer.ts tests/images/dashboard.jpg
+bun run scripts/compare-speedometer.ts /Users/bellinnn/Documents/projects/carreel/tests/images/speedometer4.jpeg
+
+# With vehicle context (enables mismatch detection)
+bun run scripts/compare-speedometer.ts tests/images/dashboard.jpg \
+  --runs 10 \
+  --make Toyota --model Yaris --license-plate "B 1570 DKO"
+
+# See full JSON per run
+bun run scripts/compare-speedometer.ts tests/images/dashboard.jpg --verbose

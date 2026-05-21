@@ -54,7 +54,7 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
     // Lowered from HIGH to MEDIUM for ~40-50% latency/cost reduction.
     // Revert to HIGH if subtle damage recall drops below acceptable threshold
     // (run scripts/batch-stability-test.ts to compare both settings).
-    thinkingLevel: "MEDIUM",
+    thinkingLevel: "HIGH",
     maxOutputTokens: 32000,
     temperature: 0.4,
     topP: 0.95,
