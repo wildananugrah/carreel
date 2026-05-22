@@ -466,43 +466,74 @@ Examples:
 Never use a digital temperature number as fuelLevelPct.
 
 ### 3. Fuel Level
-Your task is to read ONLY the actual fuel gauge, not any digital temperature, range, trip, clock, odometer, gear position, warning message, or dashboard information display.
 
-FUEL GAUGE VALID ANCHORS:
-A valid fuel gauge must have at least ONE of these clearly visible anchors:
-- Gas pump icon.
-- E / F markers.
-- Fuel needle pointing between E and F.
-- Fuel bar segmented between empty and full.
-- Explicit fuel percentage display with gas pump icon or fuel label.
+CRITICAL FUEL-GAUGE LOCK:
+Before reading fuel level, you MUST first locate a confirmed fuel gauge.
+A confirmed fuel gauge must have at least one of these fuel-specific anchors visibly attached to it:
+- "E" and/or "F" fuel markers
+- a gas pump icon
+- a vertical or horizontal fuel bar directly next to E/F markers
+- a small analog fuel needle directly connected to E/F markers
 
-TEMPERATURE / NON-FUEL REJECTION RULE — CRITICAL:
-Never use any number as fuel level if it is associated with:
-- "C", "°C", "F", or "°F" temperature units.
-- Words like "Sekitar", "Outside", "Temp", "Temperature", or "Ambient".
-- Thermometer icon.
-- Climate / AC display.
-- Center information screen showing ambient temperature.
-- Odometer, trip meter, range, speed, RPM, clock, gear position, or warning message.
+DO NOT read fuel level from:
+- the speedometer needle
+- the tachometer/RPM needle
+- km/h scale
+- x1000 r/min scale
+- temperature gauge
+- warning lamps
+- gear position display
+- trip/ODO/range/clock/temperature text
 
-If the image shows a digital value such as "32C", "32°C", "Sekitar 32C", or any temperature-like value, it is NOT fuel level. Ignore it completely for "fuelLevelPct".
+Important:
+- Speedometer usually has km/h numbers such as 0, 20, 40, 60, 100, 140, 180, 200, 220. These are NOT fuel.
+- Tachometer usually has x1000 r/min or RPM numbers such as 0–8. These are NOT fuel.
+- Fuel gauge is usually marked with E/F, a gas pump icon, or a fuel bar beside E/F.
+- Some dashboards place the fuel gauge inside the same circular dial as the speedometer. In that case, separate the main speedometer needle from the small fuel needle.
+- The speedometer needle is attached to the main center hub and points to km/h numbers.
+- The fuel needle/bar is attached to the E/F fuel scale or gas pump icon.
+- Only the needle/bar attached to E/F or gas pump icon may be used for fuelLevelPct.
 
-FUEL GAUGE READING METHOD:
-1. First locate the physical fuel gauge using the gas pump icon, E/F markers, or fuel needle/bar.
-2. Confirm the gauge has an Empty-to-Full scale.
-3. Read the needle/bar position only from that fuel gauge.
-4. Estimate percentage conservatively from the visual position:
-   - Near E = 0–15%
-   - Around 1/4 = 20–35%
-   - Around 1/2 = 45–60%
-   - Around 3/4 = 65–80%
-   - Near F = 85–100%
+Detection workflow:
+1. First scan the entire dashboard specifically for "E", "F", and gas pump icon.
+2. If not found on the first scan, scan again more carefully around:
+   - inside the speedometer cluster,
+   - beside the digital display,
+   - lower-left or lower-right small gauges,
+   - vertical LCD bar areas.
+3. Only after a confirmed fuel gauge is found, determine whether it is:
+   - ANALOG NEEDLE fuel gauge, or
+   - DIGITAL BAR fuel gauge.
 
-IMPORTANT:
-- If a visible number looks like temperature, do NOT copy that number into "fuelLevelPct".
-- If "fuelLevelPct" equals the same value as a visible temperature display, re-check because it is likely wrong.
-- If the fuel gauge is visible, estimate from the physical needle/bar position.
-- If no valid fuel gauge anchor is clearly visible, set "fuelLevelPct": null.
+For ANALOG NEEDLE fuel gauge:
+- Read only the needle that belongs to the confirmed E/F fuel scale.
+- Treat E as 0% and F as 100%.
+- Estimate the needle position continuously along the visible E-to-F scale.
+- Do NOT force the result into fixed levels such as only 0%, 25%, 50%, 75%, or 100%.
+- Use intermediate values when visually appropriate, such as 10%, 15%, 20%, 30%, 35%, 45%, 55%, 60%, 70%, 85%, etc.
+- Round to the nearest 5%.
+- If the needle is slightly above E, output a low percentage such as 5–15%, not automatically 25%.
+- If the needle is between E and half, estimate the proportional position visually.
+- If the needle is between half and F, estimate the proportional position visually.
+- If the E/F scale or fuel needle is not clearly visible, set fuelLevelPct to null.
+
+For DIGITAL BAR fuel gauge:
+- Read only the fuel bar directly associated with E/F markers or gas pump icon.
+- Estimate fuel level from the filled portion of the bar relative to the full E-to-F range.
+- If individual bars are visible, count filled bars versus total bars and convert proportionally to percentage.
+- Do NOT force the result into fixed levels such as only 0%, 25%, 50%, 75%, or 100%.
+- Use intermediate values when visually appropriate.
+- Round to the nearest 5%.
+- If filled bars cannot be distinguished from empty bars, set fuelLevelPct to null.
+
+Low fuel warning lamp rule:
+- Do NOT use the low fuel warning lamp to calculate fuelLevelPct.
+- A warning lamp only indicates a warning, not the exact fuel percentage.
+- Ignore warning lamps when estimating fuel level.
+
+If no confirmed fuel gauge is found after the second scan, set fuelLevelPct to null.
+If a fuel gauge is found but the level is unclear, set fuelLevelPct to null.
+Do not guess.
 
 ### 4. Warning Lights
 - Identify only warning lights that are clearly illuminated.
