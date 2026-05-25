@@ -159,6 +159,7 @@ describe("InspectionService", () => {
           status: "PENDING",
           createdAt: new Date(),
           updatedAt: new Date(),
+          tfDetectionHints: null,
         };
         steps.set(step.id, step);
         return step;

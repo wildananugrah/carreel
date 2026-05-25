@@ -34,6 +34,7 @@ const mockStep: InspectionStep = {
   status: "PENDING",
   createdAt: new Date(),
   updatedAt: new Date(),
+  tfDetectionHints: null,
 };
 
 const mockInspection: InspectionWithRelations = {

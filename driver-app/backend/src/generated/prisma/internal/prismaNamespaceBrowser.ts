@@ -151,7 +151,8 @@ export const InspectionStepScalarFieldEnum = {
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  projectId: 'projectId'
+  projectId: 'projectId',
+  tfDetectionHints: 'tfDetectionHints'
 } as const
 
 export type InspectionStepScalarFieldEnum = (typeof InspectionStepScalarFieldEnum)[keyof typeof InspectionStepScalarFieldEnum]

@@ -79,6 +79,7 @@ describe("UploadService", () => {
       status: "PENDING",
       createdAt: new Date(),
       updatedAt: new Date(),
+      tfDetectionHints: null,
     };
 
     const mockInspectionRepo: Partial<IInspectionRepository> = {

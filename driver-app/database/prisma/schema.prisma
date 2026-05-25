@@ -178,7 +178,8 @@ model InspectionStep {
   mediaFiles MediaFile[]
   aiAnalysis AIAnalysis?
 
-  projectId String
+  projectId        String
+  tfDetectionHints Json?
 
   @@unique([inspectionId, stepType])
   @@index([projectId])

@@ -62,6 +62,7 @@ function createMockStep(
     status: "UPLOADED",
     createdAt: new Date(),
     updatedAt: new Date(),
+    tfDetectionHints: null,
     ...overrides,
   };
 }

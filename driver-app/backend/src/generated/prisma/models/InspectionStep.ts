@@ -52,6 +52,7 @@ export type InspectionStepCountAggregateOutputType = {
   createdAt: number
   updatedAt: number
   projectId: number
+  tfDetectionHints: number
   _all: number
 }
 
@@ -84,6 +85,7 @@ export type InspectionStepCountAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   projectId?: true
+  tfDetectionHints?: true
   _all?: true
 }
 
@@ -167,6 +169,7 @@ export type InspectionStepGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   projectId: string
+  tfDetectionHints: runtime.JsonValue | null
   _count: InspectionStepCountAggregateOutputType | null
   _min: InspectionStepMinAggregateOutputType | null
   _max: InspectionStepMaxAggregateOutputType | null
@@ -198,6 +201,7 @@ export type InspectionStepWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringFilter<"InspectionStep"> | string
+  tfDetectionHints?: Prisma.JsonNullableFilter<"InspectionStep">
   inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   mediaFiles?: Prisma.MediaFileListRelationFilter
   aiAnalysis?: Prisma.XOR<Prisma.AIAnalysisNullableScalarRelationFilter, Prisma.AIAnalysisWhereInput> | null
@@ -211,6 +215,7 @@ export type InspectionStepOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
+  tfDetectionHints?: Prisma.SortOrderInput | Prisma.SortOrder
   inspection?: Prisma.InspectionOrderByWithRelationInput
   mediaFiles?: Prisma.MediaFileOrderByRelationAggregateInput
   aiAnalysis?: Prisma.AIAnalysisOrderByWithRelationInput
@@ -228,6 +233,7 @@ export type InspectionStepWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringFilter<"InspectionStep"> | string
+  tfDetectionHints?: Prisma.JsonNullableFilter<"InspectionStep">
   inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   mediaFiles?: Prisma.MediaFileListRelationFilter
   aiAnalysis?: Prisma.XOR<Prisma.AIAnalysisNullableScalarRelationFilter, Prisma.AIAnalysisWhereInput> | null
@@ -241,6 +247,7 @@ export type InspectionStepOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
+  tfDetectionHints?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.InspectionStepCountOrderByAggregateInput
   _max?: Prisma.InspectionStepMaxOrderByAggregateInput
   _min?: Prisma.InspectionStepMinOrderByAggregateInput
@@ -257,6 +264,7 @@ export type InspectionStepScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringWithAggregatesFilter<"InspectionStep"> | string
+  tfDetectionHints?: Prisma.JsonNullableWithAggregatesFilter<"InspectionStep">
 }
 
 export type InspectionStepCreateInput = {
@@ -266,6 +274,7 @@ export type InspectionStepCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   inspection: Prisma.InspectionCreateNestedOneWithoutStepsInput
   mediaFiles?: Prisma.MediaFileCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisCreateNestedOneWithoutStepInput
@@ -279,6 +288,7 @@ export type InspectionStepUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileUncheckedCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedCreateNestedOneWithoutStepInput
 }
@@ -290,6 +300,7 @@ export type InspectionStepUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutStepsNestedInput
   mediaFiles?: Prisma.MediaFileUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUpdateOneWithoutStepNestedInput
@@ -303,6 +314,7 @@ export type InspectionStepUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileUncheckedUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedUpdateOneWithoutStepNestedInput
 }
@@ -315,6 +327,7 @@ export type InspectionStepCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type InspectionStepUpdateManyMutationInput = {
@@ -324,6 +337,7 @@ export type InspectionStepUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type InspectionStepUncheckedUpdateManyInput = {
@@ -334,6 +348,7 @@ export type InspectionStepUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type InspectionStepListRelationFilter = {
@@ -359,6 +374,7 @@ export type InspectionStepCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
+  tfDetectionHints?: Prisma.SortOrder
 }
 
 export type InspectionStepMaxOrderByAggregateInput = {
@@ -471,6 +487,7 @@ export type InspectionStepCreateWithoutInspectionInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisCreateNestedOneWithoutStepInput
 }
@@ -482,6 +499,7 @@ export type InspectionStepUncheckedCreateWithoutInspectionInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileUncheckedCreateNestedManyWithoutStepInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedCreateNestedOneWithoutStepInput
 }
@@ -523,6 +541,7 @@ export type InspectionStepScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringFilter<"InspectionStep"> | string
+  tfDetectionHints?: Prisma.JsonNullableFilter<"InspectionStep">
 }
 
 export type InspectionStepCreateWithoutMediaFilesInput = {
@@ -532,6 +551,7 @@ export type InspectionStepCreateWithoutMediaFilesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   inspection: Prisma.InspectionCreateNestedOneWithoutStepsInput
   aiAnalysis?: Prisma.AIAnalysisCreateNestedOneWithoutStepInput
 }
@@ -544,6 +564,7 @@ export type InspectionStepUncheckedCreateWithoutMediaFilesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   aiAnalysis?: Prisma.AIAnalysisUncheckedCreateNestedOneWithoutStepInput
 }
 
@@ -570,6 +591,7 @@ export type InspectionStepUpdateWithoutMediaFilesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutStepsNestedInput
   aiAnalysis?: Prisma.AIAnalysisUpdateOneWithoutStepNestedInput
 }
@@ -582,6 +604,7 @@ export type InspectionStepUncheckedUpdateWithoutMediaFilesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   aiAnalysis?: Prisma.AIAnalysisUncheckedUpdateOneWithoutStepNestedInput
 }
 
@@ -592,6 +615,7 @@ export type InspectionStepCreateWithoutAiAnalysisInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   inspection: Prisma.InspectionCreateNestedOneWithoutStepsInput
   mediaFiles?: Prisma.MediaFileCreateNestedManyWithoutStepInput
 }
@@ -604,6 +628,7 @@ export type InspectionStepUncheckedCreateWithoutAiAnalysisInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileUncheckedCreateNestedManyWithoutStepInput
 }
 
@@ -630,6 +655,7 @@ export type InspectionStepUpdateWithoutAiAnalysisInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   inspection?: Prisma.InspectionUpdateOneRequiredWithoutStepsNestedInput
   mediaFiles?: Prisma.MediaFileUpdateManyWithoutStepNestedInput
 }
@@ -642,6 +668,7 @@ export type InspectionStepUncheckedUpdateWithoutAiAnalysisInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileUncheckedUpdateManyWithoutStepNestedInput
 }
 
@@ -652,6 +679,7 @@ export type InspectionStepCreateManyInspectionInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type InspectionStepUpdateWithoutInspectionInput = {
@@ -661,6 +689,7 @@ export type InspectionStepUpdateWithoutInspectionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUpdateOneWithoutStepNestedInput
 }
@@ -672,6 +701,7 @@ export type InspectionStepUncheckedUpdateWithoutInspectionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   mediaFiles?: Prisma.MediaFileUncheckedUpdateManyWithoutStepNestedInput
   aiAnalysis?: Prisma.AIAnalysisUncheckedUpdateOneWithoutStepNestedInput
 }
@@ -683,6 +713,7 @@ export type InspectionStepUncheckedUpdateManyWithoutInspectionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  tfDetectionHints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 
@@ -724,6 +755,7 @@ export type InspectionStepSelect<ExtArgs extends runtime.Types.Extensions.Intern
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
+  tfDetectionHints?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   mediaFiles?: boolean | Prisma.InspectionStep$mediaFilesArgs<ExtArgs>
   aiAnalysis?: boolean | Prisma.InspectionStep$aiAnalysisArgs<ExtArgs>
@@ -738,6 +770,7 @@ export type InspectionStepSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
+  tfDetectionHints?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspectionStep"]>
 
@@ -749,6 +782,7 @@ export type InspectionStepSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
+  tfDetectionHints?: boolean
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["inspectionStep"]>
 
@@ -760,9 +794,10 @@ export type InspectionStepSelectScalar = {
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
+  tfDetectionHints?: boolean
 }
 
-export type InspectionStepOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "stepType" | "status" | "createdAt" | "updatedAt" | "projectId", ExtArgs["result"]["inspectionStep"]>
+export type InspectionStepOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "stepType" | "status" | "createdAt" | "updatedAt" | "projectId" | "tfDetectionHints", ExtArgs["result"]["inspectionStep"]>
 export type InspectionStepInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   mediaFiles?: boolean | Prisma.InspectionStep$mediaFilesArgs<ExtArgs>
@@ -791,6 +826,7 @@ export type $InspectionStepPayload<ExtArgs extends runtime.Types.Extensions.Inte
     createdAt: Date
     updatedAt: Date
     projectId: string
+    tfDetectionHints: runtime.JsonValue | null
   }, ExtArgs["result"]["inspectionStep"]>
   composites: {}
 }
@@ -1224,6 +1260,7 @@ export interface InspectionStepFieldRefs {
   readonly createdAt: Prisma.FieldRef<"InspectionStep", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"InspectionStep", 'DateTime'>
   readonly projectId: Prisma.FieldRef<"InspectionStep", 'String'>
+  readonly tfDetectionHints: Prisma.FieldRef<"InspectionStep", 'Json'>
 }
     
 
