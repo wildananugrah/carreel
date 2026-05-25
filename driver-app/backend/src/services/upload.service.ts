@@ -11,6 +11,15 @@ import type { UserScope } from "../types/scope";
 import { badRequest, notFound } from "../utils/http-error";
 import { hasPlatformBypass } from "../utils/scope-filter";
 
+// AWS SDK v3 throws errors with name="NoSuchKey" when the object doesn't exist.
+// Check by name so we stay decoupled from the AWS SDK in the service layer.
+function isStorageNotFound(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (err.name === "NoSuchKey" || err.name === "NotFound" || err.name === "NoSuchBucket")
+  );
+}
+
 const BUCKET_MAP: Record<string, string> = {
   IMAGE: "carreel-images",
   VIDEO: "carreel-videos",
@@ -163,19 +172,29 @@ export class UploadService implements IUploadService {
     if (!media) {
       throw notFound("Media file not found");
     }
-    const buffer = await this.storageProvider.download(
-      media.minioBucket,
-      media.minioKey,
-    );
-    return { buffer, mimeType: media.mimeType };
+    try {
+      const buffer = await this.storageProvider.download(
+        media.minioBucket,
+        media.minioKey,
+      );
+      return { buffer, mimeType: media.mimeType };
+    } catch (err) {
+      if (isStorageNotFound(err)) throw notFound("Media file not found in storage");
+      throw err;
+    }
   }
 
   async getMediaByKey(
     bucket: string,
     key: string,
   ): Promise<{ buffer: Buffer; mimeType: string }> {
-    const buffer = await this.storageProvider.download(bucket, key);
-    return { buffer, mimeType: "image/png" };
+    try {
+      const buffer = await this.storageProvider.download(bucket, key);
+      return { buffer, mimeType: "image/png" };
+    } catch (err) {
+      if (isStorageNotFound(err)) throw notFound("Media file not found in storage");
+      throw err;
+    }
   }
 
   async deleteMedia(
