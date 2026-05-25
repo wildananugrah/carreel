@@ -68,7 +68,7 @@ export class GeminiProvider implements IAIProvider {
     options?: AIAnalysisOptions,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
-      model: this.model,
+      model: options?.model ?? this.model,
       contents: [{ inlineData: { mimeType, data: base64 } }, { text: prompt }],
       config: buildModelConfig(systemInstruction, options),
     });
@@ -83,7 +83,7 @@ export class GeminiProvider implements IAIProvider {
     options?: AIAnalysisOptions,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
-      model: this.model,
+      model: options?.model ?? this.model,
       contents: createUserContent([
         createPartFromUri(fileUri, mimeType),
         prompt,

@@ -44,6 +44,13 @@ export interface AIAnalysisOptions {
    * Leave undefined to inherit Gemini's default.
    */
   mediaResolution?: "LOW" | "MEDIUM" | "HIGH";
+  /**
+   * Model override for this specific call. When set, the provider uses this
+   * model instead of the one it was constructed with. Configure per step via
+   * GEMINI_MODEL_<STEP> environment variables so different steps can run on
+   * different model tiers (e.g. Flash for cheap OCR, Pro for complex analysis).
+   */
+  model?: string;
 }
 
 export interface IAIProvider {
