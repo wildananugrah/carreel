@@ -8,7 +8,7 @@ import { PrismaClient } from "./generated/prisma";
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
-import { MinIOProvider } from "./providers/minio.provider";
+import { S3Provider } from "./providers/s3.provider";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
 // Providers
 import { WinstonLogger } from "./providers/winston-logger.provider";
@@ -76,12 +76,15 @@ const logger = new WinstonLogger(
   process.env.LOKI_URL,
 );
 
-const storageProvider = new MinIOProvider({
-  endPoint: process.env.MINIO_ENDPOINT ?? "localhost",
-  port: Number(process.env.MINIO_PORT) || 9000,
-  accessKey: process.env.MINIO_ACCESS_KEY ?? "carreel",
-  secretKey: process.env.MINIO_SECRET_KEY ?? "carreel_secret",
-  useSSL: process.env.MINIO_USE_SSL === "true",
+const storageProvider = new S3Provider({
+  region: process.env.S3_REGION ?? "ap-southeast-1",
+  accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
+  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+  bucket: process.env.S3_BUCKET ?? "carreel",
+  ...(process.env.S3_ENDPOINT ? { endpoint: process.env.S3_ENDPOINT } : {}),
+  ...(process.env.S3_FORCE_PATH_STYLE
+    ? { forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true" }
+    : {}),
 });
 
 const notificationProvider = new WebSocketNotificationProvider(
@@ -256,12 +259,12 @@ async function checkConnectivity() {
     process.exit(1);
   }
 
-  const minioOk = await storageProvider.ping();
-  if (minioOk) {
-    logger.info("MinIO: connected");
+  const s3Ok = await storageProvider.ping();
+  if (s3Ok) {
+    logger.info("S3: connected");
   } else {
     logger.warn(
-      "MinIO: unavailable — file access will fail. Start it with: docker compose -f minio/docker-compose.yml up -d",
+      "S3: unavailable — file access will fail. Check S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_REGION.",
     );
   }
 }
