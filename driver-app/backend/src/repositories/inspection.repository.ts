@@ -404,10 +404,14 @@ export class InspectionRepository implements IInspectionRepository {
     });
     if (!step?.projectId) throw notFound("Step not found");
     if (
-      !canWriteToEntity(scope, {
-        projectId: step.projectId,
-        driverId: step.inspection.driverId,
-      })
+      !canWriteToEntity(
+        scope,
+        {
+          projectId: step.projectId,
+          driverId: step.inspection.driverId,
+        },
+        { requireDriverAssignment: false },
+      )
     ) {
       throw notFound("Step not found");
     }
