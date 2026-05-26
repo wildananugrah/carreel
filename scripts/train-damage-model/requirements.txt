@@ -1,0 +1,4 @@
+tensorflow==2.15.0
+tensorflowjs==4.20.0
+kaggle==1.6.14
+Pillow==10.3.0
