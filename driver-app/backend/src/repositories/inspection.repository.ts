@@ -2,6 +2,7 @@ import type {
   Inspection,
   InspectionStatus,
   InspectionStep,
+  Prisma,
   PrismaClient,
   StepStatus,
   Unit,
@@ -385,6 +386,33 @@ export class InspectionRepository implements IInspectionRepository {
     return this.prisma.inspectionStep.update({
       where: { id: stepId },
       data: { status },
+    });
+  }
+
+  async updateStepHints(
+    scope: UserScope,
+    stepId: string,
+    hints: unknown,
+  ): Promise<void> {
+    const step = await this.prisma.inspectionStep.findUnique({
+      where: { id: stepId },
+      select: {
+        projectId: true,
+        inspection: { select: { driverId: true } },
+      },
+    });
+    if (!step?.projectId) throw new Error("Step not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: step.projectId,
+        driverId: step.inspection.driverId,
+      })
+    ) {
+      throw new Error("Step not found");
+    }
+    await this.prisma.inspectionStep.update({
+      where: { id: stepId },
+      data: { tfDetectionHints: hints as Prisma.InputJsonValue },
     });
   }
 

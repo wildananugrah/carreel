@@ -213,6 +213,7 @@ describe("StepAnalysisJob", () => {
         const step = steps.get(stepId)!;
         return { ...step, status } as any;
       },
+      updateStepHints: async () => {},
       delete: async () => {},
       findUnitByInspectionId: async () => mockUnit,
       getProjectIdByInspectionId: async () => "project-1",

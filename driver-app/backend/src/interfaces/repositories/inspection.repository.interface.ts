@@ -116,6 +116,11 @@ export interface IInspectionRepository {
     stepId: string,
     status: StepStatus,
   ): Promise<InspectionStep>;
+  updateStepHints(
+    scope: UserScope,
+    stepId: string,
+    hints: unknown,
+  ): Promise<void>;
 
   delete(scope: UserScope, id: string): Promise<void>;
 

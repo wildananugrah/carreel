@@ -171,6 +171,7 @@ describe("InspectionService", () => {
         (step as any).status = status;
         return step;
       },
+      updateStepHints: async () => {},
       delete: async (_scope: UserScope, id: string) => {
         inspections.delete(id);
       },
@@ -449,6 +450,7 @@ describe("InspectionService", () => {
       createStep: async () => ({}) as any,
       findStepById: async () => null,
       updateStepStatus: async () => ({}) as any,
+      updateStepHints: async () => {},
       findUnitByInspectionId: async () => null,
       getProjectIdByInspectionId: async () => "project-1",
       updateUnitKm: async () => {},
