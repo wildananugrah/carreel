@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it, test } from "bun:test";
 import {
   buildBodyVerificationPrompt,
   buildStepPrompt,
@@ -89,5 +89,37 @@ describe("Prompt builders return PromptPair", () => {
   test("buildBodyVerificationPrompt without vehicle uses UNKNOWN", () => {
     const result = buildBodyVerificationPrompt();
     expect(result.userPrompt).toContain("UNKNOWN");
+  });
+});
+
+describe("buildStepPrompt BODY_INSPECTION with hints", () => {
+  it("omits hints section when hints is undefined", () => {
+    const { systemInstruction } = buildStepPrompt("BODY_INSPECTION", null);
+    expect(systemInstruction).not.toContain("ON-DEVICE PRE-SCREENING HINTS");
+  });
+
+  it("omits hints section when hints array is empty", () => {
+    const { systemInstruction } = buildStepPrompt("BODY_INSPECTION", null, []);
+    expect(systemInstruction).not.toContain("ON-DEVICE PRE-SCREENING HINTS");
+  });
+
+  it("appends hints section when hints are provided", () => {
+    const hints = [
+      { timestampSeconds: 12, bbox: [0.1, 0.2, 0.3, 0.4] as [number, number, number, number], damageClass: "dent" as const, confidence: 0.73 },
+      { timestampSeconds: 34, bbox: [0.5, 0.1, 0.2, 0.3] as [number, number, number, number], damageClass: "scratch" as const, confidence: 0.81 },
+    ];
+    const { systemInstruction } = buildStepPrompt("BODY_INSPECTION", null, hints);
+    expect(systemInstruction).toContain("ON-DEVICE PRE-SCREENING HINTS");
+    expect(systemInstruction).toContain("0:12");
+    expect(systemInstruction).toContain("possible dent");
+    expect(systemInstruction).toContain("0.73");
+    expect(systemInstruction).toContain("0:34");
+    expect(systemInstruction).toContain("possible scratch");
+  });
+
+  it("does not modify other step types when hints provided", () => {
+    const hints = [{ timestampSeconds: 5, bbox: [0, 0, 1, 1] as [number, number, number, number], damageClass: "dent" as const, confidence: 0.9 }];
+    const { systemInstruction } = buildStepPrompt("SPEEDOMETER", null, hints);
+    expect(systemInstruction).not.toContain("ON-DEVICE PRE-SCREENING HINTS");
   });
 });

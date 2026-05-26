@@ -117,6 +117,18 @@ export interface PromptPair {
   userPrompt: string;
 }
 
+/**
+ * A single on-device pre-screening hint produced by a lightweight TF.js model
+ * running on the driver's phone. Passed into buildStepPrompt for BODY_INSPECTION
+ * steps so Gemini can use them as starting-point timestamps.
+ */
+export interface DamageHint {
+  timestampSeconds: number;
+  bbox: [number, number, number, number];
+  damageClass: "dent" | "scratch";
+  confidence: number;
+}
+
 // ========================
 // SCREEN-CAPTURE DETECTION (image vs video variants)
 // ========================
@@ -320,6 +332,7 @@ If brand and model match, but year is unknown because it cannot be verified from
 export function buildStepPrompt(
   stepType: StepType,
   vehicle?: VehicleContext | null,
+  hints?: DamageHint[],
 ): PromptPair {
   switch (stepType) {
     case "UNIT_IDENTIFICATION":
@@ -329,7 +342,7 @@ export function buildStepPrompt(
     case "SPEEDOMETER":
       return buildSpeedometerPrompt(vehicle);
     case "BODY_INSPECTION":
-      return buildBodyInspectionPrompt(vehicle);
+      return buildBodyInspectionPrompt(vehicle, hints);
     default:
       throw new Error(`Unknown step type: ${stepType}`);
   }
@@ -666,6 +679,7 @@ STRICT JSON OUTPUT FORMAT:
 
 function buildBodyInspectionPrompt(
   vehicle?: VehicleContext | null,
+  hints?: DamageHint[],
 ): PromptPair {
   const systemInstruction = `You are an Expert Automotive Exterior Damage Appraiser AI optimized for HIGH RECALL.
 Your primary failure mode to avoid is MISSING damage.
@@ -1075,7 +1089,23 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
   const userPrompt =
     `${vehicleInfo}Analyze this vehicle exterior inspection video. Report all visible physical damage.`.trim();
 
-  return { systemInstruction, userPrompt };
+  let hintsSection = "";
+  if (hints && hints.length > 0) {
+    const hintLines = hints
+      .map((h) => {
+        const m = Math.floor(h.timestampSeconds / 60);
+        const s = Math.floor(h.timestampSeconds % 60);
+        const ts = `${m}:${s.toString().padStart(2, "0")}`;
+        return `- ${ts} — possible ${h.damageClass} (confidence ${h.confidence.toFixed(2)})`;
+      })
+      .join("\n");
+    hintsSection = `\n\nON-DEVICE PRE-SCREENING HINTS\nThe driver's phone detected potential damage at these video timestamps using a lightweight on-device model. Use these as starting points — check each timestamp carefully — but do not limit your analysis to them. Your findings take precedence over these hints. False positives are possible.\n\nDetected hints:\n${hintLines}`;
+  }
+
+  return {
+    systemInstruction: systemInstruction + hintsSection,
+    userPrompt,
+  };
 }
 
 export function buildBodyVerificationPrompt(
