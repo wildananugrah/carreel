@@ -23,6 +23,7 @@ import type {
   UpdateInspectionDTO,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { notFound } from "../utils/http-error";
 import { buildScopeFilter, canWriteToEntity } from "../utils/scope-filter";
 
 /** Thrown by `updateUnitVin` when the extracted VIN is already assigned
@@ -401,14 +402,14 @@ export class InspectionRepository implements IInspectionRepository {
         inspection: { select: { driverId: true } },
       },
     });
-    if (!step?.projectId) throw new Error("Step not found");
+    if (!step?.projectId) throw notFound("Step not found");
     if (
       !canWriteToEntity(scope, {
         projectId: step.projectId,
         driverId: step.inspection.driverId,
       })
     ) {
-      throw new Error("Step not found");
+      throw notFound("Step not found");
     }
     await this.prisma.inspectionStep.update({
       where: { id: stepId },
