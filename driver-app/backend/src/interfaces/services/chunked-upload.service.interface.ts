@@ -25,6 +25,7 @@ export interface IChunkedUploadService {
     scope: UserScope,
     sessionId: string,
     driverId: string,
+    tfDetectionHints?: unknown[],
   ): Promise<MediaFileResponse>;
   cancel(scope: UserScope, sessionId: string, driverId: string): Promise<void>;
   getStatus(

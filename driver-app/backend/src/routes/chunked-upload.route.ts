@@ -64,10 +64,22 @@ export function createChunkedUploadRoutes(
     const scope = c.get("scope");
     if (!scope) return c.json({ error: "Unauthenticated" }, 401);
     const sessionId = c.req.param("sessionId");
+
+    let tfDetectionHints: unknown[] | undefined;
+    try {
+      const body = await c.req.json();
+      if (Array.isArray(body?.tfDetectionHints)) {
+        tfDetectionHints = (body.tfDetectionHints as unknown[]).slice(0, 100);
+      }
+    } catch {
+      // No body or not JSON — hints are optional
+    }
+
     const result = await chunkedUploadService.complete(
       scope,
       sessionId,
       userId,
+      tfDetectionHints,
     );
     return c.json(result);
   });

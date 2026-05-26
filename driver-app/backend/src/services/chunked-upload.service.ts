@@ -201,6 +201,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
     scope: UserScope,
     sessionId: string,
     driverId: string,
+    tfDetectionHints?: unknown[],
   ): Promise<MediaFileResponse> {
     const session = await this.uploadSessionRepository.findById(
       scope,
@@ -257,6 +258,15 @@ export class ChunkedUploadService implements IChunkedUploadService {
       session.stepId,
       "UPLOADED",
     );
+
+    // Persist TF.js detection hints if provided
+    if (tfDetectionHints && tfDetectionHints.length > 0) {
+      await this.inspectionRepository.updateStepHints(
+        scope,
+        session.stepId,
+        tfDetectionHints,
+      );
+    }
 
     // Mark session as completed
     await this.uploadSessionRepository.updateStatus(

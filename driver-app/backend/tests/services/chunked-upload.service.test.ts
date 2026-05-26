@@ -545,3 +545,109 @@ describe("ChunkedUploadService", () => {
     });
   });
 });
+
+// ─── TF.js detection hints tests ──────────────────────────────────────────────
+
+const SUPER_SCOPE = {
+  userId: "u1",
+  appRole: "DRIVER" as const,
+  systemRole: "SUPER_ADMIN" as const,
+  projects: [],
+};
+
+function makeHintsService() {
+  const { mock } = require("bun:test");
+  const fakeSession = {
+    id: "sess1",
+    driverId: "u1",
+    inspectionId: "insp1",
+    stepId: "step1",
+    minioUploadId: "mpu1",
+    minioKey: "k",
+    minioBucket: "carreel-videos",
+    status: "IN_PROGRESS",
+    parts: [{ partNumber: 1, etag: "etag1" }],
+    totalChunks: 1,
+    fileName: "v.webm",
+    mimeType: "video/webm",
+    fileSize: 1000,
+    chunkSize: 5242880,
+    latitude: null,
+    longitude: null,
+    capturedAt: new Date(),
+    durationSeconds: 45,
+    projectId: "proj1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  const updateStepHints = mock(async () => {});
+  const updateStepStatus = mock(async () => ({} as never));
+  const uploadSessionRepo: Partial<IUploadSessionRepository> = {
+    findById: mock(async () => fakeSession as never),
+    updateStatus: mock(async () => {}),
+  };
+  const mediaFileRepo: Partial<IMediaFileRepository> = {
+    create: mock(async () => ({
+      id: "mf1",
+      fileName: "v.webm",
+      mimeType: "video/webm",
+      fileSize: 1000,
+      mediaType: "VIDEO",
+      capturedAt: new Date(),
+      createdAt: new Date(),
+    } as never)),
+  };
+  const inspectionRepo: Partial<IInspectionRepository> = {
+    updateStepStatus,
+    updateStepHints,
+  };
+  const storageProvider: Partial<IStorageProvider> = {
+    completeMultipartUpload: mock(async () => {}),
+    getPresignedUrl: mock(async () => "https://example.com/presigned"),
+  };
+  const hintsLogger = {
+    info: mock(() => {}),
+    warn: mock(() => {}),
+    error: mock(() => {}),
+    debug: mock(() => {}),
+    child: mock(function () {
+      return hintsLogger;
+    }),
+  } as never;
+  const svc = new ChunkedUploadService(
+    storageProvider as never,
+    uploadSessionRepo as never,
+    mediaFileRepo as never,
+    inspectionRepo as never,
+    hintsLogger,
+  );
+  return { svc, updateStepHints };
+}
+
+describe("ChunkedUploadService.complete — tfDetectionHints", () => {
+  test("does not call updateStepHints when hints is undefined", async () => {
+    const { svc, updateStepHints } = makeHintsService();
+    await svc.complete(SUPER_SCOPE, "sess1", "u1");
+    expect(updateStepHints).not.toHaveBeenCalled();
+  });
+
+  test("does not call updateStepHints when hints array is empty", async () => {
+    const { svc, updateStepHints } = makeHintsService();
+    await svc.complete(SUPER_SCOPE, "sess1", "u1", []);
+    expect(updateStepHints).not.toHaveBeenCalled();
+  });
+
+  test("calls updateStepHints when hints are provided", async () => {
+    const { svc, updateStepHints } = makeHintsService();
+    const hints = [
+      {
+        timestampSeconds: 12,
+        bbox: [0.1, 0.2, 0.3, 0.4],
+        damageClass: "dent",
+        confidence: 0.73,
+      },
+    ];
+    await svc.complete(SUPER_SCOPE, "sess1", "u1", hints);
+    expect(updateStepHints).toHaveBeenCalledWith(SUPER_SCOPE, "step1", hints);
+  });
+});
