@@ -94,13 +94,14 @@ export function useDamageDetector(
       const tf = await import("@tensorflow/tfjs");
 
       let tensor: unknown | null = null;
+      let batched: unknown | null = null;
       try {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
         ctx.drawImage(video, 0, 0, FRAME_WIDTH, FRAME_HEIGHT);
 
         tensor = tf.browser.fromPixels(canvas);
-        const batched = (tensor as { expandDims: (n: number) => unknown }).expandDims(0);
+        batched = (tensor as { expandDims: (n: number) => unknown }).expandDims(0);
         const outputs = await model.executeAsync(batched);
 
         // EfficientDet-lite0 output tensors: [boxes, scores, classes, numDetections]
@@ -111,6 +112,15 @@ export function useDamageDetector(
         const boxes = boxesTensor.arraySync()[0];
         const scores = scoresTensor.arraySync()[0];
         const classes = classesTensor.arraySync()[0];
+
+        // Dispose output tensors — values already extracted into JS arrays
+        for (const t of outputs) {
+          try {
+            (t as { dispose?: () => void }).dispose?.();
+          } catch {
+            // ignore
+          }
+        }
 
         const frameDetections: DamageHint[] = [];
         for (let i = 0; i < scores.length; i++) {
@@ -154,6 +164,13 @@ export function useDamageDetector(
       } catch {
         // Inference error — silently skip this tick
       } finally {
+        if (batched) {
+          try {
+            (batched as { dispose: () => void }).dispose();
+          } catch {
+            // ignore
+          }
+        }
         if (tensor) {
           try {
             (tensor as { dispose: () => void }).dispose();
