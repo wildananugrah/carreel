@@ -1,3 +1,5 @@
+import type { DamageHint } from "../types/damage-hint";
+
 const TOKEN_KEY = "carreel_token";
 
 export function getToken(): string | null {
@@ -153,7 +155,7 @@ export const api = {
       latitude?: number;
       longitude?: number;
       durationSeconds?: number;
-      tfDetectionHints?: unknown[];
+      tfDetectionHints?: DamageHint[];
     },
     onProgress: (progress: number) => void,
     signal?: AbortSignal,
@@ -227,7 +229,9 @@ export const api = {
       presignedUrl: string;
     }>(`/api/chunked-upload/${sessionId}/complete`, {
       method: "POST",
-      body: JSON.stringify({ tfDetectionHints: meta.tfDetectionHints ?? [] }),
+      body: JSON.stringify(
+        meta.tfDetectionHints?.length ? { tfDetectionHints: meta.tfDetectionHints } : {},
+      ),
     });
 
     // Clear localStorage
