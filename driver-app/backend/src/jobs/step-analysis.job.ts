@@ -28,6 +28,7 @@ import {
   type BodyVerificationResult,
   buildBodyVerificationPrompt,
   buildStepPrompt,
+  type DamageHint,
   type SpeedometerResult,
   type UnitIdentificationResult,
   type VehicleContext,
@@ -134,9 +135,23 @@ export class StepAnalysisJob {
           }
         : null;
 
+      // For BODY_INSPECTION, read on-device TF.js hints stored by the upload step
+      let tfDetectionHints: DamageHint[] | undefined;
+      if (stepType === "BODY_INSPECTION") {
+        const step = await this.inspectionRepository.findStepById(
+          JOB_SYSTEM_SCOPE,
+          stepId,
+        );
+        const raw = step?.tfDetectionHints;
+        if (Array.isArray(raw) && raw.length > 0) {
+          tfDetectionHints = (raw as unknown) as DamageHint[];
+        }
+      }
+
       const { systemInstruction, userPrompt } = buildStepPrompt(
         stepType,
         vehicleContext,
+        tfDetectionHints,
       );
 
       // 3. Analyze with Gemini
