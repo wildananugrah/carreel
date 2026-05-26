@@ -2,8 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DamageHint } from "../types/damage-hint";
 
-const DETECTION_ENABLED =
-  import.meta.env.VITE_DAMAGE_DETECTION_ENABLED === "true";
+const DETECTION_ENABLED = import.meta.env.VITE_DAMAGE_DETECTION_ENABLED === "true";
 const CONFIDENCE_THRESHOLD = 0.4;
 const FRAME_WIDTH = 320;
 const FRAME_HEIGHT = 240;
@@ -47,7 +46,10 @@ export function useDamageDetector(
 
         // Try backends in priority order; give each 5s
         const backendReady = await Promise.race([
-          tf.setBackend("webgl").then(() => true).catch(() => false),
+          tf
+            .setBackend("webgl")
+            .then(() => true)
+            .catch(() => false),
           new Promise<boolean>((res) => setTimeout(() => res(false), 5000)),
         ]);
         if (!backendReady) {

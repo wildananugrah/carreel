@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useDamageDetector } from "../../hooks/useDamageDetector";
 import { useTorch } from "../../hooks/useTorch";
 import type { DamageHint } from "../../types/damage-hint";
 import { DamageDetectionOverlay } from "./DamageDetectionOverlay";
-import { useDamageDetector } from "../../hooks/useDamageDetector";
 import { VideoGuidanceOverlay } from "./VideoGuidanceOverlay";
 
 type OverlayStatus = "requesting" | "previewing" | "recording" | "stopped";

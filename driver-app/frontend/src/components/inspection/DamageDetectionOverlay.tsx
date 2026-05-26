@@ -30,6 +30,7 @@ export function DamageDetectionOverlay({
 
   return (
     <svg
+      aria-hidden="true"
       style={{
         position: "absolute",
         inset: 0,

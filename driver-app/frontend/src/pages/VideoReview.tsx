@@ -306,9 +306,7 @@ export function VideoReview() {
       // Synthetic plate (UNKNOWN-*) is a placeholder; show it as empty so the
       // driver fills in the real plate instead of editing the placeholder.
       const seedPlate =
-        info.licensePlate && !info.licensePlate.startsWith("UNKNOWN-")
-          ? info.licensePlate
-          : "";
+        info.licensePlate && !info.licensePlate.startsWith("UNKNOWN-") ? info.licensePlate : "";
       setUnitForm((prev) => ({
         make: prev.make || info.make || "",
         model: prev.model || info.model || "",
@@ -391,11 +389,7 @@ export function VideoReview() {
   // status string covers UNIT_IDENTIFICATION → COMPLETED (early) and
   // BODY_INSPECTION → COMPLETED (much later), keeping displayFlags fresh.
   const damageStepStatusKey = inspection?.steps
-    .filter(
-      (s) =>
-        s.stepType === "BODY_INSPECTION" ||
-        s.stepType === "UNIT_IDENTIFICATION",
-    )
+    .filter((s) => s.stepType === "BODY_INSPECTION" || s.stepType === "UNIT_IDENTIFICATION")
     .map((s) => `${s.stepType}:${s.status}`)
     .join("|");
   useEffect(() => {

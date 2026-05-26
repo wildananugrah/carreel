@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
-import { damageApi, type DamageMarker } from "../lib/damage-api";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
+import { type DamageMarker, damageApi } from "../lib/damage-api";
 import type { InspectionDetail as InspectionDetailType, InspectionStatus } from "../lib/types";
 
 type Tab = "pre" | "post" | "ai-alert";
@@ -210,9 +210,7 @@ export function InspectionDetail() {
   // Falls back to aiAnalysis.structuredData.damages when these are still
   // loading or fail to fetch.
   const [thisMarkers, setThisMarkers] = useState<DamageMarker[] | null>(null);
-  const [linkedMarkers, setLinkedMarkers] = useState<DamageMarker[] | null>(
-    null,
-  );
+  const [linkedMarkers, setLinkedMarkers] = useState<DamageMarker[] | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -404,9 +402,7 @@ export function InspectionDetail() {
         })),
         ...(postInspection ? (getUnitAI(postInspection)?.damages ?? []) : []),
       ];
-  const postFlags: DamageFlag[] = postFlagsAll.filter(
-    (f) => f.isNewDamage !== false,
-  );
+  const postFlags: DamageFlag[] = postFlagsAll.filter((f) => f.isNewDamage !== false);
   const totalAlerts = preFlags.length + postFlags.length;
 
   const statusLabel =
@@ -858,10 +854,7 @@ function AIAlertPanel({
           if (flag.videoMediaId != null) {
             setSeekLightbox({
               src: `/api/media/${flag.videoMediaId}/stream`,
-              startTime:
-                typeof flag.videoTimestamp === "number"
-                  ? flag.videoTimestamp
-                  : 0,
+              startTime: typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : 0,
             });
           }
         }}
@@ -962,29 +955,20 @@ function FlagSection({
       <div className={`bg-[#0A0A0A] border ${borderColor} rounded-xl overflow-hidden`}>
         {flags.length === 0 ? (
           <div className="px-3.5 py-4 text-center">
-            <p className="text-xs text-[#555]">
-              {emptyMessage ?? "Tidak ada flag terdeteksi"}
-            </p>
+            <p className="text-xs text-[#555]">{emptyMessage ?? "Tidak ada flag terdeteksi"}</p>
           </div>
         ) : (
           flags.map((flag, i) => {
             const isManual = flag.source === "DRIVER_ADDED";
             // Manual damages don't have a meaningful video timestamp;
             // clicking the row opens the captured evidence photo instead.
-            const canShowPhoto =
-              isManual && onShowPhoto != null && flag.evidenceMediaId != null;
+            const canShowPhoto = isManual && onShowPhoto != null && flag.evidenceMediaId != null;
             // For AI damages, fall back to 0:00 when the model omitted
             // videoTimestamp so the seek button always renders. Tapping
             // it opens the body video at the start.
-            const seekTime =
-              typeof flag.videoTimestamp === "number"
-                ? flag.videoTimestamp
-                : 0;
+            const seekTime = typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : 0;
             const canSeek =
-              !isManual &&
-              DAMAGE_SEEK_ENABLED &&
-              onSeek != null &&
-              flag.videoMediaId != null;
+              !isManual && DAMAGE_SEEK_ENABLED && onSeek != null && flag.videoMediaId != null;
             const isClickable = canSeek || canShowPhoto;
 
             const rowContent = (
@@ -994,9 +978,7 @@ function FlagSection({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                    <p className="text-sm font-bold text-white">
-                      {damageLabel(flag.damageType)}
-                    </p>
+                    <p className="text-sm font-bold text-white">{damageLabel(flag.damageType)}</p>
                     {isManual && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">
                         Manual
