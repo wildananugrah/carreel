@@ -12,6 +12,7 @@ import { useUploadSources } from "../hooks/useUploadSources";
 import { api } from "../lib/api";
 import { type DamageMarker, damageApi } from "../lib/damage-api";
 import type { InspectionDetail } from "../lib/types";
+import type { DamageHint } from "../types/damage-hint";
 
 const DAMAGE_SEEK_ENABLED = import.meta.env.VITE_DAMAGE_SEEK_ENABLED === "true";
 
@@ -440,7 +441,7 @@ export function VideoReview() {
       ? [unitData.make, unitData.model].filter(Boolean).join(" ")
       : "Unit";
 
-  async function handleRecordedVideo(blob: Blob, durationSeconds: number) {
+  async function handleRecordedVideo(blob: Blob, durationSeconds: number, hints: DamageHint[]) {
     if (!id || !bodyStep) return;
     setShowRecorder(false);
     setUploading(true);
@@ -461,6 +462,7 @@ export function VideoReview() {
           durationSeconds,
           latitude: location?.latitude,
           longitude: location?.longitude,
+          tfDetectionHints: hints,
         },
         setUploadProgress,
         controller.signal,

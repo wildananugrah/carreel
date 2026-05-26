@@ -153,6 +153,7 @@ export const api = {
       latitude?: number;
       longitude?: number;
       durationSeconds?: number;
+      tfDetectionHints?: unknown[];
     },
     onProgress: (progress: number) => void,
     signal?: AbortSignal,
@@ -224,7 +225,10 @@ export const api = {
       fileSize: number;
       mediaType: string;
       presignedUrl: string;
-    }>(`/api/chunked-upload/${sessionId}/complete`, { method: "POST" });
+    }>(`/api/chunked-upload/${sessionId}/complete`, {
+      method: "POST",
+      body: JSON.stringify({ tfDetectionHints: meta.tfDetectionHints ?? [] }),
+    });
 
     // Clear localStorage
     localStorage.removeItem(getUploadSessionKey(inspectionId, stepId));
