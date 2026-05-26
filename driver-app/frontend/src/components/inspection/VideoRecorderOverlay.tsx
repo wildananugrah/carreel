@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTorch } from "../../hooks/useTorch";
+import type { DamageHint } from "../../types/damage-hint";
+import { DamageDetectionOverlay } from "./DamageDetectionOverlay";
+import { useDamageDetector } from "../../hooks/useDamageDetector";
 import { VideoGuidanceOverlay } from "./VideoGuidanceOverlay";
 
 type OverlayStatus = "requesting" | "previewing" | "recording" | "stopped";
@@ -8,7 +11,7 @@ type OverlayStatus = "requesting" | "previewing" | "recording" | "stopped";
 interface VideoRecorderOverlayProps {
   minDuration: number;
   maxDuration: number;
-  onCapture: (blob: Blob, durationSeconds: number) => void;
+  onCapture: (blob: Blob, durationSeconds: number, hints: DamageHint[]) => void;
   onClose: () => void;
 }
 
@@ -51,6 +54,10 @@ export function VideoRecorderOverlay({
   const torch = useTorch(activeStream);
 
   const canStop = elapsedSeconds >= minDuration;
+
+  const isActivelyRecording = status === "recording";
+  const { detections, getHints } = useDamageDetector(videoRef, isActivelyRecording);
+  const [videoDimensions, setVideoDimensions] = useState({ width: 320, height: 240 });
 
   const stopAllTracks = useCallback(() => {
     if (streamRef.current) {
@@ -176,15 +183,29 @@ export function VideoRecorderOverlay({
 
   const handleConfirm = useCallback(() => {
     if (!recordedBlob) return;
-    onCapture(recordedBlob, elapsedRef.current);
-  }, [recordedBlob, onCapture]);
+    onCapture(recordedBlob, elapsedRef.current, getHints());
+  }, [recordedBlob, onCapture, getHints]);
 
   return createPortal(
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Camera / recording preview */}
       <div className="flex-1 relative overflow-hidden">
         {status !== "stopped" && (
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+            onLoadedMetadata={() => {
+              if (videoRef.current) {
+                setVideoDimensions({
+                  width: videoRef.current.videoWidth || 320,
+                  height: videoRef.current.videoHeight || 240,
+                });
+              }
+            }}
+          />
         )}
 
         {status === "stopped" && recordedUrl && (
@@ -245,6 +266,11 @@ export function VideoRecorderOverlay({
               maxDuration={maxDuration}
               minDuration={minDuration}
               isRecording
+            />
+            <DamageDetectionOverlay
+              detections={detections}
+              videoWidth={videoDimensions.width}
+              videoHeight={videoDimensions.height}
             />
           </>
         )}
