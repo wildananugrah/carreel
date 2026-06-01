@@ -84,9 +84,12 @@ const storageProvider = new S3Provider({
     : {}),
 });
 
-const aiProvider = process.env.GEMINI_API_KEY
+const geminiKey = process.env.GEMINI_API_KEY;
+logger.info(`[DEBUG] GEMINI_API_KEY: ${geminiKey ? `${geminiKey.slice(0, 8)}...${geminiKey.slice(-4)} (len=${geminiKey.length})` : "NOT SET"}`);
+
+const aiProvider = geminiKey
   ? new GeminiProvider(
-      process.env.GEMINI_API_KEY,
+      geminiKey,
       process.env.GEMINI_MODEL ?? "gemini-2.0-flash",
     )
   : new GeminiStubProvider();
