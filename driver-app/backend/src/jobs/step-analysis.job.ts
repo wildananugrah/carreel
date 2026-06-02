@@ -26,8 +26,11 @@ import {
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
+  buildBodyInspectionPhotoPrompt,
+  buildBodyVerificationPhotoPrompt,
   buildBodyVerificationPrompt,
   buildStepPrompt,
+  type PhotoBodyInspectionResult,
   type SpeedometerResult,
   type UnitIdentificationResult,
   type VehicleContext,
@@ -138,6 +141,25 @@ export class StepAnalysisJob {
         stepType,
         vehicleContext,
       );
+
+      // --- BODY_INSPECTION (PHOTO mode): 8-photo multi-image pipeline ---
+      // Gated by `!isVideo` so the existing video branch is untouched. This
+      // returns at the end so the single-image path + step-type switch below
+      // never run for photo body inspections.
+      if (stepType === "BODY_INSPECTION" && !isVideo) {
+        await this.handleBodyInspectionPhotos({
+          mediaFiles,
+          primaryMedia,
+          inspectionId,
+          stepId,
+          driverId,
+          tripType,
+          vehicleContext,
+          startTime,
+          log,
+        });
+        return;
+      }
 
       // 3. Analyze with Gemini
       let rawResponse: string;
@@ -656,6 +678,224 @@ export class StepAnalysisJob {
   }
 
   /**
+   * BODY_INSPECTION photo-mode pipeline. Mirrors the two-pass video pipeline
+   * (verification → damage detection) but operates on the 8 uploaded photos
+   * via `analyzeImages`. Each detected damage is attached to the media file
+   * of the body side it was seen on (`PhotoBodyDamage.bodySide`), falling
+   * back to the primary photo when the side has no matching upload.
+   *
+   * Throws on AI/parse errors so the caller's try/catch marks the step FAILED
+   * and emits an AI_FAILURE alert (same as the video path). On the hard-gate
+   * (mismatch / recapture) it sets the step FAILED itself and returns.
+   */
+  private async handleBodyInspectionPhotos(args: {
+    mediaFiles: Array<{
+      id: string;
+      mimeType: string;
+      minioBucket: string;
+      minioKey: string;
+      bodySide: string | null;
+    }>;
+    primaryMedia: { id: string };
+    inspectionId: string;
+    stepId: string;
+    driverId: string;
+    tripType?: string;
+    vehicleContext: VehicleContext | null;
+    startTime: number;
+    log: ILogger;
+  }): Promise<void> {
+    const {
+      mediaFiles,
+      primaryMedia,
+      inspectionId,
+      stepId,
+      driverId,
+      tripType,
+      vehicleContext,
+      startTime,
+      log,
+    } = args;
+
+    // Download all photos and pair each with the media file it came from so
+    // we can route damages back to the right side.
+    const images = await Promise.all(
+      mediaFiles.map(async (m) => {
+        const buf = await this.storageProvider.download(
+          m.minioBucket,
+          m.minioKey,
+        );
+        return {
+          base64: buf.toString("base64"),
+          mimeType: m.mimeType,
+          label: m.bodySide ?? "UNKNOWN",
+          mediaFileId: m.id,
+        };
+      }),
+    );
+    const parts = images.map(({ base64, mimeType, label }) => ({
+      base64,
+      mimeType,
+      label,
+    }));
+
+    // Pass 1: vehicle verification (lighter thinking config, like video).
+    const verifyPair = buildBodyVerificationPhotoPrompt(vehicleContext);
+    const verifyRaw = await this.aiProvider.analyzeImages(
+      parts,
+      verifyPair.userPrompt,
+      verifyPair.systemInstruction,
+      BODY_VERIFICATION_AI_CONFIG,
+    );
+    const verification = JSON.parse(
+      verifyRaw
+        .replace(/```(?:json)?\s*/g, "")
+        .replace(/```\s*/g, "")
+        .trim(),
+    ) as BodyVerificationResult;
+
+    log.info("AI body verification result (photo)", {
+      statusVerifikasi: verification.statusVerifikasi,
+      analisisVerifikasi: verification.analisisVerifikasi,
+      confidence: verification.confidence,
+      screenRecaptureDetected: verification.screenRecaptureDetected,
+    });
+
+    // HARD GATE — mismatch or recapture short-circuits the damage pass.
+    const isMismatch = verification.statusVerifikasi === "Mismatch";
+    const isRecapture = verification.screenRecaptureDetected === true;
+    if (isMismatch || isRecapture) {
+      await this.aiAnalysisRepository.createAnalysis(JOB_SYSTEM_SCOPE, {
+        stepId,
+        mediaFileId: primaryMedia.id,
+        aiModel: "gemini",
+        promptUsed: `[SYSTEM]\n${verifyPair.systemInstruction}\n\n[USER]\n${verifyPair.userPrompt}`,
+        rawResponse: verifyRaw,
+        structuredData: verification,
+        confidenceScore: verification.confidence ?? null,
+        processingTimeMs: Date.now() - startTime,
+        status: "SUCCESS",
+      });
+
+      if (isMismatch) {
+        await this.createAlert(
+          inspectionId,
+          "VEHICLE_MISMATCH",
+          `Foto body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
+          log,
+        );
+      }
+      if (isRecapture) {
+        await this.createAlert(
+          inspectionId,
+          "SCREEN_RECAPTURE",
+          "Screen recapture detected in Body Inspection photos",
+          log,
+        );
+      }
+
+      log.warn("Body verification gated (photo) — skipping damage detection", {
+        statusVerifikasi: verification.statusVerifikasi,
+        screenRecaptureDetected: verification.screenRecaptureDetected,
+      });
+
+      await this.inspectionRepository.updateStepStatus(
+        JOB_SYSTEM_SCOPE,
+        stepId,
+        "FAILED",
+      );
+      await this.checkInspectionCompletion(inspectionId, driverId, log);
+      return;
+    }
+
+    // Pass 2: damage detection.
+    const damagePair = buildBodyInspectionPhotoPrompt(vehicleContext);
+    const damageRaw = await this.aiProvider.analyzeImages(
+      parts,
+      damagePair.userPrompt,
+      damagePair.systemInstruction,
+      STEP_AI_CONFIG.BODY_INSPECTION,
+    );
+    const result = JSON.parse(
+      damageRaw
+        .replace(/```(?:json)?\s*/g, "")
+        .replace(/```\s*/g, "")
+        .trim(),
+    ) as PhotoBodyInspectionResult;
+    const damages = result.damages ?? [];
+
+    log.info(
+      `AI photo body inspection — Condition: ${result.overallCondition}, Damages found: ${damages.length}`,
+    );
+
+    // POST_TRIP: override AI-guessed isNewDamage by comparing against the
+    // linked pre-trip body damages — same shared helpers the video path uses.
+    // Photo damages carry the same `location` enum vocabulary, so the
+    // token-Jaccard comparison applies unchanged.
+    if (tripType === "POST_TRIP" && damages.length > 0) {
+      const preDamages = await this.getPreTripDamages(inspectionId);
+      if (preDamages) {
+        this.overrideIsNewDamage(damages, preDamages);
+        log.info("Overrode isNewDamage flags via pre/post comparison (photo)", {
+          postCount: damages.length,
+          preCount: preDamages.length,
+          newCount: damages.filter((d) => d.isNewDamage).length,
+        });
+      }
+    }
+
+    // Attach each damage to the media file of the side it was seen on.
+    const idBySide = new Map(images.map((i) => [i.label, i.mediaFileId]));
+    for (const d of damages) {
+      const mediaFileId = idBySide.get(d.bodySide) ?? primaryMedia.id;
+      await this.saveDamageMarkers(mediaFileId, [
+        {
+          damageType: d.damageType,
+          severity: d.severity,
+          description: d.description,
+          location: d.location,
+          isNewDamage: d.isNewDamage,
+          boundingBox: d.boundingBox,
+        },
+      ]);
+    }
+
+    await this.generateDamageAlerts(
+      inspectionId,
+      damages,
+      "Body Inspection",
+      log,
+    );
+
+    const analysis = await this.aiAnalysisRepository.createAnalysis(
+      JOB_SYSTEM_SCOPE,
+      {
+        stepId,
+        mediaFileId: primaryMedia.id,
+        aiModel: "gemini",
+        promptUsed: `[SYSTEM]\n${damagePair.systemInstruction}\n\n[USER]\n${damagePair.userPrompt}`,
+        rawResponse: damageRaw,
+        structuredData: result,
+        confidenceScore: result.confidence ?? null,
+        processingTimeMs: Date.now() - startTime,
+        status: "SUCCESS",
+      },
+    );
+
+    await this.inspectionRepository.updateStepStatus(
+      JOB_SYSTEM_SCOPE,
+      stepId,
+      "COMPLETED",
+    );
+    log.info("Photo body inspection completed", {
+      analysisId: analysis.id,
+      damages: damages.length,
+    });
+
+    await this.checkInspectionCompletion(inspectionId, driverId, log);
+  }
+
+  /**
    * Pass 2 (damage detection) for BODY_INSPECTION, optionally repeated N
    * times and majority-voted. Side-guards each run before clustering so the
    * vote operates on post-guard variants (e.g., a coord-override that
@@ -1030,7 +1270,7 @@ export class StepAnalysisJob {
     const tokenize = (s: string): Set<string> => {
       const tokens = s
         .toLowerCase()
-        .replace(/[/(){},.\-]/g, " ")
+        .replace(/[/(){},.-]/g, " ")
         .split(/\s+/)
         .filter(Boolean);
       return new Set(tokens);
