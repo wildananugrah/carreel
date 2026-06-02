@@ -73,6 +73,33 @@ export interface BodyInspectionResult {
   damages: DamageResult[];
 }
 
+export interface PhotoBodyDamage {
+  damageType: string;
+  location?: string;
+  severity: "MINOR" | "MODERATE" | "MAJOR";
+  description: string;
+  /** Which of the 8 photos this damage was seen on. */
+  bodySide:
+    | "FRONT"
+    | "FRONT_RIGHT"
+    | "RIGHT"
+    | "BACK_RIGHT"
+    | "BACK"
+    | "BACK_LEFT"
+    | "LEFT"
+    | "FRONT_LEFT";
+  isNewDamage: boolean;
+  damageConfidence?: number;
+  boundingBox?: { x: number; y: number; width: number; height: number };
+}
+
+export interface PhotoBodyInspectionResult {
+  visualAnalysis: string;
+  overallCondition: "GOOD" | "FAIR" | "POOR";
+  confidence: number;
+  damages: PhotoBodyDamage[];
+}
+
 export interface BodyVerificationResult {
   analisisVerifikasi: string;
   statusVerifikasi: "Match" | "Mismatch" | "Uncertain";
@@ -1133,6 +1160,136 @@ Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown
 TARGET VEHICLE TO VERIFY:
 Merk (Make): ${make}
 Tipe (Model): ${model}`;
+
+  return { systemInstruction, userPrompt };
+}
+
+/**
+ * Verification pre-pass for the 8-photo body inspection (photo mode).
+ *
+ * Unlike the video verification (`buildBodyVerificationPrompt`), this looks at
+ * the SET of eight labeled photos at once. Output shape matches
+ * `BodyVerificationResult` so the analysis job can parse it identically to the
+ * video pass. Both gating checks (identity match + screen recapture) run here;
+ * a failure on either aborts the downstream damage-detection pass.
+ */
+export function buildBodyVerificationPhotoPrompt(
+  vehicle?: VehicleContext | null,
+): PromptPair {
+  const make = vehicle?.make ?? "UNKNOWN";
+  const model = vehicle?.model ?? "UNKNOWN";
+
+  const systemInstruction = `You are a strict Automotive Verification AI.
+You are given EIGHT photos of a single vehicle, each labeled with the side it shows
+(FRONT, FRONT_RIGHT, RIGHT, BACK_RIGHT, BACK, BACK_LEFT, LEFT, FRONT_LEFT).
+
+Perform TWO gating checks over the set of photos:
+  (1) IDENTITY MATCH — do the photos show the claimed TARGET VEHICLE?
+  (2) SCREEN-RECAPTURE DETECTION — was any photo taken of a screen/printout
+      rather than the real vehicle?
+
+Either check failing aborts the damage-detection pass, so be thorough.
+
+${SCREEN_CAPTURE_IMAGE}
+
+IDENTITY RULES:
+- Use logos/badges (primary) and distinctive headlight/taillight/grille shapes
+  (secondary) to establish identity across the photos.
+- TARGET VEHICLE: make="${make}", model="${model}".
+- If the target model is "UNKNOWN", verify the BRAND only. An UNKNOWN model is
+  never, on its own, grounds for "Mismatch".
+- Reserve "Mismatch" for a confidently DIFFERENT brand. Trim/year/variant
+  differences are NOT mismatches. When in doubt, prefer "Uncertain".
+
+Respond ONLY with raw JSON (no markdown fences), exactly:
+{
+  "analisisVerifikasi": "<short Bahasa Indonesia explanation>",
+  "statusVerifikasi": "Match" | "Mismatch" | "Uncertain",
+  "confidence": 0.0,
+  "screenRecaptureDetected": false
+}`;
+
+  const userPrompt =
+    "Verify these 8 labeled photos against the target vehicle, and check for screen recapture.";
+
+  return { systemInstruction, userPrompt };
+}
+
+/**
+ * Damage-detection pass for the 8-photo body inspection (photo mode).
+ *
+ * Because each photo's side is KNOWN from its label, this prompt DROPS the
+ * left/right orientation guesswork that the video damage prompt fights so hard
+ * with — instead it anchors every damage to the `bodySide` of the photo it was
+ * seen on. The damageType / location / severity vocabulary is kept identical to
+ * `buildBodyInspectionPrompt` (video) so photo and video outputs are
+ * consistent. Output shape matches `PhotoBodyInspectionResult`.
+ */
+export function buildBodyInspectionPhotoPrompt(
+  _vehicle?: VehicleContext | null,
+): PromptPair {
+  const systemInstruction = `You are an Expert Automotive Exterior Damage Appraiser AI optimized for HIGH RECALL.
+You are given EIGHT photos of one vehicle, each labeled with the side it shows:
+FRONT, FRONT_RIGHT, RIGHT, BACK_RIGHT, BACK, BACK_LEFT, LEFT, FRONT_LEFT.
+
+Because each photo's side is KNOWN, you must NOT guess left/right orientation —
+use the provided label of the photo a damage appears on.
+
+TASK:
+- Inspect every photo for exterior physical damage: scratches, dents, paint
+  transfer, cracks, broken/missing parts, bent panels.
+- Pay special attention to high-risk zones: bumper corners, lower body panels,
+  rocker panels, wheel arches, mirror housings, fender edges, door handles,
+  seams, and panel edges.
+- A damage visible in two overlapping photos (e.g. FRONT and FRONT_RIGHT) is ONE
+  damage — report it once, on the side where it is clearest, and do not duplicate.
+- All "description" values MUST be in Bahasa Indonesia.
+
+For each damage set "bodySide" to the label of the photo it is clearest on.
+
+Allowed damageType: goresan, transfer_cat, penyok, kaca_retak, bagian_pecah, panel_bengkok, bagian_hilang
+Allowed severity: MINOR, MODERATE, MAJOR
+Allowed location enum (use the closest match):
+Bumper Depan Kiri, Bumper Depan Tengah, Bumper Depan Kanan,
+Lampu Depan Kiri, Lampu Depan Kanan,
+Foglamp Depan Kiri, Foglamp Depan Kanan,
+Bumper / Panel Belakang Kiri, Bumper Belakang Tengah, Bumper / Panel Belakang Kanan,
+Lampu Belakang Kiri, Lampu Belakang Kanan,
+Pintu Depan Kiri, Pintu Belakang Kiri, Pintu Depan Kanan, Pintu Belakang Kanan,
+Fender Depan Kiri, Fender Depan Kanan,
+Atap, Kap Mesin, Bagasi,
+Spion Kiri, Spion Kanan,
+Kaca Depan, Kaca Belakang,
+Roda / Ban,
+Eksterior Tidak Jelas
+
+SEVERITY DEFINITIONS:
+Goresan: MINOR (Surface-level/clear coat), MODERATE (Reaches base paint), MAJOR (Bare metal or >15cm)
+Penyok: MINOR (Minor depression), MODERATE (Visible depression/paint crack), MAJOR (Deep deformation/structural)
+Transfer Cat: MINOR (<5cm), MODERATE (Visible with paint disruption), MAJOR (Large area/combined damage)
+Others: MINOR (Localized/no function loss), MODERATE (Affects appearance), MAJOR (Affects safety/structure)
+
+Respond ONLY with raw JSON (no markdown fences), exactly:
+{
+  "visualAnalysis": "<short Bahasa Indonesia summary>",
+  "overallCondition": "GOOD" | "FAIR" | "POOR",
+  "confidence": 0.0,
+  "damages": [
+    {
+      "damageType": "<one allowed damageType>",
+      "location": "<one allowed location>",
+      "severity": "MINOR",
+      "description": "Goresan halus pada bumper depan kanan",
+      "bodySide": "FRONT_RIGHT",
+      "isNewDamage": true,
+      "damageConfidence": 0.8,
+      "boundingBox": { "x": 0, "y": 0, "width": 0, "height": 0 }
+    }
+  ]
+}`;
+
+  const userPrompt =
+    "Analyze these 8 labeled photos and report every visible exterior damage.";
 
   return { systemInstruction, userPrompt };
 }
