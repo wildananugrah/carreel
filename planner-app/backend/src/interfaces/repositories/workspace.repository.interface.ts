@@ -1,12 +1,14 @@
-import type { Workspace } from "../../generated/prisma";
+import type { BodyInspectionMode, Workspace } from "../../generated/prisma";
 
 export interface CreateWorkspaceDTO {
   name: string;
   displayName: string;
+  bodyInspectionMode?: BodyInspectionMode;
 }
 
 export interface UpdateWorkspaceDTO {
   displayName?: string;
+  bodyInspectionMode?: BodyInspectionMode;
 }
 
 export interface WorkspaceListItem {
