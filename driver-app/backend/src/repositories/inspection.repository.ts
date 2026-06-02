@@ -124,6 +124,9 @@ export class InspectionRepository implements IInspectionRepository {
     const result = await this.prisma.inspection.findFirst({
       where: { id, ...(scopeFilter as object) },
       include: {
+        project: {
+          select: { workspace: { select: { bodyInspectionMode: true } } },
+        },
         unit: {
           select: {
             id: true,
@@ -166,7 +169,12 @@ export class InspectionRepository implements IInspectionRepository {
         },
       },
     });
-    return result as unknown as InspectionWithRelations | null;
+    if (!result) return null;
+    const { project, ...rest } = result;
+    return {
+      ...rest,
+      bodyInspectionMode: project.workspace.bodyInspectionMode,
+    } as unknown as InspectionWithRelations;
   }
 
   async findByDriverId(

@@ -175,6 +175,7 @@ describe("StepAnalysisJob", () => {
         ({
           id,
           driverId: "driver-1",
+          bodyInspectionMode: "VIDEO",
           projectId: "test-project",
           unitId: null,
           tripType: "PRE_TRIP",

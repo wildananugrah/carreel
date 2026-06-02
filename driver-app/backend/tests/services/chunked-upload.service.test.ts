@@ -39,6 +39,7 @@ const mockStep: InspectionStep = {
 const mockInspection: InspectionWithRelations = {
   id: "insp-1",
   driverId: "driver-1",
+  bodyInspectionMode: "VIDEO",
   projectId: "test-project",
   unitId: null,
   tripType: "PRE_TRIP",

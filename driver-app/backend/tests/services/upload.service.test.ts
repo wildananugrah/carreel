@@ -96,6 +96,7 @@ describe("UploadService", () => {
           return {
             id: "insp-1",
             driverId: "driver-1",
+            bodyInspectionMode: "VIDEO",
             projectId: "test-project",
             unitId: null,
             tripType: "PRE_TRIP",
