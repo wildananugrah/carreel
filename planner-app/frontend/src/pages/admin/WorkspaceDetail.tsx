@@ -6,6 +6,7 @@ interface Workspace {
   id: string;
   name: string;
   displayName: string;
+  bodyInspectionMode: "VIDEO" | "PHOTOS_8SIDE";
   createdAt: string;
   updatedAt: string;
 }
@@ -40,6 +41,23 @@ export function WorkspaceDetail() {
   const [createDisplayName, setCreateDisplayName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [savingMode, setSavingMode] = useState(false);
+
+  async function handleModeChange(mode: "VIDEO" | "PHOTOS_8SIDE") {
+    if (!id || !workspace) return;
+    setSavingMode(true);
+    setError(null);
+    try {
+      const updated = await api.patch<Workspace>(`/api/admin/workspaces/${id}`, {
+        bodyInspectionMode: mode,
+      });
+      setWorkspace(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update mode");
+    } finally {
+      setSavingMode(false);
+    }
+  }
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -146,12 +164,8 @@ export function WorkspaceDetail() {
 
         <div className="flex items-start justify-between mt-2 mb-6">
           <div>
-            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">
-              Workspace
-            </p>
-            <h1 className="text-2xl font-black text-white mt-1">
-              {workspace.displayName}
-            </h1>
+            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">Workspace</p>
+            <h1 className="text-2xl font-black text-white mt-1">{workspace.displayName}</h1>
             <p className="text-xs text-[#666] mt-1 font-mono">
               {workspace.name} {"\u00B7"} {formatDate(workspace.createdAt)}
             </p>
@@ -167,9 +181,7 @@ export function WorkspaceDetail() {
         {/* Projects section */}
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
-            <h2 className="text-sm font-bold text-white">
-              Projects ({projects.length})
-            </h2>
+            <h2 className="text-sm font-bold text-white">Projects ({projects.length})</h2>
             <button
               type="button"
               onClick={() => setShowCreate(true)}
@@ -180,9 +192,7 @@ export function WorkspaceDetail() {
           </div>
 
           {projects.length === 0 ? (
-            <div className="p-12 text-center text-[#666]">
-              No projects in this workspace yet.
-            </div>
+            <div className="p-12 text-center text-[#666]">No projects in this workspace yet.</div>
           ) : (
             <table className="w-full">
               <thead>
@@ -205,18 +215,10 @@ export function WorkspaceDetail() {
               <tbody className="divide-y divide-[#2a2a2a]">
                 {projects.map((p) => (
                   <tr key={p.id} className="hover:bg-[#1f1f1f] transition-colors">
-                    <td className="px-4 py-3 text-sm font-bold text-white">
-                      {p.displayName}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#888] font-mono">
-                      {p.name}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-[#C0C0C0] text-right">
-                      {p.memberCount}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#888]">
-                      {formatDate(p.createdAt)}
-                    </td>
+                    <td className="px-4 py-3 text-sm font-bold text-white">{p.displayName}</td>
+                    <td className="px-4 py-3 text-xs text-[#888] font-mono">{p.name}</td>
+                    <td className="px-4 py-3 text-sm text-[#C0C0C0] text-right">{p.memberCount}</td>
+                    <td className="px-4 py-3 text-xs text-[#888]">{formatDate(p.createdAt)}</td>
                     <td className="px-4 py-3 text-right">
                       <Link
                         to={`/admin/projects/${p.id}/members`}
@@ -237,6 +239,31 @@ export function WorkspaceDetail() {
               </tbody>
             </table>
           )}
+        </div>
+
+        {/* Body inspection mode */}
+        <div className="mt-8 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4">
+          <h3 className="text-sm font-bold text-white mb-1">Mode Inspeksi Body</h3>
+          <p className="text-xs text-[#888] mb-3">
+            Pilih bagaimana driver melakukan inspeksi body kendaraan untuk workspace ini.
+          </p>
+          <div className="flex gap-2">
+            {(["VIDEO", "PHOTOS_8SIDE"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                disabled={savingMode}
+                onClick={() => handleModeChange(mode)}
+                className={
+                  workspace.bodyInspectionMode === mode
+                    ? "px-4 py-2 rounded-lg bg-[#F5C518] text-black text-sm font-bold disabled:opacity-40"
+                    : "px-4 py-2 rounded-lg bg-[#111] text-[#C0C0C0] border border-[#2a2a2a] text-sm hover:bg-[#1f1f1f] disabled:opacity-40"
+                }
+              >
+                {mode === "VIDEO" ? "Video" : "8 Foto Sisi"}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Danger zone */}
