@@ -66,10 +66,16 @@ holistic multi-image call.
 
 ### 3. Exposing the mode to the driver app
 
-- Denormalize `bodyInspectionMode` into each `ProjectScope` (copied from the
-  project's workspace) inside `ScopeRepository.loadScope`. The driver frontend
-  already consumes scope, so no new endpoint is needed.
-- `UserScope` / `ProjectScope` type updated in **both** backends (identical copies).
+Correction from research: the driver frontend's `User` object does **not** carry
+scope/projects (scope is a backend-only per-request construct), so denormalizing the
+mode into `ProjectScope` would not reach the driver UI. Instead:
+
+- Surface `bodyInspectionMode` on the **inspection detail response**
+  (`GET /api/inspections/:id`), computed from the inspection's project → workspace.
+  `VideoReview` already fetches this payload, so no new endpoint and no scope-type
+  change is needed.
+- The backend analysis job needs no mode plumbing either — it branches on the actual
+  uploaded media for the body step (8 images → photo path; 1 video → video path).
 
 ### 4. Driver frontend (Page 2 — `VideoReview`)
 
