@@ -326,6 +326,13 @@ export type EnumMediaTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel> | $Enums.MediaType
 }
 
+export type EnumBodySideNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodySide | Prisma.EnumBodySideFieldRefInput<$PrismaModel> | null
+  in?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumBodySideNullableFilter<$PrismaModel> | $Enums.BodySide | null
+}
+
 export type IntWithAggregatesFilter<$PrismaModel = never> = {
   equals?: number | Prisma.IntFieldRefInput<$PrismaModel>
   in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
@@ -350,6 +357,16 @@ export type EnumMediaTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel>
+}
+
+export type EnumBodySideNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodySide | Prisma.EnumBodySideFieldRefInput<$PrismaModel> | null
+  in?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumBodySideNullableWithAggregatesFilter<$PrismaModel> | $Enums.BodySide | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBodySideNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBodySideNullableFilter<$PrismaModel>
 }
 
 export type JsonNullableFilter<$PrismaModel = never> =
@@ -648,6 +665,23 @@ export type EnumOutboxEventStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumOutboxEventStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumOutboxEventStatusFilter<$PrismaModel>
+}
+
+export type EnumBodyInspectionModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodyInspectionMode | Prisma.EnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  in?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBodyInspectionModeFilter<$PrismaModel> | $Enums.BodyInspectionMode
+}
+
+export type EnumBodyInspectionModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodyInspectionMode | Prisma.EnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  in?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBodyInspectionModeWithAggregatesFilter<$PrismaModel> | $Enums.BodyInspectionMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBodyInspectionModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBodyInspectionModeFilter<$PrismaModel>
 }
 
 export type EnumProjectRoleFilter<$PrismaModel = never> = {
@@ -970,6 +1004,13 @@ export type NestedEnumMediaTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel> | $Enums.MediaType
 }
 
+export type NestedEnumBodySideNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodySide | Prisma.EnumBodySideFieldRefInput<$PrismaModel> | null
+  in?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumBodySideNullableFilter<$PrismaModel> | $Enums.BodySide | null
+}
+
 export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
   equals?: number | Prisma.IntFieldRefInput<$PrismaModel>
   in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
@@ -1005,6 +1046,16 @@ export type NestedEnumMediaTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumBodySideNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodySide | Prisma.EnumBodySideFieldRefInput<$PrismaModel> | null
+  in?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumBodySideNullableWithAggregatesFilter<$PrismaModel> | $Enums.BodySide | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBodySideNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBodySideNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumAIAnalysisStatusFilter<$PrismaModel = never> = {
@@ -1249,6 +1300,23 @@ export type NestedEnumOutboxEventStatusWithAggregatesFilter<$PrismaModel = never
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumOutboxEventStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumOutboxEventStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumBodyInspectionModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodyInspectionMode | Prisma.EnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  in?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBodyInspectionModeFilter<$PrismaModel> | $Enums.BodyInspectionMode
+}
+
+export type NestedEnumBodyInspectionModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodyInspectionMode | Prisma.EnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  in?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BodyInspectionMode[] | Prisma.ListEnumBodyInspectionModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBodyInspectionModeWithAggregatesFilter<$PrismaModel> | $Enums.BodyInspectionMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBodyInspectionModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBodyInspectionModeFilter<$PrismaModel>
 }
 
 export type NestedEnumProjectRoleFilter<$PrismaModel = never> = {

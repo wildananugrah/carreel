@@ -16,6 +16,7 @@ const mockMedia: MediaFile = {
   minioKey: "inspections/insp-1/BODY_INSPECTION/file.mp4",
   minioBucket: "carreel-videos",
   mediaType: "VIDEO",
+  bodySide: null,
   latitude: null,
   longitude: null,
   capturedAt: new Date(),

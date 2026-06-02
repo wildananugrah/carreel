@@ -96,6 +96,28 @@ export const MediaType = {
 export type MediaType = (typeof MediaType)[keyof typeof MediaType]
 
 
+export const BodyInspectionMode = {
+  VIDEO: 'VIDEO',
+  PHOTOS_8SIDE: 'PHOTOS_8SIDE'
+} as const
+
+export type BodyInspectionMode = (typeof BodyInspectionMode)[keyof typeof BodyInspectionMode]
+
+
+export const BodySide = {
+  FRONT: 'FRONT',
+  FRONT_RIGHT: 'FRONT_RIGHT',
+  RIGHT: 'RIGHT',
+  BACK_RIGHT: 'BACK_RIGHT',
+  BACK: 'BACK',
+  BACK_LEFT: 'BACK_LEFT',
+  LEFT: 'LEFT',
+  FRONT_LEFT: 'FRONT_LEFT'
+} as const
+
+export type BodySide = (typeof BodySide)[keyof typeof BodySide]
+
+
 export const AIAnalysisStatus = {
   SUCCESS: 'SUCCESS',
   PARTIAL: 'PARTIAL',

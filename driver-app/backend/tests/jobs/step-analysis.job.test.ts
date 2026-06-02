@@ -39,6 +39,7 @@ function createMockMediaFile(overrides: Partial<MediaFile> = {}): MediaFile {
     fileName: "photo.jpg",
     mimeType: "image/jpeg",
     mediaType: "IMAGE",
+    bodySide: null,
     fileSize: 1024,
     minioKey: "inspections/photo.jpg",
     minioBucket: "carreel-images",

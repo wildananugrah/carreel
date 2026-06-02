@@ -60,6 +60,7 @@ describe("UploadService", () => {
         minioKey: data.minioKey,
         minioBucket: data.minioBucket,
         mediaType: data.mediaType,
+        bodySide: null,
         latitude: data.latitude ?? null,
         longitude: data.longitude ?? null,
         capturedAt: new Date(data.capturedAt),
