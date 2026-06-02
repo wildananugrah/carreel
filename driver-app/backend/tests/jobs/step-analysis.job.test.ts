@@ -124,6 +124,12 @@ describe("StepAnalysisJob", () => {
             },
           ],
         }),
+      analyzeImages: async () =>
+        JSON.stringify({
+          overallCondition: "GOOD",
+          confidence: 0.88,
+          damages: [],
+        }),
       analyzeVideo: async (
         _fileUri: string,
         _mimeType: string,

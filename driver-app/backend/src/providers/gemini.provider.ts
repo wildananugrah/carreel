@@ -7,6 +7,7 @@ import {
 import type {
   AIAnalysisOptions,
   IAIProvider,
+  ImagePart,
 } from "../interfaces/providers/ai.provider.interface";
 
 const MEDIA_RESOLUTION_MAP: Record<
@@ -75,6 +76,26 @@ export class GeminiProvider implements IAIProvider {
     return response.text ?? "";
   }
 
+  async analyzeImages(
+    images: ImagePart[],
+    prompt: string,
+    systemInstruction?: string,
+    options?: AIAnalysisOptions,
+  ): Promise<string> {
+    const parts: Array<Record<string, unknown>> = [];
+    for (const img of images) {
+      parts.push({ text: `Photo side: ${img.label}` });
+      parts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } });
+    }
+    parts.push({ text: prompt });
+    const response = await this.ai.models.generateContent({
+      model: options?.model ?? this.model,
+      contents: parts,
+      config: buildModelConfig(systemInstruction, options),
+    });
+    return response.text ?? "";
+  }
+
   async analyzeVideo(
     fileUri: string,
     mimeType: string,
@@ -127,6 +148,21 @@ export class GeminiStubProvider implements IAIProvider {
       color: "White",
       vin: null,
       confidence: 0.85,
+      damages: [],
+    });
+  }
+
+  async analyzeImages(
+    _images: ImagePart[],
+    _prompt: string,
+    _systemInstruction?: string,
+    _options?: AIAnalysisOptions,
+  ): Promise<string> {
+    return JSON.stringify({
+      cameraPath: "8-side photos",
+      visualAnalysis: "stub",
+      overallCondition: "GOOD",
+      confidence: 0.9,
       damages: [],
     });
   }
