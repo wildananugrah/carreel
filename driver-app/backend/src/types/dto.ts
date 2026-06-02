@@ -1,4 +1,5 @@
 import type {
+  BodySide,
   InspectionStatus,
   StepStatus,
   StepType,
@@ -115,6 +116,7 @@ export interface UploadMediaDTO {
   mimeType: string;
   fileSize: number;
   mediaType: "IMAGE" | "VIDEO";
+  bodySide?: BodySide;
   latitude?: number;
   longitude?: number;
   capturedAt: string;

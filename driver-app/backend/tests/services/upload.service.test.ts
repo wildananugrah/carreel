@@ -8,6 +8,7 @@ import type {
 } from "../../src/interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
 import { UploadService } from "../../src/services/upload.service";
+import type { UploadMediaDTO } from "../../src/types/dto";
 import type { UserScope } from "../../src/types/scope";
 import { makeDriverScope, makeSuperAdminScope } from "../helpers/test-scope";
 
@@ -27,9 +28,13 @@ describe("UploadService", () => {
     data: Buffer;
     mimeType: string;
   }[];
+  let lastCreateData:
+    | (UploadMediaDTO & { minioKey: string; minioBucket: string })
+    | null;
 
   beforeEach(() => {
     uploadedFiles = [];
+    lastCreateData = null;
 
     const mockStorage: IStorageProvider = {
       upload: async (bucket, key, data, mimeType) => {
@@ -50,23 +55,26 @@ describe("UploadService", () => {
     };
 
     const mockMediaFileRepo: IMediaFileRepository = {
-      create: async (_scope: UserScope, stepId, data) => ({
-        id: "media-1",
-        stepId,
-        projectId: "test-project",
-        fileName: data.fileName,
-        mimeType: data.mimeType,
-        fileSize: data.fileSize,
-        minioKey: data.minioKey,
-        minioBucket: data.minioBucket,
-        mediaType: data.mediaType,
-        bodySide: null,
-        latitude: data.latitude ?? null,
-        longitude: data.longitude ?? null,
-        capturedAt: new Date(data.capturedAt),
-        durationSeconds: data.durationSeconds ?? null,
-        createdAt: new Date(),
-      }),
+      create: async (_scope: UserScope, stepId, data) => {
+        lastCreateData = data;
+        return {
+          id: "media-1",
+          stepId,
+          projectId: "test-project",
+          fileName: data.fileName,
+          mimeType: data.mimeType,
+          fileSize: data.fileSize,
+          minioKey: data.minioKey,
+          minioBucket: data.minioBucket,
+          mediaType: data.mediaType,
+          bodySide: data.bodySide ?? null,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          capturedAt: new Date(data.capturedAt),
+          durationSeconds: data.durationSeconds ?? null,
+          createdAt: new Date(),
+        };
+      },
       findById: async () => null,
       findByStepId: async () => [],
       deleteById: async () => {},
@@ -150,6 +158,26 @@ describe("UploadService", () => {
     expect(result.presignedUrl).toContain("presigned=true");
     expect(uploadedFiles.length).toBe(1);
     expect(uploadedFiles[0].bucket).toBe("carreel-images");
+  });
+
+  test("uploadMedia forwards bodySide to repository create", async () => {
+    await service.uploadMedia(
+      makeSuperAdminScope(),
+      "insp-1",
+      "step-1",
+      "driver-1",
+      Buffer.from("fake-image-data"),
+      {
+        fileName: "photo.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 1024,
+        mediaType: "IMAGE",
+        capturedAt: "2026-03-13T10:00:00.000Z",
+        bodySide: "FRONT",
+      },
+    );
+
+    expect(lastCreateData?.bodySide).toBe("FRONT");
   });
 
   test("uploadMedia throws for wrong driver", async () => {
