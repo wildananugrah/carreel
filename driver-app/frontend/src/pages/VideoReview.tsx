@@ -236,6 +236,8 @@ export function VideoReview() {
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Fire the photo-mode AI analysis exactly once per page load.
+  const photoAnalysisTriggeredRef = useRef(false);
 
   const { allowCamera, allowFile } = useUploadSources();
   const [showRecorder, setShowRecorder] = useState(false);
@@ -271,6 +273,15 @@ export function VideoReview() {
     } finally {
       setLoading(false);
     }
+  }, [id]);
+
+  // Single source of truth for kicking off photo-mode analysis. The ref guard
+  // makes it idempotent so the on-upload callback and the backstop effect below
+  // can both call it without double-enqueuing the job.
+  const triggerPhotoAnalysis = useCallback(() => {
+    if (!id || photoAnalysisTriggeredRef.current) return;
+    photoAnalysisTriggeredRef.current = true;
+    api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
   }, [id]);
 
   useEffect(() => {
@@ -354,6 +365,20 @@ export function VideoReview() {
     bodyMode === "PHOTOS_8SIDE"
       ? allEightCaptured
       : Boolean(bodyStep && bodyStep.mediaFiles.length > 0);
+
+  // Backstop: ensure photo-mode analysis is triggered once all 8 sides exist,
+  // even if the on-upload callback was missed (e.g. concurrent final uploads,
+  // or a page reload after capture). Never (re)trigger once the body step has
+  // already moved into analysis or reached a terminal state.
+  useEffect(() => {
+    if (bodyMode !== "PHOTOS_8SIDE" || !allEightCaptured) return;
+    const status = bodyStep?.status;
+    if (status === "PROCESSING" || status === "COMPLETED" || status === "FAILED") {
+      photoAnalysisTriggeredRef.current = true;
+      return;
+    }
+    triggerPhotoAnalysis();
+  }, [bodyMode, allEightCaptured, bodyStep?.status, triggerPhotoAnalysis]);
   const aiInfo = inspection ? extractUnitInfo(inspection, unitData) : null;
   const hasAIData = !!inspection?.steps.some(
     (s) =>
@@ -1027,9 +1052,7 @@ export function VideoReview() {
                 longitude: location?.longitude,
               }}
               onChanged={fetchDetail}
-              onAllCaptured={() => {
-                api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
-              }}
+              onAllCaptured={triggerPhotoAnalysis}
             />
           </div>
         )}
