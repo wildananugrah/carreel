@@ -74,6 +74,10 @@ export interface MediaFile {
   mediaType: string;
   capturedAt: string | null;
   createdAt: string;
+  /** For 8-side body-inspection photos: which side this photo captures.
+   * One of FRONT, FRONT_RIGHT, RIGHT, BACK_RIGHT, BACK, BACK_LEFT, LEFT,
+   * FRONT_LEFT. Absent for video and single-photo steps. */
+  bodySide?: string;
 }
 
 export interface AIAnalysis {
@@ -96,6 +100,10 @@ export interface InspectionStep {
 
 export interface InspectionDetail extends Inspection {
   steps: InspectionStep[];
+  /** Per-workspace body-inspection capture mode. VIDEO = single body video
+   * recorder; PHOTOS_8SIDE = 8-tile photo capture grid. Defaults to VIDEO
+   * when absent. */
+  bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
 }
 
 export interface MediaFileResponse {

@@ -69,7 +69,7 @@ function StepIcon({ stepType }: { stepType: string }) {
 }
 
 /* ─── Full-screen camera overlay for capturing photos with rear camera ─── */
-function CameraOverlay({
+export function CameraOverlay({
   onCapture,
   onClose,
 }: {

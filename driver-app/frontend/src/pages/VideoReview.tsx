@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AddDamageFlow } from "../components/inspection/AddDamageFlow";
 import { EditDamageModal } from "../components/inspection/EditDamageModal";
+import { EightSidePhotoCapture } from "../components/inspection/EightSidePhotoCapture";
 import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
 import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
 import { TopBar } from "../components/layout/TopBar";
@@ -340,7 +341,19 @@ export function VideoReview() {
   }, [inspection, fetchDetail, showRecorder]);
 
   const bodyStep = inspection?.steps.find((s) => s.stepType === "BODY_INSPECTION");
-  const hasMedia = bodyStep && bodyStep.mediaFiles.length > 0;
+  // Per-workspace body capture mode. VIDEO = single recorder; PHOTOS_8SIDE = 8-tile grid.
+  const bodyMode = inspection?.bodyInspectionMode ?? "VIDEO";
+  // Sides already captured for the 8-photo flow: bodySide -> mediaFile id.
+  const capturedSides: Record<string, string | undefined> = {};
+  for (const m of bodyStep?.mediaFiles ?? []) {
+    if (m.bodySide) capturedSides[m.bodySide] = m.id;
+  }
+  const allEightCaptured = Object.keys(capturedSides).length === 8;
+  // "Body capture done" — video has a media file; photos require all 8 sides.
+  const hasMedia =
+    bodyMode === "PHOTOS_8SIDE"
+      ? allEightCaptured
+      : Boolean(bodyStep && bodyStep.mediaFiles.length > 0);
   const aiInfo = inspection ? extractUnitInfo(inspection, unitData) : null;
   const hasAIData = !!inspection?.steps.some(
     (s) =>
@@ -609,7 +622,10 @@ export function VideoReview() {
   }
   if (!inspection || !bodyStep) return null;
 
-  const canSubmit = hasMedia && sigSaved && !bodyStepFailed;
+  // Body capture is "ready" when all 8 photos exist (PHOTOS_8SIDE) or a body
+  // video has been uploaded (VIDEO). hasMedia already encodes this per mode.
+  const bodyReady = bodyMode === "PHOTOS_8SIDE" ? allEightCaptured : hasMedia;
+  const canSubmit = bodyReady && sigSaved && !bodyStepFailed;
 
   return (
     <div className="flex flex-col h-full">
@@ -780,7 +796,7 @@ export function VideoReview() {
           </div>
         )}
 
-        {/* Instruction card — hidden after video is uploaded */}
+        {/* Instruction card — hidden after body capture is complete */}
         {!hasMedia && (
           <div className="px-4 pt-4 pb-4">
             <div className="rounded-xl border mt-4 border-yellow-400/40 bg-yellow-400/5 p-4">
@@ -807,13 +823,24 @@ export function VideoReview() {
                       1
                     </span>
                     <span className="text-xs text-[#F5C842] uppercase font-bold tracking-wider">
-                      Video Inspeksi
+                      {bodyMode === "PHOTOS_8SIDE" ? "Foto Inspeksi" : "Video Inspeksi"}
                     </span>
                   </div>
                   <p className="text-sm text-white leading-snug">
-                    Silahkan ambil rekaman{" "}
-                    <span className="font-bold text-[#F5C842]">seluruh bodi</span> secara perlahan.
-                    Jangan terburu-buru agar AI bisa mendeteksi setiap sudut dengan maksimal.
+                    {bodyMode === "PHOTOS_8SIDE" ? (
+                      <>
+                        Ambil <span className="font-bold text-[#F5C842]">8 foto sisi</span>{" "}
+                        kendaraan sesuai urutan. Pastikan setiap sudut terlihat jelas agar AI bisa
+                        mendeteksi kerusakan dengan maksimal.
+                      </>
+                    ) : (
+                      <>
+                        Silahkan ambil rekaman{" "}
+                        <span className="font-bold text-[#F5C842]">seluruh bodi</span> secara
+                        perlahan. Jangan terburu-buru agar AI bisa mendeteksi setiap sudut dengan
+                        maksimal.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -981,8 +1008,34 @@ export function VideoReview() {
           </div>
         )}
 
+        {/* Body capture section — 8-side photos (PHOTOS_8SIDE mode) */}
+        {!hasMedia && bodyMode === "PHOTOS_8SIDE" && bodyStep && id && (
+          <div className="px-4 pt-4">
+            {error && (
+              <div className="mb-4">
+                <div className="bg-red-500/10 text-red-400 text-sm px-4 py-3 rounded-lg">
+                  {error}
+                </div>
+              </div>
+            )}
+            <EightSidePhotoCapture
+              inspectionId={id}
+              stepId={bodyStep.id}
+              capturedSides={capturedSides}
+              capturedAtMeta={{
+                latitude: location?.latitude,
+                longitude: location?.longitude,
+              }}
+              onChanged={fetchDetail}
+              onAllCaptured={() => {
+                api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
+              }}
+            />
+          </div>
+        )}
+
         {/* Video section - recording flow (not yet uploaded) */}
-        {!hasMedia && (
+        {!hasMedia && bodyMode !== "PHOTOS_8SIDE" && (
           <div className="px-4 pt-4">
             {error && (
               <div className="mb-4">
@@ -1098,20 +1151,48 @@ export function VideoReview() {
                 </p>
               )}
               <div className="rounded-xl border border-[#3a2800] bg-[#141414] overflow-hidden">
-                {/* Post-trip body video */}
-                <div className="bg-[#1a1a1a]">
-                  {/* biome-ignore lint/a11y/useMediaCaption: post-trip body video */}
-                  <video
-                    src={`/api/media/${bodyStep.mediaFiles[0].id}/stream`}
-                    className="w-full aspect-video object-cover"
-                    controls
-                    playsInline
-                    preload="metadata"
-                  />
-                  <p className="text-xs text-neutral-500 text-center py-2">
-                    Video Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
-                  </p>
-                </div>
+                {/* Body media — 8-side photo grid (PHOTOS_8SIDE) or video */}
+                {bodyMode === "PHOTOS_8SIDE" ? (
+                  <div className="bg-[#1a1a1a] p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(capturedSides).map(([side, mediaId]) =>
+                        mediaId ? (
+                          <button
+                            key={side}
+                            type="button"
+                            onClick={() => setPhotoLightbox(`/api/media/${mediaId}/url`)}
+                            className="aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden"
+                          >
+                            <img
+                              src={`/api/media/${mediaId}/url`}
+                              alt={side}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </button>
+                        ) : null,
+                      )}
+                    </div>
+                    <p className="text-xs text-neutral-500 text-center pt-2">
+                      Foto Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-[#1a1a1a]">
+                    {/* biome-ignore lint/a11y/useMediaCaption: post-trip body video */}
+                    <video
+                      src={`/api/media/${bodyStep.mediaFiles[0].id}/stream`}
+                      className="w-full aspect-video object-cover"
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
+                    <p className="text-xs text-neutral-500 text-center py-2">
+                      Video Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
+                    </p>
+                  </div>
+                )}
 
                 {/* AI analysis results */}
                 {bodyStepFailed ? (
@@ -1472,6 +1553,9 @@ export function VideoReview() {
 
             {/* Submit */}
             <div className="px-4 pb-4">
+              {bodyMode === "PHOTOS_8SIDE" && !bodyReady && (
+                <p className="text-xs text-neutral-500 text-center mb-2">Lengkapi 8 foto sisi</p>
+              )}
               <Button
                 className="w-full"
                 disabled={!canSubmit}
