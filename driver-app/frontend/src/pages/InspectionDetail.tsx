@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
-import { damageApi, type DamageMarker } from "../lib/damage-api";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
+import { type DamageMarker, damageApi } from "../lib/damage-api";
 import type { InspectionDetail as InspectionDetailType, InspectionStatus } from "../lib/types";
 
 type Tab = "pre" | "post" | "ai-alert";
@@ -76,6 +76,37 @@ function getVinFromAI(inspection: InspectionDetailType): string | null {
 function getVideoMediaId(inspection: InspectionDetailType): string | null {
   const step = inspection.steps.find((s) => s.stepType === "BODY_INSPECTION");
   return step?.mediaFiles?.[0]?.id ?? null;
+}
+
+const BODY_SIDE_ORDER: Record<string, number> = {
+  FRONT: 0,
+  FRONT_RIGHT: 1,
+  RIGHT: 2,
+  BACK_RIGHT: 3,
+  BACK: 4,
+  BACK_LEFT: 5,
+  LEFT: 6,
+  FRONT_LEFT: 7,
+};
+
+const BODY_SIDE_LABELS: Record<string, string> = {
+  FRONT: "Depan",
+  FRONT_RIGHT: "Depan-Kanan",
+  RIGHT: "Kanan",
+  BACK_RIGHT: "Belakang-Kanan",
+  BACK: "Belakang",
+  BACK_LEFT: "Belakang-Kiri",
+  LEFT: "Kiri",
+  FRONT_LEFT: "Depan-Kiri",
+};
+
+/** Body-inspection photos (PHOTOS_8SIDE mode), sorted in capture order. */
+function getBodyPhotos(inspection: InspectionDetailType): { id: string; bodySide?: string }[] {
+  const step = inspection.steps.find((s) => s.stepType === "BODY_INSPECTION");
+  const files = (step?.mediaFiles ?? []).filter((m) => m.mediaType === "IMAGE");
+  return [...files].sort(
+    (a, b) => (BODY_SIDE_ORDER[a.bodySide ?? ""] ?? 99) - (BODY_SIDE_ORDER[b.bodySide ?? ""] ?? 99),
+  );
 }
 
 function getSpeedoMediaId(inspection: InspectionDetailType): string | null {
@@ -210,9 +241,7 @@ export function InspectionDetail() {
   // Falls back to aiAnalysis.structuredData.damages when these are still
   // loading or fail to fetch.
   const [thisMarkers, setThisMarkers] = useState<DamageMarker[] | null>(null);
-  const [linkedMarkers, setLinkedMarkers] = useState<DamageMarker[] | null>(
-    null,
-  );
+  const [linkedMarkers, setLinkedMarkers] = useState<DamageMarker[] | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -404,9 +433,7 @@ export function InspectionDetail() {
         })),
         ...(postInspection ? (getUnitAI(postInspection)?.damages ?? []) : []),
       ];
-  const postFlags: DamageFlag[] = postFlagsAll.filter(
-    (f) => f.isNewDamage !== false,
-  );
+  const postFlags: DamageFlag[] = postFlagsAll.filter((f) => f.isNewDamage !== false);
   const totalAlerts = preFlags.length + postFlags.length;
 
   const statusLabel =
@@ -606,62 +633,95 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
   const speedoTime = getSpeedoTime(inspection);
   const vinFromAI = getVinFromAI(inspection);
   const displayVin = vinFromAI ?? inspection.unit?.vin ?? null;
+  const isPhotoBody = inspection.bodyInspectionMode === "PHOTOS_8SIDE";
+  const bodyPhotos = isPhotoBody ? getBodyPhotos(inspection) : [];
   const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
 
   return (
     <>
-      {/* Video */}
-      <div className="bg-[#141414] rounded-[10px] h-40 flex flex-col items-center justify-center border border-[#2a2a2a] cursor-pointer relative">
-        {videoId ? (
-          <>
-            {/* biome-ignore lint/a11y/useMediaCaption: inspection video */}
-            <video
-              src={`/api/media/${videoId}/stream`}
-              className="w-full h-full rounded-[10px] object-cover"
-              controls
-              playsInline
-              preload="metadata"
-            />
-            <button
-              type="button"
-              onClick={() => setLightbox({ src: `/api/media/${videoId}/stream`, type: "video" })}
-              className="absolute top-2 right-2 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors"
-              aria-label="Enlarge video"
-            >
-              <svg
-                aria-hidden="true"
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
+      {/* Body inspection — 8 photos (PHOTOS_8SIDE) or a video */}
+      {isPhotoBody ? (
+        bodyPhotos.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2">
+            {bodyPhotos.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
+                className="relative aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+                <img
+                  src={`/api/media/${p.id}/url`}
+                  alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
-              </svg>
-            </button>
-          </>
+                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
+                  {BODY_SIDE_LABELS[p.bodySide ?? ""] ?? p.bodySide}
+                </span>
+              </button>
+            ))}
+          </div>
         ) : (
-          <>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-              <title>Play video</title>
-              <circle
-                cx="24"
-                cy="24"
-                r="22"
-                fill="rgba(245,200,66,0.1)"
-                stroke="#F5C842"
-                strokeWidth="2"
+          <div className="bg-[#141414] rounded-[10px] h-40 flex items-center justify-center border border-[#2a2a2a]">
+            <p className="text-[11px] text-[#888]">Belum ada foto body</p>
+          </div>
+        )
+      ) : (
+        /* Video */
+        <div className="bg-[#141414] rounded-[10px] h-40 flex flex-col items-center justify-center border border-[#2a2a2a] cursor-pointer relative">
+          {videoId ? (
+            <>
+              {/* biome-ignore lint/a11y/useMediaCaption: inspection video */}
+              <video
+                src={`/api/media/${videoId}/stream`}
+                className="w-full h-full rounded-[10px] object-cover"
+                controls
+                playsInline
+                preload="metadata"
               />
-              <polygon points="20,16 34,24 20,32" fill="#F5C842" />
-            </svg>
-            <p className="text-[11px] text-[#888] mt-2">Video Body Exterior</p>
-          </>
-        )}
-      </div>
+              <button
+                type="button"
+                onClick={() => setLightbox({ src: `/api/media/${videoId}/stream`, type: "video" })}
+                className="absolute top-2 right-2 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+                aria-label="Enlarge video"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+                  />
+                </svg>
+              </button>
+            </>
+          ) : (
+            <>
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                <title>Play video</title>
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="22"
+                  fill="rgba(245,200,66,0.1)"
+                  stroke="#F5C842"
+                  strokeWidth="2"
+                />
+                <polygon points="20,16 34,24 20,32" fill="#F5C842" />
+              </svg>
+              <p className="text-[11px] text-[#888] mt-2">Video Body Exterior</p>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Speedometer */}
       <div className="bg-[#0A0A0A] border border-[#3a2800] rounded-[10px] p-3">
@@ -858,10 +918,7 @@ function AIAlertPanel({
           if (flag.videoMediaId != null) {
             setSeekLightbox({
               src: `/api/media/${flag.videoMediaId}/stream`,
-              startTime:
-                typeof flag.videoTimestamp === "number"
-                  ? flag.videoTimestamp
-                  : 0,
+              startTime: typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : 0,
             });
           }
         }}
@@ -962,29 +1019,20 @@ function FlagSection({
       <div className={`bg-[#0A0A0A] border ${borderColor} rounded-xl overflow-hidden`}>
         {flags.length === 0 ? (
           <div className="px-3.5 py-4 text-center">
-            <p className="text-xs text-[#555]">
-              {emptyMessage ?? "Tidak ada flag terdeteksi"}
-            </p>
+            <p className="text-xs text-[#555]">{emptyMessage ?? "Tidak ada flag terdeteksi"}</p>
           </div>
         ) : (
           flags.map((flag, i) => {
             const isManual = flag.source === "DRIVER_ADDED";
             // Manual damages don't have a meaningful video timestamp;
             // clicking the row opens the captured evidence photo instead.
-            const canShowPhoto =
-              isManual && onShowPhoto != null && flag.evidenceMediaId != null;
+            const canShowPhoto = isManual && onShowPhoto != null && flag.evidenceMediaId != null;
             // For AI damages, fall back to 0:00 when the model omitted
             // videoTimestamp so the seek button always renders. Tapping
             // it opens the body video at the start.
-            const seekTime =
-              typeof flag.videoTimestamp === "number"
-                ? flag.videoTimestamp
-                : 0;
+            const seekTime = typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : 0;
             const canSeek =
-              !isManual &&
-              DAMAGE_SEEK_ENABLED &&
-              onSeek != null &&
-              flag.videoMediaId != null;
+              !isManual && DAMAGE_SEEK_ENABLED && onSeek != null && flag.videoMediaId != null;
             const isClickable = canSeek || canShowPhoto;
 
             const rowContent = (
@@ -994,9 +1042,7 @@ function FlagSection({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                    <p className="text-sm font-bold text-white">
-                      {damageLabel(flag.damageType)}
-                    </p>
+                    <p className="text-sm font-bold text-white">{damageLabel(flag.damageType)}</p>
                     {isManual && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300">
                         Manual
