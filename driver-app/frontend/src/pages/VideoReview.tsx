@@ -650,7 +650,16 @@ export function VideoReview() {
   // Body capture is "ready" when all 8 photos exist (PHOTOS_8SIDE) or a body
   // video has been uploaded (VIDEO). hasMedia already encodes this per mode.
   const bodyReady = bodyMode === "PHOTOS_8SIDE" ? allEightCaptured : hasMedia;
-  const canSubmit = bodyReady && sigSaved && !bodyStepFailed;
+  // In photo mode the driver reviews the AI damages before submitting, so block
+  // submit until the body analysis reaches a terminal state (not PENDING /
+  // UPLOADED / PROCESSING). Video mode runs body analysis as a background job,
+  // so its submit gating is left unchanged.
+  const bodyAnalysisPending =
+    bodyMode === "PHOTOS_8SIDE" &&
+    (bodyStep.status === "PENDING" ||
+      bodyStep.status === "UPLOADED" ||
+      bodyStep.status === "PROCESSING");
+  const canSubmit = bodyReady && sigSaved && !bodyStepFailed && !bodyAnalysisPending;
 
   return (
     <div className="flex flex-col h-full">
@@ -1578,6 +1587,11 @@ export function VideoReview() {
             <div className="px-4 pb-4">
               {bodyMode === "PHOTOS_8SIDE" && !bodyReady && (
                 <p className="text-xs text-neutral-500 text-center mb-2">Lengkapi 8 foto sisi</p>
+              )}
+              {bodyMode === "PHOTOS_8SIDE" && bodyReady && bodyAnalysisPending && (
+                <p className="text-xs text-neutral-500 text-center mb-2">
+                  Menunggu analisa AI selesai…
+                </p>
               )}
               <Button
                 className="w-full"
