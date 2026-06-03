@@ -47,9 +47,21 @@ interface PreTripUnitData {
   odometerKm: number | null;
   damages: PreTripDamage[];
   bodyVideoMediaId: string | null;
+  bodyPhotos?: { id: string; bodySide: string | null }[];
   driverComment: string | null;
   noNewDamage: boolean | null;
 }
+
+const BODY_SIDE_LABELS: Record<string, string> = {
+  FRONT: "Depan",
+  FRONT_RIGHT: "Depan-Kanan",
+  RIGHT: "Kanan",
+  BACK_RIGHT: "Belakang-Kanan",
+  BACK: "Belakang",
+  BACK_LEFT: "Belakang-Kiri",
+  LEFT: "Kiri",
+  FRONT_LEFT: "Depan-Kiri",
+};
 
 interface AIDetectedInfo {
   make?: string;
@@ -889,8 +901,35 @@ export function VideoReview() {
               Pre-Check &middot; Referensi
             </p>
             <div className="rounded-xl border border-[#2a2a2a] bg-[#141414] overflow-hidden">
-              {/* Pre-trip body video */}
-              {unitData.bodyVideoMediaId ? (
+              {/* Pre-trip body — 8 photos (PHOTOS_8SIDE) or a video */}
+              {unitData.bodyPhotos && unitData.bodyPhotos.length > 0 ? (
+                <div className="p-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {unitData.bodyPhotos.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPhotoLightbox(`/api/media/${p.id}/url`)}
+                        className="relative aspect-video bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#2a2a2a]"
+                      >
+                        <img
+                          src={`/api/media/${p.id}/url`}
+                          alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
+                          {BODY_SIDE_LABELS[p.bodySide ?? ""] ?? p.bodySide}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-neutral-500 text-center pt-2">
+                    Foto Body &middot; Pre-Check
+                  </p>
+                </div>
+              ) : unitData.bodyVideoMediaId ? (
                 <div className="bg-[#1a1a1a]">
                   {/* biome-ignore lint/a11y/useMediaCaption: pre-trip reference video */}
                   <video
