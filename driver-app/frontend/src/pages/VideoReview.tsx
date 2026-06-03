@@ -104,7 +104,9 @@ function damageMarkerToFlag(d: DamageMarker): AIFlag {
     videoTimestamp: d.videoTimestamp ?? undefined,
     source: d.source,
     editedAt: d.editedAt,
-    mediaFileId: d.source === "DRIVER_ADDED" ? d.mediaFileId : undefined,
+    // Evidence media: the side photo (PHOTOS_8SIDE) or the video (VIDEO mode).
+    // Render-site decides whether to show it as a clickable photo.
+    mediaFileId: d.mediaFileId ?? undefined,
     isNewDamage: d.isNewDamage,
   };
 }
@@ -1040,7 +1042,7 @@ export function VideoReview() {
                             {"\u25B6"} {formatVideoTimestamp(seekTime)}
                           </button>
                         )}
-                        {isManual && d.mediaFileId && (
+                        {d.mediaFileId && (isManual || bodyMode === "PHOTOS_8SIDE") && (
                           <button
                             type="button"
                             aria-label="Lihat foto bukti"
@@ -1406,7 +1408,7 @@ export function VideoReview() {
                               {"\u25B6"} {formatVideoTimestamp(seekTime)}
                             </button>
                           )}
-                          {isManual && flag.mediaFileId && (
+                          {flag.mediaFileId && (isManual || bodyMode === "PHOTOS_8SIDE") && (
                             <button
                               type="button"
                               aria-label="Lihat foto bukti"
