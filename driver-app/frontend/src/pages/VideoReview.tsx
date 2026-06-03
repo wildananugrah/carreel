@@ -972,8 +972,13 @@ export function VideoReview() {
                     const isManual = d.source === "DRIVER_ADDED";
                     const seekTime = typeof d.videoTimestamp === "number" ? d.videoTimestamp : 0;
                     const canSeek =
-                      !isManual && DAMAGE_SEEK_ENABLED && unitData.bodyVideoMediaId != null;
-                    const showStaticTimestamp = !isManual && !canSeek;
+                      !isManual &&
+                      DAMAGE_SEEK_ENABLED &&
+                      unitData.bodyVideoMediaId != null &&
+                      bodyMode !== "PHOTOS_8SIDE";
+                    // No video timestamp in photo mode — hide the ▶ 0:00 affordance.
+                    const showStaticTimestamp =
+                      !isManual && !canSeek && bodyMode !== "PHOTOS_8SIDE";
                     return (
                       <div
                         key={`pre-${d.area}-${d.location}-${idx}`}
@@ -1327,8 +1332,14 @@ export function VideoReview() {
                       const isManual = flag.source === "DRIVER_ADDED";
                       const seekTime =
                         typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : 0;
-                      const canSeek = !isManual && DAMAGE_SEEK_ENABLED && postVideoMediaId != null;
-                      const showStaticTimestamp = !isManual && !canSeek;
+                      const canSeek =
+                        !isManual &&
+                        DAMAGE_SEEK_ENABLED &&
+                        postVideoMediaId != null &&
+                        bodyMode !== "PHOTOS_8SIDE";
+                      // No video timestamp in photo mode — hide the ▶ 0:00 affordance.
+                      const showStaticTimestamp =
+                        !isManual && !canSeek && bodyMode !== "PHOTOS_8SIDE";
                       return (
                         <div
                           key={flag.damageId ?? `legacy-${flag.area}-${flag.location}-${idx}`}
