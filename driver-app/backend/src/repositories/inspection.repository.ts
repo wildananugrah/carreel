@@ -150,6 +150,7 @@ export class InspectionRepository implements IInspectionRepository {
                 fileName: true,
                 mimeType: true,
                 mediaType: true,
+                bodySide: true,
                 latitude: true,
                 longitude: true,
                 capturedAt: true,
