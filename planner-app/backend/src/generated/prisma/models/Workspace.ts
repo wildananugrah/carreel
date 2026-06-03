@@ -20,8 +20,18 @@ export type WorkspaceModel = runtime.Types.Result.DefaultSelection<Prisma.$Works
 
 export type AggregateWorkspace = {
   _count: WorkspaceCountAggregateOutputType | null
+  _avg: WorkspaceAvgAggregateOutputType | null
+  _sum: WorkspaceSumAggregateOutputType | null
   _min: WorkspaceMinAggregateOutputType | null
   _max: WorkspaceMaxAggregateOutputType | null
+}
+
+export type WorkspaceAvgAggregateOutputType = {
+  additionalBodyPhotoCount: number | null
+}
+
+export type WorkspaceSumAggregateOutputType = {
+  additionalBodyPhotoCount: number | null
 }
 
 export type WorkspaceMinAggregateOutputType = {
@@ -29,6 +39,7 @@ export type WorkspaceMinAggregateOutputType = {
   name: string | null
   displayName: string | null
   bodyInspectionMode: $Enums.BodyInspectionMode | null
+  additionalBodyPhotoCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -38,6 +49,7 @@ export type WorkspaceMaxAggregateOutputType = {
   name: string | null
   displayName: string | null
   bodyInspectionMode: $Enums.BodyInspectionMode | null
+  additionalBodyPhotoCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -47,17 +59,27 @@ export type WorkspaceCountAggregateOutputType = {
   name: number
   displayName: number
   bodyInspectionMode: number
+  additionalBodyPhotoCount: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
 
+export type WorkspaceAvgAggregateInputType = {
+  additionalBodyPhotoCount?: true
+}
+
+export type WorkspaceSumAggregateInputType = {
+  additionalBodyPhotoCount?: true
+}
+
 export type WorkspaceMinAggregateInputType = {
   id?: true
   name?: true
   displayName?: true
   bodyInspectionMode?: true
+  additionalBodyPhotoCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -67,6 +89,7 @@ export type WorkspaceMaxAggregateInputType = {
   name?: true
   displayName?: true
   bodyInspectionMode?: true
+  additionalBodyPhotoCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -76,6 +99,7 @@ export type WorkspaceCountAggregateInputType = {
   name?: true
   displayName?: true
   bodyInspectionMode?: true
+  additionalBodyPhotoCount?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -119,6 +143,18 @@ export type WorkspaceAggregateArgs<ExtArgs extends runtime.Types.Extensions.Inte
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: WorkspaceAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: WorkspaceSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: WorkspaceMinAggregateInputType
@@ -149,6 +185,8 @@ export type WorkspaceGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   _count?: WorkspaceCountAggregateInputType | true
+  _avg?: WorkspaceAvgAggregateInputType
+  _sum?: WorkspaceSumAggregateInputType
   _min?: WorkspaceMinAggregateInputType
   _max?: WorkspaceMaxAggregateInputType
 }
@@ -158,9 +196,12 @@ export type WorkspaceGroupByOutputType = {
   name: string
   displayName: string
   bodyInspectionMode: $Enums.BodyInspectionMode
+  additionalBodyPhotoCount: number
   createdAt: Date
   updatedAt: Date
   _count: WorkspaceCountAggregateOutputType | null
+  _avg: WorkspaceAvgAggregateOutputType | null
+  _sum: WorkspaceSumAggregateOutputType | null
   _min: WorkspaceMinAggregateOutputType | null
   _max: WorkspaceMaxAggregateOutputType | null
 }
@@ -188,6 +229,7 @@ export type WorkspaceWhereInput = {
   name?: Prisma.StringFilter<"Workspace"> | string
   displayName?: Prisma.StringFilter<"Workspace"> | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFilter<"Workspace"> | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFilter<"Workspace"> | number
   createdAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   projects?: Prisma.ProjectListRelationFilter
@@ -198,6 +240,7 @@ export type WorkspaceOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
+  additionalBodyPhotoCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projects?: Prisma.ProjectOrderByRelationAggregateInput
@@ -211,6 +254,7 @@ export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WorkspaceWhereInput | Prisma.WorkspaceWhereInput[]
   displayName?: Prisma.StringFilter<"Workspace"> | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFilter<"Workspace"> | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFilter<"Workspace"> | number
   createdAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   projects?: Prisma.ProjectListRelationFilter
@@ -221,11 +265,14 @@ export type WorkspaceOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
+  additionalBodyPhotoCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.WorkspaceCountOrderByAggregateInput
+  _avg?: Prisma.WorkspaceAvgOrderByAggregateInput
   _max?: Prisma.WorkspaceMaxOrderByAggregateInput
   _min?: Prisma.WorkspaceMinOrderByAggregateInput
+  _sum?: Prisma.WorkspaceSumOrderByAggregateInput
 }
 
 export type WorkspaceScalarWhereWithAggregatesInput = {
@@ -236,6 +283,7 @@ export type WorkspaceScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Workspace"> | string
   displayName?: Prisma.StringWithAggregatesFilter<"Workspace"> | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeWithAggregatesFilter<"Workspace"> | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntWithAggregatesFilter<"Workspace"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Workspace"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Workspace"> | Date | string
 }
@@ -245,6 +293,7 @@ export type WorkspaceCreateInput = {
   name: string
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
@@ -255,6 +304,7 @@ export type WorkspaceUncheckedCreateInput = {
   name: string
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
@@ -265,6 +315,7 @@ export type WorkspaceUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
@@ -275,6 +326,7 @@ export type WorkspaceUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
@@ -285,6 +337,7 @@ export type WorkspaceCreateManyInput = {
   name: string
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -294,6 +347,7 @@ export type WorkspaceUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -303,6 +357,7 @@ export type WorkspaceUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -312,8 +367,13 @@ export type WorkspaceCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
+  additionalBodyPhotoCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type WorkspaceAvgOrderByAggregateInput = {
+  additionalBodyPhotoCount?: Prisma.SortOrder
 }
 
 export type WorkspaceMaxOrderByAggregateInput = {
@@ -321,6 +381,7 @@ export type WorkspaceMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
+  additionalBodyPhotoCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -330,8 +391,13 @@ export type WorkspaceMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
+  additionalBodyPhotoCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type WorkspaceSumOrderByAggregateInput = {
+  additionalBodyPhotoCount?: Prisma.SortOrder
 }
 
 export type WorkspaceScalarRelationFilter = {
@@ -362,6 +428,7 @@ export type WorkspaceCreateWithoutProjectsInput = {
   name: string
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -371,6 +438,7 @@ export type WorkspaceUncheckedCreateWithoutProjectsInput = {
   name: string
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -396,6 +464,7 @@ export type WorkspaceUpdateWithoutProjectsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -405,6 +474,7 @@ export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
+  additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -445,6 +515,7 @@ export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   name?: boolean
   displayName?: boolean
   bodyInspectionMode?: boolean
+  additionalBodyPhotoCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
@@ -456,6 +527,7 @@ export type WorkspaceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   name?: boolean
   displayName?: boolean
   bodyInspectionMode?: boolean
+  additionalBodyPhotoCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["workspace"]>
@@ -465,6 +537,7 @@ export type WorkspaceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   name?: boolean
   displayName?: boolean
   bodyInspectionMode?: boolean
+  additionalBodyPhotoCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["workspace"]>
@@ -474,11 +547,12 @@ export type WorkspaceSelectScalar = {
   name?: boolean
   displayName?: boolean
   bodyInspectionMode?: boolean
+  additionalBodyPhotoCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WorkspaceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "displayName" | "bodyInspectionMode" | "createdAt" | "updatedAt", ExtArgs["result"]["workspace"]>
+export type WorkspaceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "displayName" | "bodyInspectionMode" | "additionalBodyPhotoCount" | "createdAt" | "updatedAt", ExtArgs["result"]["workspace"]>
 export type WorkspaceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
@@ -496,6 +570,7 @@ export type $WorkspacePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     name: string
     displayName: string
     bodyInspectionMode: $Enums.BodyInspectionMode
+    additionalBodyPhotoCount: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["workspace"]>
@@ -926,6 +1001,7 @@ export interface WorkspaceFieldRefs {
   readonly name: Prisma.FieldRef<"Workspace", 'String'>
   readonly displayName: Prisma.FieldRef<"Workspace", 'String'>
   readonly bodyInspectionMode: Prisma.FieldRef<"Workspace", 'BodyInspectionMode'>
+  readonly additionalBodyPhotoCount: Prisma.FieldRef<"Workspace", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Workspace", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Workspace", 'DateTime'>
 }

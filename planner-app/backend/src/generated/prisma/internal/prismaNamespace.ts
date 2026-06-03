@@ -2128,6 +2128,7 @@ export const WorkspaceScalarFieldEnum = {
   name: 'name',
   displayName: 'displayName',
   bodyInspectionMode: 'bodyInspectionMode',
+  additionalBodyPhotoCount: 'additionalBodyPhotoCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
