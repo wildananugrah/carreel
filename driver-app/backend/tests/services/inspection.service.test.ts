@@ -70,6 +70,7 @@ function createMockInspectionWithRelations(
   return {
     ...createMockInspection(overrides),
     bodyInspectionMode: "VIDEO",
+    additionalBodyPhotoCount: 0,
     unit: null,
     linkedInspection: null,
     linkedFrom: null,

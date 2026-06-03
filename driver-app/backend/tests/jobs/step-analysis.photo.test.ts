@@ -178,6 +178,7 @@ describe("StepAnalysisJob — 8-photo body inspection", () => {
           id,
           driverId: "driver-1",
           bodyInspectionMode: "PHOTOS_8SIDE",
+          additionalBodyPhotoCount: 0,
           projectId: "test-project",
           unitId: null,
           tripType: "PRE_TRIP",
@@ -289,6 +290,29 @@ describe("StepAnalysisJob — 8-photo body inspection", () => {
   });
 
   test("analyzes all 8 photos and attaches damage to the correct side's media file", async () => {
+    // Add a 9th "Foto Tambahan" photo (bodySide: null) — it must be stored
+    // but never sent to AI. analyzeImages should still see only the 8 sides.
+    mockMediaRepo.findByStepId = async (_scope: UserScope, stepId: string) => [
+      ...createEightPhotos(stepId),
+      {
+        id: "media-EXTRA",
+        stepId,
+        projectId: "test-project",
+        fileName: "photo-extra.jpg",
+        mimeType: "image/jpeg",
+        mediaType: "IMAGE",
+        bodySide: null,
+        fileSize: 1024,
+        minioKey: "inspections/photo-extra.jpg",
+        minioBucket: "carreel-images",
+        latitude: null,
+        longitude: null,
+        capturedAt: new Date(),
+        durationSeconds: null,
+        createdAt: new Date(),
+      } as MediaFile,
+    ];
+
     // Make the other step terminal so completion can be checked.
     stepStatuses.set("step-speedo", "COMPLETED");
 

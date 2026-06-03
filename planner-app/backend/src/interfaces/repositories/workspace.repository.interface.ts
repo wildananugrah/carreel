@@ -4,11 +4,13 @@ export interface CreateWorkspaceDTO {
   name: string;
   displayName: string;
   bodyInspectionMode?: BodyInspectionMode;
+  additionalBodyPhotoCount?: number;
 }
 
 export interface UpdateWorkspaceDTO {
   displayName?: string;
   bodyInspectionMode?: BodyInspectionMode;
+  additionalBodyPhotoCount?: number;
 }
 
 export interface WorkspaceListItem {

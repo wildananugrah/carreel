@@ -7,6 +7,7 @@ interface Workspace {
   name: string;
   displayName: string;
   bodyInspectionMode: "VIDEO" | "PHOTOS_8SIDE";
+  additionalBodyPhotoCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,6 +43,23 @@ export function WorkspaceDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [savingMode, setSavingMode] = useState(false);
+  const [savingCount, setSavingCount] = useState(false);
+
+  async function handleCountChange(count: number) {
+    if (!id || !workspace) return;
+    setSavingCount(true);
+    setError(null);
+    try {
+      const updated = await api.patch<Workspace>(`/api/admin/workspaces/${id}`, {
+        additionalBodyPhotoCount: count,
+      });
+      setWorkspace(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update count");
+    } finally {
+      setSavingCount(false);
+    }
+  }
 
   async function handleModeChange(mode: "VIDEO" | "PHOTOS_8SIDE") {
     if (!id || !workspace) return;
@@ -263,6 +281,22 @@ export function WorkspaceDetail() {
                 {mode === "VIDEO" ? "Video" : "8 Foto Sisi"}
               </button>
             ))}
+          </div>
+          <div className="mt-4">
+            <p className="text-xs text-[#888] mb-1">Foto Tambahan (jumlah, 0 = nonaktif)</p>
+            <input
+              key={workspace.additionalBodyPhotoCount}
+              type="number"
+              min={0}
+              max={10}
+              defaultValue={workspace.additionalBodyPhotoCount}
+              disabled={savingCount}
+              onBlur={(e) => {
+                const v = Math.max(0, Math.min(10, Math.floor(Number(e.target.value) || 0)));
+                if (v !== workspace.additionalBodyPhotoCount) handleCountChange(v);
+              }}
+              className="w-24 px-3 py-2 rounded-lg bg-[#111] text-white border border-[#2a2a2a] text-sm disabled:opacity-40"
+            />
           </div>
         </div>
 

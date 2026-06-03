@@ -50,6 +50,10 @@ interface Props {
   onChanged: () => void;
   /** Fires once all 8 sides are present — triggers AI analysis. */
   onAllCaptured: () => void;
+  /** Workspace setting — number of optional "Foto Tambahan" slots (0 = none). */
+  additionalCount?: number;
+  /** Existing additional photos (bodySide null), in createdAt order. */
+  additionalPhotos?: { id: string }[];
 }
 
 export function EightSidePhotoCapture({
@@ -59,6 +63,8 @@ export function EightSidePhotoCapture({
   capturedAtMeta,
   onChanged,
   onAllCaptured,
+  additionalCount,
+  additionalPhotos,
 }: Props) {
   const { allowCamera, allowFile } = useUploadSources();
   const [busySide, setBusySide] = useState<string | null>(null);
@@ -66,6 +72,11 @@ export function EightSidePhotoCapture({
   const [error, setError] = useState("");
   // Which side is currently capturing via the full-screen camera overlay.
   const [cameraSide, setCameraSide] = useState<string | null>(null);
+  // Additional-photo state — kept separate from the 8-side state so the side
+  // tiles' busy/camera state isn't affected. Keyed by slot index.
+  const [busyAdditional, setBusyAdditional] = useState<number | null>(null);
+  const [deletingAdditional, setDeletingAdditional] = useState<string | null>(null);
+  const [additionalCameraSlot, setAdditionalCameraSlot] = useState<number | null>(null);
 
   async function uploadSide(side: string, file: File) {
     setBusySide(side);
@@ -107,7 +118,48 @@ export function EightSidePhotoCapture({
     }
   }
 
+  // Additional photos persist with NO bodySide (null) so the analysis job
+  // ignores them. They never affect 8-side completion / onAllCaptured.
+  async function uploadAdditional(slot: number, file: File) {
+    setBusyAdditional(slot);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("stepId", stepId);
+      formData.append("mediaType", "IMAGE");
+      // Intentionally NO bodySide field — persists null.
+      formData.append("capturedAt", new Date().toISOString());
+      if (capturedAtMeta?.latitude !== undefined)
+        formData.append("latitude", String(capturedAtMeta.latitude));
+      if (capturedAtMeta?.longitude !== undefined)
+        formData.append("longitude", String(capturedAtMeta.longitude));
+      await api.upload(`/api/inspections/${inspectionId}/steps/${stepId}/media`, formData);
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload gagal");
+    } finally {
+      setBusyAdditional(null);
+    }
+  }
+
+  async function deleteAdditional(mediaId: string) {
+    if (deletingAdditional) return;
+    setDeletingAdditional(mediaId);
+    setError("");
+    try {
+      await api.del(`/api/inspections/${inspectionId}/steps/${stepId}/media/${mediaId}`);
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus foto");
+    } finally {
+      setDeletingAdditional(null);
+    }
+  }
+
   const doneCount = SIDES.filter((s) => capturedSides[s.key]).length;
+  const extraCount = additionalCount ?? 0;
+  const extras = additionalPhotos ?? [];
 
   return (
     <div>
@@ -268,6 +320,159 @@ export function EightSidePhotoCapture({
         })}
       </div>
 
+      {/* Optional additional photos — stored & displayed but NOT AI-validated,
+          and never block submit. Rendered only when the workspace allows them. */}
+      {extraCount > 0 && (
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-white mb-3">Foto Tambahan (Opsional)</p>
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: extraCount }).map((_, i) => {
+              const photo = extras[i];
+              const inputId = `additional-${i}`;
+              const busy = busyAdditional === i;
+              const deleting = photo ? deletingAdditional === photo.id : false;
+              return (
+                <div
+                  key={inputId}
+                  className={`relative border-2 border-dashed rounded-xl p-3 transition-all ${
+                    photo ? "border-[#2a2a2a] bg-[#1a1a1a]" : "border-[#3a2800] bg-[#141414]"
+                  }`}
+                >
+                  {/* Hidden file input — only when file upload is allowed */}
+                  {allowFile && (
+                    <input
+                      id={inputId}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadAdditional(i, f);
+                        e.target.value = "";
+                      }}
+                    />
+                  )}
+
+                  {photo ? (
+                    <div className="flex flex-col">
+                      <div className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden mb-2">
+                        <img
+                          src={`/api/media/${photo.id}/url`}
+                          alt={`Foto Tambahan ${i + 1}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <div className="absolute top-1 right-1">
+                          <button
+                            type="button"
+                            disabled={deleting}
+                            onClick={() => deleteAdditional(photo.id)}
+                            className="w-6 h-6 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+                            aria-label={`Hapus Foto Tambahan ${i + 1}`}
+                          >
+                            <svg
+                              aria-hidden="true"
+                              className="w-3.5 h-3.5 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs font-medium text-white">Foto Tambahan {i + 1}</p>
+                      <p className="text-[10px] text-yellow-400 mt-0.5">&#10003; Terunggah</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-10 h-10 bg-[#1a1500] rounded-lg flex items-center justify-center mb-2">
+                        <div className="text-yellow-400/60 scale-75">
+                          <CameraIcon />
+                        </div>
+                      </div>
+                      <p className="text-xs font-medium text-white mb-0.5">Foto Tambahan {i + 1}</p>
+                      <p className="text-[10px] text-neutral-500 mb-2">Opsional</p>
+
+                      {busy ? (
+                        <div className="w-full">
+                          <div className="w-full bg-[#2a2a2a] rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-yellow-400 h-1.5 w-1/2 rounded-full animate-pulse" />
+                          </div>
+                          <p className="text-[10px] text-neutral-500 mt-1">Mengunggah…</p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 w-full">
+                          {allowFile && (
+                            <label
+                              htmlFor={inputId}
+                              className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors cursor-pointer"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4v16m8-8H4"
+                                />
+                              </svg>
+                              Upload
+                            </label>
+                          )}
+                          {allowCamera && (
+                            <button
+                              type="button"
+                              onClick={() => setAdditionalCameraSlot(i)}
+                              className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors cursor-pointer"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                              Camera
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
 
       {/* Full-screen camera overlay (reuses StepCard's getUserMedia rear-camera) */}
@@ -279,6 +484,18 @@ export function EightSidePhotoCapture({
             if (side) uploadSide(side, file);
           }}
           onClose={() => setCameraSide(null)}
+        />
+      )}
+
+      {/* Full-screen camera overlay for additional photos */}
+      {additionalCameraSlot !== null && (
+        <CameraOverlay
+          onCapture={(file) => {
+            const slot = additionalCameraSlot;
+            setAdditionalCameraSlot(null);
+            if (slot !== null) uploadAdditional(slot, file);
+          }}
+          onClose={() => setAdditionalCameraSlot(null)}
         />
       )}
     </div>

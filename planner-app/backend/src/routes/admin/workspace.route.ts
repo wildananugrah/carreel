@@ -27,7 +27,14 @@ export function createWorkspaceRoutes(
       name: string;
       displayName: string;
       bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
+      additionalBodyPhotoCount?: number;
     }>();
+    if (body.additionalBodyPhotoCount !== undefined) {
+      body.additionalBodyPhotoCount = Math.max(
+        0,
+        Math.min(10, Math.floor(Number(body.additionalBodyPhotoCount) || 0)),
+      );
+    }
     const workspace = await workspaceService.create(scope, body);
     return c.json(workspace, 201);
   });
@@ -47,7 +54,14 @@ export function createWorkspaceRoutes(
     const body = await c.req.json<{
       displayName?: string;
       bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
+      additionalBodyPhotoCount?: number;
     }>();
+    if (body.additionalBodyPhotoCount !== undefined) {
+      body.additionalBodyPhotoCount = Math.max(
+        0,
+        Math.min(10, Math.floor(Number(body.additionalBodyPhotoCount) || 0)),
+      );
+    }
     const workspace = await workspaceService.update(
       scope,
       c.req.param("id"),

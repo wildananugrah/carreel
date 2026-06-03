@@ -717,10 +717,17 @@ export class StepAnalysisJob {
       log,
     } = args;
 
+    // Only analyze bodySide-labeled photos. Additional "Foto Tambahan" photos
+    // (bodySide === null) are stored/displayed but never sent to AI.
+    const sideMedia = mediaFiles.filter((m) => m.bodySide);
+    // Attach AI summary/fallback records to a real side photo, not an extra
+    // (mediaFiles[0] could be an additional photo uploaded before the sides).
+    const primarySide = sideMedia[0] ?? primaryMedia;
+
     // Download all photos and pair each with the media file it came from so
     // we can route damages back to the right side.
     const images = await Promise.all(
-      mediaFiles.map(async (m) => {
+      sideMedia.map(async (m) => {
         const buf = await this.storageProvider.download(
           m.minioBucket,
           m.minioKey,
@@ -767,7 +774,7 @@ export class StepAnalysisJob {
     if (isMismatch || isRecapture) {
       await this.aiAnalysisRepository.createAnalysis(JOB_SYSTEM_SCOPE, {
         stepId,
-        mediaFileId: primaryMedia.id,
+        mediaFileId: primarySide.id,
         aiModel: "gemini",
         promptUsed: `[SYSTEM]\n${verifyPair.systemInstruction}\n\n[USER]\n${verifyPair.userPrompt}`,
         rawResponse: verifyRaw,
@@ -847,7 +854,7 @@ export class StepAnalysisJob {
     // Attach each damage to the media file of the side it was seen on.
     const idBySide = new Map(images.map((i) => [i.label, i.mediaFileId]));
     for (const d of damages) {
-      const mediaFileId = idBySide.get(d.bodySide) ?? primaryMedia.id;
+      const mediaFileId = idBySide.get(d.bodySide) ?? primarySide.id;
       await this.saveDamageMarkers(mediaFileId, [
         {
           damageType: d.damageType,
@@ -871,7 +878,7 @@ export class StepAnalysisJob {
       JOB_SYSTEM_SCOPE,
       {
         stepId,
-        mediaFileId: primaryMedia.id,
+        mediaFileId: primarySide.id,
         aiModel: "gemini",
         promptUsed: `[SYSTEM]\n${damagePair.systemInstruction}\n\n[USER]\n${damagePair.userPrompt}`,
         rawResponse: damageRaw,

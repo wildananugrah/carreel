@@ -550,6 +550,7 @@ model Workspace {
   name        String             @unique
   displayName String
   bodyInspectionMode BodyInspectionMode @default(VIDEO)
+  additionalBodyPhotoCount Int @default(0)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 

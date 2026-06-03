@@ -49,3 +49,22 @@ describe("WorkspaceService.update bodyInspectionMode", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("WorkspaceService.update additionalBodyPhotoCount", () => {
+  it("lets SUPER_ADMIN set additionalBodyPhotoCount", async () => {
+    const { service, update } = makeService();
+    await service.update(superAdmin, "w1", {
+      additionalBodyPhotoCount: 2,
+    });
+    expect(update).toHaveBeenCalledWith("w1", {
+      additionalBodyPhotoCount: 2,
+    });
+  });
+
+  it("rejects a non-SUPER_ADMIN", async () => {
+    const { service } = makeService();
+    await expect(
+      service.update(regular, "w1", { additionalBodyPhotoCount: 2 }),
+    ).rejects.toThrow();
+  });
+});

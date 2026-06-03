@@ -104,6 +104,10 @@ export interface InspectionDetail extends Inspection {
    * recorder; PHOTOS_8SIDE = 8-tile photo capture grid. Defaults to VIDEO
    * when absent. */
   bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
+  /** Per-workspace count of optional "Foto Tambahan" body photos allowed.
+   * These are stored and displayed but NOT AI-validated and never block
+   * submit. 0 (or absent) = no additional photos. */
+  additionalBodyPhotoCount?: number;
 }
 
 export interface MediaFileResponse {

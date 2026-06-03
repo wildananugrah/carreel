@@ -125,7 +125,14 @@ export class InspectionRepository implements IInspectionRepository {
       where: { id, ...(scopeFilter as object) },
       include: {
         project: {
-          select: { workspace: { select: { bodyInspectionMode: true } } },
+          select: {
+            workspace: {
+              select: {
+                bodyInspectionMode: true,
+                additionalBodyPhotoCount: true,
+              },
+            },
+          },
         },
         unit: {
           select: {
@@ -175,6 +182,7 @@ export class InspectionRepository implements IInspectionRepository {
     return {
       ...rest,
       bodyInspectionMode: project.workspace.bodyInspectionMode,
+      additionalBodyPhotoCount: project.workspace.additionalBodyPhotoCount,
     } as unknown as InspectionWithRelations;
   }
 

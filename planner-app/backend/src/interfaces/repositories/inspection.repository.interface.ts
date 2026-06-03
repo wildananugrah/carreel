@@ -33,6 +33,7 @@ export interface InspectionDetailWithRelations extends Inspection {
       fileName: string;
       mimeType: string;
       mediaType: string;
+      bodySide: string | null;
       minioKey: string;
       minioBucket: string;
       latitude: number | null;

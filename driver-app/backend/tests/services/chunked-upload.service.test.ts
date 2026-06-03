@@ -40,6 +40,7 @@ const mockInspection: InspectionWithRelations = {
   id: "insp-1",
   driverId: "driver-1",
   bodyInspectionMode: "VIDEO",
+  additionalBodyPhotoCount: 0,
   projectId: "test-project",
   unitId: null,
   tripType: "PRE_TRIP",
