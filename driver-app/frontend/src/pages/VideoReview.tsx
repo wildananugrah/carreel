@@ -63,6 +63,32 @@ const BODY_SIDE_LABELS: Record<string, string> = {
   FRONT_LEFT: "Depan-Kiri",
 };
 
+const BODY_SIDE_ORDER: Record<string, number> = {
+  FRONT: 0,
+  FRONT_RIGHT: 1,
+  RIGHT: 2,
+  BACK_RIGHT: 3,
+  BACK: 4,
+  BACK_LEFT: 5,
+  LEFT: 6,
+  FRONT_LEFT: 7,
+};
+
+/** Body-inspection photos (PHOTOS_8SIDE) from an inspection's steps, sorted. */
+function extractBodyPhotos(
+  inspection: InspectionDetail,
+): { id: string; bodySide: string | null }[] {
+  const body = inspection.steps.find((s) => s.stepType === "BODY_INSPECTION");
+  return (body?.mediaFiles ?? [])
+    .filter((m) => m.mediaType === "IMAGE")
+    .map((m) => ({ id: m.id, bodySide: m.bodySide ?? null }))
+    .sort(
+      (a, b) =>
+        (BODY_SIDE_ORDER[a.bodySide ?? ""] ?? 99) -
+        (BODY_SIDE_ORDER[b.bodySide ?? ""] ?? 99),
+    );
+}
+
 interface AIDetectedInfo {
   make?: string;
   model?: string;
@@ -260,6 +286,11 @@ export function VideoReview() {
     startTime: number;
   } | null>(null);
   const [photoLightbox, setPhotoLightbox] = useState<string | null>(null);
+  // Pre-trip body photos, fetched directly from the linked pre-trip inspection
+  // (robust — does not depend on the /pre-trip-data endpoint's bodyPhotos field).
+  const [preTripPhotos, setPreTripPhotos] = useState<
+    { id: string; bodySide: string | null }[]
+  >([]);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -277,6 +308,18 @@ export function VideoReview() {
           if (preData) setUnitData(preData);
         } catch {
           // Non-critical
+        }
+        // Pull the pre-trip body photos straight from the linked inspection so
+        // the reference grid works regardless of the pre-trip-data payload.
+        if (data.linkedInspectionId) {
+          try {
+            const pre = await api.get<InspectionDetail>(
+              `/api/inspections/${data.linkedInspectionId}`,
+            );
+            setPreTripPhotos(extractBodyPhotos(pre));
+          } catch {
+            // Non-critical
+          }
         }
       }
     } catch (err) {
@@ -664,6 +707,10 @@ export function VideoReview() {
   // Body capture is "ready" when all 8 photos exist (PHOTOS_8SIDE) or a body
   // video has been uploaded (VIDEO). hasMedia already encodes this per mode.
   const bodyReady = bodyMode === "PHOTOS_8SIDE" ? allEightCaptured : hasMedia;
+  // Pre-trip reference photos: prefer the directly-fetched linked inspection,
+  // fall back to the pre-trip-data payload if present.
+  const referencePhotos =
+    preTripPhotos.length > 0 ? preTripPhotos : (unitData?.bodyPhotos ?? []);
   // In photo mode the driver reviews the AI damages before submitting, so block
   // submit until the body analysis reaches a terminal state (not PENDING /
   // UPLOADED / PROCESSING). Video mode runs body analysis as a background job,
@@ -904,10 +951,10 @@ export function VideoReview() {
             </p>
             <div className="rounded-xl border border-[#2a2a2a] bg-[#141414] overflow-hidden">
               {/* Pre-trip body — 8 photos (PHOTOS_8SIDE) or a video */}
-              {unitData.bodyPhotos && unitData.bodyPhotos.length > 0 ? (
+              {referencePhotos.length > 0 ? (
                 <div className="p-2">
                   <div className="grid grid-cols-2 gap-2">
-                    {unitData.bodyPhotos.map((p) => (
+                    {referencePhotos.map((p) => (
                       <button
                         key={p.id}
                         type="button"
