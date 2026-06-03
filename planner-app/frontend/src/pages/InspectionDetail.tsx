@@ -20,6 +20,17 @@ const stepTypeLabels: Record<string, string> = {
   BODY_INSPECTION: "Body Inspection",
 };
 
+const BODY_SIDE_LABELS: Record<string, string> = {
+  FRONT: "Depan",
+  FRONT_RIGHT: "Depan-Kanan",
+  RIGHT: "Kanan",
+  BACK_RIGHT: "Belakang-Kanan",
+  BACK: "Belakang",
+  BACK_LEFT: "Belakang-Kiri",
+  LEFT: "Kiri",
+  FRONT_LEFT: "Depan-Kiri",
+};
+
 export function InspectionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -276,7 +287,17 @@ export function InspectionDetail() {
                     {step.mediaFiles.length > 0 && (
                       <div className="flex gap-2 mt-2 overflow-x-auto">
                         {step.mediaFiles.map((file) => (
-                          <MediaThumbnail key={file.id} file={file} />
+                          <MediaThumbnail
+                            key={file.id}
+                            file={file}
+                            label={
+                              step.stepType === "BODY_INSPECTION"
+                                ? file.bodySide
+                                  ? (BODY_SIDE_LABELS[file.bodySide] ?? file.bodySide)
+                                  : "Foto Tambahan"
+                                : undefined
+                            }
+                          />
                         ))}
                       </div>
                     )}

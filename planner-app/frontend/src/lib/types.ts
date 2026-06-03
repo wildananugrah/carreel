@@ -86,6 +86,7 @@ export interface MediaFile {
   capturedAt: string;
   fileSize: number;
   createdAt: string;
+  bodySide?: string | null;
 }
 
 export interface AIAnalysis {

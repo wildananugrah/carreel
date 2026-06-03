@@ -5,6 +5,7 @@ import { MediaLightbox } from "../ui/MediaLightbox";
 
 interface MediaThumbnailProps {
   file: MediaFile;
+  label?: string;
 }
 
 function formatDate(iso: string) {
@@ -16,7 +17,7 @@ function formatDate(iso: string) {
   });
 }
 
-export function MediaThumbnail({ file }: MediaThumbnailProps) {
+export function MediaThumbnail({ file, label }: MediaThumbnailProps) {
   const [showLightbox, setShowLightbox] = useState(false);
   const isImage = file.mimeType.startsWith("image/");
 
@@ -44,6 +45,10 @@ export function MediaThumbnail({ file }: MediaThumbnailProps) {
           />
         )}
       </button>
+
+      {label !== undefined && (
+        <p className="text-[9px] text-neutral-400 text-center mt-0.5 truncate">{label}</p>
+      )}
 
       {/* Metadata tooltip on hover */}
       <div className="absolute bottom-full left-0 mb-1 bg-gray-900 text-white text-xs rounded px-2 py-1.5 whitespace-nowrap z-10 shadow-lg hidden group-hover:block">
