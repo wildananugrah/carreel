@@ -1945,6 +1945,7 @@ export const MediaFileScalarFieldEnum = {
   minioKey: 'minioKey',
   minioBucket: 'minioBucket',
   mediaType: 'mediaType',
+  bodySide: 'bodySide',
   latitude: 'latitude',
   longitude: 'longitude',
   capturedAt: 'capturedAt',
@@ -2126,6 +2127,7 @@ export const WorkspaceScalarFieldEnum = {
   id: 'id',
   name: 'name',
   displayName: 'displayName',
+  bodyInspectionMode: 'bodyInspectionMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2391,6 +2393,20 @@ export type ListEnumMediaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
+ * Reference to a field of type 'BodySide'
+ */
+export type EnumBodySideFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BodySide'>
+    
+
+
+/**
+ * Reference to a field of type 'BodySide[]'
+ */
+export type ListEnumBodySideFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BodySide[]'>
+    
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -2534,6 +2550,20 @@ export type EnumOutboxEventStatusFieldRefInput<$PrismaModel> = FieldRefInputType
  * Reference to a field of type 'OutboxEventStatus[]'
  */
 export type ListEnumOutboxEventStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OutboxEventStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'BodyInspectionMode'
+ */
+export type EnumBodyInspectionModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BodyInspectionMode'>
+    
+
+
+/**
+ * Reference to a field of type 'BodyInspectionMode[]'
+ */
+export type ListEnumBodyInspectionModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BodyInspectionMode[]'>
     
 
 

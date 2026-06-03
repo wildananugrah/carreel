@@ -39,6 +39,7 @@ const mockStep: InspectionStep = {
 const mockInspection: InspectionWithRelations = {
   id: "insp-1",
   driverId: "driver-1",
+  bodyInspectionMode: "VIDEO",
   projectId: "test-project",
   unitId: null,
   tripType: "PRE_TRIP",
@@ -189,6 +190,7 @@ describe("ChunkedUploadService", () => {
         minioKey: data.minioKey,
         minioBucket: data.minioBucket,
         mediaType: data.mediaType,
+        bodySide: null,
         latitude: data.latitude ?? null,
         longitude: data.longitude ?? null,
         capturedAt: new Date(data.capturedAt),

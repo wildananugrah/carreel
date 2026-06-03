@@ -69,6 +69,7 @@ function createMockInspectionWithRelations(
 ): InspectionWithRelations {
   return {
     ...createMockInspection(overrides),
+    bodyInspectionMode: "VIDEO",
     unit: null,
     linkedInspection: null,
     linkedFrom: null,
@@ -231,6 +232,21 @@ describe("InspectionService", () => {
       "driver-1",
     );
     expect(result.id).toBe("insp-1");
+  });
+
+  test("getById surfaces workspace bodyInspectionMode on the detail", async () => {
+    const insp = createMockInspectionWithRelations({
+      id: "insp-photos",
+      driverId: "driver-1",
+      bodyInspectionMode: "PHOTOS_8SIDE",
+    });
+    inspections.set(insp.id, insp);
+    const result = await service.getById(
+      makeSuperAdminScope({ userId: "driver-1" }),
+      "insp-photos",
+      "driver-1",
+    );
+    expect(result.bodyInspectionMode).toBe("PHOTOS_8SIDE");
   });
 
   test("getById throws for wrong driver", async () => {

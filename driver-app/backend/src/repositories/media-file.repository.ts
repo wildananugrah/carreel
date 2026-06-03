@@ -39,6 +39,7 @@ export class MediaFileRepository implements IMediaFileRepository {
         minioKey: data.minioKey,
         minioBucket: data.minioBucket,
         mediaType: data.mediaType,
+        bodySide: data.bodySide ?? null,
         latitude: data.latitude,
         longitude: data.longitude,
         capturedAt: new Date(data.capturedAt),

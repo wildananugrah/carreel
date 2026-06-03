@@ -23,7 +23,11 @@ export function createWorkspaceRoutes(
   app.post("/", async (c) => {
     const scope = c.get("scope");
     if (!scope) return c.json({ error: "Unauthenticated" }, 401);
-    const body = await c.req.json<{ name: string; displayName: string }>();
+    const body = await c.req.json<{
+      name: string;
+      displayName: string;
+      bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
+    }>();
     const workspace = await workspaceService.create(scope, body);
     return c.json(workspace, 201);
   });
@@ -40,7 +44,10 @@ export function createWorkspaceRoutes(
   app.patch("/:id", async (c) => {
     const scope = c.get("scope");
     if (!scope) return c.json({ error: "Unauthenticated" }, 401);
-    const body = await c.req.json<{ displayName?: string }>();
+    const body = await c.req.json<{
+      displayName?: string;
+      bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
+    }>();
     const workspace = await workspaceService.update(
       scope,
       c.req.param("id"),

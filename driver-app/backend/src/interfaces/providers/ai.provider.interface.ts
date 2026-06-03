@@ -53,10 +53,24 @@ export interface AIAnalysisOptions {
   model?: string;
 }
 
+/** One labeled image for a multi-image analysis call. */
+export interface ImagePart {
+  base64: string;
+  mimeType: string;
+  /** Human/AI-facing label, e.g. the body side ("FRONT", "FRONT_RIGHT"). */
+  label: string;
+}
+
 export interface IAIProvider {
   analyzeImage(
     base64: string,
     mimeType: string,
+    prompt: string,
+    systemInstruction?: string,
+    options?: AIAnalysisOptions,
+  ): Promise<string>;
+  analyzeImages(
+    images: ImagePart[],
     prompt: string,
     systemInstruction?: string,
     options?: AIAnalysisOptions,

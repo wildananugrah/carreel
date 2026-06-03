@@ -1,4 +1,5 @@
 import type {
+  BodyInspectionMode,
   Inspection,
   InspectionStatus,
   InspectionStep,
@@ -23,6 +24,9 @@ export interface LinkedInspectionSummary {
 }
 
 export interface InspectionWithRelations extends Inspection {
+  // Body-inspection capture mode sourced from the inspection's workspace.
+  // Surfaced here so the driver frontend can pick video vs 8-photo on page 2.
+  bodyInspectionMode: BodyInspectionMode;
   unit?: {
     id: string;
     licensePlate: string;

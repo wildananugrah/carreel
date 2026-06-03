@@ -166,6 +166,7 @@ export const MediaFileScalarFieldEnum = {
   minioKey: 'minioKey',
   minioBucket: 'minioBucket',
   mediaType: 'mediaType',
+  bodySide: 'bodySide',
   latitude: 'latitude',
   longitude: 'longitude',
   capturedAt: 'capturedAt',
@@ -347,6 +348,7 @@ export const WorkspaceScalarFieldEnum = {
   id: 'id',
   name: 'name',
   displayName: 'displayName',
+  bodyInspectionMode: 'bodyInspectionMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

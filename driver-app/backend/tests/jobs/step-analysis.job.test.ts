@@ -39,6 +39,7 @@ function createMockMediaFile(overrides: Partial<MediaFile> = {}): MediaFile {
     fileName: "photo.jpg",
     mimeType: "image/jpeg",
     mediaType: "IMAGE",
+    bodySide: null,
     fileSize: 1024,
     minioKey: "inspections/photo.jpg",
     minioBucket: "carreel-images",
@@ -123,6 +124,12 @@ describe("StepAnalysisJob", () => {
             },
           ],
         }),
+      analyzeImages: async () =>
+        JSON.stringify({
+          overallCondition: "GOOD",
+          confidence: 0.88,
+          damages: [],
+        }),
       analyzeVideo: async (
         _fileUri: string,
         _mimeType: string,
@@ -168,6 +175,7 @@ describe("StepAnalysisJob", () => {
         ({
           id,
           driverId: "driver-1",
+          bodyInspectionMode: "VIDEO",
           projectId: "test-project",
           unitId: null,
           tripType: "PRE_TRIP",

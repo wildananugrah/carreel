@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
-import type { InspectionStatus } from "../generated/prisma";
+import { BodySide, type InspectionStatus } from "../generated/prisma";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
 import type { IUploadService } from "../interfaces/services/upload.service.interface";
 import type { AppEnv, TripTab } from "../types/dto";
@@ -217,11 +217,20 @@ export function createInspectionRoutes(
     }
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
+    // Optional body side, only set by the 8-photo body-inspection UI. Unknown
+    // values are ignored (stored as null) rather than rejected.
+    const bodySideRaw = formData.get("bodySide");
+    const bodySide =
+      typeof bodySideRaw === "string" &&
+      (Object.values(BodySide) as string[]).includes(bodySideRaw)
+        ? (bodySideRaw as BodySide)
+        : undefined;
     const meta = {
       fileName: file.name,
       mimeType: file.type,
       fileSize: file.size,
       mediaType: (formData.get("mediaType") as "IMAGE" | "VIDEO") ?? "IMAGE",
+      bodySide,
       latitude: formData.get("latitude")
         ? Number(formData.get("latitude"))
         : undefined,

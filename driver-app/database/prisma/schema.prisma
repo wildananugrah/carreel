@@ -194,6 +194,22 @@ enum MediaType {
   VIDEO
 }
 
+enum BodyInspectionMode {
+  VIDEO
+  PHOTOS_8SIDE
+}
+
+enum BodySide {
+  FRONT
+  FRONT_RIGHT
+  RIGHT
+  BACK_RIGHT
+  BACK
+  BACK_LEFT
+  LEFT
+  FRONT_LEFT
+}
+
 model MediaFile {
   id              String    @id @default(uuid())
   stepId          String
@@ -203,6 +219,7 @@ model MediaFile {
   minioKey        String
   minioBucket     String
   mediaType       MediaType
+  bodySide        BodySide?
   latitude        Float?
   longitude       Float?
   capturedAt      DateTime
@@ -529,11 +546,12 @@ model OutboxEvent {
 // ========================
 
 model Workspace {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String             @id @default(uuid())
+  name        String             @unique
   displayName String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  bodyInspectionMode BodyInspectionMode @default(VIDEO)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   projects Project[]
 

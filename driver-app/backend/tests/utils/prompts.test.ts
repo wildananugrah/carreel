@@ -1,5 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it, test } from "bun:test";
 import {
+  buildBodyInspectionPhotoPrompt,
+  buildBodyVerificationPhotoPrompt,
   buildBodyVerificationPrompt,
   buildStepPrompt,
 } from "../../src/utils/prompts";
@@ -89,5 +91,28 @@ describe("Prompt builders return PromptPair", () => {
   test("buildBodyVerificationPrompt without vehicle uses UNKNOWN", () => {
     const result = buildBodyVerificationPrompt();
     expect(result.userPrompt).toContain("UNKNOWN");
+  });
+});
+
+describe("photo body prompts", () => {
+  it("damage prompt returns a PromptPair mentioning the 8 sides and damage enums", () => {
+    const { systemInstruction, userPrompt } = buildBodyInspectionPhotoPrompt({
+      make: "Wuling",
+      model: "Air EV",
+      color: "Pink",
+      licensePlate: "B 1 ABC",
+    });
+    expect(systemInstruction).toContain("FRONT_RIGHT");
+    expect(systemInstruction).toContain("bodySide");
+    expect(userPrompt.length).toBeGreaterThan(0);
+  });
+
+  it("verification prompt returns a PromptPair with screen-recapture + identity checks", () => {
+    const { systemInstruction } = buildBodyVerificationPhotoPrompt({
+      make: "Wuling",
+      model: "Air EV",
+    });
+    expect(systemInstruction).toContain("screenRecaptureDetected");
+    expect(systemInstruction.toLowerCase()).toContain("match");
   });
 });
