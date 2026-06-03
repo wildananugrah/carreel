@@ -291,7 +291,8 @@ export function InspectionDetail() {
                             key={file.id}
                             file={file}
                             label={
-                              step.stepType === "BODY_INSPECTION"
+                              step.stepType === "BODY_INSPECTION" &&
+                              (file.mediaType === "IMAGE" || file.mimeType.startsWith("image/"))
                                 ? file.bodySide
                                   ? (BODY_SIDE_LABELS[file.bodySide] ?? file.bodySide)
                                   : "Foto Tambahan"
