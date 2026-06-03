@@ -717,10 +717,14 @@ export class StepAnalysisJob {
       log,
     } = args;
 
+    // Only analyze bodySide-labeled photos. Additional "Foto Tambahan" photos
+    // (bodySide === null) are stored/displayed but never sent to AI.
+    const sideMedia = mediaFiles.filter((m) => m.bodySide);
+
     // Download all photos and pair each with the media file it came from so
     // we can route damages back to the right side.
     const images = await Promise.all(
-      mediaFiles.map(async (m) => {
+      sideMedia.map(async (m) => {
         const buf = await this.storageProvider.download(
           m.minioBucket,
           m.minioKey,

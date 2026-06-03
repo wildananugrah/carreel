@@ -27,6 +27,9 @@ export interface InspectionWithRelations extends Inspection {
   // Body-inspection capture mode sourced from the inspection's workspace.
   // Surfaced here so the driver frontend can pick video vs 8-photo on page 2.
   bodyInspectionMode: BodyInspectionMode;
+  // Number of optional "Foto Tambahan" photos allowed in PHOTOS_8SIDE mode.
+  // These are stored/displayed but never sent to AI analysis.
+  additionalBodyPhotoCount: number;
   unit?: {
     id: string;
     licensePlate: string;
