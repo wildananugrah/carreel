@@ -238,6 +238,9 @@ export interface PreTripReferenceData {
   odometerKm: number | null;
   damages: PreTripDamage[];
   bodyVideoMediaId: string | null;
+  /** Pre-trip body photos (PHOTOS_8SIDE mode), in capture order. Empty for
+   * video-mode inspections. */
+  bodyPhotos: { id: string; bodySide: string | null }[];
   driverComment: string | null;
   noNewDamage: boolean | null;
 }

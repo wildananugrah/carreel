@@ -566,6 +566,27 @@ export class InspectionService implements IInspectionService {
     // Extract body video media ID
     const bodyVideoMediaId = bodyStep?.mediaFiles?.[0]?.id ?? null;
 
+    // Pre-trip body photos (PHOTOS_8SIDE mode) — sorted in capture order so
+    // the post-trip reference view can render them like the capture grid.
+    const BODY_SIDE_ORDER: Record<string, number> = {
+      FRONT: 0,
+      FRONT_RIGHT: 1,
+      RIGHT: 2,
+      BACK_RIGHT: 3,
+      BACK: 4,
+      BACK_LEFT: 5,
+      LEFT: 6,
+      FRONT_LEFT: 7,
+    };
+    const bodyPhotos = (bodyStep?.mediaFiles ?? [])
+      .filter((m) => m.mediaType === "IMAGE")
+      .map((m) => ({ id: m.id, bodySide: m.bodySide ?? null }))
+      .sort(
+        (a, b) =>
+          (BODY_SIDE_ORDER[a.bodySide ?? ""] ?? 99) -
+          (BODY_SIDE_ORDER[b.bodySide ?? ""] ?? 99),
+      );
+
     // Compare pre-trip vs post-trip damages
     const noNewDamage = this.computeDamageSimilarity(damages, postTrip);
 
@@ -576,6 +597,7 @@ export class InspectionService implements IInspectionService {
       odometerKm,
       damages,
       bodyVideoMediaId,
+      bodyPhotos,
       driverComment: preTrip.driverComment ?? null,
       noNewDamage,
     };

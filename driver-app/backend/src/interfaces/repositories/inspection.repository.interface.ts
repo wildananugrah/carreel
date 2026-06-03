@@ -44,6 +44,7 @@ export interface InspectionWithRelations extends Inspection {
       fileName: string;
       mimeType: string;
       mediaType: string;
+      bodySide: string | null;
       latitude: number | null;
       longitude: number | null;
       capturedAt: Date;
