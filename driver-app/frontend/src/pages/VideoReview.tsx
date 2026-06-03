@@ -929,7 +929,7 @@ export function VideoReview() {
                     Foto Body &middot; Pre-Check
                   </p>
                 </div>
-              ) : unitData.bodyVideoMediaId ? (
+              ) : bodyMode !== "PHOTOS_8SIDE" && unitData.bodyVideoMediaId ? (
                 <div className="bg-[#1a1a1a]">
                   {/* biome-ignore lint/a11y/useMediaCaption: pre-trip reference video */}
                   <video
@@ -957,7 +957,9 @@ export function VideoReview() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <p className="text-xs text-neutral-500">Video Body &middot; Pre-Check</p>
+                  <p className="text-xs text-neutral-500">
+                    {bodyMode === "PHOTOS_8SIDE" ? "Foto" : "Video"} Body &middot; Pre-Check
+                  </p>
                 </div>
               )}
 
