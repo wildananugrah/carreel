@@ -417,6 +417,16 @@ export function VideoReview() {
     if (m.bodySide) capturedSides[m.bodySide] = m.id;
   }
   const allEightCaptured = Object.keys(capturedSides).length === 8;
+  // Optional additional photos: BODY_INSPECTION IMAGE media with null bodySide,
+  // ordered by capture/creation time. Not AI-validated; never block submit.
+  const additionalCount = inspection?.additionalBodyPhotoCount ?? 0;
+  const additionalPhotos = (bodyStep?.mediaFiles ?? [])
+    .filter((m) => m.mediaType === "IMAGE" && !m.bodySide)
+    .slice()
+    .sort((a, b) =>
+      (a.capturedAt ?? a.createdAt ?? "").localeCompare(b.capturedAt ?? b.createdAt ?? ""),
+    )
+    .map((m) => ({ id: m.id }));
   // "Body capture done" — video has a media file; photos require all 8 sides.
   const hasMedia =
     bodyMode === "PHOTOS_8SIDE"
@@ -1157,6 +1167,8 @@ export function VideoReview() {
               }}
               onChanged={fetchDetail}
               onAllCaptured={triggerPhotoAnalysis}
+              additionalCount={additionalCount}
+              additionalPhotos={additionalPhotos}
             />
           </div>
         )}
@@ -1300,6 +1312,25 @@ export function VideoReview() {
                           </button>
                         ) : null,
                       )}
+                      {additionalPhotos.map((p, i) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setPhotoLightbox(`/api/media/${p.id}/url`)}
+                          className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden"
+                        >
+                          <img
+                            src={`/api/media/${p.id}/url`}
+                            alt={`Foto Tambahan ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
+                            Foto Tambahan {i + 1}
+                          </span>
+                        </button>
+                      ))}
                     </div>
                     <p className="text-xs text-neutral-500 text-center pt-2">
                       Foto Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}

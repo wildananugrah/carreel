@@ -658,7 +658,8 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
                   decoding="async"
                 />
                 <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
-                  {BODY_SIDE_LABELS[p.bodySide ?? ""] ?? p.bodySide}
+                  {BODY_SIDE_LABELS[p.bodySide ?? ""] ??
+                    (p.bodySide ? p.bodySide : "Foto Tambahan")}
                 </span>
               </button>
             ))}
