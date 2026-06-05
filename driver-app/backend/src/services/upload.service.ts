@@ -92,8 +92,19 @@ export class UploadService implements IUploadService {
       minioBucket: bucket,
     });
 
-    // Update step status to UPLOADED
-    await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
+    // Additional "Foto Tambahan" photos are BODY_INSPECTION images with no
+    // bodySide. They aren't part of the AI analysis, so they must NOT reset an
+    // already-analyzed body step back to UPLOADED (which would re-show the
+    // "analyzing" spinner and block submit).
+    const isAdditionalBodyPhoto =
+      step.stepType === "BODY_INSPECTION" &&
+      meta.mediaType === "IMAGE" &&
+      !meta.bodySide;
+
+    // Update step status to UPLOADED (except for additional body photos)
+    if (!isAdditionalBodyPhoto) {
+      await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
+    }
 
     this.logger.info("Media file uploaded", {
       userId: scope.userId,
@@ -234,8 +245,17 @@ export class UploadService implements IUploadService {
         });
       });
 
-    // Delete AI analysis for this step (allows re-analysis on re-upload)
-    if (this.aiAnalysisRepository) {
+    // Additional "Foto Tambahan" photos (BODY_INSPECTION images with no
+    // bodySide) aren't part of the analysis — removing one must NOT wipe the
+    // 8-side AI results or disturb the step's status.
+    const isAdditionalBodyPhoto =
+      step.stepType === "BODY_INSPECTION" &&
+      media.mediaType === "IMAGE" &&
+      !media.bodySide;
+
+    // Delete AI analysis for this step (allows re-analysis on re-upload),
+    // except when removing an additional body photo.
+    if (this.aiAnalysisRepository && !isAdditionalBodyPhoto) {
       await this.aiAnalysisRepository
         .deleteByStepId(scope, stepId)
         .catch((e) => {
