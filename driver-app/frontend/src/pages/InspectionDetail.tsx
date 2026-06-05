@@ -374,6 +374,9 @@ export function InspectionDetail() {
   const isPreTrip = inspection.tripType === "PRE_TRIP";
   const isSubmitted = inspection.status !== "DRAFT";
   const showEndTrip = isPreTrip && isSubmitted && !inspection.linkedFrom;
+  // PHOTOS_8SIDE: damages have a side-photo evidence (no video), so the AI
+  // Alert flags open the image instead of a (non-existent) video player.
+  const isPhotoBody = inspection.bodyInspectionMode === "PHOTOS_8SIDE";
 
   // Determine pre and post inspections
   const preInspection = isPreTrip ? inspection : linkedDetail;
@@ -404,7 +407,9 @@ export function InspectionDetail() {
       videoTimestamp: d.videoTimestamp,
       videoMediaId,
       source: d.source,
-      evidenceMediaId: d.source === "DRIVER_ADDED" ? d.mediaFileId : null,
+      // In photo mode every damage marker is attached to the side photo it
+      // was found on, so expose it as clickable evidence (not just manual).
+      evidenceMediaId: isPhotoBody || d.source === "DRIVER_ADDED" ? d.mediaFileId : null,
     };
   }
 
@@ -587,6 +592,7 @@ export function InspectionDetail() {
             postFlags={postFlags}
             preSpeedoAI={preSpeedoAI}
             postSpeedoAI={postSpeedoAI}
+            isPhotoBody={isPhotoBody}
           />
         )}
 
@@ -836,6 +842,7 @@ function AIAlertPanel({
   postFlags,
   preSpeedoAI,
   postSpeedoAI,
+  isPhotoBody,
 }: {
   preInspection: InspectionDetailType | null;
   postInspection: InspectionDetailType | null;
@@ -843,6 +850,7 @@ function AIAlertPanel({
   postFlags: DamageFlag[];
   preSpeedoAI: SpeedoData | null;
   postSpeedoAI: SpeedoData | null;
+  isPhotoBody: boolean;
 }) {
   const preKm = preSpeedoAI?.odometerKm ?? preInspection?.unit?.lastKnownKm;
   const postKm = postSpeedoAI?.odometerKm ?? postInspection?.unit?.lastKnownKm;
@@ -915,6 +923,7 @@ function AIAlertPanel({
         comment={preInspection?.driverComment}
         borderColor="border-[#3a2800]"
         labelColor="text-[#F5C842]"
+        isPhotoBody={isPhotoBody}
         onSeek={(flag) => {
           if (flag.videoMediaId != null) {
             setSeekLightbox({
@@ -935,6 +944,7 @@ function AIAlertPanel({
           borderColor="border-[#2a2a2a]"
           labelColor="text-[#C0C0C0]"
           emptyMessage="Tidak terdapat perubahan kondisi kendaraan"
+          isPhotoBody={isPhotoBody}
           onSeek={(flag) => {
             if (flag.videoMediaId != null && typeof flag.videoTimestamp === "number") {
               setSeekLightbox({
@@ -1000,6 +1010,7 @@ function FlagSection({
   borderColor,
   labelColor,
   emptyMessage,
+  isPhotoBody,
   onSeek,
   onShowPhoto,
 }: {
@@ -1011,6 +1022,8 @@ function FlagSection({
   /** Override empty-state copy. Defaults to the generic
    * "Tidak ada flag terdeteksi". */
   emptyMessage?: string;
+  /** Photo-mode body inspection — AI flags open their side photo, not a video. */
+  isPhotoBody?: boolean;
   onSeek?: (flag: DamageFlag) => void;
   onShowPhoto?: (mediaId: string) => void;
 }) {
@@ -1025,15 +1038,21 @@ function FlagSection({
         ) : (
           flags.map((flag, i) => {
             const isManual = flag.source === "DRIVER_ADDED";
-            // Manual damages don't have a meaningful video timestamp;
-            // clicking the row opens the captured evidence photo instead.
-            const canShowPhoto = isManual && onShowPhoto != null && flag.evidenceMediaId != null;
+            // Manual damages — and ALL damages in photo mode — open their
+            // captured evidence photo instead of a video timestamp.
+            const canShowPhoto =
+              (isManual || isPhotoBody) && onShowPhoto != null && flag.evidenceMediaId != null;
             // For AI damages, fall back to 0:00 when the model omitted
             // videoTimestamp so the seek button always renders. Tapping
-            // it opens the body video at the start.
+            // it opens the body video at the start. Disabled in photo mode
+            // (no video — the photo evidence button is shown instead).
             const seekTime = typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : 0;
             const canSeek =
-              !isManual && DAMAGE_SEEK_ENABLED && onSeek != null && flag.videoMediaId != null;
+              !isManual &&
+              !isPhotoBody &&
+              DAMAGE_SEEK_ENABLED &&
+              onSeek != null &&
+              flag.videoMediaId != null;
             const isClickable = canSeek || canShowPhoto;
 
             const rowContent = (
