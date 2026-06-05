@@ -15,6 +15,8 @@ interface DamageFlag {
   isNewDamage?: boolean;
   confidence?: number;
   videoTimestamp?: number;
+  /** PHOTOS_8SIDE mode: the side the damage was found on (maps to a photo). */
+  bodySide?: string;
 }
 
 interface BodyInspectionData {
@@ -44,6 +46,50 @@ function getSpeedoAI(insp: InspectionDetail): SpeedoData | null {
 function getVideoMediaId(insp: InspectionDetail): string | null {
   const step = insp.steps.find((s) => s.stepType === "BODY_INSPECTION");
   return step?.mediaFiles?.[0]?.id ?? null;
+}
+
+const BODY_SIDE_ORDER: Record<string, number> = {
+  FRONT: 0,
+  FRONT_RIGHT: 1,
+  RIGHT: 2,
+  BACK_RIGHT: 3,
+  BACK: 4,
+  BACK_LEFT: 5,
+  LEFT: 6,
+  FRONT_LEFT: 7,
+};
+
+const BODY_SIDE_LABELS: Record<string, string> = {
+  FRONT: "Depan",
+  FRONT_RIGHT: "Depan-Kanan",
+  RIGHT: "Kanan",
+  BACK_RIGHT: "Belakang-Kanan",
+  BACK: "Belakang",
+  BACK_LEFT: "Belakang-Kiri",
+  LEFT: "Kiri",
+  FRONT_LEFT: "Depan-Kiri",
+};
+
+/** Body-inspection photos (PHOTOS_8SIDE mode): 8 labeled sides + extras, sorted. */
+function getBodyImages(insp: InspectionDetail): { id: string; bodySide: string | null }[] {
+  const step = insp.steps.find((s) => s.stepType === "BODY_INSPECTION");
+  return (step?.mediaFiles ?? [])
+    .filter((m) => m.mediaType === "IMAGE")
+    .map((m) => ({ id: m.id, bodySide: m.bodySide ?? null }))
+    .sort(
+      (a, b) =>
+        (BODY_SIDE_ORDER[a.bodySide ?? ""] ?? 99) - (BODY_SIDE_ORDER[b.bodySide ?? ""] ?? 99),
+    );
+}
+
+/** bodySide -> photo mediaFile id, for resolving AI-flag evidence in photo mode. */
+function getSidePhotoMap(insp: InspectionDetail | null): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (!insp) return map;
+  for (const img of getBodyImages(insp)) {
+    if (img.bodySide) map[img.bodySide] = img.id;
+  }
+  return map;
 }
 
 function getSpeedoMediaId(insp: InspectionDetail): string | null {
@@ -164,9 +210,7 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
   // Hide post-trip damages that match a pre-trip damage (isNewDamage===false).
   // The planner only needs to see *new* findings on POST-CHECK; matched
   // entries already show in PRE-CHECK and would clutter the section.
-  const postFlags = (postBodyAI?.damages ?? []).filter(
-    (f) => f.isNewDamage !== false,
-  );
+  const postFlags = (postBodyAI?.damages ?? []).filter((f) => f.isNewDamage !== false);
   const totalAlerts = preFlags.length + postFlags.length;
 
   const lowFuel = vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 25;
@@ -178,12 +222,7 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
     vehicle.preTrip.status !== "DRAFT" &&
     vehicle.preTrip.status !== "PENDING_AI";
   const postDone = vehicle.postTrip != null && doneStatuses.includes(vehicle.postTrip.status);
-  const statusLabel =
-    preDone && postDone
-      ? "Completed \u2713"
-      : preDone
-        ? "On Going"
-        : "On Going";
+  const statusLabel = preDone && postDone ? "Completed \u2713" : preDone ? "On Going" : "On Going";
 
   return (
     <div className="bg-[#0f0f0f] border border-[#222] rounded-xl overflow-hidden">
@@ -430,40 +469,71 @@ function TripColumn({
 }) {
   const videoId = getVideoMediaId(detail);
   const speedoId = getSpeedoMediaId(detail);
+  const bodyImages = getBodyImages(detail);
+  const isPhotoBody = bodyImages.length > 0;
   const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
 
   return (
     <>
-      {/* Video thumbnail */}
-      {/* biome-ignore lint/a11y/useSemanticElements: div wraps conditional video/placeholder */}
-      <div
-        className="bg-[#111] rounded-lg h-20 flex flex-col items-center justify-center gap-1 mb-2 cursor-pointer"
-        role="button"
-        tabIndex={0}
-        onClick={() =>
-          videoId && setLightbox({ src: `/api/media/${videoId}/stream`, type: "video" })
-        }
-        onKeyDown={(e) => {
-          if ((e.key === "Enter" || e.key === " ") && videoId)
-            setLightbox({ src: `/api/media/${videoId}/stream`, type: "video" });
-        }}
-      >
-        {videoId ? (
-          <video
-            src={`/api/media/${videoId}/stream`}
-            className="w-full h-full rounded-lg object-cover"
-            preload="metadata"
-            muted
+      {/* Body media \u2014 8-side photos (+ extras) in PHOTOS_8SIDE mode, else video */}
+      {isPhotoBody ? (
+        <div className="grid grid-cols-2 gap-1 mb-2">
+          {bodyImages.map((p) => {
+            const label = p.bodySide ? (BODY_SIDE_LABELS[p.bodySide] ?? p.bodySide) : "Tambahan";
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
+                className="relative aspect-video bg-[#111] rounded overflow-hidden"
+              >
+                <img
+                  src={`/api/media/${p.id}/url`}
+                  alt={label}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <span className="absolute bottom-0.5 left-0.5 px-1 py-px bg-black/60 text-white text-[8px] rounded">
+                  {label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <>
+          {/* Video thumbnail */}
+          {/* biome-ignore lint/a11y/useSemanticElements: div wraps conditional video/placeholder */}
+          <div
+            className="bg-[#111] rounded-lg h-20 flex flex-col items-center justify-center gap-1 mb-2 cursor-pointer"
+            role="button"
+            tabIndex={0}
+            onClick={() =>
+              videoId && setLightbox({ src: `/api/media/${videoId}/stream`, type: "video" })
+            }
+            onKeyDown={(e) => {
+              if ((e.key === "Enter" || e.key === " ") && videoId)
+                setLightbox({ src: `/api/media/${videoId}/stream`, type: "video" });
+            }}
           >
-            <track kind="captions" />
-          </video>
-        ) : (
-          <>
-            <span className="text-2xl">{"\u25B6"}</span>
-            <span className="text-[9px] text-[#666]">Video Body</span>
-          </>
-        )}
-      </div>
+            {videoId ? (
+              <video
+                src={`/api/media/${videoId}/stream`}
+                className="w-full h-full rounded-lg object-cover"
+                preload="metadata"
+                muted
+              >
+                <track kind="captions" />
+              </video>
+            ) : (
+              <>
+                <span className="text-2xl">{"\u25B6"}</span>
+                <span className="text-[9px] text-[#666]">Video Body</span>
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Speedometer */}
       <div
@@ -736,6 +806,9 @@ function AIAlertTab({
   preVideoMediaId: string | null;
   postVideoMediaId: string | null;
 }) {
+  // Photo mode: map each damage's bodySide to its side photo for evidence.
+  const preSidePhotoMap = getSidePhotoMap(preDetail);
+  const postSidePhotoMap = getSidePhotoMap(postDetail);
   return (
     <>
       {/* PRE section */}
@@ -746,6 +819,7 @@ function AIAlertTab({
         comment={preDetail?.driverComment ?? null}
         commentLabel="Catatan Driver (Pre)"
         videoMediaId={preVideoMediaId}
+        sidePhotoMap={preSidePhotoMap}
       />
 
       {/* POST section */}
@@ -757,6 +831,7 @@ function AIAlertTab({
           comment={postDetail.driverComment ?? null}
           commentLabel="Catatan Driver (Post)"
           videoMediaId={postVideoMediaId}
+          sidePhotoMap={postSidePhotoMap}
         />
       ) : (
         <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-xl p-3 mb-3">
@@ -817,6 +892,7 @@ function AIFlagSection({
   comment,
   commentLabel,
   videoMediaId,
+  sidePhotoMap,
 }: {
   label: string;
   color: string;
@@ -824,14 +900,18 @@ function AIFlagSection({
   comment: string | null | undefined;
   commentLabel: string;
   videoMediaId: string | null;
+  /** PHOTOS_8SIDE: bodySide -> photo id; non-empty switches flags to photo evidence. */
+  sidePhotoMap?: Record<string, string>;
 }) {
   const bgColor = label === "PRE-CHECK" ? "#141200" : "#141414";
   const borderColor = label === "PRE-CHECK" ? "#282000" : "#282828";
   const canSeek = DAMAGE_SEEK_ENABLED && videoMediaId != null;
+  const isPhotoBody = sidePhotoMap != null && Object.keys(sidePhotoMap).length > 0;
   const [seekLightbox, setSeekLightbox] = useState<{
     src: string;
     startTime: number;
   } | null>(null);
+  const [photoLightbox, setPhotoLightbox] = useState<string | null>(null);
 
   return (
     <div className="rounded-xl p-3 mb-3 border" style={{ background: bgColor, borderColor }}>
@@ -842,8 +922,11 @@ function AIFlagSection({
       ) : (
         <div className="space-y-2">
           {flags.map((flag) => {
+            // Photo mode: resolve the damage's side photo as clickable evidence.
+            const evidencePhotoId =
+              isPhotoBody && flag.bodySide ? sidePhotoMap?.[flag.bodySide] : undefined;
             const hasTimestamp = typeof flag.videoTimestamp === "number";
-            const showSeek = canSeek && hasTimestamp;
+            const showSeek = !isPhotoBody && canSeek && hasTimestamp;
 
             return (
               <div
@@ -859,7 +942,15 @@ function AIFlagSection({
                       ? `${flag.location} — ${flag.description || damageLabel(flag.damageType)}`
                       : flag.description || damageLabel(flag.damageType)}
                   </p>
-                  {showSeek ? (
+                  {evidencePhotoId ? (
+                    <button
+                      type="button"
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1a1600] text-[#F5C518] hover:bg-[#2a2200] transition-colors"
+                      onClick={() => setPhotoLightbox(`/api/media/${evidencePhotoId}/url`)}
+                    >
+                      {"\uD83D\uDCF7"} Foto
+                    </button>
+                  ) : showSeek ? (
                     <button
                       type="button"
                       className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1a1600] text-[#F5C518] hover:bg-[#2a2200] transition-colors"
@@ -915,6 +1006,12 @@ function AIFlagSection({
             startTime={seekLightbox.startTime}
             onClose={() => setSeekLightbox(null)}
           />,
+          document.body,
+        )}
+
+      {photoLightbox &&
+        createPortal(
+          <MediaLightbox src={photoLightbox} type="image" onClose={() => setPhotoLightbox(null)} />,
           document.body,
         )}
 
