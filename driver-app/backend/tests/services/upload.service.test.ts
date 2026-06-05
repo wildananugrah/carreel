@@ -31,10 +31,12 @@ describe("UploadService", () => {
   let lastCreateData:
     | (UploadMediaDTO & { minioKey: string; minioBucket: string })
     | null;
+  let statusUpdates: string[];
 
   beforeEach(() => {
     uploadedFiles = [];
     lastCreateData = null;
+    statusUpdates = [];
 
     const mockStorage: IStorageProvider = {
       upload: async (bucket, key, data, mimeType) => {
@@ -125,10 +127,10 @@ describe("UploadService", () => {
         if (stepId === "step-1") return mockStep;
         return null;
       },
-      updateStepStatus: async (_scope: UserScope, _stepId, status) => ({
-        ...mockStep,
-        status,
-      }),
+      updateStepStatus: async (_scope: UserScope, _stepId, status) => {
+        statusUpdates.push(status);
+        return { ...mockStep, status };
+      },
     };
 
     service = new UploadService(
@@ -180,6 +182,46 @@ describe("UploadService", () => {
     );
 
     expect(lastCreateData?.bodySide).toBe("FRONT");
+  });
+
+  test("uploadMedia sets step UPLOADED for a labeled body side", async () => {
+    await service.uploadMedia(
+      makeSuperAdminScope(),
+      "insp-1",
+      "step-1",
+      "driver-1",
+      Buffer.from("fake-image-data"),
+      {
+        fileName: "photo.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 1024,
+        mediaType: "IMAGE",
+        capturedAt: "2026-03-13T10:00:00.000Z",
+        bodySide: "FRONT",
+      },
+    );
+
+    expect(statusUpdates).toContain("UPLOADED");
+  });
+
+  test("uploadMedia does NOT touch step status for an additional body photo", async () => {
+    // No bodySide on a BODY_INSPECTION image = additional "Foto Tambahan".
+    await service.uploadMedia(
+      makeSuperAdminScope(),
+      "insp-1",
+      "step-1",
+      "driver-1",
+      Buffer.from("fake-image-data"),
+      {
+        fileName: "extra.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 1024,
+        mediaType: "IMAGE",
+        capturedAt: "2026-03-13T10:00:00.000Z",
+      },
+    );
+
+    expect(statusUpdates).toHaveLength(0);
   });
 
   test("uploadMedia throws for wrong driver", async () => {
