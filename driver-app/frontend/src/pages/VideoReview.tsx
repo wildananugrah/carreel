@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AddDamageFlow } from "../components/inspection/AddDamageFlow";
+import { AdditionalPhotosCapture } from "../components/inspection/AdditionalPhotosCapture";
 import { EditDamageModal } from "../components/inspection/EditDamageModal";
 import { EightSidePhotoCapture } from "../components/inspection/EightSidePhotoCapture";
 import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
@@ -1312,29 +1313,25 @@ export function VideoReview() {
                           </button>
                         ) : null,
                       )}
-                      {additionalPhotos.map((p, i) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => setPhotoLightbox(`/api/media/${p.id}/url`)}
-                          className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden"
-                        >
-                          <img
-                            src={`/api/media/${p.id}/url`}
-                            alt={`Foto Tambahan ${i + 1}`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
-                            Foto Tambahan {i + 1}
-                          </span>
-                        </button>
-                      ))}
                     </div>
                     <p className="text-xs text-neutral-500 text-center pt-2">
                       Foto Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
                     </p>
+                    {bodyStep && id && additionalCount > 0 && (
+                      <div className="border-t border-[#2a2a2a] mt-3 pt-1">
+                        <AdditionalPhotosCapture
+                          inspectionId={id}
+                          stepId={bodyStep.id}
+                          count={additionalCount}
+                          photos={additionalPhotos}
+                          capturedAtMeta={{
+                            latitude: location?.latitude,
+                            longitude: location?.longitude,
+                          }}
+                          onChanged={fetchDetail}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-[#1a1a1a]">

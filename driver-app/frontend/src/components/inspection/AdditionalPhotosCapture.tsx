@@ -1,20 +1,7 @@
 import { useState } from "react";
 import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
-import { AdditionalPhotosCapture } from "./AdditionalPhotosCapture";
 import { CameraOverlay } from "./StepCard";
-
-/** Capture order for the 8-side body inspection — clockwise from the front. */
-const SIDES: { key: string; label: string }[] = [
-  { key: "FRONT", label: "Depan" },
-  { key: "FRONT_RIGHT", label: "Depan-Kanan" },
-  { key: "RIGHT", label: "Kanan" },
-  { key: "BACK_RIGHT", label: "Belakang-Kanan" },
-  { key: "BACK", label: "Belakang" },
-  { key: "BACK_LEFT", label: "Belakang-Kiri" },
-  { key: "LEFT", label: "Kiri" },
-  { key: "FRONT_LEFT", label: "Depan-Kiri" },
-];
 
 function CameraIcon() {
   return (
@@ -44,45 +31,44 @@ function CameraIcon() {
 interface Props {
   inspectionId: string;
   stepId: string;
-  /** bodySide -> existing mediaFile id (derived from bodyStep.mediaFiles). */
-  capturedSides: Record<string, string | undefined>;
+  /** Workspace setting — number of optional "Foto Tambahan" slots (0 = none). */
+  count: number;
+  /** Existing additional photos (bodySide null), in createdAt order. */
+  photos: { id: string }[];
   capturedAtMeta?: { latitude?: number; longitude?: number };
   /** Re-fetch the inspection detail after each upload/delete. */
   onChanged: () => void;
-  /** Fires once all 8 sides are present — triggers AI analysis. */
-  onAllCaptured: () => void;
-  /** Workspace setting — number of optional "Foto Tambahan" slots (0 = none). */
-  additionalCount?: number;
-  /** Existing additional photos (bodySide null), in createdAt order. */
-  additionalPhotos?: { id: string }[];
 }
 
-export function EightSidePhotoCapture({
+/**
+ * Optional "Foto Tambahan" photos for PHOTOS_8SIDE mode. Stored & displayed but
+ * NOT AI-validated (uploaded with no bodySide → null), and never block submit.
+ * Rendered both during the 8-side capture and in the post-capture review view so
+ * the driver can add extras before OR after completing the 8 mandatory sides.
+ */
+export function AdditionalPhotosCapture({
   inspectionId,
   stepId,
-  capturedSides,
+  count,
+  photos,
   capturedAtMeta,
   onChanged,
-  onAllCaptured,
-  additionalCount,
-  additionalPhotos,
 }: Props) {
   const { allowCamera, allowFile } = useUploadSources();
-  const [busySide, setBusySide] = useState<string | null>(null);
-  const [deletingSide, setDeletingSide] = useState<string | null>(null);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [cameraSlot, setCameraSlot] = useState<number | null>(null);
   const [error, setError] = useState("");
-  // Which side is currently capturing via the full-screen camera overlay.
-  const [cameraSide, setCameraSide] = useState<string | null>(null);
 
-  async function uploadSide(side: string, file: File) {
-    setBusySide(side);
+  async function upload(slot: number, file: File) {
+    setBusy(slot);
     setError("");
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("stepId", stepId);
       formData.append("mediaType", "IMAGE");
-      formData.append("bodySide", side);
+      // Intentionally NO bodySide field — persists null so AI ignores it.
       formData.append("capturedAt", new Date().toISOString());
       if (capturedAtMeta?.latitude !== undefined)
         formData.append("latitude", String(capturedAtMeta.latitude));
@@ -90,19 +76,16 @@ export function EightSidePhotoCapture({
         formData.append("longitude", String(capturedAtMeta.longitude));
       await api.upload(`/api/inspections/${inspectionId}/steps/${stepId}/media`, formData);
       onChanged();
-      // Count present sides after this upload lands (existing + the new one).
-      const filledAfter = SIDES.filter((s) => s.key === side || capturedSides[s.key]).length;
-      if (filledAfter === SIDES.length) onAllCaptured();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload gagal");
     } finally {
-      setBusySide(null);
+      setBusy(null);
     }
   }
 
-  async function deleteSide(side: string, mediaId: string) {
-    if (deletingSide) return;
-    setDeletingSide(side);
+  async function remove(mediaId: string) {
+    if (deleting) return;
+    setDeleting(mediaId);
     setError("");
     try {
       await api.del(`/api/inspections/${inspectionId}/steps/${stepId}/media/${mediaId}`);
@@ -110,36 +93,28 @@ export function EightSidePhotoCapture({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menghapus foto");
     } finally {
-      setDeletingSide(null);
+      setDeleting(null);
     }
   }
 
-  const doneCount = SIDES.filter((s) => capturedSides[s.key]).length;
-  const extraCount = additionalCount ?? 0;
-  const extras = additionalPhotos ?? [];
+  if (count <= 0) return null;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-semibold text-white">Foto Body &middot; 8 Sisi</p>
-        <span className="text-xs font-bold text-yellow-400">{doneCount}/8</span>
-      </div>
-
+    <div className="mt-6">
+      <p className="text-sm font-semibold text-white mb-3">Foto Tambahan (Opsional)</p>
       <div className="grid grid-cols-2 gap-3">
-        {SIDES.map((s, index) => {
-          const done = Boolean(capturedSides[s.key]);
-          const inputId = `side-${s.key}`;
-          const busy = busySide === s.key;
-          const deleting = deletingSide === s.key;
-          const mediaId = capturedSides[s.key];
+        {Array.from({ length: count }).map((_, i) => {
+          const photo = photos[i];
+          const inputId = `additional-${i}`;
+          const isBusy = busy === i;
+          const isDeleting = photo ? deleting === photo.id : false;
           return (
             <div
-              key={s.key}
+              key={inputId}
               className={`relative border-2 border-dashed rounded-xl p-3 transition-all ${
-                done ? "border-[#2a2a2a] bg-[#1a1a1a]" : "border-[#3a2800] bg-[#141414]"
+                photo ? "border-[#2a2a2a] bg-[#1a1a1a]" : "border-[#3a2800] bg-[#141414]"
               }`}
             >
-              {/* Hidden file input — only when file upload is allowed */}
               {allowFile && (
                 <input
                   id={inputId}
@@ -149,18 +124,18 @@ export function EightSidePhotoCapture({
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) uploadSide(s.key, f);
+                    if (f) upload(i, f);
                     e.target.value = "";
                   }}
                 />
               )}
 
-              {done && mediaId ? (
+              {photo ? (
                 <div className="flex flex-col">
                   <div className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden mb-2">
                     <img
-                      src={`/api/media/${mediaId}/url`}
-                      alt={s.label}
+                      src={`/api/media/${photo.id}/url`}
+                      alt={`Foto Tambahan ${i + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                       decoding="async"
@@ -168,10 +143,10 @@ export function EightSidePhotoCapture({
                     <div className="absolute top-1 right-1">
                       <button
                         type="button"
-                        disabled={deleting}
-                        onClick={() => deleteSide(s.key, mediaId)}
+                        disabled={isDeleting}
+                        onClick={() => remove(photo.id)}
                         className="w-6 h-6 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
-                        aria-label={`Hapus foto ${s.label}`}
+                        aria-label={`Hapus Foto Tambahan ${i + 1}`}
                       >
                         <svg
                           aria-hidden="true"
@@ -190,7 +165,7 @@ export function EightSidePhotoCapture({
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs font-medium text-white">{s.label}</p>
+                  <p className="text-xs font-medium text-white">Foto Tambahan {i + 1}</p>
                   <p className="text-[10px] text-yellow-400 mt-0.5">&#10003; Terunggah</p>
                 </div>
               ) : (
@@ -200,10 +175,10 @@ export function EightSidePhotoCapture({
                       <CameraIcon />
                     </div>
                   </div>
-                  <p className="text-xs font-medium text-white mb-0.5">{s.label}</p>
-                  <p className="text-[10px] text-yellow-400 mb-2">Photo</p>
+                  <p className="text-xs font-medium text-white mb-0.5">Foto Tambahan {i + 1}</p>
+                  <p className="text-[10px] text-neutral-500 mb-2">Opsional</p>
 
-                  {busy ? (
+                  {isBusy ? (
                     <div className="w-full">
                       <div className="w-full bg-[#2a2a2a] rounded-full h-1.5 overflow-hidden">
                         <div className="bg-yellow-400 h-1.5 w-1/2 rounded-full animate-pulse" />
@@ -237,7 +212,7 @@ export function EightSidePhotoCapture({
                       {allowCamera && (
                         <button
                           type="button"
-                          onClick={() => setCameraSide(s.key)}
+                          onClick={() => setCameraSlot(i)}
                           className="flex-1 flex items-center justify-center gap-1 text-[10px] text-yellow-400 px-2 py-1.5 bg-yellow-400/10 rounded-lg active:bg-yellow-400/20 transition-colors cursor-pointer"
                         >
                           <svg
@@ -267,36 +242,21 @@ export function EightSidePhotoCapture({
                   )}
                 </div>
               )}
-
-              {/* Order indicator */}
-              <div className="absolute -top-2 -left-2 w-5 h-5 bg-yellow-400 text-black text-xs font-bold rounded-full flex items-center justify-center">
-                {index + 1}
-              </div>
             </div>
           );
         })}
       </div>
 
-      <AdditionalPhotosCapture
-        inspectionId={inspectionId}
-        stepId={stepId}
-        count={extraCount}
-        photos={extras}
-        capturedAtMeta={capturedAtMeta}
-        onChanged={onChanged}
-      />
-
       {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
 
-      {/* Full-screen camera overlay (reuses StepCard's getUserMedia rear-camera) */}
-      {cameraSide && (
+      {cameraSlot !== null && (
         <CameraOverlay
           onCapture={(file) => {
-            const side = cameraSide;
-            setCameraSide(null);
-            if (side) uploadSide(side, file);
+            const slot = cameraSlot;
+            setCameraSlot(null);
+            if (slot !== null) upload(slot, file);
           }}
-          onClose={() => setCameraSide(null)}
+          onClose={() => setCameraSlot(null)}
         />
       )}
     </div>
