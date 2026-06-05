@@ -44,16 +44,28 @@ export function WorkspaceDetail() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [savingMode, setSavingMode] = useState(false);
   const [savingCount, setSavingCount] = useState(false);
+  // Local edit buffer for the "Foto Tambahan" count — saved explicitly via the
+  // Update button (not on blur), with a "Tersimpan" confirmation.
+  const [countInput, setCountInput] = useState(0);
+  const [countSaved, setCountSaved] = useState(false);
+
+  // Sync the buffer when the workspace loads or its saved count changes.
+  const savedCount = workspace?.additionalBodyPhotoCount;
+  useEffect(() => {
+    if (savedCount !== undefined) setCountInput(savedCount);
+  }, [savedCount]);
 
   async function handleCountChange(count: number) {
     if (!id || !workspace) return;
     setSavingCount(true);
     setError(null);
+    setCountSaved(false);
     try {
       const updated = await api.patch<Workspace>(`/api/admin/workspaces/${id}`, {
         additionalBodyPhotoCount: count,
       });
       setWorkspace(updated);
+      setCountSaved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update count");
     } finally {
@@ -284,19 +296,31 @@ export function WorkspaceDetail() {
           </div>
           <div className="mt-4">
             <p className="text-xs text-[#888] mb-1">Foto Tambahan (jumlah, 0 = nonaktif)</p>
-            <input
-              key={workspace.additionalBodyPhotoCount}
-              type="number"
-              min={0}
-              max={10}
-              defaultValue={workspace.additionalBodyPhotoCount}
-              disabled={savingCount}
-              onBlur={(e) => {
-                const v = Math.max(0, Math.min(10, Math.floor(Number(e.target.value) || 0)));
-                if (v !== workspace.additionalBodyPhotoCount) handleCountChange(v);
-              }}
-              className="w-24 px-3 py-2 rounded-lg bg-[#111] text-white border border-[#2a2a2a] text-sm disabled:opacity-40"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={10}
+                value={countInput}
+                disabled={savingCount}
+                onChange={(e) => {
+                  setCountInput(Math.max(0, Math.min(10, Math.floor(Number(e.target.value) || 0))));
+                  setCountSaved(false);
+                }}
+                className="w-24 px-3 py-2 rounded-lg bg-[#111] text-white border border-[#2a2a2a] text-sm disabled:opacity-40"
+              />
+              <button
+                type="button"
+                disabled={savingCount || countInput === workspace.additionalBodyPhotoCount}
+                onClick={() => handleCountChange(countInput)}
+                className="px-4 py-2 rounded-lg bg-[#F5C518] text-black text-sm font-bold disabled:opacity-40"
+              >
+                {savingCount ? "Menyimpan…" : "Update"}
+              </button>
+              {countSaved && countInput === workspace.additionalBodyPhotoCount && (
+                <span className="text-xs font-medium text-green-400">✓ Tersimpan</span>
+              )}
+            </div>
           </div>
         </div>
 
