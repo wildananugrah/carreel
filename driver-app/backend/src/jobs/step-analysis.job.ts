@@ -2,7 +2,10 @@ import { unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { StepType } from "../generated/prisma";
-import type { IAIProvider } from "../interfaces/providers/ai.provider.interface";
+import type {
+  IAIProvider,
+  TokenUsage,
+} from "../interfaces/providers/ai.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
 import type { INotificationProvider } from "../interfaces/providers/notification.provider.interface";
 import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
@@ -44,6 +47,29 @@ export interface StepAnalysisJobData {
   stepType: StepType;
   driverId: string;
   tripType?: string;
+}
+
+/**
+ * Accumulates token usage across the (possibly several) model calls made for a
+ * single step. Pass `.sink` as the `onUsage` callback to the AI provider and
+ * read `.total` when persisting the AIAnalysis row.
+ */
+function newUsageAccumulator(): { total: TokenUsage; sink: (u: TokenUsage) => void } {
+  const total: TokenUsage = {
+    inputTokens: 0,
+    outputTokens: 0,
+    thinkingTokens: 0,
+    totalTokens: 0,
+  };
+  return {
+    total,
+    sink: (u: TokenUsage) => {
+      total.inputTokens += u.inputTokens;
+      total.outputTokens += u.outputTokens;
+      total.thinkingTokens += u.thinkingTokens;
+      total.totalTokens += u.totalTokens;
+    },
+  };
 }
 
 const MAX_REASONABLE_KM_DELTA = 50000;
@@ -100,6 +126,8 @@ export class StepAnalysisJob {
       stepType,
     });
     const startTime = Date.now();
+    // Accumulates token usage across every model call this step makes.
+    const usage = newUsageAccumulator();
 
     log.info("Starting step analysis");
 
@@ -198,6 +226,7 @@ export class StepAnalysisJob {
               verificationPair.userPrompt,
               verificationPair.systemInstruction,
               BODY_VERIFICATION_AI_CONFIG,
+              usage.sink,
             );
 
             const verificationCleaned = verificationRaw
@@ -234,6 +263,10 @@ export class StepAnalysisJob {
                 structuredData: verification,
                 confidenceScore: verification.confidence ?? null,
                 processingTimeMs,
+                inputTokens: usage.total.inputTokens,
+                outputTokens: usage.total.outputTokens,
+                thinkingTokens: usage.total.thinkingTokens,
+                totalTokens: usage.total.totalTokens,
                 status: "SUCCESS",
               });
 
@@ -289,6 +322,7 @@ export class StepAnalysisJob {
               userPrompt,
               systemInstruction,
               log,
+              usage.sink,
             );
             rawResponse = ensemble.rawResponse;
             // Stash the deduped consensus parsed object so we can use it for
@@ -305,6 +339,7 @@ export class StepAnalysisJob {
               userPrompt,
               systemInstruction,
               STEP_AI_CONFIG[stepType],
+              usage.sink,
             );
           }
         } finally {
@@ -323,6 +358,7 @@ export class StepAnalysisJob {
           userPrompt,
           systemInstruction,
           STEP_AI_CONFIG[stepType],
+          usage.sink,
         );
       }
 
@@ -425,6 +461,10 @@ export class StepAnalysisJob {
           structuredData: parsed,
           confidenceScore: parsed.confidence ?? null,
           processingTimeMs,
+          inputTokens: usage.total.inputTokens,
+          outputTokens: usage.total.outputTokens,
+          thinkingTokens: usage.total.thinkingTokens,
+          totalTokens: usage.total.totalTokens,
           status: "SUCCESS",
         },
       );
@@ -648,6 +688,10 @@ export class StepAnalysisJob {
           })(),
           rawResponse: "",
           processingTimeMs,
+          inputTokens: usage.total.inputTokens,
+          outputTokens: usage.total.outputTokens,
+          thinkingTokens: usage.total.thinkingTokens,
+          totalTokens: usage.total.totalTokens,
           status: "FAILED",
           errorMessage,
         })
@@ -716,6 +760,8 @@ export class StepAnalysisJob {
       startTime,
       log,
     } = args;
+    // Accumulates token usage across the verification + damage passes.
+    const usage = newUsageAccumulator();
 
     // Only analyze bodySide-labeled photos. Additional "Foto Tambahan" photos
     // (bodySide === null) are stored/displayed but never sent to AI.
@@ -753,6 +799,7 @@ export class StepAnalysisJob {
       verifyPair.userPrompt,
       verifyPair.systemInstruction,
       BODY_VERIFICATION_AI_CONFIG,
+      usage.sink,
     );
     const verification = JSON.parse(
       verifyRaw
@@ -781,6 +828,10 @@ export class StepAnalysisJob {
         structuredData: verification,
         confidenceScore: verification.confidence ?? null,
         processingTimeMs: Date.now() - startTime,
+        inputTokens: usage.total.inputTokens,
+        outputTokens: usage.total.outputTokens,
+        thinkingTokens: usage.total.thinkingTokens,
+        totalTokens: usage.total.totalTokens,
         status: "SUCCESS",
       });
 
@@ -822,6 +873,7 @@ export class StepAnalysisJob {
       damagePair.userPrompt,
       damagePair.systemInstruction,
       STEP_AI_CONFIG.BODY_INSPECTION,
+      usage.sink,
     );
     const result = JSON.parse(
       damageRaw
@@ -885,6 +937,10 @@ export class StepAnalysisJob {
         structuredData: result,
         confidenceScore: result.confidence ?? null,
         processingTimeMs: Date.now() - startTime,
+        inputTokens: usage.total.inputTokens,
+        outputTokens: usage.total.outputTokens,
+        thinkingTokens: usage.total.thinkingTokens,
+        totalTokens: usage.total.totalTokens,
         status: "SUCCESS",
       },
     );
@@ -923,6 +979,7 @@ export class StepAnalysisJob {
     userPrompt: string,
     systemInstruction: string,
     log: ILogger,
+    onUsage?: (u: TokenUsage) => void,
   ): Promise<EnsembleResult> {
     const N = BODY_INSPECTION_ENSEMBLE_RUNS;
     // UNION + dedup: every damage from every run survives the cluster step;
@@ -947,6 +1004,7 @@ export class StepAnalysisJob {
         userPrompt,
         systemInstruction,
         STEP_AI_CONFIG.BODY_INSPECTION,
+        onUsage,
       );
       const cleaned = raw
         .replace(/```(?:json)?\s*/g, "")

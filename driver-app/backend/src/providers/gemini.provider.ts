@@ -8,7 +8,27 @@ import type {
   AIAnalysisOptions,
   IAIProvider,
   ImagePart,
+  TokenUsage,
+  UsageSink,
 } from "../interfaces/providers/ai.provider.interface";
+
+/** Map Gemini's usageMetadata to our TokenUsage shape (0 when absent). */
+function extractUsage(response: {
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    thoughtsTokenCount?: number;
+    totalTokenCount?: number;
+  };
+}): TokenUsage {
+  const u = response.usageMetadata;
+  return {
+    inputTokens: u?.promptTokenCount ?? 0,
+    outputTokens: u?.candidatesTokenCount ?? 0,
+    thinkingTokens: u?.thoughtsTokenCount ?? 0,
+    totalTokens: u?.totalTokenCount ?? 0,
+  };
+}
 
 const MEDIA_RESOLUTION_MAP: Record<
   NonNullable<AIAnalysisOptions["mediaResolution"]>,
@@ -67,12 +87,14 @@ export class GeminiProvider implements IAIProvider {
     prompt: string,
     systemInstruction?: string,
     options?: AIAnalysisOptions,
+    onUsage?: UsageSink,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
       model: options?.model ?? this.model,
       contents: [{ inlineData: { mimeType, data: base64 } }, { text: prompt }],
       config: buildModelConfig(systemInstruction, options),
     });
+    onUsage?.(extractUsage(response));
     return response.text ?? "";
   }
 
@@ -81,6 +103,7 @@ export class GeminiProvider implements IAIProvider {
     prompt: string,
     systemInstruction?: string,
     options?: AIAnalysisOptions,
+    onUsage?: UsageSink,
   ): Promise<string> {
     const parts: Array<Record<string, unknown>> = [];
     for (const img of images) {
@@ -93,6 +116,7 @@ export class GeminiProvider implements IAIProvider {
       contents: parts,
       config: buildModelConfig(systemInstruction, options),
     });
+    onUsage?.(extractUsage(response));
     return response.text ?? "";
   }
 
@@ -102,6 +126,7 @@ export class GeminiProvider implements IAIProvider {
     prompt: string,
     systemInstruction?: string,
     options?: AIAnalysisOptions,
+    onUsage?: UsageSink,
   ): Promise<string> {
     const response = await this.ai.models.generateContent({
       model: options?.model ?? this.model,
@@ -111,6 +136,7 @@ export class GeminiProvider implements IAIProvider {
       ]),
       config: buildModelConfig(systemInstruction, options),
     });
+    onUsage?.(extractUsage(response));
     return response.text ?? "";
   }
 

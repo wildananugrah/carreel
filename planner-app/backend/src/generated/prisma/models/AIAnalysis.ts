@@ -29,11 +29,19 @@ export type AggregateAIAnalysis = {
 export type AIAnalysisAvgAggregateOutputType = {
   confidenceScore: number | null
   processingTimeMs: number | null
+  inputTokens: number | null
+  outputTokens: number | null
+  thinkingTokens: number | null
+  totalTokens: number | null
 }
 
 export type AIAnalysisSumAggregateOutputType = {
   confidenceScore: number | null
   processingTimeMs: number | null
+  inputTokens: number | null
+  outputTokens: number | null
+  thinkingTokens: number | null
+  totalTokens: number | null
 }
 
 export type AIAnalysisMinAggregateOutputType = {
@@ -45,6 +53,10 @@ export type AIAnalysisMinAggregateOutputType = {
   rawResponse: string | null
   confidenceScore: number | null
   processingTimeMs: number | null
+  inputTokens: number | null
+  outputTokens: number | null
+  thinkingTokens: number | null
+  totalTokens: number | null
   status: $Enums.AIAnalysisStatus | null
   errorMessage: string | null
   createdAt: Date | null
@@ -60,6 +72,10 @@ export type AIAnalysisMaxAggregateOutputType = {
   rawResponse: string | null
   confidenceScore: number | null
   processingTimeMs: number | null
+  inputTokens: number | null
+  outputTokens: number | null
+  thinkingTokens: number | null
+  totalTokens: number | null
   status: $Enums.AIAnalysisStatus | null
   errorMessage: string | null
   createdAt: Date | null
@@ -76,6 +92,10 @@ export type AIAnalysisCountAggregateOutputType = {
   structuredData: number
   confidenceScore: number
   processingTimeMs: number
+  inputTokens: number
+  outputTokens: number
+  thinkingTokens: number
+  totalTokens: number
   status: number
   errorMessage: number
   createdAt: number
@@ -87,11 +107,19 @@ export type AIAnalysisCountAggregateOutputType = {
 export type AIAnalysisAvgAggregateInputType = {
   confidenceScore?: true
   processingTimeMs?: true
+  inputTokens?: true
+  outputTokens?: true
+  thinkingTokens?: true
+  totalTokens?: true
 }
 
 export type AIAnalysisSumAggregateInputType = {
   confidenceScore?: true
   processingTimeMs?: true
+  inputTokens?: true
+  outputTokens?: true
+  thinkingTokens?: true
+  totalTokens?: true
 }
 
 export type AIAnalysisMinAggregateInputType = {
@@ -103,6 +131,10 @@ export type AIAnalysisMinAggregateInputType = {
   rawResponse?: true
   confidenceScore?: true
   processingTimeMs?: true
+  inputTokens?: true
+  outputTokens?: true
+  thinkingTokens?: true
+  totalTokens?: true
   status?: true
   errorMessage?: true
   createdAt?: true
@@ -118,6 +150,10 @@ export type AIAnalysisMaxAggregateInputType = {
   rawResponse?: true
   confidenceScore?: true
   processingTimeMs?: true
+  inputTokens?: true
+  outputTokens?: true
+  thinkingTokens?: true
+  totalTokens?: true
   status?: true
   errorMessage?: true
   createdAt?: true
@@ -134,6 +170,10 @@ export type AIAnalysisCountAggregateInputType = {
   structuredData?: true
   confidenceScore?: true
   processingTimeMs?: true
+  inputTokens?: true
+  outputTokens?: true
+  thinkingTokens?: true
+  totalTokens?: true
   status?: true
   errorMessage?: true
   createdAt?: true
@@ -237,6 +277,10 @@ export type AIAnalysisGroupByOutputType = {
   structuredData: runtime.JsonValue | null
   confidenceScore: number | null
   processingTimeMs: number
+  inputTokens: number | null
+  outputTokens: number | null
+  thinkingTokens: number | null
+  totalTokens: number | null
   status: $Enums.AIAnalysisStatus
   errorMessage: string | null
   createdAt: Date
@@ -276,6 +320,10 @@ export type AIAnalysisWhereInput = {
   structuredData?: Prisma.JsonNullableFilter<"AIAnalysis">
   confidenceScore?: Prisma.FloatNullableFilter<"AIAnalysis"> | number | null
   processingTimeMs?: Prisma.IntFilter<"AIAnalysis"> | number
+  inputTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  outputTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  thinkingTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  totalTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
   status?: Prisma.EnumAIAnalysisStatusFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
@@ -294,6 +342,10 @@ export type AIAnalysisOrderByWithRelationInput = {
   structuredData?: Prisma.SortOrderInput | Prisma.SortOrder
   confidenceScore?: Prisma.SortOrderInput | Prisma.SortOrder
   processingTimeMs?: Prisma.SortOrder
+  inputTokens?: Prisma.SortOrderInput | Prisma.SortOrder
+  outputTokens?: Prisma.SortOrderInput | Prisma.SortOrder
+  thinkingTokens?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalTokens?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -315,6 +367,10 @@ export type AIAnalysisWhereUniqueInput = Prisma.AtLeast<{
   structuredData?: Prisma.JsonNullableFilter<"AIAnalysis">
   confidenceScore?: Prisma.FloatNullableFilter<"AIAnalysis"> | number | null
   processingTimeMs?: Prisma.IntFilter<"AIAnalysis"> | number
+  inputTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  outputTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  thinkingTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  totalTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
   status?: Prisma.EnumAIAnalysisStatusFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
@@ -333,6 +389,10 @@ export type AIAnalysisOrderByWithAggregationInput = {
   structuredData?: Prisma.SortOrderInput | Prisma.SortOrder
   confidenceScore?: Prisma.SortOrderInput | Prisma.SortOrder
   processingTimeMs?: Prisma.SortOrder
+  inputTokens?: Prisma.SortOrderInput | Prisma.SortOrder
+  outputTokens?: Prisma.SortOrderInput | Prisma.SortOrder
+  thinkingTokens?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalTokens?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -357,6 +417,10 @@ export type AIAnalysisScalarWhereWithAggregatesInput = {
   structuredData?: Prisma.JsonNullableWithAggregatesFilter<"AIAnalysis">
   confidenceScore?: Prisma.FloatNullableWithAggregatesFilter<"AIAnalysis"> | number | null
   processingTimeMs?: Prisma.IntWithAggregatesFilter<"AIAnalysis"> | number
+  inputTokens?: Prisma.IntNullableWithAggregatesFilter<"AIAnalysis"> | number | null
+  outputTokens?: Prisma.IntNullableWithAggregatesFilter<"AIAnalysis"> | number | null
+  thinkingTokens?: Prisma.IntNullableWithAggregatesFilter<"AIAnalysis"> | number | null
+  totalTokens?: Prisma.IntNullableWithAggregatesFilter<"AIAnalysis"> | number | null
   status?: Prisma.EnumAIAnalysisStatusWithAggregatesFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableWithAggregatesFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AIAnalysis"> | Date | string
@@ -371,6 +435,10 @@ export type AIAnalysisCreateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -389,6 +457,10 @@ export type AIAnalysisUncheckedCreateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -403,6 +475,10 @@ export type AIAnalysisUpdateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -421,6 +497,10 @@ export type AIAnalysisUncheckedUpdateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -437,6 +517,10 @@ export type AIAnalysisCreateManyInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -451,6 +535,10 @@ export type AIAnalysisUpdateManyMutationInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -467,6 +555,10 @@ export type AIAnalysisUncheckedUpdateManyInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -498,6 +590,10 @@ export type AIAnalysisCountOrderByAggregateInput = {
   structuredData?: Prisma.SortOrder
   confidenceScore?: Prisma.SortOrder
   processingTimeMs?: Prisma.SortOrder
+  inputTokens?: Prisma.SortOrder
+  outputTokens?: Prisma.SortOrder
+  thinkingTokens?: Prisma.SortOrder
+  totalTokens?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -507,6 +603,10 @@ export type AIAnalysisCountOrderByAggregateInput = {
 export type AIAnalysisAvgOrderByAggregateInput = {
   confidenceScore?: Prisma.SortOrder
   processingTimeMs?: Prisma.SortOrder
+  inputTokens?: Prisma.SortOrder
+  outputTokens?: Prisma.SortOrder
+  thinkingTokens?: Prisma.SortOrder
+  totalTokens?: Prisma.SortOrder
 }
 
 export type AIAnalysisMaxOrderByAggregateInput = {
@@ -518,6 +618,10 @@ export type AIAnalysisMaxOrderByAggregateInput = {
   rawResponse?: Prisma.SortOrder
   confidenceScore?: Prisma.SortOrder
   processingTimeMs?: Prisma.SortOrder
+  inputTokens?: Prisma.SortOrder
+  outputTokens?: Prisma.SortOrder
+  thinkingTokens?: Prisma.SortOrder
+  totalTokens?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -533,6 +637,10 @@ export type AIAnalysisMinOrderByAggregateInput = {
   rawResponse?: Prisma.SortOrder
   confidenceScore?: Prisma.SortOrder
   processingTimeMs?: Prisma.SortOrder
+  inputTokens?: Prisma.SortOrder
+  outputTokens?: Prisma.SortOrder
+  thinkingTokens?: Prisma.SortOrder
+  totalTokens?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -542,6 +650,10 @@ export type AIAnalysisMinOrderByAggregateInput = {
 export type AIAnalysisSumOrderByAggregateInput = {
   confidenceScore?: Prisma.SortOrder
   processingTimeMs?: Prisma.SortOrder
+  inputTokens?: Prisma.SortOrder
+  outputTokens?: Prisma.SortOrder
+  thinkingTokens?: Prisma.SortOrder
+  totalTokens?: Prisma.SortOrder
 }
 
 export type AIAnalysisCreateNestedOneWithoutStepInput = {
@@ -630,6 +742,10 @@ export type AIAnalysisCreateWithoutStepInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -646,6 +762,10 @@ export type AIAnalysisUncheckedCreateWithoutStepInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -676,6 +796,10 @@ export type AIAnalysisUpdateWithoutStepInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -692,6 +816,10 @@ export type AIAnalysisUncheckedUpdateWithoutStepInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -706,6 +834,10 @@ export type AIAnalysisCreateWithoutMediaFileInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -722,6 +854,10 @@ export type AIAnalysisUncheckedCreateWithoutMediaFileInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -767,6 +903,10 @@ export type AIAnalysisScalarWhereInput = {
   structuredData?: Prisma.JsonNullableFilter<"AIAnalysis">
   confidenceScore?: Prisma.FloatNullableFilter<"AIAnalysis"> | number | null
   processingTimeMs?: Prisma.IntFilter<"AIAnalysis"> | number
+  inputTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  outputTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  thinkingTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
+  totalTokens?: Prisma.IntNullableFilter<"AIAnalysis"> | number | null
   status?: Prisma.EnumAIAnalysisStatusFilter<"AIAnalysis"> | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.StringNullableFilter<"AIAnalysis"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AIAnalysis"> | Date | string
@@ -782,6 +922,10 @@ export type AIAnalysisCreateManyMediaFileInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: number | null
   processingTimeMs: number
+  inputTokens?: number | null
+  outputTokens?: number | null
+  thinkingTokens?: number | null
+  totalTokens?: number | null
   status?: $Enums.AIAnalysisStatus
   errorMessage?: string | null
   createdAt?: Date | string
@@ -796,6 +940,10 @@ export type AIAnalysisUpdateWithoutMediaFileInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -812,6 +960,10 @@ export type AIAnalysisUncheckedUpdateWithoutMediaFileInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -827,6 +979,10 @@ export type AIAnalysisUncheckedUpdateManyWithoutMediaFileInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   confidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   processingTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  thinkingTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.EnumAIAnalysisStatusFieldUpdateOperationsInput | $Enums.AIAnalysisStatus
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -845,6 +1001,10 @@ export type AIAnalysisSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   structuredData?: boolean
   confidenceScore?: boolean
   processingTimeMs?: boolean
+  inputTokens?: boolean
+  outputTokens?: boolean
+  thinkingTokens?: boolean
+  totalTokens?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
@@ -863,6 +1023,10 @@ export type AIAnalysisSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   structuredData?: boolean
   confidenceScore?: boolean
   processingTimeMs?: boolean
+  inputTokens?: boolean
+  outputTokens?: boolean
+  thinkingTokens?: boolean
+  totalTokens?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
@@ -881,6 +1045,10 @@ export type AIAnalysisSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   structuredData?: boolean
   confidenceScore?: boolean
   processingTimeMs?: boolean
+  inputTokens?: boolean
+  outputTokens?: boolean
+  thinkingTokens?: boolean
+  totalTokens?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
@@ -899,13 +1067,17 @@ export type AIAnalysisSelectScalar = {
   structuredData?: boolean
   confidenceScore?: boolean
   processingTimeMs?: boolean
+  inputTokens?: boolean
+  outputTokens?: boolean
+  thinkingTokens?: boolean
+  totalTokens?: boolean
   status?: boolean
   errorMessage?: boolean
   createdAt?: boolean
   projectId?: boolean
 }
 
-export type AIAnalysisOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "mediaFileId" | "aiModel" | "promptUsed" | "rawResponse" | "structuredData" | "confidenceScore" | "processingTimeMs" | "status" | "errorMessage" | "createdAt" | "projectId", ExtArgs["result"]["aIAnalysis"]>
+export type AIAnalysisOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "mediaFileId" | "aiModel" | "promptUsed" | "rawResponse" | "structuredData" | "confidenceScore" | "processingTimeMs" | "inputTokens" | "outputTokens" | "thinkingTokens" | "totalTokens" | "status" | "errorMessage" | "createdAt" | "projectId", ExtArgs["result"]["aIAnalysis"]>
 export type AIAnalysisInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   mediaFile?: boolean | Prisma.AIAnalysis$mediaFileArgs<ExtArgs>
@@ -935,6 +1107,10 @@ export type $AIAnalysisPayload<ExtArgs extends runtime.Types.Extensions.Internal
     structuredData: runtime.JsonValue | null
     confidenceScore: number | null
     processingTimeMs: number
+    inputTokens: number | null
+    outputTokens: number | null
+    thinkingTokens: number | null
+    totalTokens: number | null
     status: $Enums.AIAnalysisStatus
     errorMessage: string | null
     createdAt: Date
@@ -1373,6 +1549,10 @@ export interface AIAnalysisFieldRefs {
   readonly structuredData: Prisma.FieldRef<"AIAnalysis", 'Json'>
   readonly confidenceScore: Prisma.FieldRef<"AIAnalysis", 'Float'>
   readonly processingTimeMs: Prisma.FieldRef<"AIAnalysis", 'Int'>
+  readonly inputTokens: Prisma.FieldRef<"AIAnalysis", 'Int'>
+  readonly outputTokens: Prisma.FieldRef<"AIAnalysis", 'Int'>
+  readonly thinkingTokens: Prisma.FieldRef<"AIAnalysis", 'Int'>
+  readonly totalTokens: Prisma.FieldRef<"AIAnalysis", 'Int'>
   readonly status: Prisma.FieldRef<"AIAnalysis", 'AIAnalysisStatus'>
   readonly errorMessage: Prisma.FieldRef<"AIAnalysis", 'String'>
   readonly createdAt: Prisma.FieldRef<"AIAnalysis", 'DateTime'>

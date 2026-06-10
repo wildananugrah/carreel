@@ -447,3 +447,15 @@ ORDER BY "createdAt" DESC;
 
 ```
 
+### token
+```sql
+SELECT i.id, i."tripType",
+       SUM(a."totalTokens")    AS total_tokens,
+       SUM(a."thinkingTokens") AS thinking_tokens
+FROM inspections i
+JOIN inspection_steps s ON s."inspectionId" = i.id
+JOIN ai_analyses a      ON a."stepId" = s.id
+WHERE i."createdAt" >= '2026-06-01' AND i."createdAt" < '2026-07-01'
+GROUP BY i.id, i."tripType"
+ORDER BY total_tokens DESC;
+```
