@@ -20,6 +20,10 @@ const SIDES: { key: string; label: string; guide: string }[] = [
   { key: "FRONT_LEFT", label: "Depan-Kiri", guide: "/guides/depan-kiri.png" },
 ];
 
+// Cache-buster for the guide images. They keep the same filenames, so bump
+// this whenever their content changes to force browsers/CDN to refetch.
+const GUIDE_VERSION = "2";
+
 interface Props {
   inspectionId: string;
   stepId: string;
@@ -175,7 +179,7 @@ export function EightSidePhotoCapture({
                 <div className="flex flex-col items-center text-center">
                   <div className="w-full aspect-video bg-[#1a1500] rounded-lg flex items-center justify-center mb-2 overflow-hidden">
                     <img
-                      src={s.guide}
+                      src={`${s.guide}?v=${GUIDE_VERSION}`}
                       alt={`Panduan foto ${s.label}`}
                       className="w-full h-full object-contain"
                       loading="lazy"
