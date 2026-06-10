@@ -6,19 +6,18 @@ import { CameraOverlay } from "./StepCard";
 
 /**
  * Capture order for the 8-side body inspection — clockwise from the front.
- * `guide` is a reference illustration (served from public/) shown in the empty
- * tile so the driver knows which angle to capture. Paths are URL-encoded
- * because the source files contain spaces (e.g. "1. depan.png").
+ * `guide` is a reference illustration (served from public/guides/) shown in the
+ * empty tile so the driver knows which angle to capture.
  */
 const SIDES: { key: string; label: string; guide: string }[] = [
-  { key: "FRONT", label: "Depan", guide: encodeURI("/1. depan.png") },
-  { key: "FRONT_RIGHT", label: "Depan-Kanan", guide: encodeURI("/2. depan-kanan.png") },
-  { key: "RIGHT", label: "Kanan", guide: encodeURI("/3. kanan.png") },
-  { key: "BACK_RIGHT", label: "Belakang-Kanan", guide: encodeURI("/4. belakang-kanan.png") },
-  { key: "BACK", label: "Belakang", guide: encodeURI("/5. belakang.png") },
-  { key: "BACK_LEFT", label: "Belakang-Kiri", guide: encodeURI("/6. belakang-kiri.png") },
-  { key: "LEFT", label: "Kiri", guide: encodeURI("/7. kiri.png") },
-  { key: "FRONT_LEFT", label: "Depan-Kiri", guide: encodeURI("/8. depan-kiri.png") },
+  { key: "FRONT", label: "Depan", guide: "/guides/depan.png" },
+  { key: "FRONT_RIGHT", label: "Depan-Kanan", guide: "/guides/depan-kanan.png" },
+  { key: "RIGHT", label: "Kanan", guide: "/guides/kanan.png" },
+  { key: "BACK_RIGHT", label: "Belakang-Kanan", guide: "/guides/belakang-kanan.png" },
+  { key: "BACK", label: "Belakang", guide: "/guides/belakang.png" },
+  { key: "BACK_LEFT", label: "Belakang-Kiri", guide: "/guides/belakang-kiri.png" },
+  { key: "LEFT", label: "Kiri", guide: "/guides/kiri.png" },
+  { key: "FRONT_LEFT", label: "Depan-Kiri", guide: "/guides/depan-kiri.png" },
 ];
 
 interface Props {
