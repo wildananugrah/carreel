@@ -1,0 +1,74 @@
+<h2>Three implementation approaches</h2>
+<p class="subtitle">All three use TF.js on-device + bounding boxes + hints for Gemini. The difference is which model and how inference is triggered.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>EfficientDet-lite0 — Recommended ✦</h3>
+      <p>Train EfficientDet-lite0 on the public <strong>CarDD dataset</strong> (Kaggle), convert to TF.js format, serve from <code>/public/models/</code>. Run inference on a 320×240 canvas frame every 1.5s during recording. WebGL backend (~30–50ms/frame), WASM fallback for devices without GPU support.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>~4.4MB model — fast to load, fits in memory</li>
+          <li>No network calls during recording</li>
+          <li>Works offline / in tunnels</li>
+          <li>Easy to swap in fine-tuned model later (just replace the files)</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Needs one-time training run in Python (Keras + TF)</li>
+          <li>Accuracy limited by small model size on subtle damage</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>MobileNet-SSD (COCO pre-trained) + re-head</h3>
+      <p>Use the <code>@tensorflow-models/coco-ssd</code> npm package (already has a TF.js-ready MobileNet-SSD) and replace only the detection head with a custom 3-class head (dent / scratch / intact) fine-tuned on CarDD. Faster to ship since the base model is downloadable via npm, no conversion step.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Base weights available as npm package — no conversion needed</li>
+          <li>~6MB, well-tested on mobile browsers</li>
+          <li>Fastest path to a working demo</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Slightly larger than EfficientDet-lite0</li>
+          <li>Fine-tuning the head still requires a Python step</li>
+          <li>Slightly lower accuracy than EfficientDet on small objects</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid: TF.js trigger → Gemini frame confirm</h3>
+      <p>Use a tiny 1–2MB binary classifier (dent present? yes/no) running every 2s. When it fires, capture the frame and send it to the backend where Gemini <code>analyzeImage()</code> returns the actual bounding box + label. The bounding box shown on screen comes from Gemini, not TF.js.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Bounding box accuracy = Gemini quality</li>
+          <li>Tiny on-device model (~1MB)</li>
+          <li>No training needed for the localisation step</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Needs network during recording — fails in poor signal</li>
+          <li>Adds Gemini API cost per detected frame (~10–30 frames/inspection)</li>
+          <li>0.5–2s delay before box appears on screen (round-trip)</li>
+          <li>More moving parts (backend endpoint + streaming response)</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:20px;background:rgba(250,204,21,0.08);border:1px solid rgba(250,204,21,0.3);border-radius:8px;padding:12px 16px">
+  <p class="label">Performance budget — mid-range Android</p>
+  <p style="font-size:13px;margin:4px 0 0">All three run inference on a <strong>320×240 downscaled canvas</strong> (not the full 720p camera feed) and throttle to <strong>1 frame per 1.5s</strong>. This keeps CPU usage under ~15% on a Snapdragon 680 / Helio G85. Full 720p inference would take 5–10× longer and heat the device.</p>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click to select, or tell me in the terminal.</p>

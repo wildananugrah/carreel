@@ -400,3 +400,50 @@ ORDER BY i."createdAt" DESC, d."createdAt" ASC;
 ```
 
 The `source`, `verificationStatus`, `editedAt`, `deletedAt`, and `originalSeverity` / `originalLocation` columns make every fraud signal explicit per row.
+
+```sql
+SELECT
+  i.id,
+  i."tripType",
+  i.status,
+  u."fullName"      AS driver_name,
+  u.email           AS driver_email,
+  un."licensePlate" AS plate,
+  un.make,
+  un.model,
+  p."displayName"   AS project,
+  i."startedAt",
+  i."completedAt",
+  i."createdAt"
+FROM inspections i
+LEFT JOIN users    u  ON u.id  = i."driverId"
+LEFT JOIN units    un ON un.id = i."unitId"
+LEFT JOIN projects p  ON p.id  = i."projectId"
+WHERE i."createdAt" >= '2026-06-01'
+  AND i."createdAt" <  '2026-07-01'
+-- optional extra filters:
+-- AND i."tripType" = 'PRE_TRIP'
+-- AND i.status = 'AI_COMPLETE'
+-- AND i."projectId" = '<project-uuid>'
+ORDER BY i."createdAt" DESC;
+
+--- basic
+-- Inspections created between two dates (half-open range: includes all of the
+-- start day, excludes the day after the end — safe with timestamps).
+SELECT
+  id,
+  "tripType",
+  status,
+  "driverId",
+  "unitId",
+  "startedAt",
+  "completedAt",
+  "createdAt"
+FROM inspections
+WHERE "createdAt" >= '2026-06-01'
+  AND "createdAt" <  '2026-07-01'      -- exclusive: first day AFTER your range
+ORDER BY "createdAt" DESC;
+
+
+```
+

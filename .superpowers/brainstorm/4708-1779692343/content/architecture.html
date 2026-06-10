@@ -1,0 +1,104 @@
+<h2>System architecture</h2>
+<p class="subtitle">End-to-end flow from recording to Gemini analysis with TF.js hints</p>
+
+<div class="mockup">
+  <div class="mockup-header">Data flow — recording session → Gemini job</div>
+  <div class="mockup-body" style="padding:20px;font-size:13px">
+
+    <!-- Phase 1 -->
+    <div style="margin-bottom:20px">
+      <div class="label" style="color:#facc15;margin-bottom:8px">① RECORDING PHASE — on-device, no network</div>
+      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#facc15;font-weight:600;margin-bottom:4px">VideoRecorderOverlay</div>
+          <div style="color:#999;font-size:11px">Camera stream via getUserMedia</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#facc15;font-weight:600;margin-bottom:4px">useDamageDetector</div>
+          <div style="color:#999;font-size:11px">Captures 320×240 frame every 1.5s, runs EfficientDet-lite0 via TF.js</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#facc15;font-weight:600;margin-bottom:4px">DamageDetectionOverlay</div>
+          <div style="color:#999;font-size:11px">Draws bbox + label over live camera feed (SVG, pointer-events:none)</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">+</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#facc15;font-weight:600;margin-bottom:4px">DamageHint[ ]</div>
+          <div style="color:#999;font-size:11px">{ timestampSec, bbox%, class, score } accumulated in ref during recording</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border-left:2px solid #2a2a2a;margin-left:20px;height:16px"></div>
+
+    <!-- Phase 2 -->
+    <div style="margin-bottom:20px">
+      <div class="label" style="color:#60a5fa;margin-bottom:8px">② SUBMIT PHASE — after driver taps "Selesai"</div>
+      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:4px">Chunked video upload</div>
+          <div style="color:#999;font-size:11px">Existing flow unchanged</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:4px">PATCH step + hints</div>
+          <div style="color:#999;font-size:11px">DamageHint[] sent alongside upload completion as <code>tfDetectionHints</code></div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:4px">InspectionStep DB</div>
+          <div style="color:#999;font-size:11px">New <code>tfDetectionHints Json?</code> column stores the array</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:4px">pgboss job enqueued</div>
+          <div style="color:#999;font-size:11px">Existing StepAnalysisJob — hints loaded from DB</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border-left:2px solid #2a2a2a;margin-left:20px;height:16px"></div>
+
+    <!-- Phase 3 -->
+    <div>
+      <div class="label" style="color:#34d399;margin-bottom:8px">③ ANALYSIS PHASE — background job</div>
+      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#34d399;font-weight:600;margin-bottom:4px">StepAnalysisJob</div>
+          <div style="color:#999;font-size:11px">Reads hints from step, appends to Gemini prompt</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#34d399;font-weight:600;margin-bottom:4px">buildBodyInspectionPrompt</div>
+          <div style="color:#999;font-size:11px">Injects hint timestamps into system instruction section</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#34d399;font-weight:600;margin-bottom:4px">Gemini analyzeVideo</div>
+          <div style="color:#999;font-size:11px">Gets roadmap of suspicious timestamps, produces definitive damage list</div>
+        </div>
+        <div style="color:#666;align-self:center;font-size:18px">→</div>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;min-width:140px">
+          <div style="color:#34d399;font-weight:600;margin-bottom:4px">WebSocket notify</div>
+          <div style="color:#999;font-size:11px">Existing flow unchanged</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+  <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px">
+    <div class="label" style="margin-bottom:6px">Model serving</div>
+    <p style="font-size:12px;color:#ccc;margin:0">EfficientDet-lite0 model files (~4.4 MB) live in <code>driver-app/frontend/public/models/efficientdet-lite0/</code>. Loaded lazily when BODY_INSPECTION recording starts, cached by browser service worker after first load. Swappable — replace files to upgrade the model without a code change.</p>
+  </div>
+  <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px">
+    <div class="label" style="margin-bottom:6px">Graceful degradation</div>
+    <p style="font-size:12px;color:#ccc;margin:0">If TF.js fails to load, WebGL unavailable, or inference is too slow (<200ms budget exceeded), the detection silently turns off. Recording and Gemini analysis continue normally — the feature is additive, never blocking.</p>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Does this flow look right? Respond in the terminal.</p>

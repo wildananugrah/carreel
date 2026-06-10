@@ -1,0 +1,68 @@
+<h2>Component breakdown</h2>
+<p class="subtitle">New files created vs existing files changed</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+  <!-- New files -->
+  <div>
+    <div class="label" style="color:#34d399;margin-bottom:10px">✦ NEW FILES</div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="color:#34d399;font-size:12px;font-family:monospace;margin-bottom:4px">hooks/useDamageDetector.ts</div>
+      <p style="font-size:12px;color:#ccc;margin:0">Loads EfficientDet-lite0 via <code>tf.loadGraphModel()</code>. Sets up a 1.5s interval during recording — each tick draws the video frame to a hidden 320×240 canvas, runs inference, filters results above a confidence threshold (0.4), and appends to a <code>hintsRef</code>. Returns <code>{ detections, isModelReady, getHints() }</code>.</p>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="color:#34d399;font-size:12px;font-family:monospace;margin-bottom:4px">components/inspection/DamageDetectionOverlay.tsx</div>
+      <p style="font-size:12px;color:#ccc;margin:0">Absolutely-positioned SVG layer over the camera feed (<code>pointer-events:none</code>). Renders each detection as a rectangle with a label chip (Penyok / Goresan). Boxes fade out after 3s if not re-confirmed. Coordinates are scaled from model space (320×240) to display space.</p>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="color:#34d399;font-size:12px;font-family:monospace;margin-bottom:4px">public/models/efficientdet-lite0/</div>
+      <p style="font-size:12px;color:#ccc;margin:0"><code>model.json</code> + weight shards (~4.4 MB total). Populated by the one-time Keras training + <code>tensorflowjs_converter</code> step. Cached by browser after first load. Swap these files to upgrade the model — no code change needed.</p>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px">
+      <div style="color:#34d399;font-size:12px;font-family:monospace;margin-bottom:4px">scripts/train-damage-model/ (Python)</div>
+      <p style="font-size:12px;color:#ccc;margin:0">Standalone Python project (not part of the Bun app). Downloads CarDD dataset, fine-tunes EfficientDet-lite0 with Keras, converts output to TF.js format. Run once to produce the model files above. Documented README so anyone can retrain with new data later.</p>
+    </div>
+  </div>
+
+  <!-- Changed files -->
+  <div>
+    <div class="label" style="color:#facc15;margin-bottom:10px">✎ CHANGED FILES</div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="color:#facc15;font-size:12px;font-family:monospace;margin-bottom:4px">VideoRecorderOverlay.tsx</div>
+      <p style="font-size:12px;color:#ccc;margin:0">Add <code>useDamageDetector(videoRef, isRecording)</code>. Mount <code>&lt;DamageDetectionOverlay&gt;</code> over the camera preview during recording only. Pass <code>getHints()</code> result up via <code>onStop(blob, hints)</code> callback. Hidden canvas element for frame capture added to DOM.</p>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="color:#facc15;font-size:12px;font-family:monospace;margin-bottom:4px">VideoReview.tsx</div>
+      <p style="font-size:12px;color:#ccc;margin:0">Accept hints from overlay's <code>onStop</code>. After chunked upload completes, include hints in the step completion <code>PATCH</code> request body.</p>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="color:#facc15;font-size:12px;font-family:monospace;margin-bottom:4px">schema.prisma + migration</div>
+      <p style="font-size:12px;color:#ccc;margin:0">Add <code>tfDetectionHints Json?</code> to <code>InspectionStep</code>. Non-breaking — null for all existing rows and for steps where detection was disabled.</p>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="color:#facc15;font-size:12px;font-family:monospace;margin-bottom:4px">prompts.ts — buildBodyInspectionPrompt</div>
+      <p style="font-size:12px;color:#ccc;margin:0">When hints are present, appends a "PRE-SCREENING HINTS" section to the system instruction: timestamps + damage class + confidence. Instructs Gemini to treat these as starting points, not ground truth.</p>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px">
+      <div style="color:#facc15;font-size:12px;font-family:monospace;margin-bottom:4px">step-analysis.job.ts</div>
+      <p style="font-size:12px;color:#ccc;margin:0">For BODY_INSPECTION steps, read <code>step.tfDetectionHints</code> from DB and pass to <code>buildBodyInspectionPrompt</code>. No change to video upload or Gemini call flow.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Feature flag -->
+<div style="background:rgba(250,204,21,0.06);border:1px solid rgba(250,204,21,0.25);border-radius:8px;padding:12px 16px">
+  <div class="label" style="margin-bottom:6px">Feature flag</div>
+  <p style="font-size:12px;color:#ccc;margin:0"><code>VITE_DAMAGE_DETECTION_ENABLED=true</code> in <code>.env</code>. When false (default until model files exist), <code>useDamageDetector</code> returns empty detections immediately without loading TF.js at all — zero overhead on existing inspections.</p>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Does this component breakdown look right? Any changes?</p>
