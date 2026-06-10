@@ -1,0 +1,86 @@
+<h2>Real-time damage feedback — which style?</h2>
+<p class="subtitle">During recording, how should the driver see that a dent or scratch was detected?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#111;border-radius:8px;padding:12px;position:relative;height:200px;overflow:hidden;font-family:monospace">
+        <!-- Simulated camera view -->
+        <div style="position:absolute;inset:0;background:linear-gradient(160deg,#1a1a1a 0%,#2a2a2a 100%);border-radius:8px"></div>
+        <!-- Car silhouette suggestion -->
+        <div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);width:160px;height:70px;background:#333;border-radius:8px;opacity:0.5"></div>
+        <!-- REC badge -->
+        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 6px;font-size:10px;color:#fff;display:flex;align-items:center;gap:4px">
+          <div style="width:7px;height:7px;background:#ef4444;border-radius:50%"></div> REC
+        </div>
+        <!-- Detection bounding boxes -->
+        <div style="position:absolute;top:55px;left:40px;width:50px;height:35px;border:2px solid #facc15;border-radius:3px"></div>
+        <div style="position:absolute;top:57px;left:42px;background:#facc15;color:#000;font-size:8px;padding:1px 3px;border-radius:2px;font-weight:bold">Dent</div>
+        <div style="position:absolute;top:90px;right:35px;width:40px;height:22px;border:2px solid #ef4444;border-radius:3px"></div>
+        <div style="position:absolute;top:92px;right:37px;background:#ef4444;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;font-weight:bold">Scratch</div>
+        <!-- Stage indicator -->
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);border-radius:4px;padding:3px 10px;font-size:10px;color:#fff">Samping Kiri →</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Bounding boxes</h3>
+      <p>Yellow/red boxes drawn directly over the detected damage area on the live feed. Labels show damage type. Most informative — driver sees exactly where the damage is.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#111;border-radius:8px;padding:12px;position:relative;height:200px;overflow:hidden;font-family:monospace">
+        <div style="position:absolute;inset:0;background:linear-gradient(160deg,#1a1a1a 0%,#2a2a2a 100%);border-radius:8px"></div>
+        <div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);width:160px;height:70px;background:#333;border-radius:8px;opacity:0.5"></div>
+        <!-- REC badge -->
+        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 6px;font-size:10px;color:#fff;display:flex;align-items:center;gap:4px">
+          <div style="width:7px;height:7px;background:#ef4444;border-radius:50%"></div> REC
+        </div>
+        <!-- Damage counter badge top-right -->
+        <div style="position:absolute;top:8px;right:8px;background:rgba(250,204,21,0.15);border:1px solid #facc15;border-radius:6px;padding:4px 10px;text-align:center">
+          <div style="font-size:20px;color:#facc15;font-weight:bold;line-height:1">2</div>
+          <div style="font-size:8px;color:#facc15;opacity:0.8">kerusakan</div>
+        </div>
+        <!-- Subtle flash indicator at bottom -->
+        <div style="position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(250,204,21,0.2);border:1px solid #facc15;border-radius:4px;padding:2px 8px;font-size:9px;color:#facc15">⚠ Terdeteksi saat ini</div>
+        <!-- Stage indicator -->
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);border-radius:4px;padding:3px 10px;font-size:10px;color:#fff">Samping Kiri →</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Counter badge</h3>
+      <p>A running count of detected damages in the corner. Flashes when a new one is found. Minimal distraction — driver stays focused on recording but knows something was flagged.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#111;border-radius:8px;padding:12px;position:relative;height:200px;overflow:hidden;font-family:monospace">
+        <div style="position:absolute;inset:0;background:linear-gradient(160deg,#1a1a1a 0%,#2a2a2a 100%);border-radius:8px"></div>
+        <div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);width:160px;height:70px;background:#333;border-radius:8px;opacity:0.5"></div>
+        <!-- REC badge -->
+        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 6px;font-size:10px;color:#fff;display:flex;align-items:center;gap:4px">
+          <div style="width:7px;height:7px;background:#ef4444;border-radius:50%"></div> REC
+        </div>
+        <!-- Top vehicle panel map -->
+        <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);display:flex;gap:3px;background:rgba(0,0,0,0.6);border-radius:6px;padding:4px 6px">
+          <div style="width:22px;height:16px;background:#333;border-radius:2px;font-size:7px;color:#aaa;display:flex;align-items:center;justify-content:center">F</div>
+          <div style="width:22px;height:16px;background:rgba(250,204,21,0.4);border:1px solid #facc15;border-radius:2px;font-size:7px;color:#facc15;display:flex;align-items:center;justify-content:center">R</div>
+          <div style="width:22px;height:16px;background:#333;border-radius:2px;font-size:7px;color:#aaa;display:flex;align-items:center;justify-content:center">B</div>
+          <div style="width:22px;height:16px;background:rgba(239,68,68,0.4);border:1px solid #ef4444;border-radius:2px;font-size:7px;color:#ef4444;display:flex;align-items:center;justify-content:center">L</div>
+        </div>
+        <!-- Stage indicator -->
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);border-radius:4px;padding:3px 10px;font-size:10px;color:#fff">Samping Kiri →</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Panel map</h3>
+      <p>A small top-down car diagram (F / R / B / L panels). Each panel lights up yellow/red when damage is detected in that zone during recording. No boxes on the live feed.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click to select, or just tell me in the terminal.</p>
