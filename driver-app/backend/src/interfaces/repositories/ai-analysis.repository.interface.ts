@@ -16,6 +16,11 @@ export interface CreateAIAnalysisDTO {
   structuredData?: unknown;
   confidenceScore?: number;
   processingTimeMs: number;
+  /** Token usage (summed across all model calls made for this step). */
+  inputTokens?: number;
+  outputTokens?: number;
+  thinkingTokens?: number;
+  totalTokens?: number;
   status: AIAnalysisStatus;
   errorMessage?: string;
 }

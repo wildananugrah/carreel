@@ -61,6 +61,23 @@ export interface ImagePart {
   label: string;
 }
 
+/** Token counts reported by the model for a single generateContent call. */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  /** Reasoning/"thinking" tokens (billable on thinking models). */
+  thinkingTokens: number;
+  totalTokens: number;
+}
+
+/**
+ * Optional callback invoked once per underlying model call with that call's
+ * token usage. Lets a caller (e.g. the analysis job) accumulate usage across
+ * the multiple calls a single step may make, without changing the return type.
+ * Concurrency-safe: each caller passes its own sink.
+ */
+export type UsageSink = (usage: TokenUsage) => void;
+
 export interface IAIProvider {
   analyzeImage(
     base64: string,
@@ -68,12 +85,14 @@ export interface IAIProvider {
     prompt: string,
     systemInstruction?: string,
     options?: AIAnalysisOptions,
+    onUsage?: UsageSink,
   ): Promise<string>;
   analyzeImages(
     images: ImagePart[],
     prompt: string,
     systemInstruction?: string,
     options?: AIAnalysisOptions,
+    onUsage?: UsageSink,
   ): Promise<string>;
   analyzeVideo(
     fileUri: string,
@@ -81,6 +100,7 @@ export interface IAIProvider {
     prompt: string,
     systemInstruction?: string,
     options?: AIAnalysisOptions,
+    onUsage?: UsageSink,
   ): Promise<string>;
   uploadVideoFile(filePath: string, mimeType: string): Promise<string>;
 }

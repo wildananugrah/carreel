@@ -78,7 +78,14 @@ describe("StepAnalysisJob", () => {
   let mockAlertRepo: IAlertRepository;
   let stepStatuses: Map<string, string>;
   let inspectionStatuses: Map<string, string>;
-  let savedAnalyses: Array<{ stepId: string; status: string }>;
+  let savedAnalyses: Array<{
+    stepId: string;
+    status: string;
+    totalTokens?: number;
+    inputTokens?: number;
+    outputTokens?: number;
+    thinkingTokens?: number;
+  }>;
   let savedDamageMarkers: Array<unknown[]>;
   let savedTelemetry: Array<unknown>;
   let notifications: Array<{ userId: string; notification: unknown }>;
@@ -256,7 +263,14 @@ describe("StepAnalysisJob", () => {
 
     mockAIAnalysisRepo = {
       createAnalysis: async (_scope: UserScope, data) => {
-        savedAnalyses.push({ stepId: data.stepId, status: data.status });
+        savedAnalyses.push({
+          stepId: data.stepId,
+          status: data.status,
+          totalTokens: data.totalTokens,
+          inputTokens: data.inputTokens,
+          outputTokens: data.outputTokens,
+          thinkingTokens: data.thinkingTokens,
+        });
         return {
           id: `analysis-${savedAnalyses.length}`,
           ...data,
@@ -328,6 +342,45 @@ describe("StepAnalysisJob", () => {
     // DamageMarkers saved
     expect(savedDamageMarkers.length).toBe(1);
     expect(savedDamageMarkers[0].length).toBe(1);
+  });
+
+  test("records token usage reported by the provider on the AIAnalysis", async () => {
+    // Provider reports usage via the onUsage callback (6th arg).
+    mockAI.analyzeImage = async (
+      _base64: string,
+      _mimeType: string,
+      _prompt: string,
+      _systemInstruction?: string,
+      _options?: unknown,
+      onUsage?: (u: {
+        inputTokens: number;
+        outputTokens: number;
+        thinkingTokens: number;
+        totalTokens: number;
+      }) => void,
+    ) => {
+      onUsage?.({
+        inputTokens: 1200,
+        outputTokens: 300,
+        thinkingTokens: 450,
+        totalTokens: 1950,
+      });
+      return JSON.stringify({ confidence: 0.9, damages: [] });
+    };
+    stepStatuses.set("step-2", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-1",
+      stepType: "UNIT_IDENTIFICATION",
+      driverId: "driver-1",
+    });
+
+    expect(savedAnalyses.length).toBe(1);
+    expect(savedAnalyses[0].inputTokens).toBe(1200);
+    expect(savedAnalyses[0].outputTokens).toBe(300);
+    expect(savedAnalyses[0].thinkingTokens).toBe(450);
+    expect(savedAnalyses[0].totalTokens).toBe(1950);
   });
 
   test("video analysis happy path: temp file, upload to Gemini, analyze", async () => {
