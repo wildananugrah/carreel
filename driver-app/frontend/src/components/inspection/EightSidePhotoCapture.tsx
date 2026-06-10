@@ -213,7 +213,7 @@ export function EightSidePhotoCapture({
                   </div>
                 ) : (
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-full aspect-video bg-[#1a1500] rounded-lg flex items-center justify-center mb-2 overflow-hidden">
+                    <div className="w-full aspect-video rounded-lg flex items-center justify-center mb-2 overflow-hidden">
                       <img
                         src={`${s.guide}?v=${GUIDE_VERSION}`}
                         alt={`Panduan foto ${s.label}`}
