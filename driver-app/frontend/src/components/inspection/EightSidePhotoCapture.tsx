@@ -4,42 +4,22 @@ import { api } from "../../lib/api";
 import { AdditionalPhotosCapture } from "./AdditionalPhotosCapture";
 import { CameraOverlay } from "./StepCard";
 
-/** Capture order for the 8-side body inspection — clockwise from the front. */
-const SIDES: { key: string; label: string }[] = [
-  { key: "FRONT", label: "Depan" },
-  { key: "FRONT_RIGHT", label: "Depan-Kanan" },
-  { key: "RIGHT", label: "Kanan" },
-  { key: "BACK_RIGHT", label: "Belakang-Kanan" },
-  { key: "BACK", label: "Belakang" },
-  { key: "BACK_LEFT", label: "Belakang-Kiri" },
-  { key: "LEFT", label: "Kiri" },
-  { key: "FRONT_LEFT", label: "Depan-Kiri" },
+/**
+ * Capture order for the 8-side body inspection — clockwise from the front.
+ * `guide` is a reference illustration (served from public/) shown in the empty
+ * tile so the driver knows which angle to capture. Paths are URL-encoded
+ * because the source files contain spaces (e.g. "1. depan.png").
+ */
+const SIDES: { key: string; label: string; guide: string }[] = [
+  { key: "FRONT", label: "Depan", guide: encodeURI("/1. depan.png") },
+  { key: "FRONT_RIGHT", label: "Depan-Kanan", guide: encodeURI("/2. depan-kanan.png") },
+  { key: "RIGHT", label: "Kanan", guide: encodeURI("/3. kanan.png") },
+  { key: "BACK_RIGHT", label: "Belakang-Kanan", guide: encodeURI("/4. belakang-kanan.png") },
+  { key: "BACK", label: "Belakang", guide: encodeURI("/5. belakang.png") },
+  { key: "BACK_LEFT", label: "Belakang-Kiri", guide: encodeURI("/6. belakang-kiri.png") },
+  { key: "LEFT", label: "Kiri", guide: encodeURI("/7. kiri.png") },
+  { key: "FRONT_LEFT", label: "Depan-Kiri", guide: encodeURI("/8. depan-kiri.png") },
 ];
-
-function CameraIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="w-8 h-8"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  );
-}
 
 interface Props {
   inspectionId: string;
@@ -194,10 +174,14 @@ export function EightSidePhotoCapture({
                 </div>
               ) : (
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-10 h-10 bg-[#1a1500] rounded-lg flex items-center justify-center mb-2">
-                    <div className="text-yellow-400/60 scale-75">
-                      <CameraIcon />
-                    </div>
+                  <div className="w-full aspect-video bg-[#1a1500] rounded-lg flex items-center justify-center mb-2 overflow-hidden">
+                    <img
+                      src={s.guide}
+                      alt={`Panduan foto ${s.label}`}
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <p className="text-xs font-medium text-white mb-0.5">{s.label}</p>
                   <p className="text-[10px] text-yellow-400 mb-2">Photo</p>
