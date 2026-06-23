@@ -736,7 +736,9 @@ export function VideoReview() {
   return (
     <div className="flex flex-col h-full">
       <TopBar
-        title={isPostTrip ? "Post Video & Body Review" : "Pre Video & Body Review"}
+        title={`${isPostTrip ? "Post" : "Pre"} ${
+          bodyMode === "PHOTOS_8SIDE" ? "Foto" : "Video"
+        } & Body Review`}
         subtitle={unitName !== "Unit" ? unitName : undefined}
         subtitle2={
           [
