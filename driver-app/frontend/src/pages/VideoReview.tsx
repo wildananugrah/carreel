@@ -4,6 +4,7 @@ import { AddDamageFlow } from "../components/inspection/AddDamageFlow";
 import { AdditionalPhotosCapture } from "../components/inspection/AdditionalPhotosCapture";
 import { EditDamageModal } from "../components/inspection/EditDamageModal";
 import { EightSidePhotoCapture } from "../components/inspection/EightSidePhotoCapture";
+import { type PhotoTab, PhotoTabSwitcher } from "../components/inspection/PhotoTabSwitcher";
 import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
 import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
 import { TopBar } from "../components/layout/TopBar";
@@ -287,6 +288,8 @@ export function VideoReview() {
     startTime: number;
   } | null>(null);
   const [photoLightbox, setPhotoLightbox] = useState<string | null>(null);
+  // Which section is shown in the post-capture body review card (8-side grid vs. Foto Tambahan).
+  const [bodyReviewTab, setBodyReviewTab] = useState<PhotoTab>("wajib");
   // Pre-trip body photos, fetched directly from the linked pre-trip inspection
   // (robust — does not depend on the /pre-trip-data endpoint's bodyPhotos field).
   const [preTripPhotos, setPreTripPhotos] = useState<
@@ -1296,43 +1299,53 @@ export function VideoReview() {
                 {/* Body media — 8-side photo grid (PHOTOS_8SIDE) or video */}
                 {bodyMode === "PHOTOS_8SIDE" ? (
                   <div className="bg-[#1a1a1a] p-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(capturedSides).map(([side, mediaId]) =>
-                        mediaId ? (
-                          <button
-                            key={side}
-                            type="button"
-                            onClick={() => setPhotoLightbox(`/api/media/${mediaId}/url`)}
-                            className="aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden"
-                          >
-                            <img
-                              src={`/api/media/${mediaId}/url`}
-                              alt={side}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </button>
-                        ) : null,
-                      )}
-                    </div>
-                    <p className="text-xs text-neutral-500 text-center pt-2">
-                      Foto Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
-                    </p>
                     {bodyStep && id && additionalCount > 0 && (
-                      <div className="border-t border-[#2a2a2a] mt-3 pt-1">
-                        <AdditionalPhotosCapture
-                          inspectionId={id}
-                          stepId={bodyStep.id}
-                          count={additionalCount}
-                          photos={additionalPhotos}
-                          capturedAtMeta={{
-                            latitude: location?.latitude,
-                            longitude: location?.longitude,
-                          }}
-                          onChanged={fetchDetail}
-                        />
-                      </div>
+                      <PhotoTabSwitcher
+                        tab={bodyReviewTab}
+                        onTabChange={setBodyReviewTab}
+                        doneCount={Object.values(capturedSides).filter(Boolean).length}
+                        totalCount={8}
+                      />
+                    )}
+                    {(additionalCount === 0 || bodyReviewTab === "wajib") && (
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(capturedSides).map(([side, mediaId]) =>
+                            mediaId ? (
+                              <button
+                                key={side}
+                                type="button"
+                                onClick={() => setPhotoLightbox(`/api/media/${mediaId}/url`)}
+                                className="aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden"
+                              >
+                                <img
+                                  src={`/api/media/${mediaId}/url`}
+                                  alt={side}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              </button>
+                            ) : null,
+                          )}
+                        </div>
+                        <p className="text-xs text-neutral-500 text-center pt-2">
+                          Foto Body &middot; {isPostTrip ? "Post-Check" : "Pre-Check"}
+                        </p>
+                      </>
+                    )}
+                    {bodyStep && id && additionalCount > 0 && bodyReviewTab === "tambahan" && (
+                      <AdditionalPhotosCapture
+                        inspectionId={id}
+                        stepId={bodyStep.id}
+                        count={additionalCount}
+                        photos={additionalPhotos}
+                        capturedAtMeta={{
+                          latitude: location?.latitude,
+                          longitude: location?.longitude,
+                        }}
+                        onChanged={fetchDetail}
+                      />
                     )}
                   </div>
                 ) : (

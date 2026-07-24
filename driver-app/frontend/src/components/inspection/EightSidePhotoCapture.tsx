@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
 import { AdditionalPhotosCapture } from "./AdditionalPhotosCapture";
+import { type PhotoTab, PhotoTabSwitcher } from "./PhotoTabSwitcher";
 import { CameraOverlay } from "./StepCard";
 
 /**
@@ -55,7 +56,7 @@ export function EightSidePhotoCapture({
   const [deletingSide, setDeletingSide] = useState<string | null>(null);
   const [error, setError] = useState("");
   // Which section is shown when additional photos are enabled (tabbed layout).
-  const [tab, setTab] = useState<"wajib" | "tambahan">("wajib");
+  const [tab, setTab] = useState<PhotoTab>("wajib");
   // Which side is currently capturing via the full-screen camera overlay.
   const [cameraSide, setCameraSide] = useState<string | null>(null);
 
@@ -106,36 +107,7 @@ export function EightSidePhotoCapture({
   return (
     <div>
       {extraCount > 0 ? (
-        <div className="flex gap-2 mb-3 p-1 bg-[#141414] rounded-xl border border-[#2a2a2a]">
-          <button
-            type="button"
-            onClick={() => setTab("wajib")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              tab === "wajib"
-                ? "bg-yellow-400/10 text-yellow-400 border border-yellow-400/40"
-                : "text-neutral-400 border border-transparent"
-            }`}
-          >
-            Foto Body Wajib
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-black/40">
-              {doneCount}/8
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("tambahan")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              tab === "tambahan"
-                ? "bg-yellow-400/10 text-yellow-400 border border-yellow-400/40"
-                : "text-neutral-400 border border-transparent"
-            }`}
-          >
-            Foto Tambahan
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#2a2a2a] text-neutral-300">
-              Opsional
-            </span>
-          </button>
-        </div>
+        <PhotoTabSwitcher tab={tab} onTabChange={setTab} doneCount={doneCount} totalCount={8} />
       ) : (
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-white">Foto Body &middot; 8 Sisi</p>
