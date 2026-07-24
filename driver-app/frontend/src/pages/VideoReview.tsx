@@ -9,6 +9,7 @@ import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
 import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
 import { TopBar } from "../components/layout/TopBar";
 import { Button } from "../components/ui/Button";
+import { MediaImage } from "../components/ui/MediaImage";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
 import { useUploadSources } from "../hooks/useUploadSources";
@@ -1001,12 +1002,10 @@ export function VideoReview() {
                         onClick={() => setPhotoLightbox(`/api/media/${p.id}/url`)}
                         className="relative aspect-video bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#2a2a2a]"
                       >
-                        <img
+                        <MediaImage
                           src={`/api/media/${p.id}/url`}
                           alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
                           className="w-full h-full object-cover"
-                          loading="lazy"
-                          decoding="async"
                         />
                         <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
                           {BODY_SIDE_LABELS[p.bodySide ?? ""] ?? p.bodySide}
@@ -1342,12 +1341,10 @@ export function VideoReview() {
                                 onClick={() => setPhotoLightbox(`/api/media/${mediaId}/url`)}
                                 className="aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden"
                               >
-                                <img
+                                <MediaImage
                                   src={`/api/media/${mediaId}/url`}
                                   alt={side}
                                   className="w-full h-full object-cover"
-                                  loading="lazy"
-                                  decoding="async"
                                 />
                               </button>
                             ) : null,

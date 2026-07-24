@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Spinner } from "./Spinner";
 
 interface MediaLightboxProps {
   src: string;
@@ -10,6 +11,7 @@ interface MediaLightboxProps {
 
 export function MediaLightbox({ src, type, alt, startTime, onClose }: MediaLightboxProps) {
   const scrollY = useRef(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -69,14 +71,20 @@ export function MediaLightbox({ src, type, alt, startTime, onClose }: MediaLight
       </button>
 
       {type === "image" ? (
-        // biome-ignore lint/a11y/useKeyWithClickEvents: only prevents event propagation
-        <img
-          src={src}
-          alt={alt ?? ""}
-          className="max-h-[90vh] max-w-[95vw] object-contain"
-          onClick={(e) => e.stopPropagation()}
-          decoding="async"
-        />
+        <>
+          {!imageLoaded && <Spinner />}
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: only prevents event propagation */}
+          <img
+            src={src}
+            alt={alt ?? ""}
+            className={`max-h-[90vh] max-w-[95vw] object-contain transition-opacity duration-300 ${
+              imageLoaded ? "opacity-100" : "opacity-0 absolute"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+            onLoad={() => setImageLoaded(true)}
+            decoding="async"
+          />
+        </>
       ) : (
         <video
           ref={videoRef}

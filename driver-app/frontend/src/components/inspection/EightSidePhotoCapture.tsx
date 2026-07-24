@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
+import { MediaImage } from "../ui/MediaImage";
 import { AdditionalPhotosCapture } from "./AdditionalPhotosCapture";
 import { type PhotoTab, PhotoTabSwitcher } from "./PhotoTabSwitcher";
 import { CameraOverlay } from "./StepCard";
@@ -148,12 +149,10 @@ export function EightSidePhotoCapture({
                 {done && mediaId ? (
                   <div className="flex flex-col">
                     <div className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden mb-2">
-                      <img
+                      <MediaImage
                         src={`/api/media/${mediaId}/url`}
                         alt={s.label}
                         className="w-full h-full object-cover"
-                        loading="lazy"
-                        decoding="async"
                       />
                       <div className="absolute top-1 right-1">
                         <button

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { MediaImage } from "../components/ui/MediaImage";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
 import { api } from "../lib/api";
@@ -656,12 +657,10 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
                 onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
                 className="relative aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
               >
-                <img
+                <MediaImage
                   src={`/api/media/${p.id}/url`}
                   alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
                   className="w-full h-full object-cover"
-                  loading="lazy"
-                  decoding="async"
                 />
                 <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
                   {BODY_SIDE_LABELS[p.bodySide ?? ""] ??
@@ -735,13 +734,10 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
         <p className="text-[9px] font-extrabold text-[#F5C842] tracking-[1px] mb-2">SPEEDOMETER</p>
         <div className="bg-[#141414] rounded-lg h-20 flex items-center justify-center mb-2">
           {speedoId ? (
-            // biome-ignore lint/a11y/useKeyWithClickEvents: click-to-enlarge image
-            <img
+            <MediaImage
               src={`/api/media/${speedoId}/url`}
               alt="Speedometer"
               className="w-full h-full rounded-lg object-cover cursor-pointer"
-              loading="lazy"
-              decoding="async"
               onClick={() => setLightbox({ src: `/api/media/${speedoId}/url`, type: "image" })}
             />
           ) : (
@@ -790,13 +786,11 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
         </p>
         <div className="bg-white rounded-lg h-[70px] flex items-center justify-center mb-2">
           {inspection.signatureKey ? (
-            // biome-ignore lint/a11y/useKeyWithClickEvents: click-to-enlarge image
-            <img
+            <MediaImage
               src={`/api/media/key/${inspection.signatureKey}`}
               alt="Signature"
               className="w-full h-full rounded-lg object-contain cursor-pointer"
-              loading="lazy"
-              decoding="async"
+              theme="light"
               onClick={() =>
                 setLightbox({ src: `/api/media/key/${inspection.signatureKey}`, type: "image" })
               }
