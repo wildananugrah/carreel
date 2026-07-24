@@ -645,12 +645,23 @@ export function VideoReview() {
     if (!bodyStep || !hasMedia || deletingVideo) return;
     setDeletingVideo(true);
     try {
-      await api.del(
-        `/api/inspections/${bodyStep.inspectionId}/steps/${bodyStep.id}/media/${bodyStep.mediaFiles[0].id}`,
-      );
+      // PHOTOS_8SIDE mode has up to 8 mandatory side photos — all of them
+      // caused (or share) the mismatch verdict, so all must go to let the
+      // driver retake cleanly. "Foto Tambahan" extras (no bodySide) aren't
+      // part of AI verification and are left alone. Video mode has exactly
+      // one media file, so this loop is a single iteration there.
+      const targets =
+        bodyMode === "PHOTOS_8SIDE"
+          ? bodyStep.mediaFiles.filter((m) => m.bodySide)
+          : bodyStep.mediaFiles;
+      for (const m of targets) {
+        await api.del(
+          `/api/inspections/${bodyStep.inspectionId}/steps/${bodyStep.id}/media/${m.id}`,
+        );
+      }
       await fetchDetail();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menghapus video");
+      setError(err instanceof Error ? err.message : "Gagal menghapus media");
     } finally {
       setDeletingVideo(false);
     }
@@ -1370,8 +1381,9 @@ export function VideoReview() {
                     <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                       <p className="text-xs font-bold text-red-400">Kendaraan tidak sesuai</p>
                       <p className="text-[10px] text-neutral-400 mt-0.5">
-                        Video body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan
-                        rekam ulang video.
+                        {bodyMode === "PHOTOS_8SIDE"
+                          ? "Foto body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan ambil ulang foto."
+                          : "Video body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan rekam ulang video."}
                       </p>
                       <button
                         type="button"
@@ -1379,7 +1391,11 @@ export function VideoReview() {
                         onClick={handleDeleteVideo}
                         disabled={deletingVideo}
                       >
-                        {deletingVideo ? "Menghapus..." : "Hapus & Rekam Ulang"}
+                        {deletingVideo
+                          ? "Menghapus..."
+                          : bodyMode === "PHOTOS_8SIDE"
+                            ? "Hapus & Ambil Ulang"
+                            : "Hapus & Rekam Ulang"}
                       </button>
                     </div>
                   </div>
