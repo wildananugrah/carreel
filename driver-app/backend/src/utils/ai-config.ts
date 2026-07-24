@@ -2,8 +2,10 @@
  * Per-step Gemini tuning. Pro-tier models default to a low thinking budget
  * when called via API — gemini.google.com runs them at HIGH by default —
  * so we set thinkingLevel explicitly per task to close that gap. The 32k
- * output cap is defensive against truncation when the response is verbose
- * (e.g. a body inspection with many damages).
+ * output cap is defensive against truncation for the simpler OCR-style
+ * steps; BODY_INSPECTION is raised to the model's actual 65536 ceiling
+ * since its HIGH-thinking, many-damage responses are the ones that were
+ * observed hitting the cap (see gemini.provider.ts's assertNotTruncated).
  *
  * Per-step model selection:
  *  Set GEMINI_MODEL_<STEP> in your .env to override the model for a specific
@@ -56,7 +58,12 @@ export const STEP_AI_CONFIG: Record<StepType, AIAnalysisOptions> = {
   },
   BODY_INSPECTION: {
     thinkingLevel: "HIGH",
-    maxOutputTokens: 32000,
+    // 65536 is the actual Gemini 2.5 Pro/Flash output ceiling — raised from
+    // 32000 after HIGH-thinking + many-damage responses hit that cap and
+    // got silently truncated mid-JSON (see gemini.provider.ts's
+    // assertNotTruncated). There is no higher value to grow into if this
+    // still truncates; the next lever is lowering thinkingLevel instead.
+    maxOutputTokens: 65536,
     temperature: 0.4,
     topP: 0.95,
     topK: 40,

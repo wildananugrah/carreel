@@ -30,6 +30,35 @@ function extractUsage(response: {
   };
 }
 
+/**
+ * Gemini's JSON response mode does not guarantee a *complete* object — if the
+ * model hits `maxOutputTokens` mid-response, `response.text` is silently the
+ * truncated prefix, which then fails `JSON.parse` downstream with an opaque
+ * "Expected '}'" error that gives no hint it was a token-budget issue. Fail
+ * loudly here instead, with the actual usage numbers, so a truncated
+ * response is diagnosable without having to guess from a JSON syntax error.
+ */
+function assertNotTruncated(
+  response: {
+    candidates?: { finishReason?: string }[];
+    usageMetadata?: {
+      candidatesTokenCount?: number;
+      thoughtsTokenCount?: number;
+    };
+  },
+  maxOutputTokens: number | undefined,
+): void {
+  if (response.candidates?.[0]?.finishReason !== "MAX_TOKENS") return;
+  const u = response.usageMetadata;
+  throw new Error(
+    `Gemini response truncated: finishReason=MAX_TOKENS with maxOutputTokens=${
+      maxOutputTokens ?? "(model default)"
+    } (thinkingTokens=${u?.thoughtsTokenCount ?? "?"}, outputTokens=${
+      u?.candidatesTokenCount ?? "?"
+    }). Raise maxOutputTokens for this step or reduce expected response verbosity.`,
+  );
+}
+
 const MEDIA_RESOLUTION_MAP: Record<
   NonNullable<AIAnalysisOptions["mediaResolution"]>,
   MediaResolution
@@ -95,6 +124,7 @@ export class GeminiProvider implements IAIProvider {
       config: buildModelConfig(systemInstruction, options),
     });
     onUsage?.(extractUsage(response));
+    assertNotTruncated(response, options?.maxOutputTokens);
     return response.text ?? "";
   }
 
@@ -117,6 +147,7 @@ export class GeminiProvider implements IAIProvider {
       config: buildModelConfig(systemInstruction, options),
     });
     onUsage?.(extractUsage(response));
+    assertNotTruncated(response, options?.maxOutputTokens);
     return response.text ?? "";
   }
 
@@ -137,6 +168,7 @@ export class GeminiProvider implements IAIProvider {
       config: buildModelConfig(systemInstruction, options),
     });
     onUsage?.(extractUsage(response));
+    assertNotTruncated(response, options?.maxOutputTokens);
     return response.text ?? "";
   }
 
