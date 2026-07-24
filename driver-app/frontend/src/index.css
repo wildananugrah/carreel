@@ -12,3 +12,16 @@ body {
 #root {
   min-height: 100svh;
 }
+
+@keyframes media-shimmer-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.media-shimmer-sweep {
+  animation: media-shimmer-sweep 1.5s ease-in-out infinite;
+}

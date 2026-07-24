@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { Inspection } from "../../lib/types";
+import { MediaImage } from "../ui/MediaImage";
 
 interface InspectionCardProps {
   inspection: Inspection;
@@ -111,12 +112,10 @@ export function InspectionCard({ inspection }: InspectionCardProps) {
       {/* Thumbnail */}
       <div className="w-[72px] h-[52px] rounded-lg overflow-hidden shrink-0 bg-[#1a1a1a]">
         {thumbnailId ? (
-          <img
+          <MediaImage
             src={`/api/media/${thumbnailId}/url`}
             alt={unitName}
             className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
           />
         ) : (
           <svg

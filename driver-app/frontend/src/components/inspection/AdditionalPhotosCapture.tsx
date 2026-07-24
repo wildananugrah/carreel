@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
+import { MediaImage } from "../ui/MediaImage";
 import { CameraOverlay } from "./StepCard";
 
 function CameraIcon() {
@@ -132,12 +133,10 @@ export function AdditionalPhotosCapture({
               {photo ? (
                 <div className="flex flex-col">
                   <div className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden mb-2">
-                    <img
+                    <MediaImage
                       src={`/api/media/${photo.id}/url`}
                       alt={`Foto Tambahan ${i + 1}`}
                       className="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
                     />
                     <div className="absolute top-1 right-1">
                       <button

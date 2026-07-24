@@ -4,6 +4,7 @@ import { useTorch } from "../../hooks/useTorch";
 import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
 import type { InspectionStep } from "../../lib/types";
+import { MediaImage } from "../ui/MediaImage";
 import { MediaLightbox } from "../ui/MediaLightbox";
 import { StatusBadge } from "../ui/StatusBadge";
 
@@ -338,13 +339,10 @@ export function StepCard({
         <div className="flex flex-col">
           <div className="relative aspect-video bg-[#0f0f0f] rounded-lg overflow-hidden mb-2">
             {step.mediaFiles[0].mimeType.startsWith("image/") ? (
-              // biome-ignore lint/a11y/useKeyWithClickEvents: click-to-enlarge image
-              <img
+              <MediaImage
                 src={`/api/media/${step.mediaFiles[0].id}/url`}
                 alt={step.mediaFiles[0].fileName}
                 className="w-full h-full object-cover cursor-pointer"
-                loading="lazy"
-                decoding="async"
                 onClick={() =>
                   setLightbox({ src: `/api/media/${step.mediaFiles[0].id}/url`, type: "image" })
                 }
