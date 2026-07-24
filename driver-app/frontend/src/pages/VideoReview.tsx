@@ -342,7 +342,14 @@ export function VideoReview() {
   const triggerPhotoAnalysis = useCallback(() => {
     if (!id || photoAnalysisTriggeredRef.current) return;
     photoAnalysisTriggeredRef.current = true;
-    api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {});
+    api.post(`/api/inspections/${id}/analyze-photos`).catch(() => {
+      // Request failed (dropped connection, backend hiccup, iOS suspending
+      // the fetch while the camera overlay was tearing down, etc.) — un-set
+      // the guard so the backstop effect's next poll-driven run can retry,
+      // instead of leaving the step stuck at UPLOADED with no job ever
+      // enqueued and no way to recover short of a full page reload.
+      photoAnalysisTriggeredRef.current = false;
+    });
   }, [id]);
 
   useEffect(() => {
@@ -441,6 +448,12 @@ export function VideoReview() {
   // even if the on-upload callback was missed (e.g. concurrent final uploads,
   // or a page reload after capture). Never (re)trigger once the body step has
   // already moved into analysis or reached a terminal state.
+  //
+  // Depends on `inspection` (not just `bodyStep?.status`) so this re-runs on
+  // every poll tick, not only when the status value itself changes. That
+  // matters because a failed analyze-photos call resets the trigger ref but
+  // otherwise leaves status at UPLOADED forever — without repolling this
+  // effect, the retry would never actually fire again.
   useEffect(() => {
     if (bodyMode !== "PHOTOS_8SIDE" || !allEightCaptured) return;
     const status = bodyStep?.status;
@@ -449,7 +462,7 @@ export function VideoReview() {
       return;
     }
     triggerPhotoAnalysis();
-  }, [bodyMode, allEightCaptured, bodyStep?.status, triggerPhotoAnalysis]);
+  }, [bodyMode, allEightCaptured, bodyStep?.status, triggerPhotoAnalysis, inspection]);
   const aiInfo = inspection ? extractUnitInfo(inspection, unitData) : null;
   const hasAIData = !!inspection?.steps.some(
     (s) =>
