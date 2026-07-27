@@ -128,6 +128,12 @@ export class StepAnalysisJob {
     const startTime = Date.now();
     // Accumulates token usage across every model call this step makes.
     const usage = newUsageAccumulator();
+    // Declared here (not inside the try block) so the catch handler below
+    // can persist whatever Gemini actually returned when a JSON.parse (or
+    // any other) failure hits — previously the FAILED AIAnalysis record
+    // always stored rawResponse: "", so a parse failure gave no way to see
+    // what the model's response actually looked like.
+    let rawResponse = "";
 
     log.info("Starting step analysis");
 
@@ -190,7 +196,6 @@ export class StepAnalysisJob {
       }
 
       // 3. Analyze with Gemini
-      let rawResponse: string;
       let fileUri: string | undefined;
       // For BODY_INSPECTION ensemble runs, the parsed consensus is set inside
       // the helper. We keep it here so the JSON-parse step below can use it
@@ -672,12 +677,20 @@ export class StepAnalysisJob {
       const processingTimeMs = Date.now() - startTime;
       const errorMessage =
         error instanceof Error ? error.message : String(error);
+      // Logged into the `error` field (not a separate key) because the
+      // Winston formatter only inlines a fixed whitelist of metadata keys —
+      // anything else is silently dropped from the rendered log line. This
+      // keeps the raw-response preview visible in Grafana without a DB query.
       log.error("Step analysis failed", {
-        error: errorMessage,
+        error: rawResponse
+          ? `${errorMessage} | rawResponse (first 1000 chars): ${rawResponse.slice(0, 1000)}`
+          : errorMessage,
         processingTimeMs,
       });
 
-      // Save FAILED AIAnalysis
+      // Save FAILED AIAnalysis — persists whatever Gemini actually returned
+      // (rawResponse defaults to "" if the failure happened before any
+      // model call completed) instead of always discarding it.
       await this.aiAnalysisRepository
         .createAnalysis(JOB_SYSTEM_SCOPE, {
           stepId,
@@ -686,7 +699,7 @@ export class StepAnalysisJob {
             const fallbackPair = buildStepPrompt(stepType);
             return `[SYSTEM]\n${fallbackPair.systemInstruction}\n\n[USER]\n${fallbackPair.userPrompt}`;
           })(),
-          rawResponse: "",
+          rawResponse,
           processingTimeMs,
           inputTokens: usage.total.inputTokens,
           outputTokens: usage.total.outputTokens,
