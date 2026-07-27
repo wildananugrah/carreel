@@ -26,6 +26,7 @@ import {
   applyBodyDamageSideGuard,
   type BodyDamage,
 } from "../utils/body-damage-guard";
+import { parseGeminiJson } from "../utils/json-repair";
 import {
   type BodyInspectionResult,
   type BodyVerificationResult,
@@ -54,7 +55,10 @@ export interface StepAnalysisJobData {
  * single step. Pass `.sink` as the `onUsage` callback to the AI provider and
  * read `.total` when persisting the AIAnalysis row.
  */
-function newUsageAccumulator(): { total: TokenUsage; sink: (u: TokenUsage) => void } {
+function newUsageAccumulator(): {
+  total: TokenUsage;
+  sink: (u: TokenUsage) => void;
+} {
   const total: TokenUsage = {
     inputTokens: 0,
     outputTokens: 0,
@@ -234,13 +238,11 @@ export class StepAnalysisJob {
               usage.sink,
             );
 
-            const verificationCleaned = verificationRaw
-              .replace(/```(?:json)?\s*/g, "")
-              .replace(/```\s*/g, "")
-              .trim();
-            const verification = JSON.parse(
-              verificationCleaned,
-            ) as BodyVerificationResult;
+            const verification = parseGeminiJson<BodyVerificationResult>(
+              verificationRaw,
+              log,
+              { stepId, pass: "verification" },
+            );
 
             log.info("AI body verification result", {
               statusVerifikasi: verification.statusVerifikasi,
@@ -375,12 +377,7 @@ export class StepAnalysisJob {
       const parsed =
         stepType === "BODY_INSPECTION" && bodyInspectionParsed
           ? bodyInspectionParsed
-          : JSON.parse(
-              rawResponse
-                .replace(/```(?:json)?\s*/g, "")
-                .replace(/```\s*/g, "")
-                .trim(),
-            );
+          : parseGeminiJson<any>(rawResponse, log, { stepId, stepType });
       const processingTimeMs = Date.now() - startTime;
 
       // 4a. Side guard for BODY_INSPECTION damages is now applied per run
@@ -814,12 +811,14 @@ export class StepAnalysisJob {
       BODY_VERIFICATION_AI_CONFIG,
       usage.sink,
     );
-    const verification = JSON.parse(
-      verifyRaw
-        .replace(/```(?:json)?\s*/g, "")
-        .replace(/```\s*/g, "")
-        .trim(),
-    ) as BodyVerificationResult;
+    const verification = parseGeminiJson<BodyVerificationResult>(
+      verifyRaw,
+      log,
+      {
+        stepId,
+        pass: "verification-photo",
+      },
+    );
 
     log.info("AI body verification result (photo)", {
       statusVerifikasi: verification.statusVerifikasi,
@@ -888,12 +887,10 @@ export class StepAnalysisJob {
       STEP_AI_CONFIG.BODY_INSPECTION,
       usage.sink,
     );
-    const result = JSON.parse(
-      damageRaw
-        .replace(/```(?:json)?\s*/g, "")
-        .replace(/```\s*/g, "")
-        .trim(),
-    ) as PhotoBodyInspectionResult;
+    const result = parseGeminiJson<PhotoBodyInspectionResult>(damageRaw, log, {
+      stepId,
+      pass: "damage-photo",
+    });
     const damages = result.damages ?? [];
 
     log.info(
@@ -1019,13 +1016,9 @@ export class StepAnalysisJob {
         STEP_AI_CONFIG.BODY_INSPECTION,
         onUsage,
       );
-      const cleaned = raw
-        .replace(/```(?:json)?\s*/g, "")
-        .replace(/```\s*/g, "")
-        .trim();
-      const parsed = JSON.parse(cleaned) as Record<string, unknown> & {
-        damages?: BodyDamage[];
-      };
+      const parsed = parseGeminiJson<
+        Record<string, unknown> & { damages?: BodyDamage[] }
+      >(raw, log, { pass: "ensemble", run: i, of: N });
       const damages = Array.isArray(parsed.damages) ? parsed.damages : [];
       parsed.damages = damages;
 
