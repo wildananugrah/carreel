@@ -31,14 +31,15 @@ function extractUsage(response: {
 }
 
 /**
- * Gemini's JSON response mode does not guarantee a *complete* object — if the
- * model hits `maxOutputTokens` mid-response, `response.text` is silently the
- * truncated prefix, which then fails `JSON.parse` downstream with an opaque
- * "Expected '}'" error that gives no hint it was a token-budget issue. Fail
- * loudly here instead, with the actual usage numbers, so a truncated
+ * Gemini's JSON response mode does not guarantee a *complete* object unless
+ * the model stops for the normal "STOP" reason. Hitting `maxOutputTokens`,
+ * tripping a safety filter, flagging recitation, etc. all leave
+ * `response.text` as a partial fragment, which then fails `JSON.parse`
+ * downstream with an opaque "Expected '}'" error that gives no hint why.
+ * Fail loudly here instead, naming the actual reason, so an incomplete
  * response is diagnosable without having to guess from a JSON syntax error.
  */
-function assertNotTruncated(
+function assertFinishedNormally(
   response: {
     candidates?: { finishReason?: string }[];
     usageMetadata?: {
@@ -48,14 +49,19 @@ function assertNotTruncated(
   },
   maxOutputTokens: number | undefined,
 ): void {
-  if (response.candidates?.[0]?.finishReason !== "MAX_TOKENS") return;
+  const finishReason = response.candidates?.[0]?.finishReason;
+  if (!finishReason || finishReason === "STOP") return;
   const u = response.usageMetadata;
+  const detail =
+    finishReason === "MAX_TOKENS"
+      ? ` (maxOutputTokens=${maxOutputTokens ?? "(model default)"}, thinkingTokens=${
+          u?.thoughtsTokenCount ?? "?"
+        }, outputTokens=${
+          u?.candidatesTokenCount ?? "?"
+        }). Raise maxOutputTokens for this step or reduce expected response verbosity.`
+      : ". The response was likely blocked or cut short by Gemini for this reason — check the source image/video content.";
   throw new Error(
-    `Gemini response truncated: finishReason=MAX_TOKENS with maxOutputTokens=${
-      maxOutputTokens ?? "(model default)"
-    } (thinkingTokens=${u?.thoughtsTokenCount ?? "?"}, outputTokens=${
-      u?.candidatesTokenCount ?? "?"
-    }). Raise maxOutputTokens for this step or reduce expected response verbosity.`,
+    `Gemini response did not finish normally: finishReason=${finishReason}${detail}`,
   );
 }
 
@@ -124,7 +130,7 @@ export class GeminiProvider implements IAIProvider {
       config: buildModelConfig(systemInstruction, options),
     });
     onUsage?.(extractUsage(response));
-    assertNotTruncated(response, options?.maxOutputTokens);
+    assertFinishedNormally(response, options?.maxOutputTokens);
     return response.text ?? "";
   }
 
@@ -147,7 +153,7 @@ export class GeminiProvider implements IAIProvider {
       config: buildModelConfig(systemInstruction, options),
     });
     onUsage?.(extractUsage(response));
-    assertNotTruncated(response, options?.maxOutputTokens);
+    assertFinishedNormally(response, options?.maxOutputTokens);
     return response.text ?? "";
   }
 
@@ -168,7 +174,7 @@ export class GeminiProvider implements IAIProvider {
       config: buildModelConfig(systemInstruction, options),
     });
     onUsage?.(extractUsage(response));
-    assertNotTruncated(response, options?.maxOutputTokens);
+    assertFinishedNormally(response, options?.maxOutputTokens);
     return response.text ?? "";
   }
 
