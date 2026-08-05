@@ -18,4 +18,4 @@ jobs:
           git pull origin main
 
       - name: Run deploy script
-        run: bash /root/repo/carreel/deploy-all.sh
+        run: bash /home/wildandev/repo/carreel/deploy-all.sh
