@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Pull latest code
         run: |
-          cd /root/repo/carreel
+          cd /home/wildandev/repo/carreel
           git pull origin main
 
       - name: Run deploy script
