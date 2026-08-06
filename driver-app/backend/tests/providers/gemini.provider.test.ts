@@ -1,5 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { GeminiStubProvider } from "../../src/providers/gemini.provider";
+import {
+  GeminiProvider,
+  GeminiStubProvider,
+} from "../../src/providers/gemini.provider";
+
+interface GoogleGenAIWithHttpOptions {
+  httpOptions?: { retryOptions?: { attempts?: number } };
+}
+
+describe("GeminiProvider", () => {
+  test("configures SDK retry so transient network errors (e.g. socket closed) are retried instead of failing the step immediately", () => {
+    const provider = new GeminiProvider("test-api-key", "gemini-test-model");
+    const ai = (provider as unknown as { ai: GoogleGenAIWithHttpOptions }).ai;
+    expect(ai.httpOptions?.retryOptions?.attempts).toBeGreaterThan(1);
+  });
+});
 
 describe("GeminiStubProvider", () => {
   test("analyzeImage accepts optional systemInstruction parameter", async () => {

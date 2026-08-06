@@ -106,6 +106,17 @@ function buildModelConfig(
   return config;
 }
 
+/**
+ * Attempts for the SDK's built-in retry (p-retry under the hood). It retries
+ * on retryable HTTP statuses (408/429/500/502/503/504) AND on raw network
+ * errors thrown by `fetch` itself — e.g. "socket connection was closed
+ * unexpectedly" — which otherwise propagate straight to the caller with zero
+ * retry. Covers generateContent calls and the chunked file-upload requests
+ * used by uploadVideoFile, since both go through the same underlying
+ * apiClient. Non-retryable 4xx errors (bad request, auth) abort immediately.
+ */
+const GEMINI_RETRY_ATTEMPTS = 3;
+
 export class GeminiProvider implements IAIProvider {
   private ai: GoogleGenAI;
 
@@ -113,7 +124,10 @@ export class GeminiProvider implements IAIProvider {
     apiKey: string,
     private model: string,
   ) {
-    this.ai = new GoogleGenAI({ apiKey });
+    this.ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: { retryOptions: { attempts: GEMINI_RETRY_ATTEMPTS } },
+    });
   }
 
   async analyzeImage(
