@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-REPO_DIR="/root/repo/carreel"
+REPO_DIR="/home/wildandev/repo/carreel"
 DEPLOY_DIR="/var/www/html/carreel"
 
 START_EPOCH=$(date +%s)
