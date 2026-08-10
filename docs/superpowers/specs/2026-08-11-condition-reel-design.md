@@ -8,19 +8,23 @@
 
 In `PHOTOS_8SIDE` body-inspection mode, the driver captures 8 labeled side photos
 (Depan, Depan-Kanan, Kanan, Belakang-Kanan, Belakang, Belakang-Kiri, Kiri, Depan-Kiri).
-The inspection detail page (`InspectionDetail.tsx`, both driver-app and planner-app)
-shows these as a static 2-column grid. There's no quick way to visually scan all 8
-sides in sequence without tapping each thumbnail individually — reviewers (planners)
-and drivers reviewing their own submission have to piece together the vehicle's
-condition from 8 separate static tiles.
+The driver-app inspection detail page (`InspectionDetail.tsx`) shows these as a static
+2-column grid. There's no quick way to visually scan all 8 sides in sequence without
+tapping each thumbnail individually — drivers reviewing their own submission have to
+piece together the vehicle's condition from 8 separate static tiles.
 
 ## Requirements (decided during brainstorming)
 
-1. **Scope:** Both driver-app and planner-app inspection detail pages. Each frontend
-   already has its own independently-duplicated copy of `InspectionDetail.tsx` /
-   `BODY_SIDE_LABELS` / `BODY_SIDE_ORDER` (no shared UI package exists between the two
-   frontends — they are fully separate apps per the project's architecture), so the
-   new component is added to both, following the existing duplication pattern.
+1. **Scope:** Driver-app inspection detail page only. Planner-app's inspection page
+   was initially assumed to be a near-identical clone with the same PRE/POST-tabbed
+   photo grid — during planning this turned out to be false. Planner-app's
+   `InspectionDetail.tsx` is a completely different layout (a single desktop page
+   listing every `inspection.steps` entry as a card, each showing its media as a small
+   horizontal-scrolling strip of 80×80px `MediaThumbnail` tiles — no PRE/POST tabs, no
+   2-column grid, no `PrePostPanel`). Only the `BODY_SIDE_LABELS` dictionary is
+   actually duplicated there, not the grid/tabs structure. Adapting the reel to that
+   denser, differently-shaped UI is a separate follow-up, out of scope here (see "Out
+   of scope").
 2. **Gating:** Only rendered when `bodyInspectionMode === "PHOTOS_8SIDE"` and
    `bodyPhotos.length > 0`. In `VIDEO` mode nothing changes — the real recorded video
    keeps rendering as it does today.
@@ -43,23 +47,28 @@ condition from 8 separate static tiles.
 
 ## Approach
 
-**New component, duplicated per-app** (`ConditionReel.tsx` in each frontend's
-`components/inspection/` directory), rather than:
-- A shared package between driver-app and planner-app — no such infra exists today;
-  introducing cross-app workspace tooling for one component is disproportionate and
-  inconsistent with how `BODY_SIDE_LABELS` etc. are already independently duplicated.
+**New component** (`driver-app/frontend/src/components/inspection/ConditionReel.tsx`),
+rather than:
 - Extending `MediaLightbox` — that component is a full-screen single-item modal.
   Retrofitting it to also handle an inline, auto-cycling, multi-image hero card would
   conflate two unrelated concerns in one file (violates single responsibility).
+- A shared package for future planner-app reuse — premature; planner-app's actual
+  layout is different enough that it isn't clear the same component would even fit
+  without changes, so building shared infra now would be speculative (YAGNI).
 
-Internally: a `setInterval`-driven index (0–7, wrapping), each tick crossfading via a
-CSS opacity transition between the current and next `<MediaImage>` (two stacked
-absolutely-positioned images, only the active one at `opacity-100`). Pausing simply
-stops the interval; resuming restarts it from the same index (no repositioning to 0).
+Internally: a `setInterval`-driven index (0 to `photos.length - 1`, wrapping). All
+photos render simultaneously, absolutely stacked in the same box; only the photo at
+the current index sits at `opacity-100` (rest at `opacity-0`), with a CSS
+`transition-opacity` so the swap crossfades. This is simpler than manually tracking a
+"previous" layer — the browser handles both the outgoing and incoming fade from a
+single `index` state — and it has the side benefit of preloading all 8 images up
+front (via each `<MediaImage>` mounting immediately), avoiding a loading-skeleton
+flash when the cycle reaches a not-yet-fetched photo. Pausing stops the interval;
+resuming restarts it from the same index (no repositioning to 0).
 
 ## Design
 
-### 1. Shared logic — driver-app (`driver-app/frontend/src/components/inspection/ConditionReel.tsx`)
+### 1. Component (`driver-app/frontend/src/components/inspection/ConditionReel.tsx`)
 
 Props: `photos: BodyPhoto[]` (the same shape `bodyPhotos` already produces —
 `{ id, bodySide }` at minimum), no other config (interval fixed at 2000ms; not made
@@ -74,14 +83,13 @@ Behavior:
   `(index + 1) % photos.length`, cleared on unmount or when `paused` becomes true, and
   re-created when `paused` becomes false (resuming from the current `index`, not 0).
 - Tap handler on the card root toggles `paused`.
-- Renders: two stacked `<MediaImage>` layers (current + previous, previous fading out)
-  for the crossfade, the body-side label tag (existing style, reusing
+- Renders: all photos stacked absolutely in one relatively-positioned box (crossfade
+  as described above), the body-side label tag (existing style, reusing
   `BODY_SIDE_LABELS[photo.bodySide ?? ""]`), the 8-segment progress bar (only when
   `photos.length > 1`), and a small pause/play glyph (inline SVG, matching
   `MediaLightbox`'s existing inline-SVG icon convention — no icon library is used
-  anywhere in this codebase) shown briefly / on hover-equivalent (always visible at
-  low opacity in a corner, consistent with mobile-first "no hover-dependent
-  interactions" rule).
+  anywhere in this codebase), always visible at low opacity in a corner (consistent
+  with mobile-first "no hover-dependent interactions" rule).
 
 ### 2. Wiring into `InspectionDetail.tsx` (driver-app)
 
@@ -90,25 +98,18 @@ In `PrePostPanel` (around the existing grid at lines 650–671): when
 `<ConditionReel photos={bodyPhotos} />` immediately above the grid `<div>`. No change
 to the grid itself.
 
-### 3. Planner-app mirror
+### 3. Tests
 
-Same component (`planner-app/frontend/src/components/inspection/ConditionReel.tsx`)
-and same wiring point in planner-app's `InspectionDetail.tsx` `PrePostPanel`. Planner's
-`MediaImage` / media-URL helpers are already used for the grid there, so the component
-is a straight port with the same props contract.
-
-### 4. Tests
-
-This repo has no frontend test runner configured in either frontend package (no
+This repo has no frontend test runner configured in driver-app (no
 `vitest`/`@testing-library/react`, no `.test.tsx` files, no `test` script) — automated
 component tests are not an existing pattern here, so none are added as part of this
-change. Verification is manual: start each frontend's dev server and confirm, per
-CLAUDE.md's UI-change rule, that the reel autoplays, loops, labels correctly, pauses/
-resumes on tap, and that `VIDEO`-mode inspections are unaffected — in both driver-app
-and planner-app, on a mobile viewport for driver-app.
+change. Verification is manual: start the driver-app dev server and confirm, per
+CLAUDE.md's UI-change rule, that the reel autoplays, loops, labels correctly, and
+pauses/resumes on tap, on a mobile viewport, and that `VIDEO`-mode inspections are
+unaffected.
 
 ## Validation
-- `bunx tsc --noEmit` and `bun run lint` (Biome) clean in both frontend packages.
+- `bunx tsc --noEmit` and `bun run lint` (Biome) clean in `driver-app/frontend`.
 - Manual verification in-browser (dev server) per above — no automated frontend test
   suite exists to run.
 
@@ -117,5 +118,6 @@ and planner-app, on a mobile viewport for driver-app.
 - Configurable per-workspace timing/interval.
 - Tap-to-open-lightbox from the reel (explicitly rejected — pause/resume only).
 - Any change to `VIDEO`-mode body inspection rendering.
-- Extracting a cross-app shared component package (out of scope; follows existing
-  per-app duplication pattern).
+- Planner-app: its inspection page has a structurally different layout (per-step
+  horizontal thumbnail strip, not a PRE/POST-tabbed grid) discovered during planning.
+  Adapting the reel there is a separate future task, not part of this plan.
