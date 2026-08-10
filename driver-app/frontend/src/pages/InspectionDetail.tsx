@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ConditionReel } from "../components/inspection/ConditionReel";
 import { MediaImage } from "../components/ui/MediaImage";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
@@ -649,26 +650,29 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
       {/* Body inspection — 8 photos (PHOTOS_8SIDE) or a video */}
       {isPhotoBody ? (
         bodyPhotos.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2">
-            {bodyPhotos.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
-                className="relative aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
-              >
-                <MediaImage
-                  src={`/api/media/${p.id}/url`}
-                  alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
-                  className="w-full h-full object-cover"
-                />
-                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
-                  {BODY_SIDE_LABELS[p.bodySide ?? ""] ??
-                    (p.bodySide ? p.bodySide : "Foto Tambahan")}
-                </span>
-              </button>
-            ))}
-          </div>
+          <>
+            <ConditionReel photos={bodyPhotos} />
+            <div className="grid grid-cols-2 gap-2">
+              {bodyPhotos.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
+                  className="relative aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
+                >
+                  <MediaImage
+                    src={`/api/media/${p.id}/url`}
+                    alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
+                    {BODY_SIDE_LABELS[p.bodySide ?? ""] ??
+                      (p.bodySide ? p.bodySide : "Foto Tambahan")}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="bg-[#141414] rounded-[10px] h-40 flex items-center justify-center border border-[#2a2a2a]">
             <p className="text-[11px] text-[#888]">Belum ada foto body</p>
