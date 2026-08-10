@@ -41,7 +41,8 @@ export function ConditionReel({ photos }: ConditionReelProps) {
 
   if (photos.length === 0) return null;
 
-  const current = photos[Math.min(index, photos.length - 1)];
+  const safeIndex = Math.min(index, photos.length - 1);
+  const current = photos[safeIndex];
   const currentLabel =
     BODY_SIDE_LABELS[current.bodySide ?? ""] ??
     (current.bodySide ? current.bodySide : "Foto Tambahan");
@@ -49,15 +50,21 @@ export function ConditionReel({ photos }: ConditionReelProps) {
   return (
     <button
       type="button"
-      onClick={() => setPaused((p) => !p)}
-      aria-label={paused ? "Lanjutkan Condition Reel" : "Jeda Condition Reel"}
-      className="relative w-full aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
+      onClick={photos.length > 1 ? () => setPaused((p) => !p) : undefined}
+      aria-label={
+        photos.length > 1
+          ? paused
+            ? "Lanjutkan Condition Reel"
+            : "Jeda Condition Reel"
+          : undefined
+      }
+      className="relative block w-full aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
     >
       {photos.map((photo, i) => (
         <div
           key={photo.id}
           className={`absolute inset-0 transition-opacity duration-500 ${
-            i === index ? "opacity-100" : "opacity-0"
+            i === safeIndex ? "opacity-100" : "opacity-0"
           }`}
         >
           <MediaImage
@@ -74,7 +81,7 @@ export function ConditionReel({ photos }: ConditionReelProps) {
             <span
               key={photo.id}
               className={`h-0.5 flex-1 rounded-full ${
-                i === index ? "bg-[#F5C842]" : "bg-white/25"
+                i === safeIndex ? "bg-[#F5C842]" : "bg-white/25"
               }`}
             />
           ))}
