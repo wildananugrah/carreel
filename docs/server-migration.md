@@ -113,7 +113,6 @@ ssh -i $NEW_KEY $NEW_USER@$NEW_HOST \
 ```bash
 # Terminal 1
 ssh -i $OLD_KEY -L 19000:localhost:9000 $OLD_USER@$OLD_HOST
-ssh -i mhamzah.pem -L 19000:localhost:9000 ubuntu@$OLD_HOST
 # Terminal 2
 ssh -i $NEW_KEY -L 19001:localhost:9000 $NEW_USER@$NEW_HOST
 ```

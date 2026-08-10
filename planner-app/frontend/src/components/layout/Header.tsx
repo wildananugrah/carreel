@@ -47,11 +47,7 @@ export function Header() {
         <div className="flex items-center justify-between py-3">
           {/* Logo + Title */}
           <Link to="/" className="flex items-center gap-2.5">
-            <img
-              src="/car-reel-logo.png"
-              alt="CarReel"
-              className="h-9 w-9 rounded-lg object-contain"
-            />
+            <img src="/favicon.png" alt="CarReel" className="h-9 w-9 rounded-lg object-contain" />
             <div>
               <span className="block text-[17px] font-black text-white tracking-tight leading-tight">
                 CarReel
