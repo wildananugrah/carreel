@@ -8,10 +8,9 @@ export class AlertRepository implements IAlertRepository {
   constructor(private prisma: PrismaClient) {}
 
   /**
-   * Alerts carry projectId but not driverId. The Prisma schema doesn't define
-   * an `inspection` relation on Alert, so driver-level restriction cannot be
-   * expressed via a nested `where`. Instead we pre-fetch the set of inspection
-   * IDs that match the user's scope and filter alerts by that list.
+   * Alerts carry projectId but not driverId, so driver-level restriction has to
+   * come from the parent inspection. We pre-fetch the set of inspection IDs
+   * that match the user's scope and filter alerts by that list.
    */
   private async allowedInspectionIds(scope: UserScope): Promise<string[]> {
     const inspectionFilter = buildScopeFilter(scope, {

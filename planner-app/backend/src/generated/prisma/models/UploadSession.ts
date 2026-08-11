@@ -348,6 +348,7 @@ export type UploadSessionWhereInput = {
   durationSeconds?: Prisma.FloatNullableFilter<"UploadSession"> | number | null
   createdAt?: Prisma.DateTimeFilter<"UploadSession"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UploadSession"> | Date | string
+  inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   parts?: Prisma.UploadedPartListRelationFilter
 }
 
@@ -371,6 +372,7 @@ export type UploadSessionOrderByWithRelationInput = {
   durationSeconds?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  inspection?: Prisma.InspectionOrderByWithRelationInput
   parts?: Prisma.UploadedPartOrderByRelationAggregateInput
 }
 
@@ -397,6 +399,7 @@ export type UploadSessionWhereUniqueInput = Prisma.AtLeast<{
   durationSeconds?: Prisma.FloatNullableFilter<"UploadSession"> | number | null
   createdAt?: Prisma.DateTimeFilter<"UploadSession"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UploadSession"> | Date | string
+  inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
   parts?: Prisma.UploadedPartListRelationFilter
 }, "id">
 
@@ -455,7 +458,6 @@ export type UploadSessionScalarWhereWithAggregatesInput = {
 export type UploadSessionCreateInput = {
   id?: string
   driverId: string
-  inspectionId: string
   stepId: string
   minioUploadId: string
   minioKey: string
@@ -472,6 +474,7 @@ export type UploadSessionCreateInput = {
   durationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  inspection: Prisma.InspectionCreateNestedOneWithoutUploadSessionsInput
   parts?: Prisma.UploadedPartCreateNestedManyWithoutSessionInput
 }
 
@@ -501,7 +504,6 @@ export type UploadSessionUncheckedCreateInput = {
 export type UploadSessionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
-  inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   stepId?: Prisma.StringFieldUpdateOperationsInput | string
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -518,6 +520,7 @@ export type UploadSessionUpdateInput = {
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inspection?: Prisma.InspectionUpdateOneRequiredWithoutUploadSessionsNestedInput
   parts?: Prisma.UploadedPartUpdateManyWithoutSessionNestedInput
 }
 
@@ -569,7 +572,6 @@ export type UploadSessionCreateManyInput = {
 export type UploadSessionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
-  inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   stepId?: Prisma.StringFieldUpdateOperationsInput | string
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -608,6 +610,16 @@ export type UploadSessionUncheckedUpdateManyInput = {
   durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type UploadSessionListRelationFilter = {
+  every?: Prisma.UploadSessionWhereInput
+  some?: Prisma.UploadSessionWhereInput
+  none?: Prisma.UploadSessionWhereInput
+}
+
+export type UploadSessionOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type UploadSessionCountOrderByAggregateInput = {
@@ -699,6 +711,48 @@ export type UploadSessionScalarRelationFilter = {
   isNot?: Prisma.UploadSessionWhereInput
 }
 
+export type UploadSessionCreateNestedManyWithoutInspectionInput = {
+  create?: Prisma.XOR<Prisma.UploadSessionCreateWithoutInspectionInput, Prisma.UploadSessionUncheckedCreateWithoutInspectionInput> | Prisma.UploadSessionCreateWithoutInspectionInput[] | Prisma.UploadSessionUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.UploadSessionCreateOrConnectWithoutInspectionInput | Prisma.UploadSessionCreateOrConnectWithoutInspectionInput[]
+  createMany?: Prisma.UploadSessionCreateManyInspectionInputEnvelope
+  connect?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+}
+
+export type UploadSessionUncheckedCreateNestedManyWithoutInspectionInput = {
+  create?: Prisma.XOR<Prisma.UploadSessionCreateWithoutInspectionInput, Prisma.UploadSessionUncheckedCreateWithoutInspectionInput> | Prisma.UploadSessionCreateWithoutInspectionInput[] | Prisma.UploadSessionUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.UploadSessionCreateOrConnectWithoutInspectionInput | Prisma.UploadSessionCreateOrConnectWithoutInspectionInput[]
+  createMany?: Prisma.UploadSessionCreateManyInspectionInputEnvelope
+  connect?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+}
+
+export type UploadSessionUpdateManyWithoutInspectionNestedInput = {
+  create?: Prisma.XOR<Prisma.UploadSessionCreateWithoutInspectionInput, Prisma.UploadSessionUncheckedCreateWithoutInspectionInput> | Prisma.UploadSessionCreateWithoutInspectionInput[] | Prisma.UploadSessionUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.UploadSessionCreateOrConnectWithoutInspectionInput | Prisma.UploadSessionCreateOrConnectWithoutInspectionInput[]
+  upsert?: Prisma.UploadSessionUpsertWithWhereUniqueWithoutInspectionInput | Prisma.UploadSessionUpsertWithWhereUniqueWithoutInspectionInput[]
+  createMany?: Prisma.UploadSessionCreateManyInspectionInputEnvelope
+  set?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  disconnect?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  delete?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  connect?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  update?: Prisma.UploadSessionUpdateWithWhereUniqueWithoutInspectionInput | Prisma.UploadSessionUpdateWithWhereUniqueWithoutInspectionInput[]
+  updateMany?: Prisma.UploadSessionUpdateManyWithWhereWithoutInspectionInput | Prisma.UploadSessionUpdateManyWithWhereWithoutInspectionInput[]
+  deleteMany?: Prisma.UploadSessionScalarWhereInput | Prisma.UploadSessionScalarWhereInput[]
+}
+
+export type UploadSessionUncheckedUpdateManyWithoutInspectionNestedInput = {
+  create?: Prisma.XOR<Prisma.UploadSessionCreateWithoutInspectionInput, Prisma.UploadSessionUncheckedCreateWithoutInspectionInput> | Prisma.UploadSessionCreateWithoutInspectionInput[] | Prisma.UploadSessionUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.UploadSessionCreateOrConnectWithoutInspectionInput | Prisma.UploadSessionCreateOrConnectWithoutInspectionInput[]
+  upsert?: Prisma.UploadSessionUpsertWithWhereUniqueWithoutInspectionInput | Prisma.UploadSessionUpsertWithWhereUniqueWithoutInspectionInput[]
+  createMany?: Prisma.UploadSessionCreateManyInspectionInputEnvelope
+  set?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  disconnect?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  delete?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  connect?: Prisma.UploadSessionWhereUniqueInput | Prisma.UploadSessionWhereUniqueInput[]
+  update?: Prisma.UploadSessionUpdateWithWhereUniqueWithoutInspectionInput | Prisma.UploadSessionUpdateWithWhereUniqueWithoutInspectionInput[]
+  updateMany?: Prisma.UploadSessionUpdateManyWithWhereWithoutInspectionInput | Prisma.UploadSessionUpdateManyWithWhereWithoutInspectionInput[]
+  deleteMany?: Prisma.UploadSessionScalarWhereInput | Prisma.UploadSessionScalarWhereInput[]
+}
+
 export type EnumUploadSessionStatusFieldUpdateOperationsInput = {
   set?: $Enums.UploadSessionStatus
 }
@@ -717,10 +771,9 @@ export type UploadSessionUpdateOneRequiredWithoutPartsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UploadSessionUpdateToOneWithWhereWithoutPartsInput, Prisma.UploadSessionUpdateWithoutPartsInput>, Prisma.UploadSessionUncheckedUpdateWithoutPartsInput>
 }
 
-export type UploadSessionCreateWithoutPartsInput = {
+export type UploadSessionCreateWithoutInspectionInput = {
   id?: string
   driverId: string
-  inspectionId: string
   stepId: string
   minioUploadId: string
   minioKey: string
@@ -737,6 +790,102 @@ export type UploadSessionCreateWithoutPartsInput = {
   durationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parts?: Prisma.UploadedPartCreateNestedManyWithoutSessionInput
+}
+
+export type UploadSessionUncheckedCreateWithoutInspectionInput = {
+  id?: string
+  driverId: string
+  stepId: string
+  minioUploadId: string
+  minioKey: string
+  minioBucket: string
+  fileName: string
+  mimeType: string
+  fileSize: number
+  chunkSize: number
+  totalChunks: number
+  status?: $Enums.UploadSessionStatus
+  latitude?: number | null
+  longitude?: number | null
+  capturedAt: Date | string
+  durationSeconds?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  parts?: Prisma.UploadedPartUncheckedCreateNestedManyWithoutSessionInput
+}
+
+export type UploadSessionCreateOrConnectWithoutInspectionInput = {
+  where: Prisma.UploadSessionWhereUniqueInput
+  create: Prisma.XOR<Prisma.UploadSessionCreateWithoutInspectionInput, Prisma.UploadSessionUncheckedCreateWithoutInspectionInput>
+}
+
+export type UploadSessionCreateManyInspectionInputEnvelope = {
+  data: Prisma.UploadSessionCreateManyInspectionInput | Prisma.UploadSessionCreateManyInspectionInput[]
+  skipDuplicates?: boolean
+}
+
+export type UploadSessionUpsertWithWhereUniqueWithoutInspectionInput = {
+  where: Prisma.UploadSessionWhereUniqueInput
+  update: Prisma.XOR<Prisma.UploadSessionUpdateWithoutInspectionInput, Prisma.UploadSessionUncheckedUpdateWithoutInspectionInput>
+  create: Prisma.XOR<Prisma.UploadSessionCreateWithoutInspectionInput, Prisma.UploadSessionUncheckedCreateWithoutInspectionInput>
+}
+
+export type UploadSessionUpdateWithWhereUniqueWithoutInspectionInput = {
+  where: Prisma.UploadSessionWhereUniqueInput
+  data: Prisma.XOR<Prisma.UploadSessionUpdateWithoutInspectionInput, Prisma.UploadSessionUncheckedUpdateWithoutInspectionInput>
+}
+
+export type UploadSessionUpdateManyWithWhereWithoutInspectionInput = {
+  where: Prisma.UploadSessionScalarWhereInput
+  data: Prisma.XOR<Prisma.UploadSessionUpdateManyMutationInput, Prisma.UploadSessionUncheckedUpdateManyWithoutInspectionInput>
+}
+
+export type UploadSessionScalarWhereInput = {
+  AND?: Prisma.UploadSessionScalarWhereInput | Prisma.UploadSessionScalarWhereInput[]
+  OR?: Prisma.UploadSessionScalarWhereInput[]
+  NOT?: Prisma.UploadSessionScalarWhereInput | Prisma.UploadSessionScalarWhereInput[]
+  id?: Prisma.StringFilter<"UploadSession"> | string
+  driverId?: Prisma.StringFilter<"UploadSession"> | string
+  inspectionId?: Prisma.StringFilter<"UploadSession"> | string
+  stepId?: Prisma.StringFilter<"UploadSession"> | string
+  minioUploadId?: Prisma.StringFilter<"UploadSession"> | string
+  minioKey?: Prisma.StringFilter<"UploadSession"> | string
+  minioBucket?: Prisma.StringFilter<"UploadSession"> | string
+  fileName?: Prisma.StringFilter<"UploadSession"> | string
+  mimeType?: Prisma.StringFilter<"UploadSession"> | string
+  fileSize?: Prisma.IntFilter<"UploadSession"> | number
+  chunkSize?: Prisma.IntFilter<"UploadSession"> | number
+  totalChunks?: Prisma.IntFilter<"UploadSession"> | number
+  status?: Prisma.EnumUploadSessionStatusFilter<"UploadSession"> | $Enums.UploadSessionStatus
+  latitude?: Prisma.FloatNullableFilter<"UploadSession"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"UploadSession"> | number | null
+  capturedAt?: Prisma.DateTimeFilter<"UploadSession"> | Date | string
+  durationSeconds?: Prisma.FloatNullableFilter<"UploadSession"> | number | null
+  createdAt?: Prisma.DateTimeFilter<"UploadSession"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"UploadSession"> | Date | string
+}
+
+export type UploadSessionCreateWithoutPartsInput = {
+  id?: string
+  driverId: string
+  stepId: string
+  minioUploadId: string
+  minioKey: string
+  minioBucket: string
+  fileName: string
+  mimeType: string
+  fileSize: number
+  chunkSize: number
+  totalChunks: number
+  status?: $Enums.UploadSessionStatus
+  latitude?: number | null
+  longitude?: number | null
+  capturedAt: Date | string
+  durationSeconds?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  inspection: Prisma.InspectionCreateNestedOneWithoutUploadSessionsInput
 }
 
 export type UploadSessionUncheckedCreateWithoutPartsInput = {
@@ -780,6 +929,28 @@ export type UploadSessionUpdateToOneWithWhereWithoutPartsInput = {
 export type UploadSessionUpdateWithoutPartsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  stepId?: Prisma.StringFieldUpdateOperationsInput | string
+  minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
+  minioKey?: Prisma.StringFieldUpdateOperationsInput | string
+  minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  fileName?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  chunkSize?: Prisma.IntFieldUpdateOperationsInput | number
+  totalChunks?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumUploadSessionStatusFieldUpdateOperationsInput | $Enums.UploadSessionStatus
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inspection?: Prisma.InspectionUpdateOneRequiredWithoutUploadSessionsNestedInput
+}
+
+export type UploadSessionUncheckedUpdateWithoutPartsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  driverId?: Prisma.StringFieldUpdateOperationsInput | string
   inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   stepId?: Prisma.StringFieldUpdateOperationsInput | string
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -799,10 +970,74 @@ export type UploadSessionUpdateWithoutPartsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type UploadSessionUncheckedUpdateWithoutPartsInput = {
+export type UploadSessionCreateManyInspectionInput = {
+  id?: string
+  driverId: string
+  stepId: string
+  minioUploadId: string
+  minioKey: string
+  minioBucket: string
+  fileName: string
+  mimeType: string
+  fileSize: number
+  chunkSize: number
+  totalChunks: number
+  status?: $Enums.UploadSessionStatus
+  latitude?: number | null
+  longitude?: number | null
+  capturedAt: Date | string
+  durationSeconds?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type UploadSessionUpdateWithoutInspectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
-  inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  stepId?: Prisma.StringFieldUpdateOperationsInput | string
+  minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
+  minioKey?: Prisma.StringFieldUpdateOperationsInput | string
+  minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  fileName?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  chunkSize?: Prisma.IntFieldUpdateOperationsInput | number
+  totalChunks?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumUploadSessionStatusFieldUpdateOperationsInput | $Enums.UploadSessionStatus
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parts?: Prisma.UploadedPartUpdateManyWithoutSessionNestedInput
+}
+
+export type UploadSessionUncheckedUpdateWithoutInspectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  stepId?: Prisma.StringFieldUpdateOperationsInput | string
+  minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
+  minioKey?: Prisma.StringFieldUpdateOperationsInput | string
+  minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  fileName?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  chunkSize?: Prisma.IntFieldUpdateOperationsInput | number
+  totalChunks?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumUploadSessionStatusFieldUpdateOperationsInput | $Enums.UploadSessionStatus
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  capturedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  durationSeconds?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parts?: Prisma.UploadedPartUncheckedUpdateManyWithoutSessionNestedInput
+}
+
+export type UploadSessionUncheckedUpdateManyWithoutInspectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  driverId?: Prisma.StringFieldUpdateOperationsInput | string
   stepId?: Prisma.StringFieldUpdateOperationsInput | string
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -872,6 +1107,7 @@ export type UploadSessionSelect<ExtArgs extends runtime.Types.Extensions.Interna
   durationSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   parts?: boolean | Prisma.UploadSession$partsArgs<ExtArgs>
   _count?: boolean | Prisma.UploadSessionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["uploadSession"]>
@@ -896,6 +1132,7 @@ export type UploadSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   durationSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["uploadSession"]>
 
 export type UploadSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -918,6 +1155,7 @@ export type UploadSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   durationSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["uploadSession"]>
 
 export type UploadSessionSelectScalar = {
@@ -944,15 +1182,21 @@ export type UploadSessionSelectScalar = {
 
 export type UploadSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "driverId" | "inspectionId" | "stepId" | "minioUploadId" | "minioKey" | "minioBucket" | "fileName" | "mimeType" | "fileSize" | "chunkSize" | "totalChunks" | "status" | "latitude" | "longitude" | "capturedAt" | "durationSeconds" | "createdAt" | "updatedAt", ExtArgs["result"]["uploadSession"]>
 export type UploadSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   parts?: boolean | Prisma.UploadSession$partsArgs<ExtArgs>
   _count?: boolean | Prisma.UploadSessionCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UploadSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UploadSessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UploadSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
+}
+export type UploadSessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
+}
 
 export type $UploadSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UploadSession"
   objects: {
+    inspection: Prisma.$InspectionPayload<ExtArgs>
     parts: Prisma.$UploadedPartPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1369,6 +1613,7 @@ readonly fields: UploadSessionFieldRefs;
  */
 export interface Prisma__UploadSessionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  inspection<T extends Prisma.InspectionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InspectionDefaultArgs<ExtArgs>>): Prisma.Prisma__InspectionClient<runtime.Types.Result.GetResult<Prisma.$InspectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   parts<T extends Prisma.UploadSession$partsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UploadSession$partsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UploadedPartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1672,6 +1917,10 @@ export type UploadSessionCreateManyAndReturnArgs<ExtArgs extends runtime.Types.E
    */
   data: Prisma.UploadSessionCreateManyInput | Prisma.UploadSessionCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UploadSessionIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1742,6 +1991,10 @@ export type UploadSessionUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.E
    * Limit how many UploadSessions to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UploadSessionIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

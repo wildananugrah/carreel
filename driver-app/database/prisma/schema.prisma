@@ -138,6 +138,9 @@ model Inspection {
   reviews          InspectionReview[]
   auditLogs        AuditLog[]
   damageAuditLogs  DamageAuditLog[]
+  alerts           Alert[]
+  telemetryData    TelemetryData[]
+  uploadSessions   UploadSession[]
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
@@ -382,8 +385,11 @@ model TelemetryData {
   kmDelta        Int?
   createdAt      DateTime @default(now())
 
+  inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
   projectId String
 
+  @@index([inspectionId])
   @@index([projectId])
   @@map("telemetry_data")
 }
@@ -437,10 +443,13 @@ model Alert {
   isRead       Boolean   @default(false)
   createdAt    DateTime  @default(now())
 
+  inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
   @@index([isRead, createdAt])
+  @@index([inspectionId])
   @@index([projectId])
   @@map("alerts")
 }
@@ -504,9 +513,11 @@ model UploadSession {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
-  parts UploadedPart[]
+  inspection Inspection     @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  parts      UploadedPart[]
 
   @@index([driverId, status])
+  @@index([inspectionId])
   @@map("upload_sessions")
 }
 
@@ -550,13 +561,13 @@ model OutboxEvent {
 // ========================
 
 model Workspace {
-  id          String             @id @default(uuid())
-  name        String             @unique
-  displayName String
-  bodyInspectionMode BodyInspectionMode @default(VIDEO)
-  additionalBodyPhotoCount Int @default(0)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id                       String             @id @default(uuid())
+  name                     String             @unique
+  displayName              String
+  bodyInspectionMode       BodyInspectionMode @default(VIDEO)
+  additionalBodyPhotoCount Int                @default(0)
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
   projects Project[]
 

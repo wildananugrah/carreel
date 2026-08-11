@@ -268,6 +268,7 @@ export type TelemetryDataWhereInput = {
   kmDelta?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
   createdAt?: Prisma.DateTimeFilter<"TelemetryData"> | Date | string
   projectId?: Prisma.StringFilter<"TelemetryData"> | string
+  inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
 }
 
 export type TelemetryDataOrderByWithRelationInput = {
@@ -281,6 +282,7 @@ export type TelemetryDataOrderByWithRelationInput = {
   kmDelta?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
+  inspection?: Prisma.InspectionOrderByWithRelationInput
 }
 
 export type TelemetryDataWhereUniqueInput = Prisma.AtLeast<{
@@ -297,6 +299,7 @@ export type TelemetryDataWhereUniqueInput = Prisma.AtLeast<{
   kmDelta?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
   createdAt?: Prisma.DateTimeFilter<"TelemetryData"> | Date | string
   projectId?: Prisma.StringFilter<"TelemetryData"> | string
+  inspection?: Prisma.XOR<Prisma.InspectionScalarRelationFilter, Prisma.InspectionWhereInput>
 }, "id">
 
 export type TelemetryDataOrderByWithAggregationInput = {
@@ -335,7 +338,6 @@ export type TelemetryDataScalarWhereWithAggregatesInput = {
 
 export type TelemetryDataCreateInput = {
   id?: string
-  inspectionId: string
   odometerKm?: number | null
   fuelLevelPct?: number | null
   dashboardMatch?: boolean | null
@@ -344,6 +346,7 @@ export type TelemetryDataCreateInput = {
   kmDelta?: number | null
   createdAt?: Date | string
   projectId: string
+  inspection: Prisma.InspectionCreateNestedOneWithoutTelemetryDataInput
 }
 
 export type TelemetryDataUncheckedCreateInput = {
@@ -361,7 +364,6 @@ export type TelemetryDataUncheckedCreateInput = {
 
 export type TelemetryDataUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   odometerKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fuelLevelPct?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dashboardMatch?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -370,6 +372,7 @@ export type TelemetryDataUpdateInput = {
   kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  inspection?: Prisma.InspectionUpdateOneRequiredWithoutTelemetryDataNestedInput
 }
 
 export type TelemetryDataUncheckedUpdateInput = {
@@ -400,7 +403,6 @@ export type TelemetryDataCreateManyInput = {
 
 export type TelemetryDataUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   odometerKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fuelLevelPct?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dashboardMatch?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -422,6 +424,16 @@ export type TelemetryDataUncheckedUpdateManyInput = {
   kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
+export type TelemetryDataListRelationFilter = {
+  every?: Prisma.TelemetryDataWhereInput
+  some?: Prisma.TelemetryDataWhereInput
+  none?: Prisma.TelemetryDataWhereInput
+}
+
+export type TelemetryDataOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type TelemetryDataCountOrderByAggregateInput = {
@@ -477,8 +489,164 @@ export type TelemetryDataSumOrderByAggregateInput = {
   kmDelta?: Prisma.SortOrder
 }
 
+export type TelemetryDataCreateNestedManyWithoutInspectionInput = {
+  create?: Prisma.XOR<Prisma.TelemetryDataCreateWithoutInspectionInput, Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput> | Prisma.TelemetryDataCreateWithoutInspectionInput[] | Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput | Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput[]
+  createMany?: Prisma.TelemetryDataCreateManyInspectionInputEnvelope
+  connect?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+}
+
+export type TelemetryDataUncheckedCreateNestedManyWithoutInspectionInput = {
+  create?: Prisma.XOR<Prisma.TelemetryDataCreateWithoutInspectionInput, Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput> | Prisma.TelemetryDataCreateWithoutInspectionInput[] | Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput | Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput[]
+  createMany?: Prisma.TelemetryDataCreateManyInspectionInputEnvelope
+  connect?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+}
+
+export type TelemetryDataUpdateManyWithoutInspectionNestedInput = {
+  create?: Prisma.XOR<Prisma.TelemetryDataCreateWithoutInspectionInput, Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput> | Prisma.TelemetryDataCreateWithoutInspectionInput[] | Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput | Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput[]
+  upsert?: Prisma.TelemetryDataUpsertWithWhereUniqueWithoutInspectionInput | Prisma.TelemetryDataUpsertWithWhereUniqueWithoutInspectionInput[]
+  createMany?: Prisma.TelemetryDataCreateManyInspectionInputEnvelope
+  set?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  disconnect?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  delete?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  connect?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  update?: Prisma.TelemetryDataUpdateWithWhereUniqueWithoutInspectionInput | Prisma.TelemetryDataUpdateWithWhereUniqueWithoutInspectionInput[]
+  updateMany?: Prisma.TelemetryDataUpdateManyWithWhereWithoutInspectionInput | Prisma.TelemetryDataUpdateManyWithWhereWithoutInspectionInput[]
+  deleteMany?: Prisma.TelemetryDataScalarWhereInput | Prisma.TelemetryDataScalarWhereInput[]
+}
+
+export type TelemetryDataUncheckedUpdateManyWithoutInspectionNestedInput = {
+  create?: Prisma.XOR<Prisma.TelemetryDataCreateWithoutInspectionInput, Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput> | Prisma.TelemetryDataCreateWithoutInspectionInput[] | Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput[]
+  connectOrCreate?: Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput | Prisma.TelemetryDataCreateOrConnectWithoutInspectionInput[]
+  upsert?: Prisma.TelemetryDataUpsertWithWhereUniqueWithoutInspectionInput | Prisma.TelemetryDataUpsertWithWhereUniqueWithoutInspectionInput[]
+  createMany?: Prisma.TelemetryDataCreateManyInspectionInputEnvelope
+  set?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  disconnect?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  delete?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  connect?: Prisma.TelemetryDataWhereUniqueInput | Prisma.TelemetryDataWhereUniqueInput[]
+  update?: Prisma.TelemetryDataUpdateWithWhereUniqueWithoutInspectionInput | Prisma.TelemetryDataUpdateWithWhereUniqueWithoutInspectionInput[]
+  updateMany?: Prisma.TelemetryDataUpdateManyWithWhereWithoutInspectionInput | Prisma.TelemetryDataUpdateManyWithWhereWithoutInspectionInput[]
+  deleteMany?: Prisma.TelemetryDataScalarWhereInput | Prisma.TelemetryDataScalarWhereInput[]
+}
+
 export type NullableBoolFieldUpdateOperationsInput = {
   set?: boolean | null
+}
+
+export type TelemetryDataCreateWithoutInspectionInput = {
+  id?: string
+  odometerKm?: number | null
+  fuelLevelPct?: number | null
+  dashboardMatch?: boolean | null
+  kmReasonable?: boolean | null
+  previousKm?: number | null
+  kmDelta?: number | null
+  createdAt?: Date | string
+  projectId: string
+}
+
+export type TelemetryDataUncheckedCreateWithoutInspectionInput = {
+  id?: string
+  odometerKm?: number | null
+  fuelLevelPct?: number | null
+  dashboardMatch?: boolean | null
+  kmReasonable?: boolean | null
+  previousKm?: number | null
+  kmDelta?: number | null
+  createdAt?: Date | string
+  projectId: string
+}
+
+export type TelemetryDataCreateOrConnectWithoutInspectionInput = {
+  where: Prisma.TelemetryDataWhereUniqueInput
+  create: Prisma.XOR<Prisma.TelemetryDataCreateWithoutInspectionInput, Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput>
+}
+
+export type TelemetryDataCreateManyInspectionInputEnvelope = {
+  data: Prisma.TelemetryDataCreateManyInspectionInput | Prisma.TelemetryDataCreateManyInspectionInput[]
+  skipDuplicates?: boolean
+}
+
+export type TelemetryDataUpsertWithWhereUniqueWithoutInspectionInput = {
+  where: Prisma.TelemetryDataWhereUniqueInput
+  update: Prisma.XOR<Prisma.TelemetryDataUpdateWithoutInspectionInput, Prisma.TelemetryDataUncheckedUpdateWithoutInspectionInput>
+  create: Prisma.XOR<Prisma.TelemetryDataCreateWithoutInspectionInput, Prisma.TelemetryDataUncheckedCreateWithoutInspectionInput>
+}
+
+export type TelemetryDataUpdateWithWhereUniqueWithoutInspectionInput = {
+  where: Prisma.TelemetryDataWhereUniqueInput
+  data: Prisma.XOR<Prisma.TelemetryDataUpdateWithoutInspectionInput, Prisma.TelemetryDataUncheckedUpdateWithoutInspectionInput>
+}
+
+export type TelemetryDataUpdateManyWithWhereWithoutInspectionInput = {
+  where: Prisma.TelemetryDataScalarWhereInput
+  data: Prisma.XOR<Prisma.TelemetryDataUpdateManyMutationInput, Prisma.TelemetryDataUncheckedUpdateManyWithoutInspectionInput>
+}
+
+export type TelemetryDataScalarWhereInput = {
+  AND?: Prisma.TelemetryDataScalarWhereInput | Prisma.TelemetryDataScalarWhereInput[]
+  OR?: Prisma.TelemetryDataScalarWhereInput[]
+  NOT?: Prisma.TelemetryDataScalarWhereInput | Prisma.TelemetryDataScalarWhereInput[]
+  id?: Prisma.StringFilter<"TelemetryData"> | string
+  inspectionId?: Prisma.StringFilter<"TelemetryData"> | string
+  odometerKm?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
+  fuelLevelPct?: Prisma.FloatNullableFilter<"TelemetryData"> | number | null
+  dashboardMatch?: Prisma.BoolNullableFilter<"TelemetryData"> | boolean | null
+  kmReasonable?: Prisma.BoolNullableFilter<"TelemetryData"> | boolean | null
+  previousKm?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
+  kmDelta?: Prisma.IntNullableFilter<"TelemetryData"> | number | null
+  createdAt?: Prisma.DateTimeFilter<"TelemetryData"> | Date | string
+  projectId?: Prisma.StringFilter<"TelemetryData"> | string
+}
+
+export type TelemetryDataCreateManyInspectionInput = {
+  id?: string
+  odometerKm?: number | null
+  fuelLevelPct?: number | null
+  dashboardMatch?: boolean | null
+  kmReasonable?: boolean | null
+  previousKm?: number | null
+  kmDelta?: number | null
+  createdAt?: Date | string
+  projectId: string
+}
+
+export type TelemetryDataUpdateWithoutInspectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  odometerKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fuelLevelPct?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dashboardMatch?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  kmReasonable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  previousKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
+export type TelemetryDataUncheckedUpdateWithoutInspectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  odometerKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fuelLevelPct?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dashboardMatch?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  kmReasonable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  previousKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
+export type TelemetryDataUncheckedUpdateManyWithoutInspectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  odometerKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fuelLevelPct?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dashboardMatch?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  kmReasonable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  previousKm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  kmDelta?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -494,6 +662,7 @@ export type TelemetryDataSelect<ExtArgs extends runtime.Types.Extensions.Interna
   kmDelta?: boolean
   createdAt?: boolean
   projectId?: boolean
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["telemetryData"]>
 
 export type TelemetryDataSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -507,6 +676,7 @@ export type TelemetryDataSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   kmDelta?: boolean
   createdAt?: boolean
   projectId?: boolean
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["telemetryData"]>
 
 export type TelemetryDataSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -520,6 +690,7 @@ export type TelemetryDataSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   kmDelta?: boolean
   createdAt?: boolean
   projectId?: boolean
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["telemetryData"]>
 
 export type TelemetryDataSelectScalar = {
@@ -536,10 +707,21 @@ export type TelemetryDataSelectScalar = {
 }
 
 export type TelemetryDataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "odometerKm" | "fuelLevelPct" | "dashboardMatch" | "kmReasonable" | "previousKm" | "kmDelta" | "createdAt" | "projectId", ExtArgs["result"]["telemetryData"]>
+export type TelemetryDataInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
+}
+export type TelemetryDataIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
+}
+export type TelemetryDataIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
+}
 
 export type $TelemetryDataPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TelemetryData"
-  objects: {}
+  objects: {
+    inspection: Prisma.$InspectionPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     inspectionId: string
@@ -945,6 +1127,7 @@ readonly fields: TelemetryDataFieldRefs;
  */
 export interface Prisma__TelemetryDataClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  inspection<T extends Prisma.InspectionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InspectionDefaultArgs<ExtArgs>>): Prisma.Prisma__InspectionClient<runtime.Types.Result.GetResult<Prisma.$InspectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1001,6 +1184,10 @@ export type TelemetryDataFindUniqueArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
+  /**
    * Filter, which TelemetryData to fetch.
    */
   where: Prisma.TelemetryDataWhereUniqueInput
@@ -1019,6 +1206,10 @@ export type TelemetryDataFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ext
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
+  /**
    * Filter, which TelemetryData to fetch.
    */
   where: Prisma.TelemetryDataWhereUniqueInput
@@ -1036,6 +1227,10 @@ export type TelemetryDataFindFirstArgs<ExtArgs extends runtime.Types.Extensions.
    * Omit specific fields from the TelemetryData
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
   /**
    * Filter, which TelemetryData to fetch.
    */
@@ -1085,6 +1280,10 @@ export type TelemetryDataFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exte
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
+  /**
    * Filter, which TelemetryData to fetch.
    */
   where?: Prisma.TelemetryDataWhereInput
@@ -1132,6 +1331,10 @@ export type TelemetryDataFindManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the TelemetryData
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
   /**
    * Filter, which TelemetryData to fetch.
    */
@@ -1181,6 +1384,10 @@ export type TelemetryDataCreateArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
+  /**
    * The data needed to create a TelemetryData.
    */
   data: Prisma.XOR<Prisma.TelemetryDataCreateInput, Prisma.TelemetryDataUncheckedCreateInput>
@@ -1214,6 +1421,10 @@ export type TelemetryDataCreateManyAndReturnArgs<ExtArgs extends runtime.Types.E
    */
   data: Prisma.TelemetryDataCreateManyInput | Prisma.TelemetryDataCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1228,6 +1439,10 @@ export type TelemetryDataUpdateArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the TelemetryData
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
   /**
    * The data needed to update a TelemetryData.
    */
@@ -1280,6 +1495,10 @@ export type TelemetryDataUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.E
    * Limit how many TelemetryData to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1294,6 +1513,10 @@ export type TelemetryDataUpsertArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the TelemetryData
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
   /**
    * The filter to search for the TelemetryData to update in case it exists.
    */
@@ -1320,6 +1543,10 @@ export type TelemetryDataDeleteArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the TelemetryData
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
   /**
    * Filter which TelemetryData to delete.
    */
@@ -1352,4 +1579,8 @@ export type TelemetryDataDefaultArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the TelemetryData
    */
   omit?: Prisma.TelemetryDataOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryDataInclude<ExtArgs> | null
 }
