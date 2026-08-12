@@ -675,7 +675,7 @@ export function VideoReview() {
   }
 
   async function handleRetryAnalysis() {
-    if (!id || !bodyStep) return;
+    if (!id || !bodyStep || retryingAnalysis) return;
     setRetryError("");
     setRetryingAnalysis(true);
     try {
@@ -683,6 +683,7 @@ export function VideoReview() {
       await fetchDetail();
     } catch (err) {
       setRetryError(err instanceof Error ? err.message : "Gagal memvalidasi ulang");
+      await fetchDetail();
     } finally {
       setRetryingAnalysis(false);
     }
