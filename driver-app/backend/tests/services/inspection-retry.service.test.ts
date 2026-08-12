@@ -49,6 +49,10 @@ describe("InspectionService.retryStepAnalysis", () => {
   let deletedAnalysisStepIds: string[];
   let statusUpdates: { stepId: string; status: string }[];
   let retryCountWrites: { stepId: string; count: number }[];
+  // Records the order in which the four side effects fire, so a reordering
+  // regression (the exact class of bug Finding 1 fixed) fails a test instead
+  // of slipping through on final-state assertions alone.
+  let sideEffectOrder: string[];
   let service: InspectionService;
 
   beforeEach(() => {
@@ -57,11 +61,13 @@ describe("InspectionService.retryStepAnalysis", () => {
     deletedAnalysisStepIds = [];
     statusUpdates = [];
     retryCountWrites = [];
+    sideEffectOrder = [];
 
     const repo = {
       findById: async () => makeInspection(),
       findStepById: async () => step,
       updateStepStatus: async (_s: unknown, stepId: string, status: string) => {
+        sideEffectOrder.push(`statusUpdate:${status}`);
         statusUpdates.push({ stepId, status });
         return step;
       },
@@ -70,6 +76,7 @@ describe("InspectionService.retryStepAnalysis", () => {
         stepId: string,
         count: number,
       ) => {
+        sideEffectOrder.push("retryCount");
         retryCountWrites.push({ stepId, count });
         return { ...step, analysisRetryCount: count };
       },
@@ -77,12 +84,14 @@ describe("InspectionService.retryStepAnalysis", () => {
 
     const aiRepo = {
       deleteByStepId: async (_s: unknown, stepId: string) => {
+        sideEffectOrder.push("deleteAnalysis");
         deletedAnalysisStepIds.push(stepId);
       },
     } as unknown as IAIAnalysisRepository;
 
     const queue = {
       enqueue: async (name: string, payload: unknown) => {
+        sideEffectOrder.push("enqueue");
         enqueued.push({ name, payload });
       },
     } as unknown as IJobQueue;
@@ -111,6 +120,66 @@ describe("InspectionService.retryStepAnalysis", () => {
     expect(statusUpdates).toEqual([{ stepId: "step-1", status: "UPLOADED" }]);
     expect(enqueued).toHaveLength(1);
     expect(enqueued[0].name).toBe("step-analysis");
+    // The counter must be bumped and the stale analysis cleared before the
+    // step is flipped back to UPLOADED, and the job must only be enqueued
+    // once the step is actually ready to be re-analysed.
+    expect(sideEffectOrder).toEqual([
+      "retryCount",
+      "deleteAnalysis",
+      "statusUpdate:UPLOADED",
+      "enqueue",
+    ]);
+  });
+
+  test("returns without mutating anything when AI is disabled", async () => {
+    const disabledService = new InspectionService(
+      {
+        findById: async () => makeInspection(),
+        findStepById: async () => step,
+        updateStepStatus: async (
+          _s: unknown,
+          stepId: string,
+          status: string,
+        ) => {
+          statusUpdates.push({ stepId, status });
+          return step;
+        },
+        setAnalysisRetryCount: async (
+          _s: unknown,
+          stepId: string,
+          count: number,
+        ) => {
+          retryCountWrites.push({ stepId, count });
+          return { ...step, analysisRetryCount: count };
+        },
+      } as unknown as IInspectionRepository,
+      mockLogger,
+      {
+        enqueue: async (name: string, payload: unknown) => {
+          enqueued.push({ name, payload });
+        },
+      } as unknown as IJobQueue,
+      false,
+      undefined,
+      {
+        deleteByStepId: async (_s: unknown, stepId: string) => {
+          deletedAnalysisStepIds.push(stepId);
+        },
+      } as unknown as IAIAnalysisRepository,
+    );
+
+    const result = await disabledService.retryStepAnalysis(
+      makeDriverScope({ userId: "driver-1" }),
+      "insp-1",
+      "step-1",
+      "driver-1",
+    );
+
+    expect(result).toEqual({ retryCount: 0, remaining: 2 });
+    expect(enqueued).toHaveLength(0);
+    expect(retryCountWrites).toHaveLength(0);
+    expect(deletedAnalysisStepIds).toHaveLength(0);
+    expect(statusUpdates).toHaveLength(0);
   });
 
   test("rejects a third attempt once the cap is reached", async () => {

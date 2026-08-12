@@ -454,7 +454,8 @@ export class InspectionService implements IInspectionService {
       };
     }
 
-    const retryCount = step.analysisRetryCount + 1;
+    const previousRetryCount = step.analysisRetryCount;
+    const retryCount = previousRetryCount + 1;
     await this.inspectionRepository.setAnalysisRetryCount(
       scope,
       stepId,
@@ -468,13 +469,28 @@ export class InspectionService implements IInspectionService {
 
     await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
 
-    await this.jobQueue.enqueue("step-analysis", {
-      inspectionId: id,
-      stepId,
-      stepType: step.stepType,
-      driverId,
-      tripType: inspection.tripType,
-    });
+    try {
+      await this.jobQueue.enqueue("step-analysis", {
+        inspectionId: id,
+        stepId,
+        stepType: step.stepType,
+        driverId,
+        tripType: inspection.tripType,
+      });
+    } catch (err) {
+      // If enqueue fails after the step was already flipped to UPLOADED and
+      // the counter bumped, the step would be stuck forever — the retry
+      // guard only accepts FAILED steps, so it could never be retried again.
+      // Compensate by putting the step back exactly where it started so the
+      // driver still has their retry available, then re-throw.
+      await this.inspectionRepository.updateStepStatus(scope, stepId, "FAILED");
+      await this.inspectionRepository.setAnalysisRetryCount(
+        scope,
+        stepId,
+        previousRetryCount,
+      );
+      throw err;
+    }
 
     this.logger.info("Re-enqueued body analysis after verification failure", {
       userId: scope.userId,
