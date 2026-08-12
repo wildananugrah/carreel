@@ -483,12 +483,32 @@ export class InspectionService implements IInspectionService {
       // guard only accepts FAILED steps, so it could never be retried again.
       // Compensate by putting the step back exactly where it started so the
       // driver still has their retry available, then re-throw.
-      await this.inspectionRepository.updateStepStatus(scope, stepId, "FAILED");
-      await this.inspectionRepository.setAnalysisRetryCount(
-        scope,
-        stepId,
-        previousRetryCount,
-      );
+      try {
+        await this.inspectionRepository.updateStepStatus(
+          scope,
+          stepId,
+          "FAILED",
+        );
+        await this.inspectionRepository.setAnalysisRetryCount(
+          scope,
+          stepId,
+          previousRetryCount,
+        );
+      } catch (compensationErr) {
+        // The original enqueue failure is what the caller needs to see and
+        // must never be masked by a secondary error — log the compensation
+        // failure for diagnosis, but always re-throw the ORIGINAL error.
+        this.logger.error("Failed to roll back retry-analysis mutation", {
+          userId: scope.userId,
+          inspectionId: id,
+          stepId,
+          previousRetryCount,
+          error:
+            compensationErr instanceof Error
+              ? compensationErr.message
+              : String(compensationErr),
+        });
+      }
       throw err;
     }
 

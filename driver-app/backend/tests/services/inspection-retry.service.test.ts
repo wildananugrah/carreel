@@ -53,6 +53,13 @@ describe("InspectionService.retryStepAnalysis", () => {
   // regression (the exact class of bug Finding 1 fixed) fails a test instead
   // of slipping through on final-state assertions alone.
   let sideEffectOrder: string[];
+  // When set, the mock jobQueue.enqueue throws this instead of succeeding,
+  // exercising the compensating rollback path.
+  let enqueueError: Error | null;
+  // When set, the mock updateStepStatus throws this specifically on the
+  // FAILED-revert call made by the rollback (not the initial UPLOADED call),
+  // exercising the "compensation itself fails" path.
+  let statusRevertError: Error | null;
   let service: InspectionService;
 
   beforeEach(() => {
@@ -62,11 +69,16 @@ describe("InspectionService.retryStepAnalysis", () => {
     statusUpdates = [];
     retryCountWrites = [];
     sideEffectOrder = [];
+    enqueueError = null;
+    statusRevertError = null;
 
     const repo = {
       findById: async () => makeInspection(),
       findStepById: async () => step,
       updateStepStatus: async (_s: unknown, stepId: string, status: string) => {
+        if (status === "FAILED" && statusRevertError) {
+          throw statusRevertError;
+        }
         sideEffectOrder.push(`statusUpdate:${status}`);
         statusUpdates.push({ stepId, status });
         return step;
@@ -91,6 +103,7 @@ describe("InspectionService.retryStepAnalysis", () => {
 
     const queue = {
       enqueue: async (name: string, payload: unknown) => {
+        if (enqueueError) throw enqueueError;
         sideEffectOrder.push("enqueue");
         enqueued.push({ name, payload });
       },
@@ -180,6 +193,44 @@ describe("InspectionService.retryStepAnalysis", () => {
     expect(retryCountWrites).toHaveLength(0);
     expect(deletedAnalysisStepIds).toHaveLength(0);
     expect(statusUpdates).toHaveLength(0);
+  });
+
+  test("rolls back the status and counter when the enqueue fails", async () => {
+    enqueueError = new Error("job queue is down");
+
+    await expect(
+      service.retryStepAnalysis(
+        makeDriverScope({ userId: "driver-1" }),
+        "insp-1",
+        "step-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("job queue is down");
+
+    // The step is reverted to FAILED and the counter reset to its original
+    // value, so the driver's retry attempt isn't silently consumed by an
+    // enqueue failure that has nothing to do with them.
+    expect(statusUpdates.at(-1)).toEqual({
+      stepId: "step-1",
+      status: "FAILED",
+    });
+    expect(retryCountWrites.at(-1)).toEqual({ stepId: "step-1", count: 0 });
+  });
+
+  test("still surfaces the original enqueue error when the compensation itself fails", async () => {
+    enqueueError = new Error("job queue is down");
+    statusRevertError = new Error("db write failed during compensation");
+
+    // The compensation's own failure must never mask the real cause — the
+    // caller should see the original enqueue error, not the rollback error.
+    await expect(
+      service.retryStepAnalysis(
+        makeDriverScope({ userId: "driver-1" }),
+        "insp-1",
+        "step-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("job queue is down");
   });
 
   test("rejects a third attempt once the cap is reached", async () => {
