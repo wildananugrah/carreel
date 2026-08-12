@@ -87,8 +87,7 @@ function extractBodyPhotos(
     .map((m) => ({ id: m.id, bodySide: m.bodySide ?? null }))
     .sort(
       (a, b) =>
-        (BODY_SIDE_ORDER[a.bodySide ?? ""] ?? 99) -
-        (BODY_SIDE_ORDER[b.bodySide ?? ""] ?? 99),
+        (BODY_SIDE_ORDER[a.bodySide ?? ""] ?? 99) - (BODY_SIDE_ORDER[b.bodySide ?? ""] ?? 99),
     );
 }
 
@@ -293,9 +292,7 @@ export function VideoReview() {
   const [bodyReviewTab, setBodyReviewTab] = useState<PhotoTab>("wajib");
   // Pre-trip body photos, fetched directly from the linked pre-trip inspection
   // (robust — does not depend on the /pre-trip-data endpoint's bodyPhotos field).
-  const [preTripPhotos, setPreTripPhotos] = useState<
-    { id: string; bodySide: string | null }[]
-  >([]);
+  const [preTripPhotos, setPreTripPhotos] = useState<{ id: string; bodySide: string | null }[]>([]);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -386,9 +383,7 @@ export function VideoReview() {
       // Synthetic plate (UNKNOWN-*) is a placeholder; show it as empty so the
       // driver fills in the real plate instead of editing the placeholder.
       const seedPlate =
-        info.licensePlate && !info.licensePlate.startsWith("UNKNOWN-")
-          ? info.licensePlate
-          : "";
+        info.licensePlate && !info.licensePlate.startsWith("UNKNOWN-") ? info.licensePlate : "";
       setUnitForm((prev) => ({
         make: prev.make || info.make || "",
         model: prev.model || info.model || "",
@@ -513,11 +508,7 @@ export function VideoReview() {
   // status string covers UNIT_IDENTIFICATION → COMPLETED (early) and
   // BODY_INSPECTION → COMPLETED (much later), keeping displayFlags fresh.
   const damageStepStatusKey = inspection?.steps
-    .filter(
-      (s) =>
-        s.stepType === "BODY_INSPECTION" ||
-        s.stepType === "UNIT_IDENTIFICATION",
-    )
+    .filter((s) => s.stepType === "BODY_INSPECTION" || s.stepType === "UNIT_IDENTIFICATION")
     .map((s) => `${s.stepType}:${s.status}`)
     .join("|");
   useEffect(() => {
@@ -655,6 +646,8 @@ export function VideoReview() {
   }
 
   const [deletingVideo, setDeletingVideo] = useState(false);
+  const [retryingAnalysis, setRetryingAnalysis] = useState(false);
+  const [retryError, setRetryError] = useState("");
   async function handleDeleteVideo() {
     if (!bodyStep || !hasMedia || deletingVideo) return;
     setDeletingVideo(true);
@@ -681,7 +674,22 @@ export function VideoReview() {
     }
   }
 
+  async function handleRetryAnalysis() {
+    if (!id || !bodyStep) return;
+    setRetryError("");
+    setRetryingAnalysis(true);
+    try {
+      await api.post(`/api/inspections/${id}/steps/${bodyStep.id}/retry-analysis`);
+      await fetchDetail();
+    } catch (err) {
+      setRetryError(err instanceof Error ? err.message : "Gagal memvalidasi ulang");
+    } finally {
+      setRetryingAnalysis(false);
+    }
+  }
+
   const bodyStepFailed = bodyStep?.status === "FAILED";
+  const retryRemaining = 2 - (bodyStep?.analysisRetryCount ?? 0);
 
   async function handleSignatureConfirm(data: { image: Blob; signerName: string }) {
     if (!id) return;
@@ -748,8 +756,7 @@ export function VideoReview() {
   const bodyReady = bodyMode === "PHOTOS_8SIDE" ? allEightCaptured : hasMedia;
   // Pre-trip reference photos: prefer the directly-fetched linked inspection,
   // fall back to the pre-trip-data payload if present.
-  const referencePhotos =
-    preTripPhotos.length > 0 ? preTripPhotos : (unitData?.bodyPhotos ?? []);
+  const referencePhotos = preTripPhotos.length > 0 ? preTripPhotos : (unitData?.bodyPhotos ?? []);
   // In photo mode the driver reviews the AI damages before submitting, so block
   // submit until the body analysis reaches a terminal state (not PENDING /
   // UPLOADED / PROCESSING). Video mode runs body analysis as a background job,
@@ -1395,11 +1402,35 @@ export function VideoReview() {
                           ? "Foto body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan ambil ulang foto."
                           : "Video body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan rekam ulang video."}
                       </p>
+                      {retryRemaining > 0 && (
+                        <p className="text-[10px] text-neutral-500 mt-1">
+                          Yakin kendaraan sudah benar? Coba validasi ulang tanpa mengambil foto
+                          baru.
+                        </p>
+                      )}
+                      {retryRemaining <= 0 && (
+                        <p className="text-[10px] text-neutral-500 mt-1">
+                          Batas percobaan ulang tercapai.
+                        </p>
+                      )}
+                      {retryError && <p className="text-[10px] text-red-400 mt-1">{retryError}</p>}
+                      {retryRemaining > 0 && (
+                        <button
+                          type="button"
+                          className="mt-2 w-full rounded-lg bg-[#F5C842] px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
+                          onClick={handleRetryAnalysis}
+                          disabled={retryingAnalysis || deletingVideo}
+                        >
+                          {retryingAnalysis
+                            ? "Memvalidasi ulang..."
+                            : `Coba Validasi Ulang (${retryRemaining} tersisa)`}
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="mt-2 w-full rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
                         onClick={handleDeleteVideo}
-                        disabled={deletingVideo}
+                        disabled={deletingVideo || retryingAnalysis}
                       >
                         {deletingVideo
                           ? "Menghapus..."
