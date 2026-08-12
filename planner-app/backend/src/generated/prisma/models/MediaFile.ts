@@ -665,14 +665,6 @@ export type MediaFileUncheckedUpdateManyWithoutStepNestedInput = {
   deleteMany?: Prisma.MediaFileScalarWhereInput | Prisma.MediaFileScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type EnumMediaTypeFieldUpdateOperationsInput = {
   set?: $Enums.MediaType
 }

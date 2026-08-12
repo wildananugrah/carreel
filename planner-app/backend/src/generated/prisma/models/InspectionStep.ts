@@ -20,8 +20,18 @@ export type InspectionStepModel = runtime.Types.Result.DefaultSelection<Prisma.$
 
 export type AggregateInspectionStep = {
   _count: InspectionStepCountAggregateOutputType | null
+  _avg: InspectionStepAvgAggregateOutputType | null
+  _sum: InspectionStepSumAggregateOutputType | null
   _min: InspectionStepMinAggregateOutputType | null
   _max: InspectionStepMaxAggregateOutputType | null
+}
+
+export type InspectionStepAvgAggregateOutputType = {
+  analysisRetryCount: number | null
+}
+
+export type InspectionStepSumAggregateOutputType = {
+  analysisRetryCount: number | null
 }
 
 export type InspectionStepMinAggregateOutputType = {
@@ -29,6 +39,7 @@ export type InspectionStepMinAggregateOutputType = {
   inspectionId: string | null
   stepType: $Enums.StepType | null
   status: $Enums.StepStatus | null
+  analysisRetryCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
   projectId: string | null
@@ -39,6 +50,7 @@ export type InspectionStepMaxAggregateOutputType = {
   inspectionId: string | null
   stepType: $Enums.StepType | null
   status: $Enums.StepStatus | null
+  analysisRetryCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
   projectId: string | null
@@ -49,6 +61,7 @@ export type InspectionStepCountAggregateOutputType = {
   inspectionId: number
   stepType: number
   status: number
+  analysisRetryCount: number
   createdAt: number
   updatedAt: number
   projectId: number
@@ -56,11 +69,20 @@ export type InspectionStepCountAggregateOutputType = {
 }
 
 
+export type InspectionStepAvgAggregateInputType = {
+  analysisRetryCount?: true
+}
+
+export type InspectionStepSumAggregateInputType = {
+  analysisRetryCount?: true
+}
+
 export type InspectionStepMinAggregateInputType = {
   id?: true
   inspectionId?: true
   stepType?: true
   status?: true
+  analysisRetryCount?: true
   createdAt?: true
   updatedAt?: true
   projectId?: true
@@ -71,6 +93,7 @@ export type InspectionStepMaxAggregateInputType = {
   inspectionId?: true
   stepType?: true
   status?: true
+  analysisRetryCount?: true
   createdAt?: true
   updatedAt?: true
   projectId?: true
@@ -81,6 +104,7 @@ export type InspectionStepCountAggregateInputType = {
   inspectionId?: true
   stepType?: true
   status?: true
+  analysisRetryCount?: true
   createdAt?: true
   updatedAt?: true
   projectId?: true
@@ -125,6 +149,18 @@ export type InspectionStepAggregateArgs<ExtArgs extends runtime.Types.Extensions
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: InspectionStepAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: InspectionStepSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: InspectionStepMinAggregateInputType
@@ -155,6 +191,8 @@ export type InspectionStepGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   _count?: InspectionStepCountAggregateInputType | true
+  _avg?: InspectionStepAvgAggregateInputType
+  _sum?: InspectionStepSumAggregateInputType
   _min?: InspectionStepMinAggregateInputType
   _max?: InspectionStepMaxAggregateInputType
 }
@@ -164,10 +202,13 @@ export type InspectionStepGroupByOutputType = {
   inspectionId: string
   stepType: $Enums.StepType
   status: $Enums.StepStatus
+  analysisRetryCount: number
   createdAt: Date
   updatedAt: Date
   projectId: string
   _count: InspectionStepCountAggregateOutputType | null
+  _avg: InspectionStepAvgAggregateOutputType | null
+  _sum: InspectionStepSumAggregateOutputType | null
   _min: InspectionStepMinAggregateOutputType | null
   _max: InspectionStepMaxAggregateOutputType | null
 }
@@ -195,6 +236,7 @@ export type InspectionStepWhereInput = {
   inspectionId?: Prisma.StringFilter<"InspectionStep"> | string
   stepType?: Prisma.EnumStepTypeFilter<"InspectionStep"> | $Enums.StepType
   status?: Prisma.EnumStepStatusFilter<"InspectionStep"> | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFilter<"InspectionStep"> | number
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringFilter<"InspectionStep"> | string
@@ -208,6 +250,7 @@ export type InspectionStepOrderByWithRelationInput = {
   inspectionId?: Prisma.SortOrder
   stepType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  analysisRetryCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
@@ -225,6 +268,7 @@ export type InspectionStepWhereUniqueInput = Prisma.AtLeast<{
   inspectionId?: Prisma.StringFilter<"InspectionStep"> | string
   stepType?: Prisma.EnumStepTypeFilter<"InspectionStep"> | $Enums.StepType
   status?: Prisma.EnumStepStatusFilter<"InspectionStep"> | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFilter<"InspectionStep"> | number
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringFilter<"InspectionStep"> | string
@@ -238,12 +282,15 @@ export type InspectionStepOrderByWithAggregationInput = {
   inspectionId?: Prisma.SortOrder
   stepType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  analysisRetryCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   _count?: Prisma.InspectionStepCountOrderByAggregateInput
+  _avg?: Prisma.InspectionStepAvgOrderByAggregateInput
   _max?: Prisma.InspectionStepMaxOrderByAggregateInput
   _min?: Prisma.InspectionStepMinOrderByAggregateInput
+  _sum?: Prisma.InspectionStepSumOrderByAggregateInput
 }
 
 export type InspectionStepScalarWhereWithAggregatesInput = {
@@ -254,6 +301,7 @@ export type InspectionStepScalarWhereWithAggregatesInput = {
   inspectionId?: Prisma.StringWithAggregatesFilter<"InspectionStep"> | string
   stepType?: Prisma.EnumStepTypeWithAggregatesFilter<"InspectionStep"> | $Enums.StepType
   status?: Prisma.EnumStepStatusWithAggregatesFilter<"InspectionStep"> | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntWithAggregatesFilter<"InspectionStep"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringWithAggregatesFilter<"InspectionStep"> | string
@@ -263,6 +311,7 @@ export type InspectionStepCreateInput = {
   id?: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -276,6 +325,7 @@ export type InspectionStepUncheckedCreateInput = {
   inspectionId: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -287,6 +337,7 @@ export type InspectionStepUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -300,6 +351,7 @@ export type InspectionStepUncheckedUpdateInput = {
   inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -312,6 +364,7 @@ export type InspectionStepCreateManyInput = {
   inspectionId: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -321,6 +374,7 @@ export type InspectionStepUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -331,6 +385,7 @@ export type InspectionStepUncheckedUpdateManyInput = {
   inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -356,9 +411,14 @@ export type InspectionStepCountOrderByAggregateInput = {
   inspectionId?: Prisma.SortOrder
   stepType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  analysisRetryCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
+}
+
+export type InspectionStepAvgOrderByAggregateInput = {
+  analysisRetryCount?: Prisma.SortOrder
 }
 
 export type InspectionStepMaxOrderByAggregateInput = {
@@ -366,6 +426,7 @@ export type InspectionStepMaxOrderByAggregateInput = {
   inspectionId?: Prisma.SortOrder
   stepType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  analysisRetryCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
@@ -376,9 +437,14 @@ export type InspectionStepMinOrderByAggregateInput = {
   inspectionId?: Prisma.SortOrder
   stepType?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  analysisRetryCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
+}
+
+export type InspectionStepSumOrderByAggregateInput = {
+  analysisRetryCount?: Prisma.SortOrder
 }
 
 export type InspectionStepScalarRelationFilter = {
@@ -436,6 +502,14 @@ export type EnumStepStatusFieldUpdateOperationsInput = {
   set?: $Enums.StepStatus
 }
 
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type InspectionStepCreateNestedOneWithoutMediaFilesInput = {
   create?: Prisma.XOR<Prisma.InspectionStepCreateWithoutMediaFilesInput, Prisma.InspectionStepUncheckedCreateWithoutMediaFilesInput>
   connectOrCreate?: Prisma.InspectionStepCreateOrConnectWithoutMediaFilesInput
@@ -468,6 +542,7 @@ export type InspectionStepCreateWithoutInspectionInput = {
   id?: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -479,6 +554,7 @@ export type InspectionStepUncheckedCreateWithoutInspectionInput = {
   id?: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -520,6 +596,7 @@ export type InspectionStepScalarWhereInput = {
   inspectionId?: Prisma.StringFilter<"InspectionStep"> | string
   stepType?: Prisma.EnumStepTypeFilter<"InspectionStep"> | $Enums.StepType
   status?: Prisma.EnumStepStatusFilter<"InspectionStep"> | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFilter<"InspectionStep"> | number
   createdAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InspectionStep"> | Date | string
   projectId?: Prisma.StringFilter<"InspectionStep"> | string
@@ -529,6 +606,7 @@ export type InspectionStepCreateWithoutMediaFilesInput = {
   id?: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -541,6 +619,7 @@ export type InspectionStepUncheckedCreateWithoutMediaFilesInput = {
   inspectionId: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -567,6 +646,7 @@ export type InspectionStepUpdateWithoutMediaFilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -579,6 +659,7 @@ export type InspectionStepUncheckedUpdateWithoutMediaFilesInput = {
   inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -589,6 +670,7 @@ export type InspectionStepCreateWithoutAiAnalysisInput = {
   id?: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -601,6 +683,7 @@ export type InspectionStepUncheckedCreateWithoutAiAnalysisInput = {
   inspectionId: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -627,6 +710,7 @@ export type InspectionStepUpdateWithoutAiAnalysisInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -639,6 +723,7 @@ export type InspectionStepUncheckedUpdateWithoutAiAnalysisInput = {
   inspectionId?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -649,6 +734,7 @@ export type InspectionStepCreateManyInspectionInput = {
   id?: string
   stepType: $Enums.StepType
   status?: $Enums.StepStatus
+  analysisRetryCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   projectId: string
@@ -658,6 +744,7 @@ export type InspectionStepUpdateWithoutInspectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -669,6 +756,7 @@ export type InspectionStepUncheckedUpdateWithoutInspectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -680,6 +768,7 @@ export type InspectionStepUncheckedUpdateManyWithoutInspectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   stepType?: Prisma.EnumStepTypeFieldUpdateOperationsInput | $Enums.StepType
   status?: Prisma.EnumStepStatusFieldUpdateOperationsInput | $Enums.StepStatus
+  analysisRetryCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -721,6 +810,7 @@ export type InspectionStepSelect<ExtArgs extends runtime.Types.Extensions.Intern
   inspectionId?: boolean
   stepType?: boolean
   status?: boolean
+  analysisRetryCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
@@ -735,6 +825,7 @@ export type InspectionStepSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   inspectionId?: boolean
   stepType?: boolean
   status?: boolean
+  analysisRetryCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
@@ -746,6 +837,7 @@ export type InspectionStepSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   inspectionId?: boolean
   stepType?: boolean
   status?: boolean
+  analysisRetryCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
@@ -757,12 +849,13 @@ export type InspectionStepSelectScalar = {
   inspectionId?: boolean
   stepType?: boolean
   status?: boolean
+  analysisRetryCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   projectId?: boolean
 }
 
-export type InspectionStepOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "stepType" | "status" | "createdAt" | "updatedAt" | "projectId", ExtArgs["result"]["inspectionStep"]>
+export type InspectionStepOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "inspectionId" | "stepType" | "status" | "analysisRetryCount" | "createdAt" | "updatedAt" | "projectId", ExtArgs["result"]["inspectionStep"]>
 export type InspectionStepInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   mediaFiles?: boolean | Prisma.InspectionStep$mediaFilesArgs<ExtArgs>
@@ -788,6 +881,12 @@ export type $InspectionStepPayload<ExtArgs extends runtime.Types.Extensions.Inte
     inspectionId: string
     stepType: $Enums.StepType
     status: $Enums.StepStatus
+    /**
+     * How many times the driver has re-run AI analysis for this step after a
+     * verification failure. Capped at 2 by InspectionService.retryStepAnalysis;
+     * surfaced to planners so a pass-on-retry stays visible.
+     */
+    analysisRetryCount: number
     createdAt: Date
     updatedAt: Date
     projectId: string
@@ -1221,6 +1320,7 @@ export interface InspectionStepFieldRefs {
   readonly inspectionId: Prisma.FieldRef<"InspectionStep", 'String'>
   readonly stepType: Prisma.FieldRef<"InspectionStep", 'StepType'>
   readonly status: Prisma.FieldRef<"InspectionStep", 'StepStatus'>
+  readonly analysisRetryCount: Prisma.FieldRef<"InspectionStep", 'Int'>
   readonly createdAt: Prisma.FieldRef<"InspectionStep", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"InspectionStep", 'DateTime'>
   readonly projectId: Prisma.FieldRef<"InspectionStep", 'String'>

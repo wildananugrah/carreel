@@ -149,6 +149,7 @@ export const InspectionStepScalarFieldEnum = {
   inspectionId: 'inspectionId',
   stepType: 'stepType',
   status: 'status',
+  analysisRetryCount: 'analysisRetryCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   projectId: 'projectId'

@@ -170,12 +170,16 @@ enum StepStatus {
 }
 
 model InspectionStep {
-  id           String     @id @default(uuid())
-  inspectionId String
-  stepType     StepType
-  status       StepStatus @default(PENDING)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                 String     @id @default(uuid())
+  inspectionId       String
+  stepType           StepType
+  status             StepStatus @default(PENDING)
+  /// How many times the driver has re-run AI analysis for this step after a
+  /// verification failure. Capped at 2 by InspectionService.retryStepAnalysis;
+  /// surfaced to planners so a pass-on-retry stays visible.
+  analysisRetryCount Int        @default(0)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   inspection Inspection  @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
   mediaFiles MediaFile[]

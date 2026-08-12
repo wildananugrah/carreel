@@ -159,6 +159,7 @@ describe("InspectionService", () => {
           projectId: "test-project",
           stepType: data.stepType,
           status: "PENDING",
+          analysisRetryCount: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
         };

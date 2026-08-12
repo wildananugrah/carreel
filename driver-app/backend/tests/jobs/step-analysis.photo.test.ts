@@ -50,6 +50,7 @@ function createMockStep(
     projectId: "test-project",
     stepType: "BODY_INSPECTION",
     status: "UPLOADED",
+    analysisRetryCount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

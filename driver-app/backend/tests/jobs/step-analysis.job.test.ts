@@ -61,6 +61,7 @@ function createMockStep(
     projectId: "test-project",
     stepType: "UNIT_IDENTIFICATION",
     status: "UPLOADED",
+    analysisRetryCount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

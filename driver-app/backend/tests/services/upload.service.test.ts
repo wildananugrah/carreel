@@ -88,6 +88,7 @@ describe("UploadService", () => {
       projectId: "test-project",
       stepType: "BODY_INSPECTION",
       status: "PENDING",
+      analysisRetryCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
