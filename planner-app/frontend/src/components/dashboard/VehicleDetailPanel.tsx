@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../../lib/api";
+import { type DamageMarker, damageAuditApi } from "../../lib/damage-audit-api";
 import type { DashboardVehicleCard, InspectionDetail } from "../../lib/types";
 import { MediaLightbox } from "../ui/MediaLightbox";
 import { Spinner } from "../ui/Spinner";
@@ -8,6 +9,8 @@ import { Spinner } from "../ui/Spinner";
 type DetailTab = "check" | "ttd" | "alert";
 
 interface DamageFlag {
+  /** DamageMarker id when this flag came from the markers table. */
+  id?: string;
   damageType: string;
   severity: string;
   description: string;
@@ -17,6 +20,9 @@ interface DamageFlag {
   videoTimestamp?: number;
   /** PHOTOS_8SIDE mode: the side the damage was found on (maps to a photo). */
   bodySide?: string;
+  /** Evidence image to show for this flag (side photo, or a driver-added
+   * damage's own photo). Takes precedence over the bodySide lookup. */
+  evidenceMediaId?: string | null;
 }
 
 interface BodyInspectionData {
@@ -90,6 +96,49 @@ function getSidePhotoMap(insp: InspectionDetail | null): Record<string, string> 
     if (img.bodySide) map[img.bodySide] = img.id;
   }
   return map;
+}
+
+/** mediaFile id -> bodySide, for tagging a damage marker with its side photo. */
+function getMediaIdToSide(insp: InspectionDetail | null): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (!insp) return map;
+  for (const img of getBodyImages(insp)) {
+    if (img.bodySide) map[img.id] = img.bodySide;
+  }
+  return map;
+}
+
+/**
+ * Damage markers that count as current findings. Mirrors the driver-side
+ * filter in `damage-editing.service.ts` (`listForDriver`) so both apps show
+ * the same list: soft-deleted markers are excluded, as are ones that failed
+ * inline verification. The full fraud trail — deletes, failed verifications,
+ * driver edits — stays visible in the inspection detail page's
+ * DamageAuditPanel, which is where planners review it.
+ */
+function activeMarkers(markers: DamageMarker[]): DamageMarker[] {
+  return markers.filter(
+    (d) =>
+      d.deletedAt == null &&
+      (d.verificationStatus === "PASSED" || d.verificationStatus === "NOT_REQUIRED"),
+  );
+}
+
+function markerToFlag(d: DamageMarker, mediaIdToSide: Record<string, string>): DamageFlag {
+  const bodySide = mediaIdToSide[d.mediaFileId];
+  return {
+    id: d.id,
+    damageType: d.damageType,
+    severity: d.severity,
+    description: d.description,
+    location: d.location ?? undefined,
+    isNewDamage: d.isNewDamage,
+    videoTimestamp: d.videoTimestamp ?? undefined,
+    bodySide,
+    // A photo-mode damage sits on its side photo; a driver-added one carries
+    // its own evidence photo. Either way mediaFileId is the image to show.
+    evidenceMediaId: bodySide || d.source === "DRIVER_ADDED" ? d.mediaFileId : null,
+  };
 }
 
 function getSpeedoMediaId(insp: InspectionDetail): string | null {
@@ -169,6 +218,12 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
   const [preDetail, setPreDetail] = useState<InspectionDetail | null>(null);
   const [postDetail, setPostDetail] = useState<InspectionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  // Damage markers are the live record of findings: they include driver-added
+  // damages and reflect the driver's edits and deletes, none of which are
+  // written back into the frozen aiAnalysis.structuredData snapshot. Reading
+  // only that snapshot is why this panel used to disagree with the driver app.
+  const [preMarkers, setPreMarkers] = useState<DamageMarker[] | null>(null);
+  const [postMarkers, setPostMarkers] = useState<DamageMarker[] | null>(null);
 
   const fetchDetails = useCallback(async () => {
     setLoading(true);
@@ -202,15 +257,48 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
     fetchDetails();
   }, [fetchDetails]);
 
+  // Fetch damage markers alongside the details. On failure we leave these null
+  // so the AI snapshot is used instead — for a planner reviewing for fraud, a
+  // stale list is far safer than falsely reporting "Bersih".
+  const preTripId = vehicle.preTrip?.inspectionId;
+  const postTripId = vehicle.postTrip?.inspectionId;
+
+  useEffect(() => {
+    setPreMarkers(null);
+    if (!preTripId) return;
+    damageAuditApi
+      .getForInspection(preTripId)
+      .then((r) => setPreMarkers(r.damages))
+      .catch(() => setPreMarkers(null));
+  }, [preTripId]);
+
+  useEffect(() => {
+    setPostMarkers(null);
+    if (!postTripId) return;
+    damageAuditApi
+      .getForInspection(postTripId)
+      .then((r) => setPostMarkers(r.damages))
+      .catch(() => setPostMarkers(null));
+  }, [postTripId]);
+
   const preSpeedoAI = preDetail ? getSpeedoAI(preDetail) : null;
   const postSpeedoAI = postDetail ? getSpeedoAI(postDetail) : null;
   const preBodyAI = preDetail ? getBodyAI(preDetail) : null;
   const postBodyAI = postDetail ? getBodyAI(postDetail) : null;
-  const preFlags = preBodyAI?.damages ?? [];
+  // Prefer the markers table over the AI snapshot; fall back to the snapshot
+  // only while markers load or if that request failed.
+  const preMediaIdToSide = getMediaIdToSide(preDetail);
+  const postMediaIdToSide = getMediaIdToSide(postDetail);
+  const preFlags: DamageFlag[] = preMarkers
+    ? activeMarkers(preMarkers).map((d) => markerToFlag(d, preMediaIdToSide))
+    : (preBodyAI?.damages ?? []);
+  const postFlagsAll: DamageFlag[] = postMarkers
+    ? activeMarkers(postMarkers).map((d) => markerToFlag(d, postMediaIdToSide))
+    : (postBodyAI?.damages ?? []);
   // Hide post-trip damages that match a pre-trip damage (isNewDamage===false).
   // The planner only needs to see *new* findings on POST-CHECK; matched
   // entries already show in PRE-CHECK and would clutter the section.
-  const postFlags = (postBodyAI?.damages ?? []).filter((f) => f.isNewDamage !== false);
+  const postFlags = postFlagsAll.filter((f) => f.isNewDamage !== false);
   const totalAlerts = preFlags.length + postFlags.length;
 
   const lowFuel = vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 25;
@@ -922,15 +1010,18 @@ function AIFlagSection({
       ) : (
         <div className="space-y-2">
           {flags.map((flag) => {
-            // Photo mode: resolve the damage's side photo as clickable evidence.
+            // Marker-derived flags carry their evidence image directly (side
+            // photo, or a driver-added damage's own photo). AI-snapshot flags
+            // only have a bodySide, so fall back to the photo-mode lookup.
             const evidencePhotoId =
-              isPhotoBody && flag.bodySide ? sidePhotoMap?.[flag.bodySide] : undefined;
+              flag.evidenceMediaId ??
+              (isPhotoBody && flag.bodySide ? sidePhotoMap?.[flag.bodySide] : undefined);
             const hasTimestamp = typeof flag.videoTimestamp === "number";
             const showSeek = !isPhotoBody && canSeek && hasTimestamp;
 
             return (
               <div
-                key={`${flag.damageType}-${flag.severity}-${flag.description}`}
+                key={flag.id ?? `${flag.damageType}-${flag.severity}-${flag.description}`}
                 className="bg-[#111] rounded-[10px] p-3 border"
                 style={{
                   borderColor: flag.isNewDamage ? "#F5C51833" : "#252525",
