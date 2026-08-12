@@ -85,7 +85,9 @@ const storageProvider = new S3Provider({
 });
 
 const geminiKey = process.env.GEMINI_API_KEY;
-logger.info(`[DEBUG] GEMINI_API_KEY: ${geminiKey ? `${geminiKey.slice(0, 8)}...${geminiKey.slice(-4)} (len=${geminiKey.length})` : "NOT SET"}`);
+logger.info(
+  `[DEBUG] GEMINI_API_KEY: ${geminiKey ? `${geminiKey.slice(0, 8)}...${geminiKey.slice(-4)} (len=${geminiKey.length})` : "NOT SET"}`,
+);
 
 const aiProvider = geminiKey
   ? new GeminiProvider(
@@ -138,6 +140,7 @@ const inspectionService = new InspectionService(
   jobQueue,
   aiEnabled,
   damageMarkerRepository,
+  aiAnalysisRepository,
 );
 
 const uploadService = new UploadService(

@@ -124,6 +124,11 @@ export interface IInspectionRepository {
     stepId: string,
     status: StepStatus,
   ): Promise<InspectionStep>;
+  setAnalysisRetryCount(
+    scope: UserScope,
+    stepId: string,
+    count: number,
+  ): Promise<InspectionStep>;
 
   delete(scope: UserScope, id: string): Promise<void>;
 

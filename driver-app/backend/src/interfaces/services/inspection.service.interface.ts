@@ -48,6 +48,12 @@ export interface IInspectionService {
     id: string,
     driverId: string,
   ): Promise<{ enqueuedSteps: string[] }>;
+  retryStepAnalysis(
+    scope: UserScope,
+    id: string,
+    stepId: string,
+    driverId: string,
+  ): Promise<{ retryCount: number; remaining: number }>;
   delete(scope: UserScope, id: string, driverId: string): Promise<void>;
 
   updateStepStatus(

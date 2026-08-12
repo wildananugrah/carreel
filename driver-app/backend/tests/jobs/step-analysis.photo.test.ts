@@ -219,6 +219,7 @@ describe("StepAnalysisJob — 8-photo body inspection", () => {
         const step = steps.get(stepId)!;
         return { ...step, status } as any;
       },
+      setAnalysisRetryCount: async () => ({}) as any,
       delete: async () => {},
       findUnitByInspectionId: async () =>
         ({

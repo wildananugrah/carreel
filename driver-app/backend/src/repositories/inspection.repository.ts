@@ -22,6 +22,7 @@ import type {
   UpdateInspectionDTO,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import { notFound } from "../utils/http-error";
 import { buildScopeFilter, canWriteToEntity } from "../utils/scope-filter";
 
 /** Thrown by `updateUnitVin` when the extracted VIN is already assigned
@@ -402,6 +403,33 @@ export class InspectionRepository implements IInspectionRepository {
     return this.prisma.inspectionStep.update({
       where: { id: stepId },
       data: { status },
+    });
+  }
+
+  async setAnalysisRetryCount(
+    scope: UserScope,
+    stepId: string,
+    count: number,
+  ): Promise<InspectionStep> {
+    const step = await this.prisma.inspectionStep.findUnique({
+      where: { id: stepId },
+      select: {
+        projectId: true,
+        inspection: { select: { driverId: true } },
+      },
+    });
+    if (!step?.projectId) throw notFound("Step not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: step.projectId,
+        driverId: step.inspection.driverId,
+      })
+    ) {
+      throw notFound("Step not found");
+    }
+    return this.prisma.inspectionStep.update({
+      where: { id: stepId },
+      data: { analysisRetryCount: count },
     });
   }
 

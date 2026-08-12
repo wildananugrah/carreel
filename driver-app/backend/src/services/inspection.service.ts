@@ -5,6 +5,7 @@ import type {
 } from "../generated/prisma";
 import type { IJobQueue } from "../interfaces/providers/job-queue.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
+import type { IAIAnalysisRepository } from "../interfaces/repositories/ai-analysis.repository.interface";
 import type { IDamageMarkerRepository } from "../interfaces/repositories/damage-marker.repository.interface";
 import type {
   IInspectionRepository,
@@ -33,6 +34,7 @@ export class InspectionService implements IInspectionService {
     private jobQueue?: IJobQueue,
     private aiEnabled = true,
     private damageMarkerRepository?: IDamageMarkerRepository,
+    private aiAnalysisRepository?: IAIAnalysisRepository,
   ) {}
 
   async create(
@@ -404,6 +406,84 @@ export class InspectionService implements IInspectionService {
     });
 
     return { enqueuedSteps };
+  }
+
+  /** Max re-runs of the body-verification AI check per step. */
+  private static readonly MAX_ANALYSIS_RETRIES = 2;
+
+  async retryStepAnalysis(
+    scope: UserScope,
+    id: string,
+    stepId: string,
+    driverId: string,
+  ): Promise<{ retryCount: number; remaining: number }> {
+    const inspection = await this.inspectionRepository.findById(scope, id);
+    if (!inspection) {
+      throw notFound("Inspection not found");
+    }
+    if (!hasPlatformBypass(scope) && inspection.driverId !== driverId) {
+      throw notFound("Inspection not found");
+    }
+    if (inspection.status !== "DRAFT") {
+      throw badRequest("Only DRAFT inspections can be re-analysed");
+    }
+
+    const step = await this.inspectionRepository.findStepById(scope, stepId);
+    if (
+      !step ||
+      step.inspectionId !== id ||
+      step.stepType !== "BODY_INSPECTION"
+    ) {
+      throw notFound("Step not found");
+    }
+    if (step.status !== "FAILED") {
+      throw badRequest("Only a failed body inspection can be re-analysed");
+    }
+
+    const max = InspectionService.MAX_ANALYSIS_RETRIES;
+    if (step.analysisRetryCount >= max) {
+      throw badRequest("Batas percobaan ulang tercapai");
+    }
+
+    // Checked before any mutation so a disabled-AI environment cannot burn a
+    // driver's retry allowance.
+    if (!this.aiEnabled || !this.jobQueue) {
+      return {
+        retryCount: step.analysisRetryCount,
+        remaining: max - step.analysisRetryCount,
+      };
+    }
+
+    const retryCount = step.analysisRetryCount + 1;
+    await this.inspectionRepository.setAnalysisRetryCount(
+      scope,
+      stepId,
+      retryCount,
+    );
+
+    // AIAnalysis.stepId is @unique and the job calls create(), not upsert —
+    // without clearing the previous row the re-run dies on a constraint
+    // violation.
+    await this.aiAnalysisRepository?.deleteByStepId(scope, stepId);
+
+    await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
+
+    await this.jobQueue.enqueue("step-analysis", {
+      inspectionId: id,
+      stepId,
+      stepType: step.stepType,
+      driverId,
+      tripType: inspection.tripType,
+    });
+
+    this.logger.info("Re-enqueued body analysis after verification failure", {
+      userId: scope.userId,
+      inspectionId: id,
+      stepId,
+      retryCount,
+    });
+
+    return { retryCount, remaining: max - retryCount };
   }
 
   async delete(scope: UserScope, id: string, driverId: string): Promise<void> {

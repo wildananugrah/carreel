@@ -204,6 +204,21 @@ export function createInspectionRoutes(
     return c.json(step);
   });
 
+  // POST /api/inspections/:id/steps/:stepId/retry-analysis
+  // Re-runs the body-verification AI check against the media already uploaded.
+  app.post("/:id/steps/:stepId/retry-analysis", async (c) => {
+    const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const result = await inspectionService.retryStepAnalysis(
+      scope,
+      c.req.param("id"),
+      c.req.param("stepId"),
+      userId,
+    );
+    return c.json(result);
+  });
+
   // POST /api/inspections/:id/steps/:stepId/media
   app.post("/:id/steps/:stepId/media", async (c) => {
     const userId = c.get("userId") as string;

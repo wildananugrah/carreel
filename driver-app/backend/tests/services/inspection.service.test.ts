@@ -173,6 +173,7 @@ describe("InspectionService", () => {
         (step as any).status = status;
         return step;
       },
+      setAnalysisRetryCount: async () => ({}) as any,
       delete: async (_scope: UserScope, id: string) => {
         inspections.delete(id);
       },
@@ -466,6 +467,7 @@ describe("InspectionService", () => {
       createStep: async () => ({}) as any,
       findStepById: async () => null,
       updateStepStatus: async () => ({}) as any,
+      setAnalysisRetryCount: async () => ({}) as any,
       findUnitByInspectionId: async () => null,
       getProjectIdByInspectionId: async () => "project-1",
       updateUnitKm: async () => {},
