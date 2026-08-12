@@ -106,6 +106,8 @@ export interface InspectionStep {
   updatedAt: string;
   mediaFiles: MediaFile[];
   aiAnalysis: AIAnalysis | null;
+  /** Driver re-runs of the AI check after a verification failure (max 2). */
+  analysisRetryCount?: number;
 }
 
 export interface InspectionReview {

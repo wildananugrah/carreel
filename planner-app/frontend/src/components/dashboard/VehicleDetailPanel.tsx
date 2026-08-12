@@ -43,6 +43,13 @@ function getBodyAI(insp: InspectionDetail): BodyInspectionData | null {
   return step.aiAnalysis.structuredData as BodyInspectionData;
 }
 
+/** How many times the driver re-ran the body-verification AI check. */
+function getBodyRetryCount(insp: InspectionDetail | null): number {
+  if (!insp) return 0;
+  const step = insp.steps.find((s) => s.stepType === "BODY_INSPECTION");
+  return step?.analysisRetryCount ?? 0;
+}
+
 function getSpeedoAI(insp: InspectionDetail): SpeedoData | null {
   const step = insp.steps.find((s) => s.stepType === "SPEEDOMETER");
   if (!step?.aiAnalysis?.structuredData) return null;
@@ -908,6 +915,7 @@ function AIAlertTab({
         commentLabel="Catatan Driver (Pre)"
         videoMediaId={preVideoMediaId}
         sidePhotoMap={preSidePhotoMap}
+        retryCount={getBodyRetryCount(preDetail)}
       />
 
       {/* POST section */}
@@ -920,6 +928,7 @@ function AIAlertTab({
           commentLabel="Catatan Driver (Post)"
           videoMediaId={postVideoMediaId}
           sidePhotoMap={postSidePhotoMap}
+          retryCount={getBodyRetryCount(postDetail)}
         />
       ) : (
         <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-xl p-3 mb-3">
@@ -981,6 +990,7 @@ function AIFlagSection({
   commentLabel,
   videoMediaId,
   sidePhotoMap,
+  retryCount,
 }: {
   label: string;
   color: string;
@@ -990,6 +1000,8 @@ function AIFlagSection({
   videoMediaId: string | null;
   /** PHOTOS_8SIDE: bodySide -> photo id; non-empty switches flags to photo evidence. */
   sidePhotoMap?: Record<string, string>;
+  /** Driver re-runs of the AI verification for this trip's body step. */
+  retryCount?: number;
 }) {
   const bgColor = label === "PRE-CHECK" ? "#141200" : "#141414";
   const borderColor = label === "PRE-CHECK" ? "#282000" : "#282828";
@@ -1004,6 +1016,10 @@ function AIFlagSection({
   return (
     <div className="rounded-xl p-3 mb-3 border" style={{ background: bgColor, borderColor }}>
       <SectionHeader label={label} color={color} count={flags.length} />
+
+      {retryCount != null && retryCount > 0 && (
+        <p className="text-[10px] text-[#D4A800] mb-2">Divalidasi ulang {retryCount}×</p>
+      )}
 
       {flags.length === 0 ? (
         <p className="text-[11px] text-[#555] py-2">Tidak ada flag terdeteksi</p>
