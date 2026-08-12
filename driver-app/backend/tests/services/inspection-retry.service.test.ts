@@ -47,50 +47,57 @@ describe("InspectionService.retryStepAnalysis", () => {
   let step: InspectionStep;
   let enqueued: { name: string; payload: unknown }[];
   let deletedAnalysisStepIds: string[];
-  let statusUpdates: { stepId: string; status: string }[];
-  let retryCountWrites: { stepId: string; count: number }[];
-  // Records the order in which the four side effects fire, so a reordering
+  let claimCalls: { stepId: string; maxRetries: number }[];
+  let releaseCalls: string[];
+  // Records the order in which the side effects fire, so a reordering
   // regression (the exact class of bug Finding 1 fixed) fails a test instead
   // of slipping through on final-state assertions alone.
   let sideEffectOrder: string[];
   // When set, the mock jobQueue.enqueue throws this instead of succeeding,
   // exercising the compensating rollback path.
   let enqueueError: Error | null;
-  // When set, the mock updateStepStatus throws this specifically on the
-  // FAILED-revert call made by the rollback (not the initial UPLOADED call),
-  // exercising the "compensation itself fails" path.
-  let statusRevertError: Error | null;
+  // When set, the mock releaseAnalysisRetryClaim (the rollback compensation)
+  // throws this, exercising the "compensation itself fails" path.
+  let releaseError: Error | null;
+  // Controls what the mock claimAnalysisRetry reports. Defaults to
+  // "claimed successfully, bumping the count by 1" — set to false to
+  // simulate the atomic guard rejecting the claim (cap reached, or lost a
+  // race to a concurrent request) even though the service's own read-side
+  // pre-check passed.
+  let claimClaimed: boolean;
   let service: InspectionService;
 
   beforeEach(() => {
     step = makeStep();
     enqueued = [];
     deletedAnalysisStepIds = [];
-    statusUpdates = [];
-    retryCountWrites = [];
+    claimCalls = [];
+    releaseCalls = [];
     sideEffectOrder = [];
     enqueueError = null;
-    statusRevertError = null;
+    releaseError = null;
+    claimClaimed = true;
 
     const repo = {
       findById: async () => makeInspection(),
       findStepById: async () => step,
-      updateStepStatus: async (_s: unknown, stepId: string, status: string) => {
-        if (status === "FAILED" && statusRevertError) {
-          throw statusRevertError;
-        }
-        sideEffectOrder.push(`statusUpdate:${status}`);
-        statusUpdates.push({ stepId, status });
-        return step;
-      },
-      setAnalysisRetryCount: async (
+      claimAnalysisRetry: async (
         _s: unknown,
         stepId: string,
-        count: number,
+        maxRetries: number,
       ) => {
-        sideEffectOrder.push("retryCount");
-        retryCountWrites.push({ stepId, count });
-        return { ...step, analysisRetryCount: count };
+        sideEffectOrder.push("claim");
+        claimCalls.push({ stepId, maxRetries });
+        if (!claimClaimed) {
+          return { claimed: false, retryCount: step.analysisRetryCount };
+        }
+        return { claimed: true, retryCount: step.analysisRetryCount + 1 };
+      },
+      releaseAnalysisRetryClaim: async (_s: unknown, stepId: string) => {
+        if (releaseError) throw releaseError;
+        sideEffectOrder.push("release");
+        releaseCalls.push(stepId);
+        return step;
       },
     } as unknown as IInspectionRepository;
 
@@ -119,7 +126,7 @@ describe("InspectionService.retryStepAnalysis", () => {
     );
   });
 
-  test("re-enqueues analysis, increments the counter, and clears the stale analysis", async () => {
+  test("re-enqueues analysis, increments the counter, and clears the stale analysis, in order", async () => {
     const result = await service.retryStepAnalysis(
       makeDriverScope({ userId: "driver-1" }),
       "insp-1",
@@ -128,43 +135,50 @@ describe("InspectionService.retryStepAnalysis", () => {
     );
 
     expect(result).toEqual({ retryCount: 1, remaining: 1 });
-    expect(retryCountWrites).toEqual([{ stepId: "step-1", count: 1 }]);
+    expect(claimCalls).toEqual([{ stepId: "step-1", maxRetries: 2 }]);
     expect(deletedAnalysisStepIds).toEqual(["step-1"]);
-    expect(statusUpdates).toEqual([{ stepId: "step-1", status: "UPLOADED" }]);
     expect(enqueued).toHaveLength(1);
     expect(enqueued[0].name).toBe("step-analysis");
-    // The counter must be bumped and the stale analysis cleared before the
-    // step is flipped back to UPLOADED, and the job must only be enqueued
-    // once the step is actually ready to be re-analysed.
-    expect(sideEffectOrder).toEqual([
-      "retryCount",
-      "deleteAnalysis",
-      "statusUpdate:UPLOADED",
-      "enqueue",
-    ]);
+    // The atomic claim (counter bump + status flip in one write) happens
+    // first, then the stale analysis is cleared, and only then is the job
+    // enqueued.
+    expect(sideEffectOrder).toEqual(["claim", "deleteAnalysis", "enqueue"]);
+  });
+
+  test("the atomic claim is what enforces the cap, not just the read-side pre-check", async () => {
+    // step.analysisRetryCount is 0, so the service's own read-side guard
+    // (`step.analysisRetryCount >= max`) passes. But the repository's
+    // atomic claim reports no row was updated — e.g. a concurrent request
+    // already consumed the last slot between the read and the write. The
+    // service must treat that as authoritative and refuse, not trust its
+    // own stale read.
+    claimClaimed = false;
+
+    await expect(
+      service.retryStepAnalysis(
+        makeDriverScope({ userId: "driver-1" }),
+        "insp-1",
+        "step-1",
+        "driver-1",
+      ),
+    ).rejects.toThrow("Batas percobaan ulang tercapai");
+
+    expect(claimCalls).toEqual([{ stepId: "step-1", maxRetries: 2 }]);
+    expect(enqueued).toHaveLength(0);
+    expect(deletedAnalysisStepIds).toHaveLength(0);
   });
 
   test("returns without mutating anything when AI is disabled", async () => {
+    const claimCallsDisabled: unknown[] = [];
     const disabledService = new InspectionService(
       {
         findById: async () => makeInspection(),
         findStepById: async () => step,
-        updateStepStatus: async (
-          _s: unknown,
-          stepId: string,
-          status: string,
-        ) => {
-          statusUpdates.push({ stepId, status });
-          return step;
+        claimAnalysisRetry: async () => {
+          claimCallsDisabled.push(true);
+          return { claimed: true, retryCount: 1 };
         },
-        setAnalysisRetryCount: async (
-          _s: unknown,
-          stepId: string,
-          count: number,
-        ) => {
-          retryCountWrites.push({ stepId, count });
-          return { ...step, analysisRetryCount: count };
-        },
+        releaseAnalysisRetryClaim: async () => step,
       } as unknown as IInspectionRepository,
       mockLogger,
       {
@@ -190,9 +204,8 @@ describe("InspectionService.retryStepAnalysis", () => {
 
     expect(result).toEqual({ retryCount: 0, remaining: 2 });
     expect(enqueued).toHaveLength(0);
-    expect(retryCountWrites).toHaveLength(0);
+    expect(claimCallsDisabled).toHaveLength(0);
     expect(deletedAnalysisStepIds).toHaveLength(0);
-    expect(statusUpdates).toHaveLength(0);
   });
 
   test("rolls back the status and counter when the enqueue fails", async () => {
@@ -207,19 +220,17 @@ describe("InspectionService.retryStepAnalysis", () => {
       ),
     ).rejects.toThrow("job queue is down");
 
-    // The step is reverted to FAILED and the counter reset to its original
-    // value, so the driver's retry attempt isn't silently consumed by an
-    // enqueue failure that has nothing to do with them.
-    expect(statusUpdates.at(-1)).toEqual({
-      stepId: "step-1",
-      status: "FAILED",
-    });
-    expect(retryCountWrites.at(-1)).toEqual({ stepId: "step-1", count: 0 });
+    // The step is reverted to FAILED and the counter decremented back to its
+    // original value via the single compensating write, so the driver's
+    // retry attempt isn't silently consumed by an enqueue failure that has
+    // nothing to do with them.
+    expect(releaseCalls).toEqual(["step-1"]);
+    expect(sideEffectOrder).toEqual(["claim", "deleteAnalysis", "release"]);
   });
 
   test("still surfaces the original enqueue error when the compensation itself fails", async () => {
     enqueueError = new Error("job queue is down");
-    statusRevertError = new Error("db write failed during compensation");
+    releaseError = new Error("db write failed during compensation");
 
     // The compensation's own failure must never mask the real cause — the
     // caller should see the original enqueue error, not the rollback error.
@@ -233,7 +244,7 @@ describe("InspectionService.retryStepAnalysis", () => {
     ).rejects.toThrow("job queue is down");
   });
 
-  test("rejects a third attempt once the cap is reached", async () => {
+  test("rejects a third attempt once the cap is reached (read-side pre-check)", async () => {
     step = makeStep({ analysisRetryCount: 2 });
     await expect(
       service.retryStepAnalysis(
@@ -244,6 +255,7 @@ describe("InspectionService.retryStepAnalysis", () => {
       ),
     ).rejects.toThrow("Batas percobaan ulang tercapai");
     expect(enqueued).toHaveLength(0);
+    expect(claimCalls).toHaveLength(0);
   });
 
   test("rejects a step that is not FAILED", async () => {
@@ -292,8 +304,8 @@ describe("InspectionService.retryStepAnalysis", () => {
     const repo = {
       findById: async () => submitted,
       findStepById: async () => step,
-      updateStepStatus: async () => step,
-      setAnalysisRetryCount: async () => step,
+      claimAnalysisRetry: async () => ({ claimed: true, retryCount: 1 }),
+      releaseAnalysisRetryClaim: async () => step,
     } as unknown as IInspectionRepository;
     const aiRepo = {
       deleteByStepId: async () => {},
@@ -321,5 +333,110 @@ describe("InspectionService.retryStepAnalysis", () => {
       ),
     ).rejects.toThrow("Only DRAFT inspections can be re-analysed");
     expect(enqueued).toHaveLength(0);
+  });
+});
+
+describe("InspectionService.analyzePhotos — retry-in-progress body step", () => {
+  let enqueued: { name: string; payload: unknown }[];
+
+  function makeInspectionWithSteps(
+    steps: InspectionStep[],
+  ): InspectionWithRelations {
+    return {
+      id: "insp-1",
+      driverId: "driver-1",
+      projectId: "test-project",
+      tripType: "PRE_TRIP",
+      status: "DRAFT",
+      steps,
+    } as unknown as InspectionWithRelations;
+  }
+
+  function makeService(inspection: InspectionWithRelations): InspectionService {
+    const repo = {
+      findById: async () => inspection,
+    } as unknown as IInspectionRepository;
+    const queue = {
+      enqueue: async (name: string, payload: unknown) => {
+        enqueued.push({ name, payload });
+      },
+    } as unknown as IJobQueue;
+    return new InspectionService(repo, mockLogger, queue, true);
+  }
+
+  beforeEach(() => {
+    enqueued = [];
+  });
+
+  test("skips a body step mid-retry (analysisRetryCount > 0) even though it is UPLOADED", async () => {
+    const inspection = makeInspectionWithSteps([
+      makeStep({
+        id: "body-step",
+        stepType: "BODY_INSPECTION",
+        status: "UPLOADED",
+        analysisRetryCount: 1,
+      }),
+    ]);
+    const svc = makeService(inspection);
+
+    const result = await svc.analyzePhotos(
+      makeDriverScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
+
+    expect(result.enqueuedSteps).toEqual([]);
+    expect(enqueued).toHaveLength(0);
+  });
+
+  test("still enqueues a body step that has never been retried (analysisRetryCount 0)", async () => {
+    const inspection = makeInspectionWithSteps([
+      makeStep({
+        id: "body-step",
+        stepType: "BODY_INSPECTION",
+        status: "UPLOADED",
+        analysisRetryCount: 0,
+      }),
+    ]);
+    const svc = makeService(inspection);
+
+    const result = await svc.analyzePhotos(
+      makeDriverScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
+
+    expect(result.enqueuedSteps).toEqual(["BODY_INSPECTION"]);
+    expect(enqueued).toHaveLength(1);
+  });
+
+  test("does not affect other UPLOADED step types", async () => {
+    const inspection = makeInspectionWithSteps([
+      makeStep({
+        id: "unit-step",
+        stepType: "UNIT_IDENTIFICATION",
+        status: "UPLOADED",
+        analysisRetryCount: 0,
+      }),
+      makeStep({
+        id: "speedo-step",
+        stepType: "SPEEDOMETER",
+        status: "UPLOADED",
+        analysisRetryCount: 0,
+      }),
+    ]);
+    const svc = makeService(inspection);
+
+    const result = await svc.analyzePhotos(
+      makeDriverScope({ userId: "driver-1" }),
+      "insp-1",
+      "driver-1",
+    );
+
+    expect(result.enqueuedSteps).toEqual([
+      "UNIT_IDENTIFICATION",
+      "SPEEDOMETER",
+    ]);
+    expect(enqueued).toHaveLength(2);
   });
 });

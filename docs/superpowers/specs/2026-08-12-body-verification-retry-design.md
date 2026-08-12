@@ -105,10 +105,18 @@ Returns `{ retryCount, remaining }`, both computed **after** the increment:
 first retry returns `{ retryCount: 1, remaining: 1 }` and the second returns
 `{ retryCount: 2, remaining: 0 }`.
 
-**No damage-marker cleanup.** The verification gate short-circuits before the
-damage pass (`step-analysis.job.ts:830`), so a verification-gated failure has
-never created markers. Restricting the endpoint to `status === "FAILED"` on a
-`BODY_INSPECTION` step keeps that invariant true.
+**No damage-marker cleanup.** In the common case — the verification gate
+short-circuiting before the damage pass (`step-analysis.job.ts:830`) — a
+`FAILED` body step has no markers, since it never reached `saveDamageMarkers`.
+But the endpoint's guard is just `status === "FAILED"` on a `BODY_INSPECTION`
+step, and that status is also reachable through the *generic* catch in
+`step-analysis.job.ts` (~lines 673-728), which can fire after the damage pass
+already ran `saveDamageMarkers` (e.g. a downstream error while persisting
+results). `saveDamageMarkers` creates unconditionally with no dedupe, so a
+retry in that narrow window would duplicate markers on the next successful
+run. This is not implemented as marker cleanup — the window is narrow and out
+of scope for this change — but the invariant "a FAILED body step never has
+markers" is not actually guaranteed by the code.
 
 **Alerts are left alone.** Each failed attempt continues to create its own
 `VEHICLE_MISMATCH` alert. This is deliberate: it gives the planner the full

@@ -406,10 +406,68 @@ export class InspectionRepository implements IInspectionRepository {
     });
   }
 
-  async setAnalysisRetryCount(
+  /**
+   * Atomically claims one retry attempt for a FAILED body-inspection step:
+   * bumps `analysisRetryCount` and flips status to `UPLOADED` in a single
+   * guarded `updateMany`. The WHERE clause (`status: "FAILED"` AND
+   * `analysisRetryCount < maxRetries`) is the authoritative anti-fraud cap —
+   * it collapses the read-then-write race that let two concurrent retry
+   * requests both read the same counter value and both slip through. Only
+   * one concurrent caller can ever get `claimed: true` for a given step.
+   */
+  async claimAnalysisRetry(
     scope: UserScope,
     stepId: string,
-    count: number,
+    maxRetries: number,
+  ): Promise<{ claimed: boolean; retryCount: number }> {
+    const step = await this.prisma.inspectionStep.findUnique({
+      where: { id: stepId },
+      select: {
+        projectId: true,
+        analysisRetryCount: true,
+        inspection: { select: { driverId: true } },
+      },
+    });
+    if (!step?.projectId) throw notFound("Step not found");
+    if (
+      !canWriteToEntity(
+        scope,
+        {
+          projectId: step.projectId,
+          driverId: step.inspection.driverId,
+        },
+        { requireDriverAssignment: false },
+      )
+    ) {
+      throw notFound("Step not found");
+    }
+
+    const { count } = await this.prisma.inspectionStep.updateMany({
+      where: {
+        id: stepId,
+        status: "FAILED",
+        analysisRetryCount: { lt: maxRetries },
+      },
+      data: {
+        analysisRetryCount: { increment: 1 },
+        status: "UPLOADED",
+      },
+    });
+
+    if (count === 0) {
+      return { claimed: false, retryCount: step.analysisRetryCount };
+    }
+    return { claimed: true, retryCount: step.analysisRetryCount + 1 };
+  }
+
+  /**
+   * Reverts a previously-claimed retry when the follow-up enqueue fails —
+   * puts the step back to FAILED and decrements the counter in one write,
+   * restoring exactly the state `claimAnalysisRetry` moved it from.
+   */
+  async releaseAnalysisRetryClaim(
+    scope: UserScope,
+    stepId: string,
   ): Promise<InspectionStep> {
     const step = await this.prisma.inspectionStep.findUnique({
       where: { id: stepId },
@@ -433,7 +491,7 @@ export class InspectionRepository implements IInspectionRepository {
     }
     return this.prisma.inspectionStep.update({
       where: { id: stepId },
-      data: { analysisRetryCount: count },
+      data: { status: "FAILED", analysisRetryCount: { decrement: 1 } },
     });
   }
 

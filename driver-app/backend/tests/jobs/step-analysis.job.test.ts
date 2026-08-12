@@ -229,7 +229,8 @@ describe("StepAnalysisJob", () => {
         const step = steps.get(stepId)!;
         return { ...step, status } as any;
       },
-      setAnalysisRetryCount: async () => ({}) as any,
+      claimAnalysisRetry: async () => ({ claimed: true, retryCount: 1 }) as any,
+      releaseAnalysisRetryClaim: async () => ({}) as any,
       delete: async () => {},
       findUnitByInspectionId: async () => mockUnit,
       getProjectIdByInspectionId: async () => "project-1",

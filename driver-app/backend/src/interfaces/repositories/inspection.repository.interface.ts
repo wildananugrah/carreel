@@ -124,10 +124,27 @@ export interface IInspectionRepository {
     stepId: string,
     status: StepStatus,
   ): Promise<InspectionStep>;
-  setAnalysisRetryCount(
+  /**
+   * Atomically claims one retry attempt for a FAILED body-inspection step.
+   * `claimed: false` means the guarded write matched zero rows — either the
+   * cap (`maxRetries`) was already reached or the step wasn't `FAILED`
+   * anymore (e.g. a concurrent request claimed it first). This is the
+   * authoritative anti-fraud enforcement — callers must not bump the
+   * counter any other way.
+   */
+  claimAnalysisRetry(
     scope: UserScope,
     stepId: string,
-    count: number,
+    maxRetries: number,
+  ): Promise<{ claimed: boolean; retryCount: number }>;
+  /**
+   * Reverts a successful `claimAnalysisRetry` — puts the step back to
+   * FAILED and decrements the counter in one write. Used to compensate when
+   * the follow-up enqueue fails after the claim succeeded.
+   */
+  releaseAnalysisRetryClaim(
+    scope: UserScope,
+    stepId: string,
   ): Promise<InspectionStep>;
 
   delete(scope: UserScope, id: string): Promise<void>;

@@ -381,10 +381,21 @@ export class InspectionService implements IInspectionService {
       "SPEEDOMETER",
       "BODY_INSPECTION",
     ];
-    const eligibleSteps = inspection.steps.filter(
-      (s) =>
-        ANALYZABLE_STEP_TYPES.includes(s.stepType) && s.status === "UPLOADED",
-    );
+    const eligibleSteps = inspection.steps.filter((s) => {
+      if (!ANALYZABLE_STEP_TYPES.includes(s.stepType)) return false;
+      if (s.status !== "UPLOADED") return false;
+      // A body step that has already been retried (analysisRetryCount > 0)
+      // was put back to UPLOADED by retryStepAnalysis, not by a fresh photo
+      // upload. That endpoint is the sole authority on re-running the body
+      // AI check — the cap it enforces (MAX_ANALYSIS_RETRIES) would be
+      // bypassed for free if this generic analyze-photos path also picked
+      // the step up while it's mid-retry. A never-retried body step (count
+      // 0) is the normal first-analysis path and must still be enqueued.
+      if (s.stepType === "BODY_INSPECTION" && s.analysisRetryCount > 0) {
+        return false;
+      }
+      return true;
+    });
 
     const enqueuedSteps: string[] = [];
     for (const step of eligibleSteps) {
@@ -454,20 +465,26 @@ export class InspectionService implements IInspectionService {
       };
     }
 
-    const previousRetryCount = step.analysisRetryCount;
-    const retryCount = previousRetryCount + 1;
-    await this.inspectionRepository.setAnalysisRetryCount(
+    // Atomic claim: bumps the counter and flips status to UPLOADED in one
+    // guarded write (`status = FAILED AND analysisRetryCount < max`). This
+    // is the authoritative enforcement of the cap — two concurrent requests
+    // can no longer both read the same counter value and both slip through;
+    // only one can win the guarded update. The read-side checks above exist
+    // purely to surface the specific, driver-facing error messages.
+    const claim = await this.inspectionRepository.claimAnalysisRetry(
       scope,
       stepId,
-      retryCount,
+      max,
     );
+    if (!claim.claimed) {
+      throw badRequest("Batas percobaan ulang tercapai");
+    }
+    const retryCount = claim.retryCount;
 
     // AIAnalysis.stepId is @unique and the job calls create(), not upsert —
     // without clearing the previous row the re-run dies on a constraint
     // violation.
     await this.aiAnalysisRepository?.deleteByStepId(scope, stepId);
-
-    await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
 
     try {
       await this.jobQueue.enqueue("step-analysis", {
@@ -478,21 +495,16 @@ export class InspectionService implements IInspectionService {
         tripType: inspection.tripType,
       });
     } catch (err) {
-      // If enqueue fails after the step was already flipped to UPLOADED and
-      // the counter bumped, the step would be stuck forever — the retry
-      // guard only accepts FAILED steps, so it could never be retried again.
-      // Compensate by putting the step back exactly where it started so the
-      // driver still has their retry available, then re-throw.
+      // If enqueue fails after the claim already flipped the step to
+      // UPLOADED and bumped the counter, the step would be stuck forever —
+      // the retry guard only accepts FAILED steps, so it could never be
+      // retried again. Compensate by putting the step back exactly where it
+      // started (one atomic write) so the driver still has their retry
+      // available, then re-throw.
       try {
-        await this.inspectionRepository.updateStepStatus(
+        await this.inspectionRepository.releaseAnalysisRetryClaim(
           scope,
           stepId,
-          "FAILED",
-        );
-        await this.inspectionRepository.setAnalysisRetryCount(
-          scope,
-          stepId,
-          previousRetryCount,
         );
       } catch (compensationErr) {
         // The original enqueue failure is what the caller needs to see and
@@ -502,7 +514,7 @@ export class InspectionService implements IInspectionService {
           userId: scope.userId,
           inspectionId: id,
           stepId,
-          previousRetryCount,
+          previousRetryCount: retryCount - 1,
           error:
             compensationErr instanceof Error
               ? compensationErr.message
