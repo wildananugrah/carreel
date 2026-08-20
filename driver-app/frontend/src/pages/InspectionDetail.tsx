@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ConditionReel } from "../components/inspection/ConditionReel";
+import {
+  ConditionReel,
+  type ConditionReelPhoto,
+  type ReelFinding,
+} from "../components/inspection/ConditionReel";
 import { MediaImage } from "../components/ui/MediaImage";
 import { MediaLightbox } from "../components/ui/MediaLightbox";
 import { Spinner } from "../components/ui/Spinner";
@@ -109,6 +113,49 @@ function getBodyPhotos(inspection: InspectionDetailType): { id: string; bodySide
   return [...files].sort(
     (a, b) => (BODY_SIDE_ORDER[a.bodySide ?? ""] ?? 99) - (BODY_SIDE_ORDER[b.bodySide ?? ""] ?? 99),
   );
+}
+
+/** Most-serious first, so the worst finding is visible without scrolling. */
+const SEVERITY_RANK: Record<string, number> = { MAJOR: 0, MODERATE: 1, MINOR: 2 };
+
+/**
+ * Attach each damage marker to the side photo it was found on. In
+ * PHOTOS_8SIDE mode the AI pass persists every damage against the media
+ * file of the side it was seen on, so `mediaFileId` is a direct join key.
+ *
+ * DRIVER_ADDED damages are deliberately NOT matched here: they hang off
+ * their own uploaded evidence photo, which is not one of the eight side
+ * photos, so their `mediaFileId` matches nothing in `photos`. That is the
+ * intended result — the overlay describes what is visible in the photo on
+ * screen, and a manual damage is not visible in it. They remain listed in
+ * the AI Alert tab, which is where their evidence photo is viewable.
+ *
+ * `markers === null` means the fetch is still in flight (or failed) — the
+ * reel then renders without overlays rather than blocking on it.
+ */
+function attachFindings(
+  photos: { id: string; bodySide?: string }[],
+  markers: DamageMarker[] | null,
+): ConditionReelPhoto[] {
+  if (!markers) return photos;
+
+  const byPhoto = new Map<string, ReelFinding[]>();
+  for (const m of markers) {
+    const finding: ReelFinding = {
+      id: m.id,
+      label: damageLabel(m.damageType),
+      severity: m.severity,
+      location: m.location,
+    };
+    const existing = byPhoto.get(m.mediaFileId);
+    if (existing) existing.push(finding);
+    else byPhoto.set(m.mediaFileId, [finding]);
+  }
+  for (const list of byPhoto.values()) {
+    list.sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9));
+  }
+
+  return photos.map((p) => ({ ...p, findings: byPhoto.get(p.id) ?? [] }));
 }
 
 function getSpeedoMediaId(inspection: InspectionDetailType): string | null {
@@ -398,6 +445,11 @@ export function InspectionDetail() {
   const preMarkers = isPreTrip ? thisMarkers : linkedMarkers;
   const postMarkers = isPreTrip ? linkedMarkers : thisMarkers;
 
+  // Findings shown on the Post-Check reel mirror what the AI Alert tab
+  // lists: carried-over pre-trip damages (isNewDamage === false) are
+  // hidden there, so showing them here would make the two counts disagree.
+  const postReelMarkers = postMarkers?.filter((m) => m.isNewDamage !== false) ?? null;
+
   function markerToFlag(d: DamageMarker, videoMediaId: string | null): DamageFlag {
     return {
       damageType: d.damageType,
@@ -545,7 +597,7 @@ export function InspectionDetail() {
         )}
 
         {activeTab === "pre" && preInspection && (
-          <PrePostPanel inspection={preInspection} label="Pre-Check" />
+          <PrePostPanel inspection={preInspection} label="Pre-Check" markers={preMarkers} />
         )}
         {activeTab === "pre" && !preInspection && <EmptyState text="Pre-Check belum tersedia" />}
 
@@ -565,7 +617,7 @@ export function InspectionDetail() {
           </div>
         )}
         {activeTab === "post" && postInspection && postInspection.status !== "DRAFT" && (
-          <PrePostPanel inspection={postInspection} label="Post-Check" />
+          <PrePostPanel inspection={postInspection} label="Post-Check" markers={postReelMarkers} />
         )}
         {activeTab === "post" && !postInspection && showEndTrip && (
           <div className="flex flex-col items-center gap-4 py-8">
@@ -634,7 +686,15 @@ export function InspectionDetail() {
 }
 
 /* ─── Pre/Post Panel ─── */
-function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType; label: string }) {
+function PrePostPanel({
+  inspection,
+  label,
+  markers,
+}: {
+  inspection: InspectionDetailType;
+  label: string;
+  markers: DamageMarker[] | null;
+}) {
   const videoId = getVideoMediaId(inspection);
   const speedoId = getSpeedoMediaId(inspection);
   const speedoAI = getSpeedoAI(inspection);
@@ -643,6 +703,8 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
   const displayVin = vinFromAI ?? inspection.unit?.vin ?? null;
   const isPhotoBody = inspection.bodyInspectionMode === "PHOTOS_8SIDE";
   const bodyPhotos = isPhotoBody ? getBodyPhotos(inspection) : [];
+  const reelPhotos = attachFindings(bodyPhotos, markers);
+  const findingCount = reelPhotos.reduce((n, p) => n + (p.findings?.length ?? 0), 0);
   const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
 
   return (
@@ -651,7 +713,16 @@ function PrePostPanel({ inspection, label }: { inspection: InspectionDetailType;
       {isPhotoBody ? (
         bodyPhotos.length > 0 ? (
           <>
-            <ConditionReel photos={bodyPhotos} />
+            <div className="bg-[#0A0A0A] border border-[#3a2800] rounded-[10px] p-3">
+              <p className="text-[9px] font-extrabold text-[#F5C842] tracking-[1px] mb-2">
+                BODY INSPECTION
+              </p>
+              <ConditionReel photos={reelPhotos} />
+              <p className="text-[10px] text-[#555] mt-2">
+                {bodyPhotos.length} foto
+                {findingCount > 0 ? ` · ${findingCount} temuan` : ""}
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {bodyPhotos.map((p) => (
                 <button
