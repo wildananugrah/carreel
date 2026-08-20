@@ -143,4 +143,5 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
 - [ ] Phase 11: Deployment (Docker images, CI/CD, cloud hosting)
 
 ## enhancement / bugs
+- [x] Condition Reel: per-photo AI finding overlay (severity-ranked rows over the bottom of the frame, dwell scales 2s + 1.5s/finding capped at 6s) + SPEEDOMETER-style card wrapper — driver-app InspectionDetail PRE/POST tabs, PHOTOS_8SIDE mode
 - [ ]
