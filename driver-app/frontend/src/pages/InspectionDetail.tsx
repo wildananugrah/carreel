@@ -712,38 +712,16 @@ function PrePostPanel({
       {/* Body inspection — 8 photos (PHOTOS_8SIDE) or a video */}
       {isPhotoBody ? (
         bodyPhotos.length > 0 ? (
-          <>
-            <div className="bg-[#0A0A0A] border border-[#3a2800] rounded-[10px] p-3">
-              <p className="text-[9px] font-extrabold text-[#F5C842] tracking-[1px] mb-2">
-                BODY INSPECTION
-              </p>
-              <ConditionReel photos={reelPhotos} />
-              <p className="text-[10px] text-[#555] mt-2">
-                {bodyPhotos.length} foto
-                {findingCount > 0 ? ` · ${findingCount} temuan` : ""}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {bodyPhotos.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
-                  className="relative aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
-                >
-                  <MediaImage
-                    src={`/api/media/${p.id}/url`}
-                    alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
-                    {BODY_SIDE_LABELS[p.bodySide ?? ""] ??
-                      (p.bodySide ? p.bodySide : "Foto Tambahan")}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </>
+          <div className="bg-[#0A0A0A] border border-[#3a2800] rounded-[10px] p-3">
+            <p className="text-[9px] font-extrabold text-[#F5C842] tracking-[1px] mb-2">
+              CONDITION REEL
+            </p>
+            <ConditionReel photos={reelPhotos} />
+            <p className="text-[10px] text-[#555] mt-2">
+              {bodyPhotos.length} foto
+              {findingCount > 0 ? ` · ${findingCount} temuan` : ""}
+            </p>
+          </div>
         ) : (
           <div className="bg-[#141414] rounded-[10px] h-40 flex items-center justify-center border border-[#2a2a2a]">
             <p className="text-[11px] text-[#888]">Belum ada foto body</p>
@@ -882,6 +860,30 @@ function PrePostPanel({
           {inspection.id.slice(0, 8).toUpperCase()}
         </p>
       </div>
+
+      {/* All 8 side photos — full grid, below the signature so the reel and
+          the summary cards stay above the fold. */}
+      {isPhotoBody && bodyPhotos.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {bodyPhotos.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
+              className="relative aspect-video bg-[#141414] rounded-[10px] overflow-hidden border border-[#2a2a2a]"
+            >
+              <MediaImage
+                src={`/api/media/${p.id}/url`}
+                alt={BODY_SIDE_LABELS[p.bodySide ?? ""] ?? "Foto body"}
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded">
+                {BODY_SIDE_LABELS[p.bodySide ?? ""] ?? (p.bodySide ? p.bodySide : "Foto Tambahan")}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Submit Info */}
       {inspection.completedAt && (
