@@ -5,6 +5,7 @@ import { type DamageMarker, damageAuditApi } from "../../lib/damage-audit-api";
 import type { DashboardVehicleCard, InspectionDetail } from "../../lib/types";
 import { MediaLightbox } from "../ui/MediaLightbox";
 import { Spinner } from "../ui/Spinner";
+import { ConditionReel, type ConditionReelPhoto, type ReelFinding } from "./ConditionReel";
 
 type DetailTab = "check" | "ttd" | "alert";
 
@@ -146,6 +147,48 @@ function markerToFlag(d: DamageMarker, mediaIdToSide: Record<string, string>): D
     // its own evidence photo. Either way mediaFileId is the image to show.
     evidenceMediaId: bodySide || d.source === "DRIVER_ADDED" ? d.mediaFileId : null,
   };
+}
+
+/** Most-serious first, so the worst finding is visible without scrolling. */
+const SEVERITY_RANK: Record<string, number> = { MAJOR: 0, MODERATE: 1, MINOR: 2 };
+
+/**
+ * Attach each damage marker to the side photo it was found on. In
+ * PHOTOS_8SIDE mode the AI pass persists every damage against the media
+ * file of the side it was seen on, so `mediaFileId` is a direct join key.
+ *
+ * DRIVER_ADDED damages are deliberately NOT matched: they hang off their own
+ * uploaded evidence photo rather than one of the eight side photos, so their
+ * `mediaFileId` matches nothing here. That is the intended result — the
+ * overlay describes what is visible in the photo on screen. They stay listed
+ * in the AI Alert tab, which is where their evidence photo is viewable.
+ *
+ * `markers === null` means the fetch is still in flight (or failed) — the
+ * reel then renders without overlays rather than blocking on it.
+ */
+function attachFindings(
+  photos: { id: string; bodySide: string | null }[],
+  markers: DamageMarker[] | null,
+): ConditionReelPhoto[] {
+  if (!markers) return photos;
+
+  const byPhoto = new Map<string, ReelFinding[]>();
+  for (const m of markers) {
+    const finding: ReelFinding = {
+      id: m.id,
+      label: damageLabel(m.damageType),
+      severity: m.severity,
+      location: m.location,
+    };
+    const existing = byPhoto.get(m.mediaFileId);
+    if (existing) existing.push(finding);
+    else byPhoto.set(m.mediaFileId, [finding]);
+  }
+  for (const list of byPhoto.values()) {
+    list.sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9));
+  }
+
+  return photos.map((p) => ({ ...p, findings: byPhoto.get(p.id) ?? [] }));
 }
 
 function getSpeedoMediaId(insp: InspectionDetail): string | null {
@@ -306,6 +349,14 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
   // The planner only needs to see *new* findings on POST-CHECK; matched
   // entries already show in PRE-CHECK and would clutter the section.
   const postFlags = postFlagsAll.filter((f) => f.isNewDamage !== false);
+  // Findings overlaid on the PRE/POST condition reels. `activeMarkers` keeps
+  // soft-deleted and failed-verification entries off the reel so it agrees
+  // with the AI Alert tab; POST additionally drops carried-over pre-trip
+  // damages, mirroring `postFlags` above.
+  const preReelMarkers = preMarkers ? activeMarkers(preMarkers) : null;
+  const postReelMarkers = postMarkers
+    ? activeMarkers(postMarkers).filter((d) => d.isNewDamage !== false)
+    : null;
   const totalAlerts = preFlags.length + postFlags.length;
 
   const lowFuel = vehicle.latestFuelLevelPct != null && vehicle.latestFuelLevelPct <= 25;
@@ -413,6 +464,8 @@ export function VehicleDetailPanel({ vehicle, onClose }: VehicleDetailPanelProps
             preSpeedoAI={preSpeedoAI}
             postSpeedoAI={postSpeedoAI}
             postFlags={postFlags}
+            preReelMarkers={preReelMarkers}
+            postReelMarkers={postReelMarkers}
           />
         ) : activeTab === "ttd" ? (
           <TTDTab
@@ -444,6 +497,8 @@ function CheckTab({
   preSpeedoAI,
   postSpeedoAI,
   postFlags,
+  preReelMarkers,
+  postReelMarkers,
 }: {
   preDetail: InspectionDetail | null;
   postDetail: InspectionDetail | null;
@@ -451,6 +506,8 @@ function CheckTab({
   preSpeedoAI: SpeedoData | null;
   postSpeedoAI: SpeedoData | null;
   postFlags: DamageFlag[];
+  preReelMarkers: DamageMarker[] | null;
+  postReelMarkers: DamageMarker[] | null;
 }) {
   const preKm = preSpeedoAI?.odometerKm;
   const postKm = postSpeedoAI?.odometerKm;
@@ -469,6 +526,7 @@ function CheckTab({
               speedoAI={preSpeedoAI}
               label="Pre"
               accentColor="#F5C518"
+              markers={preReelMarkers}
             />
           ) : (
             <PlaceholderBox text="Belum ada data" />
@@ -505,6 +563,7 @@ function CheckTab({
                 speedoAI={postSpeedoAI}
                 label="Post"
                 accentColor="#A8A8A8"
+                markers={postReelMarkers}
               />
               {kmDelta != null && (
                 <p className="text-[10px] text-[#C0C0C0] mt-1">
@@ -556,11 +615,13 @@ function TripColumn({
   speedoAI,
   label,
   accentColor,
+  markers,
 }: {
   detail: InspectionDetail;
   speedoAI: SpeedoData | null;
   label: string;
   accentColor: string;
+  markers: DamageMarker[] | null;
 }) {
   const videoId = getVideoMediaId(detail);
   const speedoId = getSpeedoMediaId(detail);
@@ -572,29 +633,32 @@ function TripColumn({
     <>
       {/* Body media \u2014 8-side photos (+ extras) in PHOTOS_8SIDE mode, else video */}
       {isPhotoBody ? (
-        <div className="grid grid-cols-2 gap-1 mb-2">
-          {bodyImages.map((p) => {
-            const label = p.bodySide ? (BODY_SIDE_LABELS[p.bodySide] ?? p.bodySide) : "Tambahan";
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
-                className="relative aspect-video bg-[#111] rounded overflow-hidden"
-              >
-                <img
-                  src={`/api/media/${p.id}/url`}
-                  alt={label}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                <span className="absolute bottom-0.5 left-0.5 px-1 py-px bg-black/60 text-white text-[8px] rounded">
-                  {label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <>
+          <ConditionReel photos={attachFindings(bodyImages, markers)} />
+          <div className="grid grid-cols-2 gap-1 mb-2">
+            {bodyImages.map((p) => {
+              const label = p.bodySide ? (BODY_SIDE_LABELS[p.bodySide] ?? p.bodySide) : "Tambahan";
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setLightbox({ src: `/api/media/${p.id}/url`, type: "image" })}
+                  className="relative aspect-video bg-[#111] rounded overflow-hidden"
+                >
+                  <img
+                    src={`/api/media/${p.id}/url`}
+                    alt={label}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <span className="absolute bottom-0.5 left-0.5 px-1 py-px bg-black/60 text-white text-[8px] rounded">
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
       ) : (
         <>
           {/* Video thumbnail */}
