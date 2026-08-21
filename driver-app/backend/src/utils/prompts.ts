@@ -109,6 +109,18 @@ export interface BodyVerificationResult {
    * `statusVerifikasi === "Mismatch"` hard-gates the damage-detection
    * pass. */
   screenRecaptureDetected: boolean;
+  /**
+   * Photo path only — how sure the model is about the recapture call itself
+   * (0-1), independent of `confidence`, which scores the identity decision.
+   * Optional so a response from the video prompt still parses.
+   */
+  recaptureConfidence?: number;
+  /**
+   * Photo path only — the specific cues the recapture call rests on. Surfaced
+   * verbatim in the planner's SCREEN_RECAPTURE alert so the decision is
+   * auditable instead of an unexplained boolean.
+   */
+  recaptureIndicators?: string[];
 }
 
 /**
@@ -211,44 +223,166 @@ DO NOT REQUIRE any of these to flag as recapture:
 - Temporal artifacts
 `;
 
+/**
+ * Screen-recapture protocol for the 8-photo EXTERIOR body inspection.
+ *
+ * Deliberately NOT `SCREEN_CAPTURE_IMAGE`: that one is written for the
+ * SPEEDOMETER step and reasons about dashboards, steering wheels and analog vs
+ * digital clusters. Reused on an exterior walkaround its headline indicators
+ * ("rounded corners", "uniform dark padding", "photo-within-a-photo") have no
+ * valid meaning, and its "when in doubt, classify as true" policy made the
+ * model manufacture those cues — a real Toyota Calya set was rejected as
+ * screenshots while the same response scored the identity Match at 0.98
+ * (docs/lessons.md, 2026-08-21).
+ *
+ * This variant is tuned for precision instead: the caller treats the result as
+ * advisory (it raises a planner alert, it does not fail the driver), so
+ * converging evidence beats a hair trigger.
+ */
+const SCREEN_CAPTURE_EXTERIOR = `
+[SCREEN-CAPTURE DETECTION PROTOCOL — EXTERIOR VEHICLE PHOTOS]
+
+GOAL:
+Decide whether these photos were taken with a real camera pointed at a real
+vehicle, or re-captured from a screen / printout / saved screenshot.
+
+CALIBRATION (READ FIRST):
+These are outdoor or workshop photos of a car's exterior, taken handheld on a
+phone. Expect messy, imperfect framing. That is NORMAL and is NOT evidence of
+recapture.
+
+DECISIVE INDICATORS (any ONE is enough to conclude recapture):
+D1. A physical device is visible in frame: monitor bezel, phone body, laptop
+    lid, tablet edge, or a printed page's paper edge.
+D2. Operating-system or application chrome is visible: status bar with clock or
+    battery, navigation buttons, browser toolbar, app header, cursor, scrollbar,
+    or a watermark/timestamp overlay drawn by another app.
+D3. A clear moiré / subpixel grid across the VEHICLE ITSELF (not merely on a
+    small reflective surface such as a headlight lens or window glass).
+D4. The vehicle is unmistakably contained inside a smaller inner rectangle that
+    has its own visible frame, with unrelated content outside it.
+
+SUPPORTING INDICATORS (need at least TWO, together, to conclude recapture):
+S1. The whole scene is on one flat focal plane with no perspective change
+    between the near and far ends of the car across the set.
+S2. Specular hotspot or brightness falloff shaped like a rectangular panel,
+    inconsistent with the scene's own light sources.
+S3. Every photo in the set shares an identical border geometry, as if all eight
+    were cropped from the same frame.
+S4. Visible banding/posterization typical of a re-encoded display capture,
+    present uniformly across all eight photos.
+
+EXPLICITLY NOT EVIDENCE — never flag on these alone:
+- Dark or black regions at the top or bottom of the frame. Workshop ceilings,
+  shadow under the car, asphalt, and night sky all produce these. They are NOT
+  letterboxing.
+- Any aspect ratio. Phones produce 4:3, 16:9, 1:1 and cropped frames alike.
+- Rounded or soft frame corners. Lens vignetting, a dirty lens, and JPEG
+  artifacts all soften corners. A real photo can absolutely have dark, soft
+  corners.
+- Straight, clean edges where the vehicle meets a wall, floor line, or door.
+- Glare or reflections on paint, glass, or chrome — these are expected on a car.
+- Blur, low resolution, or heavy JPEG compression on their own.
+- Photos that look similar to each other, or a plate/sticker visible on the car.
+
+DECISION RULE:
+- One decisive indicator (D1-D4) → screenRecaptureDetected = true.
+- Two or more supporting indicators (S1-S4) → screenRecaptureDetected = true.
+- A single supporting indicator, a vague impression, or nothing from the lists
+  above → screenRecaptureDetected = false.
+- Do NOT default to true when unsure. If you cannot name the specific indicator
+  code you relied on, the answer is false.
+
+REPORTING:
+Populate "recaptureIndicators" with the codes you actually relied on (e.g.
+["D2"], ["S1","S3"]) — leave it as [] when the answer is false.
+"recaptureConfidence" is the probability that these photos ARE a recapture:
+0.0 = certainly a real camera photo, 1.0 = certainly recaptured. It must stay
+below 0.5 whenever screenRecaptureDetected is false.
+`;
+
+/**
+ * Screen-recapture protocol for the body-inspection WALKAROUND VIDEO.
+ *
+ * The video counterpart of `SCREEN_CAPTURE_EXTERIOR`, and rewritten for the
+ * same reason (docs/lessons.md, 2026-08-21). The previous version fired on
+ * "any single one" of eight loose cues, led with "Rectangular screen boundary,
+ * bezel, frame, or black border" — which a letterboxed phone recording has by
+ * construction — and closed with a blank cheque: "Even if no obvious artifacts
+ * are visible, still classify as true if the scene strongly resembles a
+ * recorded display." Wired to a terminal gate that dead-ends drivers.
+ *
+ * A walkaround video carries one genuinely strong signal a screen recording
+ * cannot fake: parallax. Lean on that instead of a hair trigger. The caller
+ * treats the result as advisory — it raises a planner alert, it does not fail
+ * the driver.
+ */
 const SCREEN_CAPTURE_VIDEO = `
-[SCREEN-CAPTURE DETECTION PROTOCOL — VIDEO]
+[SCREEN-CAPTURE DETECTION PROTOCOL — EXTERIOR WALKAROUND VIDEO]
 
-If the video may have been recorded from a display, treat it as recapture.
+GOAL:
+Decide whether this video was recorded by a real camera walking around a real
+vehicle, or re-recorded from a screen / display / another playback device.
 
-TASK:
-Detect whether the input video is a recording of a screen/display (monitor, phone, tablet, TV, or any other digital display).
+CALIBRATION (READ FIRST):
+This is a handheld phone video of a car's exterior, shot outdoors or in a
+workshop. Expect shake, uneven exposure, wind noise, fingers at the frame edge
+and imperfect framing. That is NORMAL and is NOT evidence of recapture.
 
-HARD RULE:
-If there is any reasonable indication that the video was recorded from a display, set screenRecaptureDetected = true.
+THE PARALLAX TEST (your primary tool):
+In a real walkaround, near and far objects shift relative to each other as the
+camera moves: the background slides behind the car, wheels and mirrors occlude
+and reveal parts of the body, and reflections travel across the paint. A video
+of a screen cannot produce this — the whole frame moves as one rigid plane.
+Judge parallax first; it separates real from recaptured more reliably than any
+surface artifact.
 
-PREVENTIVE POLICY:
-False negatives are worse than false positives.
-When in doubt, classify as true.
+DECISIVE INDICATORS (any ONE is enough to conclude recapture):
+D1. A physical display is visible in frame: monitor bezel, phone body, laptop
+    lid, tablet edge, or TV frame surrounding the content.
+D2. Operating-system or application chrome is visible: status bar with clock or
+    battery, playback controls, progress bar, navigation buttons, cursor,
+    window title bar, or another app's watermark burned into the content.
+D3. Refresh interference across the whole frame: rolling horizontal bands or
+    pulsing brightness from a shutter/refresh mismatch.
+D4. The vehicle is unmistakably contained inside a smaller inner rectangle with
+    its own visible frame, with unrelated content outside it.
 
-PRIMARY DISPLAY INDICATORS (any single one is sufficient):
-1. Rectangular screen boundary, bezel, frame, or black border.
-2. UI-like content such as menus, icons, buttons, status bars, app layouts, overlays, text blocks, or interface elements.
-3. Content appears unnaturally flat, as if everything is on one plane.
-4. Reflection, glare, hotspot, or brightness falloff consistent with recording a display.
-5. Visible pixel structure, subpixel grid, aliasing, or moiré on the content area.
-6. Uniform sharpness across the entire framed content, with no natural depth separation.
-7. Perspective and geometry consistent with a camera capturing a screen surface rather than a real physical scene.
-8. Signs that the content inside the frame is itself a digital render, screenshot, or pre-recorded video.
+SUPPORTING INDICATORS (need at least TWO, together, to conclude recapture):
+S1. No parallax: the scene moves as one rigid block throughout, with no
+    relative shift between foreground and background (see THE PARALLAX TEST).
+S2. No focal depth shift anywhere in the clip — everything stays on one focus
+    plane even as the camera distance changes.
+S3. A moiré / subpixel grid over the VEHICLE ITSELF, not merely on glass,
+    chrome, or a headlight lens.
+S4. Specular hotspot or brightness falloff shaped like a flat rectangular
+    panel, inconsistent with the scene's own light sources.
 
-VIDEO-SPECIFIC INDICATORS (additional signals):
-9. Flat-plane movement: The entire scene moves as one rigid block during camera motion, with no parallax between foreground and background.
-10. Refresh flicker: Scrolling horizontal/vertical bands or pulsing brightness caused by shutter/refresh mismatch.
-11. No focal depth shift: Everything stays in the same focus plane during camera movement (real 3D scenes show focus change).
+EXPLICITLY NOT EVIDENCE — never flag on these alone:
+- Black bars at the edges of the video. Portrait recordings, letterboxing, and
+  aspect-ratio padding all produce these on ordinary phone footage.
+- Any aspect ratio or resolution.
+- Glare, reflections, or highlights on paint, glass, or chrome — a car is a
+  large glossy object and these are expected.
+- Camera shake, motion blur, autofocus hunting, or heavy compression.
+- Flat or overcast lighting, or a shaded indoor workshop.
+- Straight, clean edges where the car meets a wall, floor line, or shutter.
+- Sections where the operator holds still or films a panel close up.
 
-SECONDARY CHECK:
-Even if no obvious artifacts are visible, still classify as true if the scene strongly resembles a recorded display.
+DECISION RULE:
+- One decisive indicator (D1-D4) → screenRecaptureDetected = true.
+- Two or more supporting indicators (S1-S4) → screenRecaptureDetected = true.
+- A single supporting indicator, a vague impression, or nothing from the lists
+  above → screenRecaptureDetected = false.
+- Do NOT default to true when unsure. If you cannot name the specific indicator
+  code you relied on, the answer is false.
 
-DO NOT REQUIRE any of these to flag as recapture:
-- Moiré
-- Flicker
-- Scan lines
-- These are bonus signals, not requirements.
+REPORTING:
+Populate "recaptureIndicators" with the codes you actually relied on (e.g.
+["D2"], ["S1","S2"]) — leave it as [] when the answer is false.
+"recaptureConfidence" is the probability that this video IS a recapture:
+0.0 = certainly a real camera recording, 1.0 = certainly recaptured. It must
+stay below 0.5 whenever screenRecaptureDetected is false.
 `;
 
 // ========================
@@ -1116,7 +1250,8 @@ Your primary task is TWO gating checks on the provided VIDEO:
   (1) IDENTITY MATCH — does the vehicle shown match the claimed TARGET VEHICLE?
   (2) SCREEN-RECAPTURE DETECTION — was the video recorded from a screen/display rather than a real camera?
 
-Either check failing aborts the rest of the body-inspection pipeline (the expensive damage-detection pass is SKIPPED), so be thorough on both.
+A confident identity Mismatch aborts the rest of the body-inspection pipeline (the expensive damage-detection pass is SKIPPED), so be thorough on identity.
+The recapture check is ADVISORY — it routes the inspection to a human reviewer rather than rejecting the driver's work, so report it accurately rather than defensively.
 
 ${SCREEN_CAPTURE_VIDEO}
 
@@ -1149,10 +1284,12 @@ You MUST perform a Chain-of-Thought reasoning process before concluding. Detail 
 Respond ONLY with a valid, raw JSON object. Do NOT wrap the response in markdown code blocks. Do not add any conversational text.
 
 {
-  "analisisVerifikasi": "Jelaskan bukti visual yang Anda temukan secara spesifik.",
+  "analisisVerifikasi": "Jelaskan bukti visual yang Anda temukan secara spesifik, untuk identitas DAN untuk keputusan screen-recapture.",
   "statusVerifikasi": "Match",
   "confidence": 0.0,
-  "screenRecaptureDetected": false
+  "screenRecaptureDetected": false,
+  "recaptureConfidence": 0.0,
+  "recaptureIndicators": []
 }`;
 
   const userPrompt = `Verify if this vehicle matches the target.
@@ -1188,9 +1325,12 @@ Perform TWO gating checks over the set of photos:
   (2) SCREEN-RECAPTURE DETECTION — was any photo taken of a screen/printout
       rather than the real vehicle?
 
-Either check failing aborts the damage-detection pass, so be thorough.
+A confident identity Mismatch aborts the damage-detection pass, so be thorough.
+The recapture check is ADVISORY — it routes the inspection to a human reviewer
+rather than rejecting the driver's work, so report it accurately rather than
+defensively.
 
-${SCREEN_CAPTURE_IMAGE}
+${SCREEN_CAPTURE_EXTERIOR}
 
 IDENTITY RULES:
 - Use logos/badges (primary) and distinctive headlight/taillight/grille shapes
@@ -1203,10 +1343,12 @@ IDENTITY RULES:
 
 Respond ONLY with raw JSON (no markdown fences), exactly:
 {
-  "analisisVerifikasi": "<short Bahasa Indonesia explanation>",
+  "analisisVerifikasi": "<short Bahasa Indonesia explanation covering BOTH the identity decision and the recapture decision>",
   "statusVerifikasi": "Match" | "Mismatch" | "Uncertain",
   "confidence": 0.0,
-  "screenRecaptureDetected": false
+  "screenRecaptureDetected": false,
+  "recaptureConfidence": 0.0,
+  "recaptureIndicators": []
 }`;
 
   const userPrompt =

@@ -85,4 +85,14 @@ export interface IInspectionRepository {
     damageIndex: number,
     newLocation: string,
   ): Promise<{ structuredData: unknown }>;
+  /**
+   * Planner escape hatch — clears a FAILED body step so a driver blocked by a
+   * bad AI verdict can submit without re-shooting. Returns null when the step
+   * is no longer FAILED (someone already cleared it), so the caller can stay
+   * idempotent rather than racing.
+   */
+  clearFailedBodyStep(
+    scope: UserScope,
+    stepId: string,
+  ): Promise<{ id: string; previousRetryCount: number } | null>;
 }

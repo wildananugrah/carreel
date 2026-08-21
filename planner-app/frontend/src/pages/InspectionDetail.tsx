@@ -40,6 +40,8 @@ export function InspectionDetail() {
   const [comparison, setComparison] = useState<InspectionComparison | null>(null);
   const [showComparison, setShowComparison] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; type: "image" | "video" } | null>(null);
+  const [overridingStep, setOverridingStep] = useState<string | null>(null);
+  const [overrideError, setOverrideError] = useState("");
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -56,6 +58,36 @@ export function InspectionDetail() {
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
+
+  /**
+   * Clears a body step the AI wrongly failed. Without this the driver's only
+   * option after exhausting their retries is to delete and re-shoot all eight
+   * photos, which does not help when the photos were fine all along.
+   */
+  async function handleOverrideBodyStep(stepId: string) {
+    if (!id) return;
+    const reason = window.prompt(
+      "Alasan override (tercatat di audit log):",
+      "Foto sudah dicek manual, kendaraan sesuai",
+    );
+    if (reason === null) return;
+    if (!reason.trim()) {
+      setOverrideError("Alasan wajib diisi.");
+      return;
+    }
+    setOverridingStep(stepId);
+    setOverrideError("");
+    try {
+      await api.post<{ cleared: boolean }>(`/api/inspections/${id}/steps/${stepId}/override`, {
+        reason,
+      });
+      await fetchDetail();
+    } catch (err) {
+      setOverrideError(err instanceof Error ? err.message : "Override gagal");
+    } finally {
+      setOverridingStep(null);
+    }
+  }
 
   async function handleSwapDamageSide(
     analysisId: string,
@@ -282,6 +314,27 @@ export function InspectionDetail() {
                       </p>
                       <StatusBadge status={step.status} />
                     </div>
+
+                    {/* Escape hatch for a body step the AI wrongly failed. */}
+                    {step.stepType === "BODY_INSPECTION" && step.status === "FAILED" && (
+                      <div className="mb-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3">
+                        <p className="text-xs text-neutral-300">
+                          Driver terblokir oleh hasil AI. Jika foto sudah Anda periksa dan benar,
+                          override step ini agar driver bisa submit tanpa foto ulang.
+                        </p>
+                        {overrideError && (
+                          <p className="text-xs text-red-400 mt-1">{overrideError}</p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleOverrideBodyStep(step.id)}
+                          disabled={overridingStep === step.id}
+                          className="mt-2 rounded-lg bg-yellow-400 px-3 py-2 text-xs font-bold text-black hover:bg-yellow-300 disabled:opacity-50"
+                        >
+                          {overridingStep === step.id ? "Memproses..." : "Override & Loloskan Step"}
+                        </button>
+                      </div>
+                    )}
 
                     {/* Media */}
                     {step.mediaFiles.length > 0 && (

@@ -131,5 +131,26 @@ export function createInspectionRoutes(
     return c.json(review, 201);
   });
 
+  // POST /api/inspections/:id/steps/:stepId/override
+  // Body: { reason: string }
+  // Planner escape hatch for a body step the AI wrongly failed — lets a driver
+  // submit without re-shooting all eight photos. Always audit-logged.
+  app.post("/:id/steps/:stepId/override", async (c) => {
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+    const body = (await c.req.json().catch(() => ({}))) as { reason?: unknown };
+    if (typeof body.reason !== "string") {
+      return c.json({ error: "reason must be a string" }, 400);
+    }
+    const result = await inspectionService.overrideFailedBodyStep(
+      scope,
+      c.req.param("id"),
+      c.req.param("stepId"),
+      c.get("userId"),
+      body.reason,
+    );
+    return c.json(result);
+  });
+
   return app;
 }

@@ -145,4 +145,10 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
 ## enhancement / bugs
 - [x] Condition Reel: per-photo AI finding overlay (severity-ranked rows over the bottom of the frame, dwell scales 2s + 1.5s/finding capped at 6s) + SPEEDOMETER-style card wrapper — driver-app InspectionDetail PRE/POST tabs, PHOTOS_8SIDE mode
 - [x] Condition Reel (planner-app): same reel + findings overlay in the PRE-CHECK / POST-CHECK columns of the dashboard VehicleDetailPanel, above the 8-photo grid
+- [x] Body-photo verification false positive (see docs/lessons.md 2026-08-21):
+      exterior-specific `SCREEN_CAPTURE_EXTERIOR` prompt; recapture downgraded
+      to an advisory planner alert (only an identity Mismatch still hard-fails);
+      driver UI reports the real failure reason; planner override endpoint +
+      button to clear a wrongly-failed body step. Same fix applied to the VIDEO
+      path (`SCREEN_CAPTURE_VIDEO` rewritten around the parallax test)
 - [ ]

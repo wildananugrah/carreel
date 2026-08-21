@@ -36,4 +36,15 @@ export interface IInspectionService {
     damageIndex: number,
     newLocation: string,
   ): Promise<{ structuredData: unknown }>;
+  /**
+   * Clears a FAILED BODY_INSPECTION step so a driver stuck behind a bad AI
+   * verdict can submit. `cleared: false` means the step was already not FAILED.
+   */
+  overrideFailedBodyStep(
+    scope: UserScope,
+    inspectionId: string,
+    stepId: string,
+    reviewerId: string,
+    reason: string,
+  ): Promise<{ cleared: boolean }>;
 }

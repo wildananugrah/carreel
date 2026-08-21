@@ -376,4 +376,100 @@ describe("StepAnalysisJob — 8-photo body inspection", () => {
     // No damage markers saved.
     expect(savedDamageMarkers.flat().length).toBe(0);
   });
+  test("recapture suspected but identity matches → step still COMPLETED, damage pass runs, SCREEN_RECAPTURE alert raised", async () => {
+    // Reproduces the production false positive on inspection ac1a6621 (B 1511
+    // CZX): the model confirmed the vehicle ("Match", conf 0.98) but flagged
+    // screen recapture off rounded-corner/letterbox cues. That combination used
+    // to terminally FAIL the step and tell the driver the vehicle was wrong.
+    // Recapture suspicion is now advisory: the damage pass still runs and the
+    // planner gets an alert to review.
+    let imagesCallCount = 0;
+    mockAI.analyzeImages = async (images) => {
+      imagesCallCount += 1;
+      analyzeImagesCalls.push({ imagesLength: images.length });
+      if (imagesCallCount === 1) {
+        return JSON.stringify({
+          analisisVerifikasi:
+            "Kendaraan teridentifikasi sebagai Toyota Calya, identitas sesuai. Namun foto terlihat memiliki sudut melengkung.",
+          statusVerifikasi: "Match",
+          confidence: 0.98,
+          screenRecaptureDetected: true,
+          recaptureConfidence: 0.55,
+          recaptureIndicators: ["rounded_corners", "letterbox_bars"],
+        });
+      }
+      return JSON.stringify({
+        visualAnalysis: "Visual review of all 8 sides",
+        overallCondition: "FAIR",
+        confidence: 0.85,
+        damages: [
+          {
+            damageType: "goresan",
+            location: "Fender Depan Kanan",
+            severity: "MINOR",
+            description: "Goresan halus pada fender depan kanan",
+            bodySide: "FRONT_RIGHT",
+            isNewDamage: true,
+          },
+        ],
+      });
+    };
+
+    stepStatuses.set("step-speedo", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-body",
+      stepType: "BODY_INSPECTION",
+      driverId: "driver-1",
+    });
+
+    // The damage pass ran — the driver is not blocked.
+    expect(analyzeImagesCalls.length).toBe(2);
+    expect(stepStatuses.get("step-body")).toBe("COMPLETED");
+    expect(savedDamageMarkers.flat().length).toBe(1);
+
+    // The planner still gets a reviewable signal, with the reason attached.
+    const alert = savedAlerts.find((a) => a.alertType === "SCREEN_RECAPTURE");
+    expect(alert).toBeDefined();
+    expect(alert!.message).toContain("rounded_corners");
+
+    // Suspicion alone must not be reported as a vehicle mismatch.
+    expect(
+      savedAlerts.find((a) => a.alertType === "VEHICLE_MISMATCH"),
+    ).toBeUndefined();
+  });
+
+  test("mismatch AND recapture → still hard-fails on the mismatch", async () => {
+    mockAI.analyzeImages = async (images) => {
+      analyzeImagesCalls.push({ imagesLength: images.length });
+      return JSON.stringify({
+        analisisVerifikasi: "Merek berbeda",
+        statusVerifikasi: "Mismatch",
+        confidence: 0.95,
+        screenRecaptureDetected: true,
+        recaptureConfidence: 0.9,
+        recaptureIndicators: ["device_bezel"],
+      });
+    };
+
+    stepStatuses.set("step-speedo", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-body",
+      stepType: "BODY_INSPECTION",
+      driverId: "driver-1",
+    });
+
+    expect(analyzeImagesCalls.length).toBe(1);
+    expect(stepStatuses.get("step-body")).toBe("FAILED");
+    expect(
+      savedAlerts.find((a) => a.alertType === "VEHICLE_MISMATCH"),
+    ).toBeDefined();
+    expect(
+      savedAlerts.find((a) => a.alertType === "SCREEN_RECAPTURE"),
+    ).toBeDefined();
+    expect(savedDamageMarkers.flat().length).toBe(0);
+  });
 });
