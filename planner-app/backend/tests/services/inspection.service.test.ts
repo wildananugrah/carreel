@@ -123,6 +123,14 @@ describe("InspectionService", () => {
         }
         return null;
       },
+      clearFailedBodyStep: async (_scope: UserScope, stepId: string) => {
+        const insp = inspections.get("insp-1")!;
+        const step = (insp.steps as any[]).find((st) => st.id === stepId);
+        if (!step) throw new Error("Step not found");
+        if (step.status !== "FAILED") return null;
+        step.status = "COMPLETED";
+        return { id: stepId, previousRetryCount: step.analysisRetryCount ?? 0 };
+      },
     };
 
     mockReviewRepo = {
@@ -286,5 +294,104 @@ describe("InspectionService", () => {
     );
     const result = await inspectionService.getComparison(scope, "insp-no-unit");
     expect(result).toBeNull();
+  });
+  describe("overrideFailedBodyStep", () => {
+    function seedFailedBodyStep() {
+      inspections.set(
+        "insp-1",
+        createMockInspection({
+          steps: [
+            {
+              id: "step-body",
+              stepType: "BODY_INSPECTION",
+              status: "FAILED",
+              analysisRetryCount: 2,
+            },
+          ] as never,
+        }),
+      );
+    }
+
+    test("clears the step, audit-logs the override, and notifies the driver", async () => {
+      seedFailedBodyStep();
+
+      const result = await inspectionService.overrideFailedBodyStep(
+        scope,
+        "insp-1",
+        "step-body",
+        "planner-1",
+        "Foto sudah dicek manual, kendaraan benar",
+      );
+
+      expect(result.cleared).toBe(true);
+      expect((inspections.get("insp-1")!.steps as any[])[0].status).toBe(
+        "COMPLETED",
+      );
+
+      const entry = auditLogs.find((a) => a.action === "BODY_STEP_OVERRIDE");
+      expect(entry).toBeDefined();
+      expect(entry.userId).toBe("planner-1");
+      expect(entry.details.reason).toBe(
+        "Foto sudah dicek manual, kendaraan benar",
+      );
+      expect(entry.details.previousRetryCount).toBe(2);
+
+      expect(notifications[0].userId).toBe("driver-1");
+    });
+
+    test("requires a reason", async () => {
+      seedFailedBodyStep();
+      await expect(
+        inspectionService.overrideFailedBodyStep(
+          scope,
+          "insp-1",
+          "step-body",
+          "planner-1",
+          "   ",
+        ),
+      ).rejects.toThrow("reason is required");
+      expect(auditLogs.length).toBe(0);
+    });
+
+    test("is a no-op when the step is no longer FAILED", async () => {
+      inspections.set(
+        "insp-1",
+        createMockInspection({
+          steps: [
+            {
+              id: "step-body",
+              stepType: "BODY_INSPECTION",
+              status: "COMPLETED",
+              analysisRetryCount: 0,
+            },
+          ] as never,
+        }),
+      );
+
+      const result = await inspectionService.overrideFailedBodyStep(
+        scope,
+        "insp-1",
+        "step-body",
+        "planner-1",
+        "sudah dicek",
+      );
+
+      expect(result.cleared).toBe(false);
+      expect(auditLogs.length).toBe(0);
+      expect(notifications.length).toBe(0);
+    });
+
+    test("404s for a step that does not belong to the inspection", async () => {
+      seedFailedBodyStep();
+      await expect(
+        inspectionService.overrideFailedBodyStep(
+          scope,
+          "insp-1",
+          "step-other",
+          "planner-1",
+          "sudah dicek",
+        ),
+      ).rejects.toThrow("Step not found");
+    });
   });
 });

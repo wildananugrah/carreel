@@ -108,6 +108,34 @@ interface EnsembleResult {
   parsed: Record<string, unknown> & { damages: BodyDamage[] };
 }
 
+/**
+ * Human-readable SCREEN_RECAPTURE alert body for the planner queue.
+ *
+ * Because recapture suspicion no longer fails the step, the alert is the only
+ * place the evidence survives (the single per-step AIAnalysis row is written by
+ * the damage pass). Carry the model's confidence and the specific indicators it
+ * relied on so a planner can triage without re-running the analysis. Shared by
+ * the photo and video body pipelines.
+ */
+function buildRecaptureAlertMessage(
+  verification: BodyVerificationResult,
+  media: "photo" | "video" = "photo",
+): string {
+  const subject = media === "video" ? "video body" : "foto body";
+  const parts = [`Dugaan ${subject} diambil dari layar (perlu review planner)`];
+  if (typeof verification.recaptureConfidence === "number") {
+    parts.push(
+      `keyakinan ${(verification.recaptureConfidence * 100).toFixed(0)}%`,
+    );
+  }
+  const indicators = verification.recaptureIndicators;
+  if (indicators?.length) {
+    parts.push(`indikator: ${indicators.join(", ")}`);
+  }
+  parts.push(`identitas kendaraan: ${verification.statusVerifikasi}`);
+  return parts.join(" — ");
+}
+
 export class StepAnalysisJob {
   constructor(
     private aiProvider: IAIProvider,
@@ -251,14 +279,34 @@ export class StepAnalysisJob {
               screenRecaptureDetected: verification.screenRecaptureDetected,
             });
 
-            // HARD GATE — either failure short-circuits Pass 2.
-            // (a) Vehicle mismatch    → VEHICLE_MISMATCH alert
-            // (b) Screen recapture    → SCREEN_RECAPTURE alert
-            // Both can fire on the same response if the AI flags both.
             const isMismatch = verification.statusVerifikasi === "Mismatch";
             const isRecapture = verification.screenRecaptureDetected === true;
 
-            if (isMismatch || isRecapture) {
+            // SOFT GATE — same reasoning as the photo path: the recapture
+            // detector is deliberately high-recall, so it must not be the sole
+            // cause of a terminal, driver-blocking failure. Suspicion raises a
+            // SCREEN_RECAPTURE alert for the planner and the damage pass still
+            // runs. See docs/lessons.md 2026-08-21.
+            if (isRecapture) {
+              await this.createAlert(
+                inspectionId,
+                "SCREEN_RECAPTURE",
+                buildRecaptureAlertMessage(verification, "video"),
+                log,
+              );
+              log.warn(
+                "Body video recapture suspected — flagged for planner review",
+                {
+                  stepId,
+                  statusVerifikasi: verification.statusVerifikasi,
+                  recaptureConfidence: verification.recaptureConfidence,
+                  recaptureIndicators: verification.recaptureIndicators,
+                },
+              );
+            }
+
+            // HARD GATE — only an identity mismatch short-circuits Pass 2.
+            if (isMismatch) {
               const processingTimeMs = Date.now() - startTime;
 
               await this.aiAnalysisRepository.createAnalysis(JOB_SYSTEM_SCOPE, {
@@ -277,22 +325,12 @@ export class StepAnalysisJob {
                 status: "SUCCESS",
               });
 
-              if (isMismatch) {
-                await this.createAlert(
-                  inspectionId,
-                  "VEHICLE_MISMATCH",
-                  `Video body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
-                  log,
-                );
-              }
-              if (isRecapture) {
-                await this.createAlert(
-                  inspectionId,
-                  "SCREEN_RECAPTURE",
-                  "Screen recapture detected in Body Inspection video",
-                  log,
-                );
-              }
+              await this.createAlert(
+                inspectionId,
+                "VEHICLE_MISMATCH",
+                `Video body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
+                log,
+              );
 
               log.warn("Body verification gated — skipping damage detection", {
                 stepType,
@@ -827,10 +865,34 @@ export class StepAnalysisJob {
       screenRecaptureDetected: verification.screenRecaptureDetected,
     });
 
-    // HARD GATE — mismatch or recapture short-circuits the damage pass.
     const isMismatch = verification.statusVerifikasi === "Mismatch";
     const isRecapture = verification.screenRecaptureDetected === true;
-    if (isMismatch || isRecapture) {
+
+    // SOFT GATE — recapture suspicion alerts the planner but does NOT fail the
+    // step. The detector is deliberately high-recall, and on exterior photos it
+    // false-positives on benign cues (dark bands at the frame edge read as
+    // "letterboxing", a shadowed corner reads as a "rounded corner"). Failing
+    // the step on that alone dead-ended drivers whose vehicle the same response
+    // had just confirmed as a Match — see docs/lessons.md 2026-08-21. Only a
+    // confident identity Mismatch blocks; everything else goes to the planner
+    // as a reviewable alert with the model's stated reason attached.
+    if (isRecapture) {
+      await this.createAlert(
+        inspectionId,
+        "SCREEN_RECAPTURE",
+        buildRecaptureAlertMessage(verification),
+        log,
+      );
+      log.warn("Body photo recapture suspected — flagged for planner review", {
+        stepId,
+        statusVerifikasi: verification.statusVerifikasi,
+        recaptureConfidence: verification.recaptureConfidence,
+        recaptureIndicators: verification.recaptureIndicators,
+      });
+    }
+
+    // HARD GATE — only an identity mismatch short-circuits the damage pass.
+    if (isMismatch) {
       await this.aiAnalysisRepository.createAnalysis(JOB_SYSTEM_SCOPE, {
         stepId,
         mediaFileId: primarySide.id,
@@ -847,22 +909,12 @@ export class StepAnalysisJob {
         status: "SUCCESS",
       });
 
-      if (isMismatch) {
-        await this.createAlert(
-          inspectionId,
-          "VEHICLE_MISMATCH",
-          `Foto body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
-          log,
-        );
-      }
-      if (isRecapture) {
-        await this.createAlert(
-          inspectionId,
-          "SCREEN_RECAPTURE",
-          "Screen recapture detected in Body Inspection photos",
-          log,
-        );
-      }
+      await this.createAlert(
+        inspectionId,
+        "VEHICLE_MISMATCH",
+        `Foto body inspection tidak sesuai dengan kendaraan yang terdaftar (${vehicleContext?.make ?? "?"} ${vehicleContext?.model ?? "?"})`,
+        log,
+      );
 
       log.warn("Body verification gated (photo) — skipping damage detection", {
         statusVerifikasi: verification.statusVerifikasi,

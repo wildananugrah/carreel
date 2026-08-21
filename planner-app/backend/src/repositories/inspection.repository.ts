@@ -295,4 +295,44 @@ export class InspectionRepository implements IInspectionRepository {
     });
     return { structuredData: updated.structuredData };
   }
+
+  async clearFailedBodyStep(
+    scope: UserScope,
+    stepId: string,
+  ): Promise<{ id: string; previousRetryCount: number } | null> {
+    const step = await this.prisma.inspectionStep.findUnique({
+      where: { id: stepId },
+      select: {
+        id: true,
+        status: true,
+        stepType: true,
+        projectId: true,
+        analysisRetryCount: true,
+        inspection: { select: { driverId: true } },
+      },
+    });
+    if (!step?.projectId) throw notFound("Step not found");
+    if (
+      !canWriteToEntity(scope, {
+        projectId: step.projectId,
+        driverId: step.inspection.driverId,
+      })
+    ) {
+      throw notFound("Step not found");
+    }
+    if (step.stepType !== "BODY_INSPECTION") {
+      throw badRequest("Only a BODY_INSPECTION step can be overridden");
+    }
+
+    // Guarded write — `status: "FAILED"` in the where clause means a concurrent
+    // override (or a retry that has since succeeded) yields count 0 instead of
+    // silently re-clearing a step that is no longer failed.
+    const result = await this.prisma.inspectionStep.updateMany({
+      where: { id: stepId, status: "FAILED" },
+      data: { status: "COMPLETED" },
+    });
+    if (result.count === 0) return null;
+
+    return { id: step.id, previousRetryCount: step.analysisRetryCount };
+  }
 }

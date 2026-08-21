@@ -166,6 +166,78 @@ export class InspectionService implements IInspectionService {
     return result;
   }
 
+  /**
+   * Planner escape hatch for a body step the AI wrongly failed.
+   *
+   * The body verification gate is terminal for the driver: after
+   * MAX_ANALYSIS_RETRIES re-runs their only remaining option is to delete and
+   * re-shoot all eight photos, which does not help when the AI keeps rejecting
+   * a set that is actually fine. A planner who has looked at the photos can
+   * clear the step so the inspection can be submitted. Always audit-logged —
+   * this bypasses an anti-fraud control, so who did it and why must be
+   * recoverable.
+   */
+  async overrideFailedBodyStep(
+    scope: UserScope,
+    inspectionId: string,
+    stepId: string,
+    reviewerId: string,
+    reason: string,
+  ): Promise<{ cleared: boolean }> {
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      throw badRequest("A reason is required to override a failed body step");
+    }
+
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
+    if (!inspection) {
+      throw notFound("Inspection not found");
+    }
+    const step = inspection.steps.find((s) => s.id === stepId);
+    if (!step) {
+      throw notFound("Step not found");
+    }
+
+    const result = await this.inspectionRepository.clearFailedBodyStep(
+      scope,
+      stepId,
+    );
+    if (!result) {
+      // Already cleared, or the step is no longer FAILED. Idempotent no-op.
+      return { cleared: false };
+    }
+
+    await this.auditLogRepository.create({
+      userId: reviewerId,
+      inspectionId,
+      action: "BODY_STEP_OVERRIDE",
+      details: {
+        stepId,
+        reason: trimmedReason,
+        previousRetryCount: result.previousRetryCount,
+      },
+    });
+
+    this.logger.warn("Failed body step overridden by planner", {
+      inspectionId,
+      stepId,
+      reviewerId,
+      previousRetryCount: result.previousRetryCount,
+    });
+
+    await this.notificationProvider.notify(inspection.driverId, {
+      type: "body_step_override",
+      inspectionId,
+      message:
+        "Pemeriksaan body Anda telah disetujui manual oleh planner. Silakan lanjutkan submit.",
+    });
+
+    return { cleared: true };
+  }
+
   async getComparison(
     scope: UserScope,
     inspectionId: string,
