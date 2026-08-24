@@ -63,6 +63,93 @@ zero env changes; new rows simply start recording `storageTarget = "s3-primary"`
 To use a different id going forward, set `STORAGE_DEFAULT_TARGET` before the
 first write — the id is persisted in the database.
 
+## Deploying this change (first rollout)
+
+**Short version: nothing special to do.** This rolls out as a no-op —
+`./deploy-all.sh` covers it, and no `.env` edit is required.
+
+Why it is safe:
+
+- `deploy-all.sh` already runs `bunx prisma db push`, which adds the three new
+  columns. All nullable, plus one index — no data loss, no table rewrite, no
+  prompt.
+- With `STORAGE_TARGETS` unset, both backends synthesize one target named
+  `s3-primary` from the current `S3_*` vars. Old rows are `NULL` → resolved to
+  that same target. New rows start recording `storageTarget = "s3-primary"`.
+  Same bucket either way.
+
+### Before deploying — the one decision
+
+**What the current bucket's target id should be called.** That id is written
+into every new media row and is persisted data: renaming it later means old rows
+point at an id that must stay configured.
+
+The default is `s3-primary`. To name it after the actual bucket instead, set
+this in **both** `driver-app/backend/.env` and `planner-app/backend/.env` before
+restarting:
+
+```bash
+STORAGE_DEFAULT_TARGET=lightsail-2026
+```
+
+Not a blocker — recoverable later with a single
+`UPDATE media_files SET "storageTarget" = ...` — but cheaper to pick now.
+
+### Deploy
+
+```bash
+cd /home/wildandev/repo/carreel   # REPO_DIR in deploy-all.sh
+git pull
+./deploy-all.sh
+```
+
+`make down; make up` is a full `pm2 delete` + `pm2 start`, so the new env is read
+by all instances (driver-backend runs 3).
+
+### Ordering notes
+
+1. **Backend before frontend.** The signature `<img>` URLs moved from
+   `/api/media/key/...` to row-aware routes (`/api/media/signature/:id`,
+   `/api/inspections/:id/signature`). `deploy-all.sh` already does backend
+   first. Never run `deploy-frontend.sh` alone against an old backend — the new
+   signature routes would not exist and signatures would 404. The reverse
+   (backend only) is safe: the old bare-key route still works.
+2. **`db push` vs `migrate deploy`.** The deploy scripts use
+   `bunx prisma db push`, while `make install` uses `prisma migrate deploy`.
+   Because `db push` does not record `20260824000000_add_storage_target` in
+   `_prisma_migrations`, a later `migrate deploy` would try to re-add columns
+   that already exist and fail. Either stay on `db push` (and treat the
+   migration file as documentation), or run `migrate deploy` *instead of*
+   `db push` this once.
+
+### Verify after deploying
+
+```bash
+# every configured target + which one is active
+curl -s localhost:3001/health | jq .checks
+# → "storageTargets": { "s3-primary": "connected" }, "activeStorageTarget": "s3-primary"
+
+curl -s localhost:3002/health | jq .checks   # planner-backend
+
+# after one new upload, confirm the target is being recorded
+psql "$DATABASE_URL" -c 'SELECT "storageTarget", count(*) FROM media_files GROUP BY 1;'
+# → NULL = pre-existing media, 's3-primary' = written since the deploy
+```
+
+Also confirm the columns landed:
+
+```bash
+psql "$DATABASE_URL" -c '\d media_files' | grep storageTarget
+psql "$DATABASE_URL" -c '\d inspections' | grep signatureStorageTarget
+```
+
+### Rollback
+
+The change is additive, so rolling back the code is enough — the extra columns
+can stay. Redeploy the previous commit; the old code ignores `storageTarget` and
+reads everything from the single `S3_*` provider, which is still the same
+bucket. Only drop the columns if you are abandoning the feature entirely.
+
 ## Adding a target (the scale-up runbook)
 
 1. Create the new bucket and its credentials.
