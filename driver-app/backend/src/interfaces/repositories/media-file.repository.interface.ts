@@ -6,7 +6,11 @@ export interface IMediaFileRepository {
   create(
     scope: UserScope,
     stepId: string,
-    data: UploadMediaDTO & { minioKey: string; minioBucket: string },
+    data: UploadMediaDTO & {
+      minioKey: string;
+      minioBucket: string;
+      storageTarget: string | null;
+    },
   ): Promise<MediaFile>;
   findById(scope: UserScope, id: string): Promise<MediaFile | null>;
   findByStepId(scope: UserScope, stepId: string): Promise<MediaFile[]>;

@@ -10,6 +10,10 @@ import type { IMediaFileRepository } from "../../src/interfaces/repositories/med
 import { UploadService } from "../../src/services/upload.service";
 import type { UploadMediaDTO } from "../../src/types/dto";
 import type { UserScope } from "../../src/types/scope";
+import {
+  multiTargetRegistry,
+  singleTargetRegistry,
+} from "../helpers/storage-registry";
 import { makeDriverScope, makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
@@ -29,7 +33,11 @@ describe("UploadService", () => {
     mimeType: string;
   }[];
   let lastCreateData:
-    | (UploadMediaDTO & { minioKey: string; minioBucket: string })
+    | (UploadMediaDTO & {
+        minioKey: string;
+        minioBucket: string;
+        storageTarget: string | null;
+      })
     | null;
   let statusUpdates: string[];
 
@@ -68,6 +76,7 @@ describe("UploadService", () => {
           fileSize: data.fileSize,
           minioKey: data.minioKey,
           minioBucket: data.minioBucket,
+          storageTarget: null,
           mediaType: data.mediaType,
           bodySide: data.bodySide ?? null,
           latitude: data.latitude ?? null,
@@ -111,6 +120,7 @@ describe("UploadService", () => {
             latitude: null,
             longitude: null,
             signatureKey: null,
+            signatureStorageTarget: null,
             signerName: null,
             signedAt: null,
             driverComment: null,
@@ -135,7 +145,7 @@ describe("UploadService", () => {
     };
 
     service = new UploadService(
-      mockStorage,
+      singleTargetRegistry(mockStorage),
       mockMediaFileRepo,
       mockInspectionRepo as IInspectionRepository,
       mockLogger,
@@ -280,5 +290,176 @@ describe("UploadService", () => {
       "driver-1",
     );
     expect(url).toContain("carreel-videos");
+  });
+});
+
+describe("UploadService storage targets", () => {
+  function providerNamed(name: string, log: string[]) {
+    return {
+      upload: async (bucket: string, key: string) => {
+        log.push(`upload:${name}:${bucket}/${key}`);
+        return key;
+      },
+      getPresignedUrl: async (bucket: string, key: string) =>
+        `https://${name}/${bucket}/${key}`,
+      download: async (bucket: string, key: string) => {
+        log.push(`download:${name}:${bucket}/${key}`);
+        return Buffer.from(name);
+      },
+      delete: async () => {
+        log.push(`delete:${name}`);
+      },
+      ping: async () => true,
+      initiateMultipartUpload: async () => "upload-id",
+      uploadPart: async () => ({ part: 1, etag: "etag" }),
+      completeMultipartUpload: async () => {},
+      abortMultipartUpload: async () => {},
+      statObject: async () => ({ size: 0, mimeType: "image/jpeg" }),
+      getObjectStream: async () => new ReadableStream(),
+    } as IStorageProvider;
+  }
+
+  function buildService(
+    mediaRow: { storageTarget: string | null },
+    log: string[],
+  ) {
+    const registry = multiTargetRegistry(
+      { old: providerNamed("old", log), new: providerNamed("new", log) },
+      "new",
+      "old",
+    );
+
+    const created: {
+      value:
+        | (UploadMediaDTO & {
+            minioKey: string;
+            minioBucket: string;
+            storageTarget: string | null;
+          })
+        | null;
+    } = { value: null };
+
+    const mediaRepo: Partial<IMediaFileRepository> = {
+      create: async (_scope: UserScope, stepId: string, data) => {
+        created.value = data;
+        return {
+          id: "media-1",
+          stepId,
+          projectId: "test-project",
+          fileName: data.fileName,
+          mimeType: data.mimeType,
+          fileSize: data.fileSize,
+          minioKey: data.minioKey,
+          minioBucket: data.minioBucket,
+          storageTarget: data.storageTarget,
+          mediaType: data.mediaType,
+          bodySide: null,
+          latitude: null,
+          longitude: null,
+          capturedAt: new Date(data.capturedAt),
+          durationSeconds: null,
+          createdAt: new Date(),
+        };
+      },
+      findById: async () => ({
+        id: "media-1",
+        stepId: "step-1",
+        projectId: "test-project",
+        fileName: "photo.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 10,
+        minioKey: "inspections/photo.jpg",
+        minioBucket: "carreel-images",
+        storageTarget: mediaRow.storageTarget,
+        mediaType: "IMAGE",
+        bodySide: null,
+        latitude: null,
+        longitude: null,
+        capturedAt: new Date(),
+        durationSeconds: null,
+        createdAt: new Date(),
+      }),
+    };
+
+    const step = {
+      id: "step-1",
+      inspectionId: "insp-1",
+      projectId: "test-project",
+      stepType: "UNIT_IDENTIFICATION",
+      status: "PENDING",
+      analysisRetryCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as unknown as InspectionStep;
+
+    const inspectionRepo: Partial<IInspectionRepository> = {
+      findById: async () =>
+        ({
+          id: "insp-1",
+          driverId: "driver-1",
+          status: "DRAFT",
+          steps: [],
+        }) as unknown as InspectionWithRelations,
+      findStepById: async () => step,
+      updateStepStatus: async () => step,
+    };
+
+    const service = new UploadService(
+      registry,
+      mediaRepo as IMediaFileRepository,
+      inspectionRepo as IInspectionRepository,
+      mockLogger,
+    );
+    return { service, created };
+  }
+
+  test("a new upload goes to the active target and records its id", async () => {
+    const log: string[] = [];
+    const { service, created } = buildService({ storageTarget: "old" }, log);
+
+    const result = await service.uploadMedia(
+      makeSuperAdminScope(),
+      "insp-1",
+      "step-1",
+      "driver-1",
+      Buffer.from("data"),
+      {
+        fileName: "photo.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 4,
+        mediaType: "IMAGE",
+        capturedAt: "2026-08-24T10:00:00.000Z",
+      },
+    );
+
+    expect(created.value?.storageTarget).toBe("new");
+    expect(log.some((l) => l.startsWith("upload:new:"))).toBe(true);
+    expect(log.some((l) => l.startsWith("upload:old:"))).toBe(false);
+    expect(result.presignedUrl).toContain("https://new/");
+  });
+
+  test("media on an older target is read from that target, not the active one", async () => {
+    const log: string[] = [];
+    const { service } = buildService({ storageTarget: "old" }, log);
+
+    const { buffer } = await service.getMediaData(
+      makeSuperAdminScope(),
+      "media-1",
+    );
+
+    expect(buffer.toString()).toBe("old");
+    expect(log).toContain("download:old:carreel-images/inspections/photo.jpg");
+  });
+
+  test("legacy media with no recorded target falls back to the default target", async () => {
+    const log: string[] = [];
+    const { service } = buildService({ storageTarget: null }, log);
+
+    const { buffer } = await service.getMediaData(
+      makeSuperAdminScope(),
+      "media-1",
+    );
+
+    expect(buffer.toString()).toBe("old");
   });
 });

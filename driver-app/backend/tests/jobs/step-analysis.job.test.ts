@@ -22,6 +22,7 @@ import type { IMediaFileRepository } from "../../src/interfaces/repositories/med
 import type { StepAnalysisJobData } from "../../src/jobs/step-analysis.job";
 import { StepAnalysisJob } from "../../src/jobs/step-analysis.job";
 import type { UserScope } from "../../src/types/scope";
+import { singleTargetRegistry } from "../helpers/storage-registry";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -43,6 +44,7 @@ function createMockMediaFile(overrides: Partial<MediaFile> = {}): MediaFile {
     fileSize: 1024,
     minioKey: "inspections/photo.jpg",
     minioBucket: "carreel-images",
+    storageTarget: null,
     latitude: null,
     longitude: null,
     capturedAt: new Date(),
@@ -195,6 +197,7 @@ describe("StepAnalysisJob", () => {
           latitude: null,
           longitude: null,
           signatureKey: null,
+          signatureStorageTarget: null,
           signerName: null,
           signedAt: null,
           driverComment: null,
@@ -311,7 +314,7 @@ describe("StepAnalysisJob", () => {
 
     job = new StepAnalysisJob(
       mockAI,
-      mockStorage,
+      singleTargetRegistry(mockStorage),
       mockInspectionRepo,
       mockMediaRepo,
       mockAIAnalysisRepo,
@@ -392,6 +395,7 @@ describe("StepAnalysisJob", () => {
       createMockMediaFile({
         mimeType: "video/mp4",
         minioBucket: "carreel-videos",
+        storageTarget: null,
         minioKey: "inspections/video.mp4",
       }),
     ];
@@ -776,6 +780,7 @@ describe("StepAnalysisJob", () => {
           latitude: null,
           longitude: null,
           signatureKey: null,
+          signatureStorageTarget: null,
           signerName: null,
           signedAt: null,
           driverComment: null,
@@ -818,6 +823,7 @@ describe("StepAnalysisJob", () => {
           latitude: null,
           longitude: null,
           signatureKey: null,
+          signatureStorageTarget: null,
           signerName: null,
           signedAt: null,
           driverComment: null,
@@ -861,6 +867,7 @@ describe("StepAnalysisJob", () => {
       createMockMediaFile({
         mimeType: "video/mp4",
         minioBucket: "carreel-videos",
+        storageTarget: null,
         minioKey: "inspections/video.mp4",
       }),
     ];

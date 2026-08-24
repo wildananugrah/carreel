@@ -16,6 +16,7 @@ import type {
 } from "../../src/interfaces/repositories/upload-session.repository.interface";
 import { ChunkedUploadService } from "../../src/services/chunked-upload.service";
 import type { UserScope } from "../../src/types/scope";
+import { singleTargetRegistry } from "../helpers/storage-registry";
 import { makeDriverScope, makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
@@ -52,6 +53,7 @@ const mockInspection: InspectionWithRelations = {
   latitude: null,
   longitude: null,
   signatureKey: null,
+  signatureStorageTarget: null,
   signerName: null,
   signedAt: null,
   driverComment: null,
@@ -125,6 +127,7 @@ describe("ChunkedUploadService", () => {
           minioUploadId: data.minioUploadId,
           minioKey: data.minioKey,
           minioBucket: data.minioBucket,
+          storageTarget: null,
           fileName: data.fileName,
           mimeType: data.mimeType,
           fileSize: data.fileSize,
@@ -191,6 +194,7 @@ describe("ChunkedUploadService", () => {
         fileSize: data.fileSize,
         minioKey: data.minioKey,
         minioBucket: data.minioBucket,
+        storageTarget: null,
         mediaType: data.mediaType,
         bodySide: null,
         latitude: data.latitude ?? null,
@@ -226,7 +230,7 @@ describe("ChunkedUploadService", () => {
     } as unknown as IInspectionRepository;
 
     service = new ChunkedUploadService(
-      mockStorage,
+      singleTargetRegistry(mockStorage),
       mockSessionRepo,
       mockMediaFileRepo,
       mockInspectionRepo,

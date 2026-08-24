@@ -4,13 +4,17 @@ import type { MediaStreamService } from "../services/media-stream.service";
 export function createMediaRoutes(mediaStreamService: MediaStreamService) {
   const app = new Hono();
 
-  // GET /api/media/key/* — proxy files stored by MinIO key (e.g. signatures)
+  // GET /api/media/key/* — proxy files stored by bare object key.
+  // Reads the DEFAULT storage target unless ?t=<targetId> names another. For
+  // anything with a DB row, prefer a row-aware route (e.g. the inspection
+  // signature endpoint) so the recorded target is used.
   // No auth required: used by <img> tags.
   app.get("/key/*", async (c) => {
     const key = c.req.path.replace(/^\/api\/media\/key\//, "");
     const { buffer, mimeType } = await mediaStreamService.getMediaByKey(
       "carreel-images",
       decodeURIComponent(key),
+      c.req.query("t"),
     );
     return new Response(new Uint8Array(buffer), {
       headers: {

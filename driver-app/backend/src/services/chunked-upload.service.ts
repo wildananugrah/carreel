@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import type { IUploadSessionRepository } from "../interfaces/repositories/upload-session.repository.interface";
@@ -25,7 +25,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
   private chunkSize: number;
 
   constructor(
-    private storageProvider: IStorageProvider,
+    private storage: IStorageRegistry,
     private uploadSessionRepository: IUploadSessionRepository,
     private mediaFileRepository: IMediaFileRepository,
     private inspectionRepository: IInspectionRepository,
@@ -77,12 +77,14 @@ export class ChunkedUploadService implements IChunkedUploadService {
     const key = `inspections/${dto.inspectionId}/${step.stepType}/${randomUUID()}.${ext}`;
     const bucket = BUCKET_MAP.VIDEO;
 
-    // Initiate MinIO multipart upload
-    const minioUploadId = await this.storageProvider.initiateMultipartUpload(
-      bucket,
-      key,
-      dto.mimeType,
-    );
+    // Initiate the multipart upload on the ACTIVE target. The session is
+    // pinned to that target for its whole life — a multipart upload started on
+    // one target can never be completed on another, so an operator flipping
+    // STORAGE_ACTIVE_TARGET mid-flight must not break in-progress uploads.
+    const storageTarget = this.storage.activeTargetId;
+    const minioUploadId = await this.storage
+      .active()
+      .initiateMultipartUpload(bucket, key, dto.mimeType);
 
     const totalChunks = Math.ceil(dto.fileSize / this.chunkSize);
 
@@ -94,6 +96,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
       minioUploadId,
       minioKey: key,
       minioBucket: bucket,
+      storageTarget,
       fileName: dto.fileName,
       mimeType: dto.mimeType,
       fileSize: dto.fileSize,
@@ -112,6 +115,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
       stepId: dto.stepId,
       totalChunks,
       fileSize: dto.fileSize,
+      storageTarget,
     });
 
     return {
@@ -161,14 +165,16 @@ export class ChunkedUploadService implements IChunkedUploadService {
       };
     }
 
-    // Upload to MinIO
-    const result = await this.storageProvider.uploadPart(
-      session.minioBucket,
-      session.minioKey,
-      session.minioUploadId,
-      partNumber,
-      data,
-    );
+    // Upload the part to the session's pinned target
+    const result = await this.storage
+      .resolve(session.storageTarget)
+      .uploadPart(
+        session.minioBucket,
+        session.minioKey,
+        session.minioUploadId,
+        partNumber,
+        data,
+      );
 
     // Save part to DB
     await this.uploadSessionRepository.addPart(
@@ -226,12 +232,14 @@ export class ChunkedUploadService implements IChunkedUploadService {
       .sort((a, b) => a.partNumber - b.partNumber)
       .map((p) => ({ part: p.partNumber, etag: p.etag }));
 
-    await this.storageProvider.completeMultipartUpload(
-      session.minioBucket,
-      session.minioKey,
-      session.minioUploadId,
-      parts,
-    );
+    await this.storage
+      .resolve(session.storageTarget)
+      .completeMultipartUpload(
+        session.minioBucket,
+        session.minioKey,
+        session.minioUploadId,
+        parts,
+      );
 
     // Create MediaFile record
     const mediaFile = await this.mediaFileRepository.create(
@@ -244,6 +252,7 @@ export class ChunkedUploadService implements IChunkedUploadService {
         mediaType: "VIDEO",
         minioKey: session.minioKey,
         minioBucket: session.minioBucket,
+        storageTarget: session.storageTarget,
         latitude: session.latitude ?? undefined,
         longitude: session.longitude ?? undefined,
         capturedAt: session.capturedAt.toISOString(),
@@ -266,10 +275,9 @@ export class ChunkedUploadService implements IChunkedUploadService {
     );
 
     // Get presigned URL
-    const presignedUrl = await this.storageProvider.getPresignedUrl(
-      session.minioBucket,
-      session.minioKey,
-    );
+    const presignedUrl = await this.storage
+      .resolve(session.storageTarget)
+      .getPresignedUrl(session.minioBucket, session.minioKey);
 
     this.logger.info("Chunked upload completed", {
       userId: scope.userId,
@@ -309,11 +317,13 @@ export class ChunkedUploadService implements IChunkedUploadService {
 
     // Abort MinIO multipart upload
     try {
-      await this.storageProvider.abortMultipartUpload(
-        session.minioBucket,
-        session.minioKey,
-        session.minioUploadId,
-      );
+      await this.storage
+        .resolve(session.storageTarget)
+        .abortMultipartUpload(
+          session.minioBucket,
+          session.minioKey,
+          session.minioUploadId,
+        );
     } catch {
       // Ignore MinIO errors on abort — upload may already be gone
     }

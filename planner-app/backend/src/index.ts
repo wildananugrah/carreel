@@ -8,7 +8,7 @@ import { PrismaClient } from "./generated/prisma";
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
-import { S3Provider } from "./providers/s3.provider";
+import { buildStorageRegistry } from "./providers/storage-registry";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
 // Providers
 import { WinstonLogger } from "./providers/winston-logger.provider";
@@ -56,6 +56,7 @@ import { ProjectMemberService } from "./services/project-member.service";
 import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
 import { HttpError } from "./utils/http-error";
+import { loadStorageConfig } from "./utils/storage-config";
 
 // ========================
 // Wire Dependencies
@@ -76,15 +77,15 @@ const logger = new WinstonLogger(
   process.env.LOKI_URL,
 );
 
-const storageProvider = new S3Provider({
-  region: process.env.S3_REGION ?? "ap-southeast-1",
-  accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
-  bucket: process.env.S3_BUCKET ?? "carreel",
-  ...(process.env.S3_ENDPOINT ? { endpoint: process.env.S3_ENDPOINT } : {}),
-  ...(process.env.S3_FORCE_PATH_STYLE
-    ? { forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true" }
-    : {}),
+// Storage targets. The planner only READS media, so what matters here is that
+// every target the driver-app has ever written to is configured — objects are
+// read from the target recorded on their row. See docs/storage-targets.md.
+const storageConfig = loadStorageConfig();
+const storage = buildStorageRegistry(storageConfig);
+logger.info("Storage targets configured", {
+  targets: storageConfig.targets.map((t) => `${t.id}(${t.kind})`).join(", "),
+  activeTarget: storageConfig.activeTargetId,
+  defaultTarget: storageConfig.defaultTargetId,
 });
 
 const notificationProvider = new WebSocketNotificationProvider(
@@ -127,7 +128,7 @@ const alertService = new AlertService(alertRepository);
 const dashboardRepository = new DashboardRepository(prisma);
 const dashboardService = new DashboardService(prisma, dashboardRepository);
 
-const mediaStreamService = new MediaStreamService(prisma, storageProvider);
+const mediaStreamService = new MediaStreamService(prisma, storage);
 
 const workspaceService = new WorkspaceService(workspaceRepository);
 const projectService = new ProjectService(projectRepository);
@@ -191,14 +192,14 @@ app.onError((err, c) => {
 });
 
 // Routes
-app.route("/health", createHealthRoutes(prisma, storageProvider));
+app.route("/health", createHealthRoutes(prisma, storage));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
   createInspectionRoutes(
     inspectionService,
     authMiddleware,
-    storageProvider,
+    storage,
     damageAuditRepository,
   ),
 );
@@ -208,7 +209,7 @@ app.route(
   createDashboardRoutes(dashboardService, authMiddleware),
 );
 app.route("/api/drivers", createDriverRoutes(userRepository, authMiddleware));
-app.route("/api/upload", createUploadRoutes(storageProvider, authMiddleware));
+app.route("/api/upload", createUploadRoutes(storage, authMiddleware));
 app.route("/api/media", createMediaRoutes(mediaStreamService));
 app.route(
   "/api/admin/workspaces",
@@ -259,12 +260,20 @@ async function checkConnectivity() {
     process.exit(1);
   }
 
-  const s3Ok = await storageProvider.ping();
+  const pings = await storage.pingAll();
+  const unreachable = Object.entries(pings)
+    .filter(([, ok]) => !ok)
+    .map(([id]) => id);
+  const s3Ok = unreachable.length === 0;
   if (s3Ok) {
-    logger.info("S3: connected");
+    logger.info(
+      `Storage: all targets connected (${storage.targetIds().join(", ")})`,
+    );
   } else {
     logger.warn(
-      "S3: unavailable — file access will fail. Check S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_REGION.",
+      `Storage: unreachable target(s) [${unreachable.join(", ")}] — media on ` +
+        "those targets will fail to load. Check STORAGE_TARGETS (or S3_* for " +
+        "the legacy single-target setup).",
     );
   }
 }

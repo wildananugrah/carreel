@@ -26,6 +26,7 @@ export class DamageMarkerRepository implements IDamageMarkerRepository {
             stepId: true,
             minioKey: true,
             minioBucket: true,
+            storageTarget: true,
             mimeType: true,
           },
         },

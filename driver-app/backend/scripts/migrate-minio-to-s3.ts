@@ -1,6 +1,11 @@
 /**
  * One-time migration: copy all MediaFile objects from MinIO → S3.
  *
+ * SUPERSEDED — storage is now pluggable per object (see docs/storage-targets.md).
+ * To move to new storage, add a target and flip STORAGE_ACTIVE_TARGET; old media
+ * stays where it is. This script predates `MediaFile.storageTarget` and does NOT
+ * update that column, so only run it against rows whose target is still NULL.
+ *
  * The S3Provider stores objects at key `${minioBucket}/${minioKey}` inside a
  * single S3 bucket, matching the prefix convention used by the new S3Provider.
  *

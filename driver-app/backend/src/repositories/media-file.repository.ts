@@ -10,7 +10,11 @@ export class MediaFileRepository implements IMediaFileRepository {
   async create(
     scope: UserScope,
     stepId: string,
-    data: UploadMediaDTO & { minioKey: string; minioBucket: string },
+    data: UploadMediaDTO & {
+      minioKey: string;
+      minioBucket: string;
+      storageTarget: string | null;
+    },
   ): Promise<MediaFile> {
     const step = await this.prisma.inspectionStep.findUnique({
       where: { id: stepId },
@@ -38,6 +42,7 @@ export class MediaFileRepository implements IMediaFileRepository {
         fileSize: data.fileSize,
         minioKey: data.minioKey,
         minioBucket: data.minioBucket,
+        storageTarget: data.storageTarget,
         mediaType: data.mediaType,
         bodySide: data.bodySide ?? null,
         latitude: data.latitude,

@@ -52,6 +52,7 @@ export type UploadSessionMinAggregateOutputType = {
   minioUploadId: string | null
   minioKey: string | null
   minioBucket: string | null
+  storageTarget: string | null
   fileName: string | null
   mimeType: string | null
   fileSize: number | null
@@ -74,6 +75,7 @@ export type UploadSessionMaxAggregateOutputType = {
   minioUploadId: string | null
   minioKey: string | null
   minioBucket: string | null
+  storageTarget: string | null
   fileName: string | null
   mimeType: string | null
   fileSize: number | null
@@ -96,6 +98,7 @@ export type UploadSessionCountAggregateOutputType = {
   minioUploadId: number
   minioKey: number
   minioBucket: number
+  storageTarget: number
   fileName: number
   mimeType: number
   fileSize: number
@@ -138,6 +141,7 @@ export type UploadSessionMinAggregateInputType = {
   minioUploadId?: true
   minioKey?: true
   minioBucket?: true
+  storageTarget?: true
   fileName?: true
   mimeType?: true
   fileSize?: true
@@ -160,6 +164,7 @@ export type UploadSessionMaxAggregateInputType = {
   minioUploadId?: true
   minioKey?: true
   minioBucket?: true
+  storageTarget?: true
   fileName?: true
   mimeType?: true
   fileSize?: true
@@ -182,6 +187,7 @@ export type UploadSessionCountAggregateInputType = {
   minioUploadId?: true
   minioKey?: true
   minioBucket?: true
+  storageTarget?: true
   fileName?: true
   mimeType?: true
   fileSize?: true
@@ -291,6 +297,7 @@ export type UploadSessionGroupByOutputType = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -336,6 +343,7 @@ export type UploadSessionWhereInput = {
   minioUploadId?: Prisma.StringFilter<"UploadSession"> | string
   minioKey?: Prisma.StringFilter<"UploadSession"> | string
   minioBucket?: Prisma.StringFilter<"UploadSession"> | string
+  storageTarget?: Prisma.StringNullableFilter<"UploadSession"> | string | null
   fileName?: Prisma.StringFilter<"UploadSession"> | string
   mimeType?: Prisma.StringFilter<"UploadSession"> | string
   fileSize?: Prisma.IntFilter<"UploadSession"> | number
@@ -360,6 +368,7 @@ export type UploadSessionOrderByWithRelationInput = {
   minioUploadId?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrderInput | Prisma.SortOrder
   fileName?: Prisma.SortOrder
   mimeType?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -387,6 +396,7 @@ export type UploadSessionWhereUniqueInput = Prisma.AtLeast<{
   minioUploadId?: Prisma.StringFilter<"UploadSession"> | string
   minioKey?: Prisma.StringFilter<"UploadSession"> | string
   minioBucket?: Prisma.StringFilter<"UploadSession"> | string
+  storageTarget?: Prisma.StringNullableFilter<"UploadSession"> | string | null
   fileName?: Prisma.StringFilter<"UploadSession"> | string
   mimeType?: Prisma.StringFilter<"UploadSession"> | string
   fileSize?: Prisma.IntFilter<"UploadSession"> | number
@@ -411,6 +421,7 @@ export type UploadSessionOrderByWithAggregationInput = {
   minioUploadId?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrderInput | Prisma.SortOrder
   fileName?: Prisma.SortOrder
   mimeType?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -441,6 +452,7 @@ export type UploadSessionScalarWhereWithAggregatesInput = {
   minioUploadId?: Prisma.StringWithAggregatesFilter<"UploadSession"> | string
   minioKey?: Prisma.StringWithAggregatesFilter<"UploadSession"> | string
   minioBucket?: Prisma.StringWithAggregatesFilter<"UploadSession"> | string
+  storageTarget?: Prisma.StringNullableWithAggregatesFilter<"UploadSession"> | string | null
   fileName?: Prisma.StringWithAggregatesFilter<"UploadSession"> | string
   mimeType?: Prisma.StringWithAggregatesFilter<"UploadSession"> | string
   fileSize?: Prisma.IntWithAggregatesFilter<"UploadSession"> | number
@@ -462,6 +474,7 @@ export type UploadSessionCreateInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -486,6 +499,7 @@ export type UploadSessionUncheckedCreateInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -508,6 +522,7 @@ export type UploadSessionUpdateInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -532,6 +547,7 @@ export type UploadSessionUncheckedUpdateInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -555,6 +571,7 @@ export type UploadSessionCreateManyInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -576,6 +593,7 @@ export type UploadSessionUpdateManyMutationInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -598,6 +616,7 @@ export type UploadSessionUncheckedUpdateManyInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -630,6 +649,7 @@ export type UploadSessionCountOrderByAggregateInput = {
   minioUploadId?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   mimeType?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -661,6 +681,7 @@ export type UploadSessionMaxOrderByAggregateInput = {
   minioUploadId?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   mimeType?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -683,6 +704,7 @@ export type UploadSessionMinOrderByAggregateInput = {
   minioUploadId?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   mimeType?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -778,6 +800,7 @@ export type UploadSessionCreateWithoutInspectionInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -800,6 +823,7 @@ export type UploadSessionUncheckedCreateWithoutInspectionInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -852,6 +876,7 @@ export type UploadSessionScalarWhereInput = {
   minioUploadId?: Prisma.StringFilter<"UploadSession"> | string
   minioKey?: Prisma.StringFilter<"UploadSession"> | string
   minioBucket?: Prisma.StringFilter<"UploadSession"> | string
+  storageTarget?: Prisma.StringNullableFilter<"UploadSession"> | string | null
   fileName?: Prisma.StringFilter<"UploadSession"> | string
   mimeType?: Prisma.StringFilter<"UploadSession"> | string
   fileSize?: Prisma.IntFilter<"UploadSession"> | number
@@ -873,6 +898,7 @@ export type UploadSessionCreateWithoutPartsInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -896,6 +922,7 @@ export type UploadSessionUncheckedCreateWithoutPartsInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -933,6 +960,7 @@ export type UploadSessionUpdateWithoutPartsInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -956,6 +984,7 @@ export type UploadSessionUncheckedUpdateWithoutPartsInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -977,6 +1006,7 @@ export type UploadSessionCreateManyInspectionInput = {
   minioUploadId: string
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   fileName: string
   mimeType: string
   fileSize: number
@@ -998,6 +1028,7 @@ export type UploadSessionUpdateWithoutInspectionInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1020,6 +1051,7 @@ export type UploadSessionUncheckedUpdateWithoutInspectionInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1042,6 +1074,7 @@ export type UploadSessionUncheckedUpdateManyWithoutInspectionInput = {
   minioUploadId?: Prisma.StringFieldUpdateOperationsInput | string
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1095,6 +1128,7 @@ export type UploadSessionSelect<ExtArgs extends runtime.Types.Extensions.Interna
   minioUploadId?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   fileName?: boolean
   mimeType?: boolean
   fileSize?: boolean
@@ -1120,6 +1154,7 @@ export type UploadSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   minioUploadId?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   fileName?: boolean
   mimeType?: boolean
   fileSize?: boolean
@@ -1143,6 +1178,7 @@ export type UploadSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   minioUploadId?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   fileName?: boolean
   mimeType?: boolean
   fileSize?: boolean
@@ -1166,6 +1202,7 @@ export type UploadSessionSelectScalar = {
   minioUploadId?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   fileName?: boolean
   mimeType?: boolean
   fileSize?: boolean
@@ -1180,7 +1217,7 @@ export type UploadSessionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UploadSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "driverId" | "inspectionId" | "stepId" | "minioUploadId" | "minioKey" | "minioBucket" | "fileName" | "mimeType" | "fileSize" | "chunkSize" | "totalChunks" | "status" | "latitude" | "longitude" | "capturedAt" | "durationSeconds" | "createdAt" | "updatedAt", ExtArgs["result"]["uploadSession"]>
+export type UploadSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "driverId" | "inspectionId" | "stepId" | "minioUploadId" | "minioKey" | "minioBucket" | "storageTarget" | "fileName" | "mimeType" | "fileSize" | "chunkSize" | "totalChunks" | "status" | "latitude" | "longitude" | "capturedAt" | "durationSeconds" | "createdAt" | "updatedAt", ExtArgs["result"]["uploadSession"]>
 export type UploadSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inspection?: boolean | Prisma.InspectionDefaultArgs<ExtArgs>
   parts?: boolean | Prisma.UploadSession$partsArgs<ExtArgs>
@@ -1207,6 +1244,7 @@ export type $UploadSessionPayload<ExtArgs extends runtime.Types.Extensions.Inter
     minioUploadId: string
     minioKey: string
     minioBucket: string
+    storageTarget: string | null
     fileName: string
     mimeType: string
     fileSize: number
@@ -1651,6 +1689,7 @@ export interface UploadSessionFieldRefs {
   readonly minioUploadId: Prisma.FieldRef<"UploadSession", 'String'>
   readonly minioKey: Prisma.FieldRef<"UploadSession", 'String'>
   readonly minioBucket: Prisma.FieldRef<"UploadSession", 'String'>
+  readonly storageTarget: Prisma.FieldRef<"UploadSession", 'String'>
   readonly fileName: Prisma.FieldRef<"UploadSession", 'String'>
   readonly mimeType: Prisma.FieldRef<"UploadSession", 'String'>
   readonly fileSize: Prisma.FieldRef<"UploadSession", 'Int'>

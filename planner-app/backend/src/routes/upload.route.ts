@@ -1,10 +1,10 @@
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 import type { AppEnv } from "../types/dto";
 
 export function createUploadRoutes(
-  storageProvider: IStorageProvider,
+  storage: IStorageRegistry,
   authMiddleware: MiddlewareHandler<AppEnv>,
 ) {
   const app = new Hono<AppEnv>();
@@ -15,7 +15,10 @@ export function createUploadRoutes(
   app.get("/presigned/*", async (c) => {
     const key = c.req.path.replace("/presigned/", "");
     const bucket = c.req.query("bucket") ?? "carreel-media";
-    const url = await storageProvider.getPresignedUrl(bucket, key);
+    // A bare key carries no storage target — default target unless ?t= names one.
+    const url = await storage
+      .resolve(c.req.query("t") ?? null)
+      .getPresignedUrl(bucket, key);
     return c.json({ url });
   });
 

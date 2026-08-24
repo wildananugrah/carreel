@@ -458,6 +458,65 @@ export class GeminiProvider implements IAIProvider {
 }
 ```
 
+### Storage Targets (Pluggable, Scale-Out Object Storage)
+
+Object storage is **not** a single global provider. A **storage target** is one
+named place objects live (an S3 bucket, a MinIO bucket, a bucket in another
+region). Every stored object records the id of the target it was written to:
+`MediaFile.storageTarget`, `UploadSession.storageTarget`,
+`Inspection.signatureStorageTarget` (all nullable — `NULL` = the default target,
+which is every row written before this feature).
+
+- **Writes** go to the **active** target (`storage.active()`), and the active id
+  is persisted on the row.
+- **Reads** go to the target recorded on the row (`storage.resolve(row.storageTarget)`).
+
+That is what makes scaling additive: declare a new target, flip
+`STORAGE_ACTIVE_TARGET`, restart. Old media is never copied or touched.
+
+Config (both backends, `src/utils/storage-config.ts`):
+
+```bash
+STORAGE_TARGETS='[{"id":"s3-2026","kind":"s3","region":"ap-southeast-1","bucket":"bucket-rsmcb1",
+                   "accessKeyId":"env:S3_ACCESS_KEY_ID","secretAccessKey":"env:S3_SECRET_ACCESS_KEY"}]'
+STORAGE_ACTIVE_TARGET=s3-2026    # new uploads land here
+STORAGE_DEFAULT_TARGET=s3-2026   # where rows with a NULL storageTarget live
+```
+
+`env:VAR_NAME` values are resolved from `process.env` so secrets stay out of the
+JSON. With `STORAGE_TARGETS` unset, one target (`s3-primary`) is synthesized
+from the legacy `S3_*` vars — existing deployments need no env change.
+
+```typescript
+// WRITE — active target, and persist which one it was
+const storageTarget = this.storage.activeTargetId;
+await this.storage.active().upload(bucket, key, file, mimeType);
+await this.mediaFileRepository.create(scope, stepId, { ...meta, minioKey: key, minioBucket: bucket, storageTarget });
+
+// READ — whatever the row says (null → default target)
+await this.storage.resolve(media.storageTarget).download(media.minioBucket, media.minioKey);
+```
+
+**Rules:**
+
+- **Services and jobs take `IStorageRegistry`, never a bare `IStorageProvider`.**
+  A service holding one provider cannot read media written to another target.
+- **Every write persists `activeTargetId` on the row.** A write that doesn't
+  record its target is unreadable once the active target moves.
+- **Target ids are persisted data.** Never rename or reuse an id once objects
+  have been written to it; never drop a target that still holds objects
+  (`SELECT "storageTarget", count(*) FROM media_files GROUP BY 1;`).
+- **Both backends must configure every target ever written to.** The planner-app
+  only reads, but it reads everything.
+- **Chunked upload sessions are pinned** to the target active when the session
+  started — a multipart upload cannot be completed on another target.
+- **Bare-key routes can't know a target** — they read the default target unless
+  given `?t=<targetId>`. Prefer row-aware routes for anything with a DB row.
+- **Adding a `kind` means one new case in `createStorageProvider`** plus a config
+  type in `types/storage.ts`. Nothing else changes.
+
+Full runbook: `docs/storage-targets.md`.
+
 ### System Instruction vs User Prompt (AI Prompt Split)
 
 All AI prompts are split into **two parts** and passed separately to the provider:

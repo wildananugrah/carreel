@@ -21,6 +21,7 @@ import type { IMediaFileRepository } from "../../src/interfaces/repositories/med
 import type { StepAnalysisJobData } from "../../src/jobs/step-analysis.job";
 import { StepAnalysisJob } from "../../src/jobs/step-analysis.job";
 import type { UserScope } from "../../src/types/scope";
+import { singleTargetRegistry } from "../helpers/storage-registry";
 
 const mockLogger: ILogger = {
   info: () => {},
@@ -72,6 +73,7 @@ function createEightPhotos(stepId: string): MediaFile[] {
         fileSize: 1024,
         minioKey: `inspections/photo-${i}.jpg`,
         minioBucket: "carreel-images",
+        storageTarget: null,
         latitude: null,
         longitude: null,
         capturedAt: new Date(),
@@ -190,6 +192,7 @@ describe("StepAnalysisJob — 8-photo body inspection", () => {
           latitude: null,
           longitude: null,
           signatureKey: null,
+          signatureStorageTarget: null,
           signerName: null,
           signedAt: null,
           driverComment: null,
@@ -282,7 +285,7 @@ describe("StepAnalysisJob — 8-photo body inspection", () => {
 
     job = new StepAnalysisJob(
       mockAI,
-      mockStorage,
+      singleTargetRegistry(mockStorage),
       mockInspectionRepo,
       mockMediaRepo,
       mockAIAnalysisRepo,
@@ -308,6 +311,7 @@ describe("StepAnalysisJob — 8-photo body inspection", () => {
         fileSize: 1024,
         minioKey: "inspections/photo-extra.jpg",
         minioBucket: "carreel-images",
+        storageTarget: null,
         latitude: null,
         longitude: null,
         capturedAt: new Date(),

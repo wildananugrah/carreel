@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import type {
-  DamageAuditLog,
-  DamageMarker,
-} from "../../src/generated/prisma";
+import type { DamageAuditLog, DamageMarker } from "../../src/generated/prisma";
 import type {
   DamagePhotoVerificationInput,
   DamagePhotoVerificationOutcome,
@@ -19,6 +16,7 @@ import type {
 import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
 import { DamageEditingService } from "../../src/services/damage-editing.service";
 import { HttpError } from "../../src/utils/http-error";
+import { singleTargetRegistry } from "../helpers/storage-registry";
 import { makeDriverScope } from "../helpers/test-scope";
 
 const mockLogger: ILogger = {
@@ -54,7 +52,12 @@ function setup(): Fixtures {
     projectId: "project-1",
     status: "DRAFT",
     tripType: "PRE_TRIP",
-    unit: { id: "unit-1", make: "Volvo", model: "740 GLE", licensePlate: "B 1" },
+    unit: {
+      id: "unit-1",
+      make: "Volvo",
+      model: "740 GLE",
+      licensePlate: "B 1",
+    },
     steps: [
       {
         id: "step-body",
@@ -81,6 +84,7 @@ function setup(): Fixtures {
         fileSize: data.fileSize,
         minioKey: data.minioKey,
         minioBucket: data.minioBucket,
+        storageTarget: null,
         mediaType: data.mediaType,
         latitude: null,
         longitude: null,
@@ -101,6 +105,7 @@ function setup(): Fixtures {
           stepId: "step-body",
           minioKey: "k",
           minioBucket: "b",
+          storageTarget: null,
           mimeType: "image/jpeg",
         },
       };
@@ -139,7 +144,8 @@ function setup(): Fixtures {
       const updated: DamageMarker = {
         ...existing,
         severity: data.severity ?? existing.severity,
-        location: data.location !== undefined ? data.location : existing.location,
+        location:
+          data.location !== undefined ? data.location : existing.location,
         description: data.description ?? existing.description,
         editedAt: new Date(),
         editedById: data.editedById,
@@ -208,7 +214,7 @@ function setup(): Fixtures {
     mediaFileRepo as IMediaFileRepository,
     damageRepo,
     auditRepo,
-    storage as IStorageProvider,
+    singleTargetRegistry(storage as IStorageProvider),
     verificationProvider,
     mockLogger,
   );

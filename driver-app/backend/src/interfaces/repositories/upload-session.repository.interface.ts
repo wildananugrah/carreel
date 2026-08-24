@@ -16,6 +16,7 @@ export interface CreateUploadSessionData {
   minioUploadId: string;
   minioKey: string;
   minioBucket: string;
+  storageTarget: string | null;
   fileName: string;
   mimeType: string;
   fileSize: number;

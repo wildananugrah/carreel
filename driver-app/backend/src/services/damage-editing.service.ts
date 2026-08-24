@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { DamageMarker } from "../generated/prisma";
 import type { IDamagePhotoVerificationProvider } from "../interfaces/providers/damage-photo-verification.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 import type { IDamageAuditLogRepository } from "../interfaces/repositories/damage-audit-log.repository.interface";
 import type { IDamageMarkerRepository } from "../interfaces/repositories/damage-marker.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
@@ -25,7 +25,7 @@ export class DamageEditingService implements IDamageEditingService {
     private mediaFileRepository: IMediaFileRepository,
     private damageMarkerRepository: IDamageMarkerRepository,
     private damageAuditLogRepository: IDamageAuditLogRepository,
-    private storageProvider: IStorageProvider,
+    private storage: IStorageRegistry,
     private verificationProvider: IDamagePhotoVerificationProvider,
     private logger: ILogger,
   ) {}
@@ -58,12 +58,10 @@ export class DamageEditingService implements IDamageEditingService {
     //    walk-around video; this photo is supplemental evidence.
     const ext = data.photoFileName.split(".").pop() ?? "jpg";
     const key = `inspections/${inspectionId}/DAMAGE_EVIDENCE/${randomUUID()}.${ext}`;
-    await this.storageProvider.upload(
-      EVIDENCE_BUCKET,
-      key,
-      data.photo,
-      data.photoMimeType,
-    );
+    const storageTarget = this.storage.activeTargetId;
+    await this.storage
+      .active()
+      .upload(EVIDENCE_BUCKET, key, data.photo, data.photoMimeType);
 
     const mediaFile = await this.mediaFileRepository.create(
       scope,
@@ -76,6 +74,7 @@ export class DamageEditingService implements IDamageEditingService {
         capturedAt: new Date().toISOString(),
         minioKey: key,
         minioBucket: EVIDENCE_BUCKET,
+        storageTarget,
       },
     );
 

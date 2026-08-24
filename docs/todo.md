@@ -142,6 +142,17 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
 
 - [ ] Phase 11: Deployment (Docker images, CI/CD, cloud hosting)
 
+## Storage Scalability (2026-08-24)
+
+- [x] S1 Schema + migration: `media_files.storageTarget`, `upload_sessions.storageTarget`, `inspections.signatureStorageTarget` (nullable, no backfill)
+- [x] S2 `IStorageRegistry` + `StorageRegistry` + provider factory (both backends)
+- [x] S3 `loadStorageConfig` — `STORAGE_TARGETS` JSON with `env:` refs, legacy `S3_*` fallback
+- [x] S4 Driver-app: upload, chunked upload (session pinned to its target), media stream, damage editing, step-analysis job, health, composition root
+- [x] S5 Planner-app: media stream, signature route, presign route, health, composition root
+- [x] S6 Row-aware signature routes (`/api/media/signature/:id`, `/api/inspections/:id/signature`) + both frontends switched off the bare-key URL
+- [x] S7 Tests: registry + config loader + service-level target routing (driver 237 pass, planner 73 pass; only pre-existing DB-credential failures remain)
+- [x] S8 Docs: `docs/storage-targets.md` runbook, CLAUDE.md section, both `.env.example`
+
 ## enhancement / bugs
 - [x] Condition Reel: per-photo AI finding overlay (severity-ranked rows over the bottom of the frame, dwell scales 2s + 1.5s/finding capped at 6s) + SPEEDOMETER-style card wrapper — driver-app InspectionDetail PRE/POST tabs, PHOTOS_8SIDE mode
 - [x] Condition Reel (planner-app): same reel + findings overlay in the PRE-CHECK / POST-CHECK columns of the dashboard VehicleDetailPanel, above the 8-photo grid
