@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { IJobQueue } from "../interfaces/providers/job-queue.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 import type { IAIAnalysisRepository } from "../interfaces/repositories/ai-analysis.repository.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
@@ -16,7 +16,9 @@ import { hasPlatformBypass } from "../utils/scope-filter";
 function isStorageNotFound(err: unknown): boolean {
   return (
     err instanceof Error &&
-    (err.name === "NoSuchKey" || err.name === "NotFound" || err.name === "NoSuchBucket")
+    (err.name === "NoSuchKey" ||
+      err.name === "NotFound" ||
+      err.name === "NoSuchBucket")
   );
 }
 
@@ -24,6 +26,9 @@ const BUCKET_MAP: Record<string, string> = {
   IMAGE: "carreel-images",
   VIDEO: "carreel-videos",
 };
+
+// Signatures are always PNGs written alongside inspection images.
+const SIGNATURE_BUCKET = "carreel-images";
 
 const IMMEDIATE_ANALYSIS_STEPS = [
   "UNIT_IDENTIFICATION",
@@ -33,7 +38,7 @@ const IMMEDIATE_ANALYSIS_STEPS = [
 
 export class UploadService implements IUploadService {
   constructor(
-    private storageProvider: IStorageProvider,
+    private storage: IStorageRegistry,
     private mediaFileRepository: IMediaFileRepository,
     private inspectionRepository: IInspectionRepository,
     private logger: ILogger,
@@ -77,19 +82,22 @@ export class UploadService implements IUploadService {
       );
     }
 
-    // Generate MinIO key
+    // Generate object key
     const ext = meta.fileName.split(".").pop() ?? "bin";
     const key = `inspections/${inspectionId}/${step.stepType}/${randomUUID()}.${ext}`;
     const bucket = BUCKET_MAP[meta.mediaType] ?? "carreel-images";
 
-    // Upload to MinIO
-    await this.storageProvider.upload(bucket, key, file, meta.mimeType);
+    // New uploads always go to the ACTIVE storage target; the target id is
+    // persisted with the row so reads keep working after the active target moves.
+    const storageTarget = this.storage.activeTargetId;
+    await this.storage.active().upload(bucket, key, file, meta.mimeType);
 
     // Save to DB
     const mediaFile = await this.mediaFileRepository.create(scope, stepId, {
       ...meta,
       minioKey: key,
       minioBucket: bucket,
+      storageTarget,
     });
 
     // Additional "Foto Tambahan" photos are BODY_INSPECTION images with no
@@ -103,7 +111,11 @@ export class UploadService implements IUploadService {
 
     // Update step status to UPLOADED (except for additional body photos)
     if (!isAdditionalBodyPhoto) {
-      await this.inspectionRepository.updateStepStatus(scope, stepId, "UPLOADED");
+      await this.inspectionRepository.updateStepStatus(
+        scope,
+        stepId,
+        "UPLOADED",
+      );
     }
 
     this.logger.info("Media file uploaded", {
@@ -113,6 +125,7 @@ export class UploadService implements IUploadService {
       stepId,
       bucket,
       key,
+      storageTarget,
     });
 
     // Immediately enqueue AI analysis for photo steps
@@ -137,10 +150,9 @@ export class UploadService implements IUploadService {
     }
 
     // Return with presigned URL
-    const presignedUrl = await this.storageProvider.getPresignedUrl(
-      bucket,
-      key,
-    );
+    const presignedUrl = await this.storage
+      .active()
+      .getPresignedUrl(bucket, key);
 
     return {
       id: mediaFile.id,
@@ -158,10 +170,13 @@ export class UploadService implements IUploadService {
     _scope: UserScope,
     key: string,
     _driverId: string,
+    targetId?: string,
   ): Promise<string> {
     // Determine bucket from key path or default
     const bucket = key.includes("video") ? "carreel-videos" : "carreel-images";
-    return this.storageProvider.getPresignedUrl(bucket, key);
+    // A bare key carries no target, so callers must say which one — otherwise
+    // we fall back to the default target (where all pre-multi-target objects live).
+    return this.storage.resolve(targetId ?? null).getPresignedUrl(bucket, key);
   }
 
   async getMediaUrl(scope: UserScope, mediaId: string): Promise<string> {
@@ -169,10 +184,9 @@ export class UploadService implements IUploadService {
     if (!media) {
       throw notFound("Media file not found");
     }
-    return this.storageProvider.getPresignedUrl(
-      media.minioBucket,
-      media.minioKey,
-    );
+    return this.storage
+      .resolve(media.storageTarget)
+      .getPresignedUrl(media.minioBucket, media.minioKey);
   }
 
   async getMediaData(
@@ -184,13 +198,13 @@ export class UploadService implements IUploadService {
       throw notFound("Media file not found");
     }
     try {
-      const buffer = await this.storageProvider.download(
-        media.minioBucket,
-        media.minioKey,
-      );
+      const buffer = await this.storage
+        .resolve(media.storageTarget)
+        .download(media.minioBucket, media.minioKey);
       return { buffer, mimeType: media.mimeType };
     } catch (err) {
-      if (isStorageNotFound(err)) throw notFound("Media file not found in storage");
+      if (isStorageNotFound(err))
+        throw notFound("Media file not found in storage");
       throw err;
     }
   }
@@ -198,12 +212,39 @@ export class UploadService implements IUploadService {
   async getMediaByKey(
     bucket: string,
     key: string,
+    targetId?: string,
   ): Promise<{ buffer: Buffer; mimeType: string }> {
     try {
-      const buffer = await this.storageProvider.download(bucket, key);
+      const buffer = await this.storage
+        .resolve(targetId ?? null)
+        .download(bucket, key);
       return { buffer, mimeType: "image/png" };
     } catch (err) {
-      if (isStorageNotFound(err)) throw notFound("Media file not found in storage");
+      if (isStorageNotFound(err))
+        throw notFound("Media file not found in storage");
+      throw err;
+    }
+  }
+
+  async getSignatureData(
+    scope: UserScope,
+    inspectionId: string,
+  ): Promise<{ buffer: Buffer; mimeType: string }> {
+    const inspection = await this.inspectionRepository.findById(
+      scope,
+      inspectionId,
+    );
+    if (!inspection?.signatureKey) {
+      throw notFound("Signature not found");
+    }
+    try {
+      const buffer = await this.storage
+        .resolve(inspection.signatureStorageTarget)
+        .download(SIGNATURE_BUCKET, inspection.signatureKey);
+      return { buffer, mimeType: "image/png" };
+    } catch (err) {
+      if (isStorageNotFound(err))
+        throw notFound("Signature not found in storage");
       throw err;
     }
   }
@@ -234,8 +275,9 @@ export class UploadService implements IUploadService {
     if (!media || media.stepId !== stepId)
       throw notFound("Media file not found");
 
-    // Delete from MinIO
-    await this.storageProvider
+    // Delete from the target this object was written to
+    await this.storage
+      .resolve(media.storageTarget)
       .delete(media.minioBucket, media.minioKey)
       .catch((e) => {
         this.logger.warn("Failed to delete from storage", {
@@ -310,14 +352,16 @@ export class UploadService implements IUploadService {
       throw badRequest("Only DRAFT inspections can be updated");
 
     const key = `inspections/${inspectionId}/signature/${randomUUID()}.png`;
-    const bucket = "carreel-images";
+    const bucket = SIGNATURE_BUCKET;
 
-    await this.storageProvider.upload(bucket, key, file, mimeType);
+    const storageTarget = this.storage.activeTargetId;
+    await this.storage.active().upload(bucket, key, file, mimeType);
     await this.inspectionRepository.updateSignatureKey(
       scope,
       inspectionId,
       key,
       signerName,
+      storageTarget,
     );
 
     this.logger.info("Signature uploaded", {
@@ -325,6 +369,7 @@ export class UploadService implements IUploadService {
       inspectionId,
       key,
       signerName,
+      storageTarget,
     });
 
     return { signatureKey: key };

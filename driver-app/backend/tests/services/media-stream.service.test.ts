@@ -4,6 +4,7 @@ import type { IStorageProvider } from "../../src/interfaces/providers/storage.pr
 import type { IMediaFileRepository } from "../../src/interfaces/repositories/media-file.repository.interface";
 import { MediaStreamService } from "../../src/services/media-stream.service";
 import type { UserScope } from "../../src/types/scope";
+import { singleTargetRegistry } from "../helpers/storage-registry";
 import { makeSuperAdminScope } from "../helpers/test-scope";
 
 const mockMedia: MediaFile = {
@@ -15,6 +16,7 @@ const mockMedia: MediaFile = {
   fileSize: 10_000_000,
   minioKey: "inspections/insp-1/BODY_INSPECTION/file.mp4",
   minioBucket: "carreel-videos",
+  storageTarget: null,
   mediaType: "VIDEO",
   bodySide: null,
   latitude: null,
@@ -63,7 +65,10 @@ describe("MediaStreamService", () => {
       deleteById: async () => {},
     };
 
-    service = new MediaStreamService(mockStorage, mockMediaFileRepo);
+    service = new MediaStreamService(
+      singleTargetRegistry(mockStorage),
+      mockMediaFileRepo,
+    );
   });
 
   test("returns full stream when no range header", async () => {

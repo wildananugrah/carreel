@@ -32,6 +32,7 @@ function createMockInspection(overrides: Partial<Inspection> = {}): Inspection {
     latitude: null,
     longitude: null,
     signatureKey: null,
+    signatureStorageTarget: null,
     signerName: null,
     signedAt: null,
     driverComment: null,
@@ -415,6 +416,7 @@ describe("InspectionService", () => {
       id: "insp-jobs",
       driverId: "driver-1",
       signatureKey: "sig-key",
+      signatureStorageTarget: null,
       steps: [
         {
           id: "s1",

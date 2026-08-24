@@ -908,11 +908,14 @@ function TTDCard({
         {done && detail?.signatureKey ? (
           // biome-ignore lint/a11y/useKeyWithClickEvents: click-to-enlarge image
           <img
-            src={`/api/media/key/${detail.signatureKey}`}
+            src={`/api/inspections/${detail.id}/signature`}
             alt="TTD"
             className="w-full h-full rounded-lg object-contain cursor-pointer"
             onClick={() =>
-              setLightbox({ src: `/api/media/key/${detail.signatureKey}`, type: "image" })
+              setLightbox({
+                src: `/api/inspections/${detail.id}/signature`,
+                type: "image",
+              })
             }
           />
         ) : (

@@ -19,7 +19,7 @@ import {
 } from "./providers/gemini.provider";
 import { GeminiDamagePhotoVerificationProvider } from "./providers/gemini-damage-photo-verification.provider";
 import { PgBossQueueProvider } from "./providers/pgboss-queue.provider";
-import { S3Provider } from "./providers/s3.provider";
+import { buildStorageRegistry } from "./providers/storage-registry";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
 // Providers
 import { WinstonLogger } from "./providers/winston-logger.provider";
@@ -53,6 +53,7 @@ import { UploadService } from "./services/upload.service";
 import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
 import { HttpError } from "./utils/http-error";
+import { loadStorageConfig } from "./utils/storage-config";
 
 // ========================
 // Wire Dependencies
@@ -73,15 +74,15 @@ const logger = new WinstonLogger(
   process.env.LOKI_URL,
 );
 
-const storageProvider = new S3Provider({
-  region: process.env.S3_REGION ?? "ap-southeast-1",
-  accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
-  bucket: process.env.S3_BUCKET ?? "carreel",
-  ...(process.env.S3_ENDPOINT ? { endpoint: process.env.S3_ENDPOINT } : {}),
-  ...(process.env.S3_FORCE_PATH_STYLE
-    ? { forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true" }
-    : {}),
+// Storage targets. New uploads go to the active target; every stored object
+// records which target it lives in, so adding capacity never touches old media.
+// See docs/storage-targets.md.
+const storageConfig = loadStorageConfig();
+const storage = buildStorageRegistry(storageConfig);
+logger.info("Storage targets configured", {
+  targets: storageConfig.targets.map((t) => `${t.id}(${t.kind})`).join(", "),
+  activeTarget: storageConfig.activeTargetId,
+  defaultTarget: storageConfig.defaultTargetId,
 });
 
 const geminiKey = process.env.GEMINI_API_KEY;
@@ -144,7 +145,7 @@ const inspectionService = new InspectionService(
 );
 
 const uploadService = new UploadService(
-  storageProvider,
+  storage,
   mediaFileRepository,
   inspectionRepository,
   logger,
@@ -153,24 +154,21 @@ const uploadService = new UploadService(
 );
 
 const chunkedUploadService = new ChunkedUploadService(
-  storageProvider,
+  storage,
   uploadSessionRepository,
   mediaFileRepository,
   inspectionRepository,
   logger,
 );
 
-const mediaStreamService = new MediaStreamService(
-  storageProvider,
-  mediaFileRepository,
-);
+const mediaStreamService = new MediaStreamService(storage, mediaFileRepository);
 
 const damageEditingService = new DamageEditingService(
   inspectionRepository,
   mediaFileRepository,
   damageMarkerRepository,
   damageAuditLogRepository,
-  storageProvider,
+  storage,
   damagePhotoVerificationProvider,
   logger,
 );
@@ -180,7 +178,7 @@ const workspaceService = new WorkspaceService(workspaceRepository);
 // Jobs
 const stepAnalysisJob = new StepAnalysisJob(
   aiProvider,
-  storageProvider,
+  storage,
   inspectionRepository,
   mediaFileRepository,
   aiAnalysisRepository,
@@ -241,7 +239,7 @@ app.onError((err, c) => {
 });
 
 // Routes
-app.route("/health", createHealthRoutes(prisma, storageProvider));
+app.route("/health", createHealthRoutes(prisma, storage));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
@@ -286,13 +284,23 @@ async function checkConnectivity() {
     process.exit(1);
   }
 
-  // S3
-  const s3Ok = await storageProvider.ping();
+  // Storage targets
+  const pings = await storage.pingAll();
+  const unreachable = Object.entries(pings)
+    .filter(([, ok]) => !ok)
+    .map(([id]) => id);
+  const s3Ok = unreachable.length === 0;
   if (s3Ok) {
-    logger.info("S3: connected");
+    logger.info(
+      `Storage: all targets connected (${storage.targetIds().join(", ")})`,
+    );
   } else {
     logger.warn(
-      "S3: unavailable — file uploads will fail. Check S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_REGION.",
+      `Storage: unreachable target(s) [${unreachable.join(", ")}] — ` +
+        (unreachable.includes(storage.activeTargetId)
+          ? "uploads will fail. "
+          : "old media on those targets will fail to load. ") +
+        "Check STORAGE_TARGETS (or S3_* for the legacy single-target setup).",
     );
   }
 }

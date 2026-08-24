@@ -71,3 +71,17 @@ docker exec -it carreel-driver-db psql -U carreel -d carreel_driver
 bun run generate
 bunx prisma db push
 ```
+
+### object storage (S3 / MinIO)
+
+Storage is pluggable per object: each media row records which **storage target**
+it lives in, so a new bucket can be added and made active without migrating or
+touching old media.
+
+- Deploy runbook, env config, verification and rollback: **`docs/storage-targets.md`**
+- First rollout of the feature needs no `.env` change — `deploy-all.sh` covers it
+  (`prisma db push` adds the columns; the legacy `S3_*` vars are read as one
+  target named `s3-primary`).
+- Adding a bucket later: add it to `STORAGE_TARGETS`, point
+  `STORAGE_ACTIVE_TARGET` at it, keep the old target in the list, restart both
+  backends.

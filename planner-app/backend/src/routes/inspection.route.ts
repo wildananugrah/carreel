@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import type { InspectionStatus } from "../generated/prisma";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 import type { IDamageAuditRepository } from "../interfaces/repositories/damage-audit.repository.interface";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
 import type { AppEnv } from "../types/dto";
@@ -10,7 +10,7 @@ import { SYSTEM_SCOPE } from "../utils/system-scope";
 export function createInspectionRoutes(
   inspectionService: IInspectionService,
   authMiddleware: MiddlewareHandler<AppEnv>,
-  storageProvider: IStorageProvider,
+  storage: IStorageRegistry,
   damageAuditRepository: IDamageAuditRepository,
 ) {
   const app = new Hono<AppEnv>();
@@ -25,10 +25,9 @@ export function createInspectionRoutes(
     if (!inspection?.signatureKey) {
       return c.json({ error: "No signature found" }, 404);
     }
-    const buffer = await storageProvider.download(
-      "carreel-images",
-      inspection.signatureKey,
-    );
+    const buffer = await storage
+      .resolve(inspection.signatureStorageTarget)
+      .download("carreel-images", inspection.signatureKey);
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "image/png",

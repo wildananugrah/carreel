@@ -840,12 +840,15 @@ function PrePostPanel({
         <div className="bg-white rounded-lg h-[70px] flex items-center justify-center mb-2">
           {inspection.signatureKey ? (
             <MediaImage
-              src={`/api/media/key/${inspection.signatureKey}`}
+              src={`/api/media/signature/${inspection.id}`}
               alt="Signature"
               className="w-full h-full rounded-lg object-contain cursor-pointer"
               theme="light"
               onClick={() =>
-                setLightbox({ src: `/api/media/key/${inspection.signatureKey}`, type: "image" })
+                setLightbox({
+                  src: `/api/media/signature/${inspection.id}`,
+                  type: "image",
+                })
               }
             />
           ) : (

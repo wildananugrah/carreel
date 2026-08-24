@@ -8,7 +8,7 @@ import type {
 } from "../interfaces/providers/ai.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
 import type { INotificationProvider } from "../interfaces/providers/notification.provider.interface";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 import type {
   CreateDamageMarkerDTO,
   IAIAnalysisRepository,
@@ -139,7 +139,7 @@ function buildRecaptureAlertMessage(
 export class StepAnalysisJob {
   constructor(
     private aiProvider: IAIProvider,
-    private storageProvider: IStorageProvider,
+    private storage: IStorageRegistry,
     private inspectionRepository: IInspectionRepository,
     private mediaFileRepository: IMediaFileRepository,
     private aiAnalysisRepository: IAIAnalysisRepository,
@@ -239,10 +239,9 @@ export class StepAnalysisJob {
 
       if (isVideo) {
         // Download → temp file → upload to Gemini Files API
-        const buffer = await this.storageProvider.download(
-          primaryMedia.minioBucket,
-          primaryMedia.minioKey,
-        );
+        const buffer = await this.storage
+          .resolve(primaryMedia.storageTarget)
+          .download(primaryMedia.minioBucket, primaryMedia.minioKey);
         const tempPath = join(tmpdir(), `carreel-${stepId}-${Date.now()}`);
         await writeFile(tempPath, buffer);
 
@@ -392,10 +391,9 @@ export class StepAnalysisJob {
         }
       } else {
         // Image analysis (non-video) — unchanged
-        const buffer = await this.storageProvider.download(
-          primaryMedia.minioBucket,
-          primaryMedia.minioKey,
-        );
+        const buffer = await this.storage
+          .resolve(primaryMedia.storageTarget)
+          .download(primaryMedia.minioBucket, primaryMedia.minioKey);
         const base64 = buffer.toString("base64");
         rawResponse = await this.aiProvider.analyzeImage(
           base64,
@@ -786,6 +784,7 @@ export class StepAnalysisJob {
       mimeType: string;
       minioBucket: string;
       minioKey: string;
+      storageTarget: string | null;
       bodySide: string | null;
     }>;
     primaryMedia: { id: string };
@@ -822,10 +821,9 @@ export class StepAnalysisJob {
     // we can route damages back to the right side.
     const images = await Promise.all(
       sideMedia.map(async (m) => {
-        const buf = await this.storageProvider.download(
-          m.minioBucket,
-          m.minioKey,
-        );
+        const buf = await this.storage
+          .resolve(m.storageTarget)
+          .download(m.minioBucket, m.minioKey);
         return {
           base64: buf.toString("base64"),
           mimeType: m.mimeType,

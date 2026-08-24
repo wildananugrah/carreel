@@ -160,6 +160,7 @@ export interface IInspectionRepository {
     id: string,
     signatureKey: string,
     signerName: string,
+    signatureStorageTarget: string | null,
   ): Promise<void>;
   findOrCreateUnit(
     scope: UserScope,

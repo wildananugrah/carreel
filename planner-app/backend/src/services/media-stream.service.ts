@@ -1,5 +1,5 @@
 import type { PrismaClient } from "../generated/prisma";
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 
 export interface StreamInfo {
   stream: ReadableStream;
@@ -13,7 +13,7 @@ export interface StreamInfo {
 export class MediaStreamService {
   constructor(
     private prisma: PrismaClient,
-    private storageProvider: IStorageProvider,
+    private storage: IStorageRegistry,
   ) {}
 
   async getMediaData(
@@ -25,18 +25,25 @@ export class MediaStreamService {
     if (!media) {
       throw new Error("Media file not found");
     }
-    const buffer = await this.storageProvider.download(
-      media.minioBucket,
-      media.minioKey,
-    );
+    const buffer = await this.storage
+      .resolve(media.storageTarget)
+      .download(media.minioBucket, media.minioKey);
     return { buffer, mimeType: media.mimeType };
   }
 
+  /**
+   * Read by bare object key. A key carries no storage target, so this reads the
+   * DEFAULT target unless the caller names one. Prefer a row-aware read for
+   * anything that has a DB row recording its target.
+   */
   async getMediaByKey(
     bucket: string,
     key: string,
+    targetId?: string,
   ): Promise<{ buffer: Buffer; mimeType: string }> {
-    const buffer = await this.storageProvider.download(bucket, key);
+    const buffer = await this.storage
+      .resolve(targetId ?? null)
+      .download(bucket, key);
     return { buffer, mimeType: "image/png" };
   }
 
@@ -51,10 +58,9 @@ export class MediaStreamService {
       throw new Error("Media file not found");
     }
 
-    const stat = await this.storageProvider.statObject(
-      media.minioBucket,
-      media.minioKey,
-    );
+    const stat = await this.storage
+      .resolve(media.storageTarget)
+      .statObject(media.minioBucket, media.minioKey);
     const total = stat.size;
 
     let start = 0;
@@ -69,12 +75,9 @@ export class MediaStreamService {
     }
 
     const length = end - start + 1;
-    const stream = await this.storageProvider.getObjectStream(
-      media.minioBucket,
-      media.minioKey,
-      start,
-      length,
-    );
+    const stream = await this.storage
+      .resolve(media.storageTarget)
+      .getObjectStream(media.minioBucket, media.minioKey, start, length);
 
     return {
       stream,

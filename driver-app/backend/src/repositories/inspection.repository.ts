@@ -605,6 +605,7 @@ export class InspectionRepository implements IInspectionRepository {
     id: string,
     signatureKey: string,
     signerName: string,
+    signatureStorageTarget: string | null,
   ): Promise<void> {
     const existing = await this.prisma.inspection.findUnique({
       where: { id },
@@ -621,7 +622,12 @@ export class InspectionRepository implements IInspectionRepository {
     }
     await this.prisma.inspection.update({
       where: { id },
-      data: { signatureKey, signerName, signedAt: new Date() },
+      data: {
+        signatureKey,
+        signerName,
+        signatureStorageTarget,
+        signedAt: new Date(),
+      },
     });
   }
 

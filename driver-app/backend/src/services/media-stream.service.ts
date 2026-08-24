@@ -1,4 +1,4 @@
-import type { IStorageProvider } from "../interfaces/providers/storage.provider.interface";
+import type { IStorageRegistry } from "../interfaces/providers/storage-registry.interface";
 import type { IMediaFileRepository } from "../interfaces/repositories/media-file.repository.interface";
 import type {
   IMediaStreamService,
@@ -10,13 +10,15 @@ import { notFound } from "../utils/http-error";
 function isStorageNotFound(err: unknown): boolean {
   return (
     err instanceof Error &&
-    (err.name === "NoSuchKey" || err.name === "NotFound" || err.name === "NoSuchBucket")
+    (err.name === "NoSuchKey" ||
+      err.name === "NotFound" ||
+      err.name === "NoSuchBucket")
   );
 }
 
 export class MediaStreamService implements IMediaStreamService {
   constructor(
-    private storageProvider: IStorageProvider,
+    private storage: IStorageRegistry,
     private mediaFileRepository: IMediaFileRepository,
   ) {}
 
@@ -32,12 +34,12 @@ export class MediaStreamService implements IMediaStreamService {
 
     let stat: { size: number; mimeType: string };
     try {
-      stat = await this.storageProvider.statObject(
-        media.minioBucket,
-        media.minioKey,
-      );
+      stat = await this.storage
+        .resolve(media.storageTarget)
+        .statObject(media.minioBucket, media.minioKey);
     } catch (err) {
-      if (isStorageNotFound(err)) throw notFound("Media file not found in storage");
+      if (isStorageNotFound(err))
+        throw notFound("Media file not found in storage");
       throw err;
     }
     const total = stat.size;
@@ -56,14 +58,12 @@ export class MediaStreamService implements IMediaStreamService {
     const length = end - start + 1;
     let stream: ReadableStream;
     try {
-      stream = await this.storageProvider.getObjectStream(
-        media.minioBucket,
-        media.minioKey,
-        start,
-        length,
-      );
+      stream = await this.storage
+        .resolve(media.storageTarget)
+        .getObjectStream(media.minioBucket, media.minioKey, start, length);
     } catch (err) {
-      if (isStorageNotFound(err)) throw notFound("Media file not found in storage");
+      if (isStorageNotFound(err))
+        throw notFound("Media file not found in storage");
       throw err;
     }
 

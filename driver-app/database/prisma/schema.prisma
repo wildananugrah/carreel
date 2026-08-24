@@ -113,22 +113,23 @@ enum InspectionStatus {
 }
 
 model Inspection {
-  id                 String           @id @default(uuid())
-  driverId           String
-  unitId             String?
-  tripType           TripType
-  status             InspectionStatus @default(DRAFT)
-  linkedInspectionId String?          @unique
-  startedAt          DateTime         @default(now())
-  completedAt        DateTime?
-  latitude           Float?
-  longitude          Float?
-  signatureKey       String?
-  signerName         String?
-  signedAt           DateTime?
-  driverComment      String?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                     String           @id @default(uuid())
+  driverId               String
+  unitId                 String?
+  tripType               TripType
+  status                 InspectionStatus @default(DRAFT)
+  linkedInspectionId     String?          @unique
+  startedAt              DateTime         @default(now())
+  completedAt            DateTime?
+  latitude               Float?
+  longitude              Float?
+  signatureKey           String?
+  signatureStorageTarget String?
+  signerName             String?
+  signedAt               DateTime?
+  driverComment          String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
   driver           User               @relation("DriverInspections", fields: [driverId], references: [id])
   unit             Unit?              @relation(fields: [unitId], references: [id])
@@ -225,6 +226,7 @@ model MediaFile {
   fileSize        Int
   minioKey        String
   minioBucket     String
+  storageTarget   String?
   mediaType       MediaType
   bodySide        BodySide?
   latitude        Float?
@@ -240,6 +242,7 @@ model MediaFile {
   projectId String
 
   @@index([projectId])
+  @@index([storageTarget])
   @@map("media_files")
 }
 
@@ -504,6 +507,7 @@ model UploadSession {
   minioUploadId   String
   minioKey        String
   minioBucket     String
+  storageTarget   String?
   fileName        String
   mimeType        String
   fileSize        Int

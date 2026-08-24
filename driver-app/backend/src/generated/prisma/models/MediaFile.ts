@@ -48,6 +48,7 @@ export type MediaFileMinAggregateOutputType = {
   fileSize: number | null
   minioKey: string | null
   minioBucket: string | null
+  storageTarget: string | null
   mediaType: $Enums.MediaType | null
   bodySide: $Enums.BodySide | null
   latitude: number | null
@@ -66,6 +67,7 @@ export type MediaFileMaxAggregateOutputType = {
   fileSize: number | null
   minioKey: string | null
   minioBucket: string | null
+  storageTarget: string | null
   mediaType: $Enums.MediaType | null
   bodySide: $Enums.BodySide | null
   latitude: number | null
@@ -84,6 +86,7 @@ export type MediaFileCountAggregateOutputType = {
   fileSize: number
   minioKey: number
   minioBucket: number
+  storageTarget: number
   mediaType: number
   bodySide: number
   latitude: number
@@ -118,6 +121,7 @@ export type MediaFileMinAggregateInputType = {
   fileSize?: true
   minioKey?: true
   minioBucket?: true
+  storageTarget?: true
   mediaType?: true
   bodySide?: true
   latitude?: true
@@ -136,6 +140,7 @@ export type MediaFileMaxAggregateInputType = {
   fileSize?: true
   minioKey?: true
   minioBucket?: true
+  storageTarget?: true
   mediaType?: true
   bodySide?: true
   latitude?: true
@@ -154,6 +159,7 @@ export type MediaFileCountAggregateInputType = {
   fileSize?: true
   minioKey?: true
   minioBucket?: true
+  storageTarget?: true
   mediaType?: true
   bodySide?: true
   latitude?: true
@@ -259,6 +265,7 @@ export type MediaFileGroupByOutputType = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget: string | null
   mediaType: $Enums.MediaType
   bodySide: $Enums.BodySide | null
   latitude: number | null
@@ -300,6 +307,7 @@ export type MediaFileWhereInput = {
   fileSize?: Prisma.IntFilter<"MediaFile"> | number
   minioKey?: Prisma.StringFilter<"MediaFile"> | string
   minioBucket?: Prisma.StringFilter<"MediaFile"> | string
+  storageTarget?: Prisma.StringNullableFilter<"MediaFile"> | string | null
   mediaType?: Prisma.EnumMediaTypeFilter<"MediaFile"> | $Enums.MediaType
   bodySide?: Prisma.EnumBodySideNullableFilter<"MediaFile"> | $Enums.BodySide | null
   latitude?: Prisma.FloatNullableFilter<"MediaFile"> | number | null
@@ -321,6 +329,7 @@ export type MediaFileOrderByWithRelationInput = {
   fileSize?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrderInput | Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   bodySide?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -345,6 +354,7 @@ export type MediaFileWhereUniqueInput = Prisma.AtLeast<{
   fileSize?: Prisma.IntFilter<"MediaFile"> | number
   minioKey?: Prisma.StringFilter<"MediaFile"> | string
   minioBucket?: Prisma.StringFilter<"MediaFile"> | string
+  storageTarget?: Prisma.StringNullableFilter<"MediaFile"> | string | null
   mediaType?: Prisma.EnumMediaTypeFilter<"MediaFile"> | $Enums.MediaType
   bodySide?: Prisma.EnumBodySideNullableFilter<"MediaFile"> | $Enums.BodySide | null
   latitude?: Prisma.FloatNullableFilter<"MediaFile"> | number | null
@@ -366,6 +376,7 @@ export type MediaFileOrderByWithAggregationInput = {
   fileSize?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrderInput | Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   bodySide?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -392,6 +403,7 @@ export type MediaFileScalarWhereWithAggregatesInput = {
   fileSize?: Prisma.IntWithAggregatesFilter<"MediaFile"> | number
   minioKey?: Prisma.StringWithAggregatesFilter<"MediaFile"> | string
   minioBucket?: Prisma.StringWithAggregatesFilter<"MediaFile"> | string
+  storageTarget?: Prisma.StringNullableWithAggregatesFilter<"MediaFile"> | string | null
   mediaType?: Prisma.EnumMediaTypeWithAggregatesFilter<"MediaFile"> | $Enums.MediaType
   bodySide?: Prisma.EnumBodySideNullableWithAggregatesFilter<"MediaFile"> | $Enums.BodySide | null
   latitude?: Prisma.FloatNullableWithAggregatesFilter<"MediaFile"> | number | null
@@ -409,6 +421,7 @@ export type MediaFileCreateInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -430,6 +443,7 @@ export type MediaFileUncheckedCreateInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -449,6 +463,7 @@ export type MediaFileUpdateInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -470,6 +485,7 @@ export type MediaFileUncheckedUpdateInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -490,6 +506,7 @@ export type MediaFileCreateManyInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -507,6 +524,7 @@ export type MediaFileUpdateManyMutationInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -525,6 +543,7 @@ export type MediaFileUncheckedUpdateManyInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -553,6 +572,7 @@ export type MediaFileCountOrderByAggregateInput = {
   fileSize?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   bodySide?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -578,6 +598,7 @@ export type MediaFileMaxOrderByAggregateInput = {
   fileSize?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   bodySide?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -596,6 +617,7 @@ export type MediaFileMinOrderByAggregateInput = {
   fileSize?: Prisma.SortOrder
   minioKey?: Prisma.SortOrder
   minioBucket?: Prisma.SortOrder
+  storageTarget?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   bodySide?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -710,6 +732,7 @@ export type MediaFileCreateWithoutStepInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -729,6 +752,7 @@ export type MediaFileUncheckedCreateWithoutStepInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -778,6 +802,7 @@ export type MediaFileScalarWhereInput = {
   fileSize?: Prisma.IntFilter<"MediaFile"> | number
   minioKey?: Prisma.StringFilter<"MediaFile"> | string
   minioBucket?: Prisma.StringFilter<"MediaFile"> | string
+  storageTarget?: Prisma.StringNullableFilter<"MediaFile"> | string | null
   mediaType?: Prisma.EnumMediaTypeFilter<"MediaFile"> | $Enums.MediaType
   bodySide?: Prisma.EnumBodySideNullableFilter<"MediaFile"> | $Enums.BodySide | null
   latitude?: Prisma.FloatNullableFilter<"MediaFile"> | number | null
@@ -795,6 +820,7 @@ export type MediaFileCreateWithoutAiAnalysesInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -815,6 +841,7 @@ export type MediaFileUncheckedCreateWithoutAiAnalysesInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -849,6 +876,7 @@ export type MediaFileUpdateWithoutAiAnalysesInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -869,6 +897,7 @@ export type MediaFileUncheckedUpdateWithoutAiAnalysesInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -887,6 +916,7 @@ export type MediaFileCreateWithoutDamageMarkersInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -907,6 +937,7 @@ export type MediaFileUncheckedCreateWithoutDamageMarkersInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -941,6 +972,7 @@ export type MediaFileUpdateWithoutDamageMarkersInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -961,6 +993,7 @@ export type MediaFileUncheckedUpdateWithoutDamageMarkersInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -979,6 +1012,7 @@ export type MediaFileCreateManyStepInput = {
   fileSize: number
   minioKey: string
   minioBucket: string
+  storageTarget?: string | null
   mediaType: $Enums.MediaType
   bodySide?: $Enums.BodySide | null
   latitude?: number | null
@@ -996,6 +1030,7 @@ export type MediaFileUpdateWithoutStepInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1015,6 +1050,7 @@ export type MediaFileUncheckedUpdateWithoutStepInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1034,6 +1070,7 @@ export type MediaFileUncheckedUpdateManyWithoutStepInput = {
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
   minioKey?: Prisma.StringFieldUpdateOperationsInput | string
   minioBucket?: Prisma.StringFieldUpdateOperationsInput | string
+  storageTarget?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   bodySide?: Prisma.NullableEnumBodySideFieldUpdateOperationsInput | $Enums.BodySide | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1092,6 +1129,7 @@ export type MediaFileSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   fileSize?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   mediaType?: boolean
   bodySide?: boolean
   latitude?: boolean
@@ -1114,6 +1152,7 @@ export type MediaFileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   fileSize?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   mediaType?: boolean
   bodySide?: boolean
   latitude?: boolean
@@ -1133,6 +1172,7 @@ export type MediaFileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   fileSize?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   mediaType?: boolean
   bodySide?: boolean
   latitude?: boolean
@@ -1152,6 +1192,7 @@ export type MediaFileSelectScalar = {
   fileSize?: boolean
   minioKey?: boolean
   minioBucket?: boolean
+  storageTarget?: boolean
   mediaType?: boolean
   bodySide?: boolean
   latitude?: boolean
@@ -1162,7 +1203,7 @@ export type MediaFileSelectScalar = {
   projectId?: boolean
 }
 
-export type MediaFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "fileName" | "mimeType" | "fileSize" | "minioKey" | "minioBucket" | "mediaType" | "bodySide" | "latitude" | "longitude" | "capturedAt" | "durationSeconds" | "createdAt" | "projectId", ExtArgs["result"]["mediaFile"]>
+export type MediaFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stepId" | "fileName" | "mimeType" | "fileSize" | "minioKey" | "minioBucket" | "storageTarget" | "mediaType" | "bodySide" | "latitude" | "longitude" | "capturedAt" | "durationSeconds" | "createdAt" | "projectId", ExtArgs["result"]["mediaFile"]>
 export type MediaFileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   step?: boolean | Prisma.InspectionStepDefaultArgs<ExtArgs>
   damageMarkers?: boolean | Prisma.MediaFile$damageMarkersArgs<ExtArgs>
@@ -1191,6 +1232,7 @@ export type $MediaFilePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     fileSize: number
     minioKey: string
     minioBucket: string
+    storageTarget: string | null
     mediaType: $Enums.MediaType
     bodySide: $Enums.BodySide | null
     latitude: number | null
@@ -1632,6 +1674,7 @@ export interface MediaFileFieldRefs {
   readonly fileSize: Prisma.FieldRef<"MediaFile", 'Int'>
   readonly minioKey: Prisma.FieldRef<"MediaFile", 'String'>
   readonly minioBucket: Prisma.FieldRef<"MediaFile", 'String'>
+  readonly storageTarget: Prisma.FieldRef<"MediaFile", 'String'>
   readonly mediaType: Prisma.FieldRef<"MediaFile", 'MediaType'>
   readonly bodySide: Prisma.FieldRef<"MediaFile", 'BodySide'>
   readonly latitude: Prisma.FieldRef<"MediaFile", 'Float'>

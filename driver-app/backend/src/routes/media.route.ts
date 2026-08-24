@@ -9,13 +9,34 @@ export function createMediaRoutes(
 ) {
   const app = new Hono();
 
-  // GET /api/media/key/* — proxy files stored by MinIO key (e.g. signatures)
+  // GET /api/media/signature/:inspectionId — proxy an inspection signature.
+  // Row-aware: the signature's storage target comes from the inspection, so it
+  // keeps resolving after the active target moves.
+  // No auth required: used by <img> tags (same pattern as the routes below).
+  app.get("/signature/:inspectionId", async (c) => {
+    const { buffer, mimeType } = await uploadService.getSignatureData(
+      SYSTEM_SCOPE,
+      c.req.param("inspectionId"),
+    );
+    return new Response(buffer as unknown as BodyInit, {
+      headers: {
+        "Content-Type": mimeType,
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  });
+
+  // GET /api/media/key/* — proxy files stored by bare object key.
+  // A bare key carries no storage target, so this reads the DEFAULT target
+  // unless the caller names one with ?t=<targetId>. Prefer a row-aware route
+  // (like /signature/:inspectionId above) for anything with a DB row.
   // No auth required: used by <img> tags.
   app.get("/key/*", async (c) => {
     const key = c.req.path.replace(/^\/api\/media\/key\//, "");
     const { buffer, mimeType } = await uploadService.getMediaByKey(
       "carreel-images",
       decodeURIComponent(key),
+      c.req.query("t"),
     );
     return new Response(buffer as unknown as BodyInit, {
       headers: {

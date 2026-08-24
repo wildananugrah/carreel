@@ -10,10 +10,12 @@ export interface IUploadService {
     file: Buffer,
     meta: UploadMediaDTO,
   ): Promise<MediaFileResponse>;
+  /** `targetId` names the storage target for a bare key; omit for the default target. */
   getPresignedUrl(
     scope: UserScope,
     key: string,
     driverId: string,
+    targetId?: string,
   ): Promise<string>;
   getMediaUrl(scope: UserScope, mediaId: string): Promise<string>;
   getMediaData(
@@ -23,6 +25,11 @@ export interface IUploadService {
   getMediaByKey(
     bucket: string,
     key: string,
+    targetId?: string,
+  ): Promise<{ buffer: Buffer; mimeType: string }>;
+  getSignatureData(
+    scope: UserScope,
+    inspectionId: string,
   ): Promise<{ buffer: Buffer; mimeType: string }>;
   deleteMedia(
     scope: UserScope,
