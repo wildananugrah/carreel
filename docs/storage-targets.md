@@ -33,14 +33,18 @@ Two env vars replace the single-provider `S3_*` block (which still works — see
 
 ```bash
 STORAGE_TARGETS='[
-  {"id":"s3-2026","kind":"s3","region":"ap-southeast-1","bucket":"bucket-rsmcb1",
+  {"id":"s3-primary","kind":"s3","region":"ap-southeast-1","bucket":"bucket-rsmcb1",
    "accessKeyId":"env:S3_ACCESS_KEY_ID","secretAccessKey":"env:S3_SECRET_ACCESS_KEY"},
   {"id":"s3-2027","kind":"s3","region":"ap-southeast-1","bucket":"carreel-2027",
    "accessKeyId":"env:S3_2027_ACCESS_KEY_ID","secretAccessKey":"env:S3_2027_SECRET_ACCESS_KEY"}
 ]'
-STORAGE_ACTIVE_TARGET=s3-2027    # new uploads land here
-STORAGE_DEFAULT_TARGET=s3-2026   # where rows with a NULL storageTarget live
+STORAGE_ACTIVE_TARGET=s3-2027      # new uploads land here
+STORAGE_DEFAULT_TARGET=s3-primary  # where rows with a NULL storageTarget live
 ```
+
+The ids above are not decorative. `s3-primary` is the id the legacy fallback
+uses, so it is what live rows already record — see the warning in "Adding a
+target" before you write this block for the first time.
 
 Any string written as `env:VAR_NAME` is read from `process.env`, so credentials
 stay in ordinary env vars instead of inside the JSON blob.
@@ -103,8 +107,9 @@ git pull
 ./deploy-all.sh
 ```
 
-`make down; make up` is a full `pm2 delete` + `pm2 start`, so the new env is read
-by all instances (driver-backend runs 3).
+`make down; make up` is a full `pm2 delete` + `pm2 start pm2.config.cjs`, which
+is what makes a changed `.env` take effect — see "Restart, and why `pm2 restart`
+is not enough" below.
 
 ### Ordering notes
 
@@ -152,20 +157,118 @@ bucket. Only drop the columns if you are abandoning the feature entirely.
 
 ## Adding a target (the scale-up runbook)
 
-1. Create the new bucket and its credentials.
-2. Add the new target to `STORAGE_TARGETS` in **both** backends —
-   `driver-app/backend/.env` and `planner-app/backend/.env`. **Keep the old
-   target in the list**: it still holds all the old media, and the planner-app
-   must be able to read it.
-3. Point `STORAGE_ACTIVE_TARGET` at the new id (driver-app is the only writer,
-   but keep the two `.env` files consistent to avoid confusion).
-4. Leave `STORAGE_DEFAULT_TARGET` alone. It answers "where do the NULL rows
-   live?", and that answer never changes.
-5. Restart both backends: `pm2 restart driver-backend planner-backend`.
-6. Verify: `curl -s localhost:3001/health | jq .checks` shows every target and
-   which one is active.
+Adding storage is an `.env` edit plus a restart. No database change, no data
+copying, no downtime for existing media.
 
-No migration, no backfill, no downtime for existing media.
+### ⚠️ Read this first: defining `STORAGE_TARGETS` switches off the legacy fallback
+
+While `STORAGE_TARGETS` is unset, both backends synthesize a single target with
+the id **`s3-primary`**, and every row written since that deploy records exactly
+that string. The moment you define `STORAGE_TARGETS`, the fallback no longer
+applies — the list becomes the whole truth.
+
+So the list **must contain a target whose id is exactly the id already in your
+data**, pointing at the same bucket. Check what that is before you edit anything:
+
+```sql
+SELECT "storageTarget", count(*) FROM media_files GROUP BY 1;
+```
+
+Every non-NULL id in that result needs an entry. Miss one and reads of that
+media fail with:
+
+```
+Storage target "s3-primary" is referenced by stored data but not configured.
+Configured targets: s3-2027
+```
+
+That is deliberate — failing loudly beats silently reading the wrong bucket and
+reporting "not found" weeks later.
+
+### 1. Create the bucket and its credentials
+
+Outside the app: new bucket, new access key pair.
+
+### 2. Edit `.env` in **both** backends
+
+`driver-app/backend/.env` and `planner-app/backend/.env` get the *same* list.
+The planner only reads, but it reads *everything*, so it needs every target too.
+
+```bash
+# credentials stay as ordinary env vars
+S3_ACCESS_KEY_ID=<existing>
+S3_SECRET_ACCESS_KEY=<existing>
+S3_2027_ACCESS_KEY_ID=<new>
+S3_2027_SECRET_ACCESS_KEY=<new>
+
+STORAGE_TARGETS='[
+  {"id":"s3-primary","kind":"s3","region":"ap-southeast-1","bucket":"bucket-rsmcb1",
+   "accessKeyId":"env:S3_ACCESS_KEY_ID","secretAccessKey":"env:S3_SECRET_ACCESS_KEY"},
+  {"id":"s3-2027","kind":"s3","region":"ap-southeast-1","bucket":"carreel-2027",
+   "accessKeyId":"env:S3_2027_ACCESS_KEY_ID","secretAccessKey":"env:S3_2027_SECRET_ACCESS_KEY"}
+]'
+STORAGE_ACTIVE_TARGET=s3-2027      # new uploads land here
+STORAGE_DEFAULT_TARGET=s3-primary  # never change — where the NULL rows live
+```
+
+- **Keep the old target in the list forever.** It still holds all the old media.
+- **Leave `STORAGE_DEFAULT_TARGET` alone.** It answers "where do the NULL rows
+  live?", and that answer never changes.
+- **Non-AWS S3-compatible** (Cloudflare R2, Lightsail, a self-hosted MinIO
+  behind TLS): add `"endpoint":"https://…"` and usually
+  `"forcePathStyle":true`. A local MinIO can instead use `"kind":"minio"` with
+  `endPoint` / `port` / `accessKey` / `secretKey` / `useSSL`.
+
+### 3. Restart, and why `pm2 restart` is not enough
+
+```bash
+cd /home/wildandev/repo/carreel/driver-app/backend  && make down && make up
+cd /home/wildandev/repo/carreel/planner-app/backend && make down && make up
+```
+
+`driver-app/backend/pm2.config.cjs` loads `.env` through dotenv **at
+config-parse time** and spreads it into pm2's `env` block:
+
+```js
+const { parsed: envVars } = config({ path: ".env" });
+module.exports = { apps: [{ /* … */ env: { NODE_ENV: "development", ...envVars } }] };
+```
+
+`pm2 restart driver-backend` replays pm2's *saved* env snapshot from when the
+process was first started — it never re-parses `pm2.config.cjs`, so the new
+`STORAGE_TARGETS` is silently ignored and uploads keep going to the old bucket
+with no error anywhere. `make down && make up` is `pm2 delete` + `pm2 start
+pm2.config.cjs`, which re-parses the config and re-reads `.env`.
+
+(The planner's `pm2.config.cjs` does not spread `.env`, so it happens to pick
+changes up on a plain restart via Bun's automatic `.env` loading — but use
+`make down && make up` for both so the procedure is one thing, not two.)
+
+### 4. Verify
+
+```bash
+curl -s localhost:3001/health | jq .checks
+# → "storageTargets": { "s3-primary": "connected", "s3-2027": "connected" },
+#   "activeStorageTarget": "s3-2027"
+curl -s localhost:3002/health | jq .checks   # planner-backend
+```
+
+If any target reports `unavailable`, fix it before uploading — a bad *old*
+target means old media will not load.
+
+Then upload one inspection photo and confirm it landed on the new target:
+
+```sql
+SELECT "storageTarget", count(*) FROM media_files GROUP BY 1;
+-- NULL       | 1200   ← pre-feature media
+-- s3-primary |  340   ← written between the rollout and now
+-- s3-2027    |    1   ← the new upload
+```
+
+Boot is fail-fast: a malformed `STORAGE_TARGETS`, an unresolvable `env:`
+reference, a duplicate id, or an active/default id that is not in the list all
+throw before the server accepts traffic. Check `pm2 logs driver-backend` if a
+backend does not come up.
 
 ## Rules
 
@@ -178,6 +281,9 @@ No migration, no backfill, no downtime for existing media.
   ```
 - **Both backends must configure every target the driver-app has ever written
   to.** The planner-app only reads, but it reads *everything*.
+- **`pm2 restart` does not pick up `.env` changes** on the driver backend — its
+  `pm2.config.cjs` bakes `.env` into pm2's env snapshot at start time. Always
+  `make down && make up`.
 - **In-flight chunked uploads are pinned** to the target that was active when
   the session started — a multipart upload cannot be completed on a different
   target. Flipping the active target mid-upload is safe.
