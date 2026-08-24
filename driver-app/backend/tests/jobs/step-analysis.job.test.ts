@@ -931,4 +931,101 @@ describe("StepAnalysisJob", () => {
     expect(newDamageAlert).toBeDefined();
     expect(newDamageAlert!.message).toContain("1 new damage");
   });
+  test("video: recapture suspected but identity matches → step COMPLETED, damage pass runs, SCREEN_RECAPTURE alert raised", async () => {
+    // Video counterpart of the photo-path false positive (docs/lessons.md
+    // 2026-08-21). A high-recall recapture signal must not terminally block a
+    // driver whose vehicle the same response just confirmed as a Match.
+    mockMediaRepo.findByStepId = async () => [
+      createMockMediaFile({
+        mimeType: "video/mp4",
+        minioBucket: "carreel-videos",
+        minioKey: "inspections/video.mp4",
+      }),
+    ];
+
+    let videoCall = 0;
+    mockAI.analyzeVideo = async () => {
+      videoCall += 1;
+      if (videoCall === 1) {
+        return JSON.stringify({
+          analisisVerifikasi:
+            "Kendaraan sesuai target, namun terdapat bilah hitam di tepi video.",
+          statusVerifikasi: "Match",
+          confidence: 0.97,
+          screenRecaptureDetected: true,
+          recaptureConfidence: 0.6,
+          recaptureIndicators: ["S1", "S3"],
+        });
+      }
+      return JSON.stringify({
+        cameraPath: "test",
+        visualAnalysis: "test",
+        overallCondition: "GOOD",
+        confidence: 0.9,
+        damages: [],
+      });
+    };
+
+    stepStatuses.set("step-2", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-1",
+      stepType: "BODY_INSPECTION",
+      driverId: "driver-1",
+    });
+
+    // Verification + damage pass both ran — the driver is not blocked.
+    expect(videoCall).toBe(2);
+    expect(stepStatuses.get("step-1")).toBe("COMPLETED");
+
+    const alert = savedAlerts.find((a) => a.alertType === "SCREEN_RECAPTURE");
+    expect(alert).toBeDefined();
+    expect(alert!.message).toContain("S1");
+
+    expect(
+      savedAlerts.find((a) => a.alertType === "VEHICLE_MISMATCH"),
+    ).toBeUndefined();
+  });
+
+  test("video: mismatch still hard-fails the step and skips the damage pass", async () => {
+    mockMediaRepo.findByStepId = async () => [
+      createMockMediaFile({
+        mimeType: "video/mp4",
+        minioBucket: "carreel-videos",
+        minioKey: "inspections/video.mp4",
+      }),
+    ];
+
+    let videoCall = 0;
+    mockAI.analyzeVideo = async () => {
+      videoCall += 1;
+      return JSON.stringify({
+        analisisVerifikasi: "Merek berbeda",
+        statusVerifikasi: "Mismatch",
+        confidence: 0.95,
+        screenRecaptureDetected: true,
+        recaptureConfidence: 0.9,
+        recaptureIndicators: ["D1"],
+      });
+    };
+
+    stepStatuses.set("step-2", "COMPLETED");
+
+    await job.handle({
+      inspectionId: "insp-1",
+      stepId: "step-1",
+      stepType: "BODY_INSPECTION",
+      driverId: "driver-1",
+    });
+
+    expect(videoCall).toBe(1); // damage pass skipped
+    expect(stepStatuses.get("step-1")).toBe("FAILED");
+    expect(
+      savedAlerts.find((a) => a.alertType === "VEHICLE_MISMATCH"),
+    ).toBeDefined();
+    expect(
+      savedAlerts.find((a) => a.alertType === "SCREEN_RECAPTURE"),
+    ).toBeDefined();
+  });
 });

@@ -691,6 +691,17 @@ export function VideoReview() {
 
   const bodyStepFailed = bodyStep?.status === "FAILED";
   const retryRemaining = 2 - (bodyStep?.analysisRetryCount ?? 0);
+  // A FAILED body step is NOT always a vehicle mismatch. The verification pass
+  // also fails the step when the AI call itself errors out, and it used to fail
+  // it on a screen-recapture suspicion while reporting the vehicle as a Match.
+  // Showing "Kendaraan tidak sesuai" for all of those told drivers to re-shoot
+  // eight perfectly good photos. Read the actual verdict off the stored
+  // analysis and only claim a mismatch when the AI actually said Mismatch.
+  const bodyVerdict = bodyStep?.aiAnalysis?.structuredData as
+    | { statusVerifikasi?: string }
+    | null
+    | undefined;
+  const bodyFailedOnMismatch = bodyVerdict?.statusVerifikasi === "Mismatch";
 
   async function handleSignatureConfirm(data: { image: Blob; signerName: string }) {
     if (!id) return;
@@ -1397,13 +1408,19 @@ export function VideoReview() {
                 {bodyStepFailed ? (
                   <div className="px-4 py-3 border-t border-[#2a2a2a]">
                     <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-                      <p className="text-xs font-bold text-red-400">Kendaraan tidak sesuai</p>
-                      <p className="text-[10px] text-neutral-400 mt-0.5">
-                        {bodyMode === "PHOTOS_8SIDE"
-                          ? "Foto body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan ambil ulang foto."
-                          : "Video body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan rekam ulang video."}
+                      <p className="text-xs font-bold text-red-400">
+                        {bodyFailedOnMismatch ? "Kendaraan tidak sesuai" : "Analisa AI gagal"}
                       </p>
-                      {retryRemaining > 0 && (
+                      <p className="text-[10px] text-neutral-400 mt-0.5">
+                        {bodyFailedOnMismatch
+                          ? bodyMode === "PHOTOS_8SIDE"
+                            ? "Foto body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan ambil ulang foto."
+                            : "Video body tidak sesuai dengan kendaraan yang diinspeksi. Silakan hapus dan rekam ulang video."
+                          : bodyMode === "PHOTOS_8SIDE"
+                            ? "Analisa AI belum berhasil diselesaikan. Foto Anda kemungkinan sudah benar — coba validasi ulang dulu sebelum mengambil ulang foto."
+                            : "Analisa AI belum berhasil diselesaikan. Video Anda kemungkinan sudah benar — coba validasi ulang dulu sebelum merekam ulang."}
+                      </p>
+                      {retryRemaining > 0 && bodyFailedOnMismatch && (
                         <p className="text-[10px] text-neutral-500 mt-1">
                           Yakin kendaraan sudah benar? Coba validasi ulang tanpa mengambil foto
                           baru.
