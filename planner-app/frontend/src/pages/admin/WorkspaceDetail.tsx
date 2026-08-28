@@ -8,9 +8,26 @@ interface Workspace {
   displayName: string;
   bodyInspectionMode: "VIDEO" | "PHOTOS_8SIDE";
   additionalBodyPhotoCount: number;
+  requiredBodySides: string[];
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * The 8 body sides in walk-around order, with the same Indonesian labels the
+ * driver-app capture grid uses. A workspace picks which of these are mandatory;
+ * the rest still get a capture slot in the driver app, marked "(Opsional)".
+ */
+const BODY_SIDES: { key: string; label: string }[] = [
+  { key: "FRONT", label: "Depan" },
+  { key: "FRONT_RIGHT", label: "Depan-Kanan" },
+  { key: "RIGHT", label: "Kanan" },
+  { key: "BACK_RIGHT", label: "Belakang-Kanan" },
+  { key: "BACK", label: "Belakang" },
+  { key: "BACK_LEFT", label: "Belakang-Kiri" },
+  { key: "LEFT", label: "Kiri" },
+  { key: "FRONT_LEFT", label: "Depan-Kiri" },
+];
 
 interface ProjectListItem {
   id: string;
@@ -44,6 +61,8 @@ export function WorkspaceDetail() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [savingMode, setSavingMode] = useState(false);
   const [savingCount, setSavingCount] = useState(false);
+  // Which side is mid-save, so only that checkbox shows a pending state.
+  const [savingSides, setSavingSides] = useState<string | null>(null);
   // Local edit buffer for the "Foto Tambahan" count — saved explicitly via the
   // Update button (not on blur), with a "Tersimpan" confirmation.
   const [countInput, setCountInput] = useState(0);
@@ -70,6 +89,30 @@ export function WorkspaceDetail() {
       setError(err instanceof Error ? err.message : "Failed to update count");
     } finally {
       setSavingCount(false);
+    }
+  }
+
+  /**
+   * Toggles one side in or out of the mandatory set. Unchecking the last
+   * remaining side is refused here as well as in the backend — a workspace with
+   * zero mandatory sides would make the body-inspection step meaningless.
+   */
+  async function handleSideToggle(side: string) {
+    if (!id || !workspace) return;
+    const current = workspace.requiredBodySides;
+    const next = current.includes(side) ? current.filter((s) => s !== side) : [...current, side];
+    if (next.length === 0) return;
+    setSavingSides(side);
+    setError(null);
+    try {
+      const updated = await api.patch<Workspace>(`/api/admin/workspaces/${id}`, {
+        requiredBodySides: next,
+      });
+      setWorkspace(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update sides");
+    } finally {
+      setSavingSides(null);
     }
   }
 
@@ -294,6 +337,44 @@ export function WorkspaceDetail() {
               </button>
             ))}
           </div>
+          {workspace.bodyInspectionMode === "PHOTOS_8SIDE" && (
+            <div className="mt-4">
+              <p className="text-xs text-[#888] mb-1">
+                Sisi Wajib ({workspace.requiredBodySides.length}/8)
+              </p>
+              <p className="text-xs text-[#666] mb-2">
+                Sisi yang tidak dicentang tetap muncul di aplikasi driver, tapi ditandai
+                "(Opsional)" dan tidak menghalangi submit.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {BODY_SIDES.map((side) => {
+                  const checked = workspace.requiredBodySides.includes(side.key);
+                  // Refuse to uncheck the last remaining mandatory side.
+                  const isLastChecked = checked && workspace.requiredBodySides.length === 1;
+                  return (
+                    <label
+                      key={side.key}
+                      className={
+                        isLastChecked
+                          ? "flex items-center gap-2 px-3 py-2 rounded-lg bg-[#111] border border-[#2a2a2a] text-sm opacity-60 cursor-not-allowed"
+                          : "flex items-center gap-2 px-3 py-2 rounded-lg bg-[#111] border border-[#2a2a2a] text-sm cursor-pointer hover:bg-[#1f1f1f]"
+                      }
+                      title={isLastChecked ? "Minimal satu sisi harus wajib" : undefined}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={savingSides !== null || isLastChecked}
+                        onChange={() => handleSideToggle(side.key)}
+                        className="accent-[#F5C518] w-4 h-4 disabled:opacity-40"
+                      />
+                      <span className={checked ? "text-white" : "text-[#888]"}>{side.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="mt-4">
             <p className="text-xs text-[#888] mb-1">Foto Tambahan (jumlah, 0 = nonaktif)</p>
             <div className="flex items-center gap-2">

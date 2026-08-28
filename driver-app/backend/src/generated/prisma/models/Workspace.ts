@@ -60,6 +60,7 @@ export type WorkspaceCountAggregateOutputType = {
   displayName: number
   bodyInspectionMode: number
   additionalBodyPhotoCount: number
+  requiredBodySides: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -100,6 +101,7 @@ export type WorkspaceCountAggregateInputType = {
   displayName?: true
   bodyInspectionMode?: true
   additionalBodyPhotoCount?: true
+  requiredBodySides?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -197,6 +199,7 @@ export type WorkspaceGroupByOutputType = {
   displayName: string
   bodyInspectionMode: $Enums.BodyInspectionMode
   additionalBodyPhotoCount: number
+  requiredBodySides: $Enums.BodySide[]
   createdAt: Date
   updatedAt: Date
   _count: WorkspaceCountAggregateOutputType | null
@@ -230,6 +233,7 @@ export type WorkspaceWhereInput = {
   displayName?: Prisma.StringFilter<"Workspace"> | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFilter<"Workspace"> | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFilter<"Workspace"> | number
+  requiredBodySides?: Prisma.EnumBodySideNullableListFilter<"Workspace">
   createdAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   projects?: Prisma.ProjectListRelationFilter
@@ -241,6 +245,7 @@ export type WorkspaceOrderByWithRelationInput = {
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
   additionalBodyPhotoCount?: Prisma.SortOrder
+  requiredBodySides?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projects?: Prisma.ProjectOrderByRelationAggregateInput
@@ -255,6 +260,7 @@ export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   displayName?: Prisma.StringFilter<"Workspace"> | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFilter<"Workspace"> | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFilter<"Workspace"> | number
+  requiredBodySides?: Prisma.EnumBodySideNullableListFilter<"Workspace">
   createdAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   projects?: Prisma.ProjectListRelationFilter
@@ -266,6 +272,7 @@ export type WorkspaceOrderByWithAggregationInput = {
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
   additionalBodyPhotoCount?: Prisma.SortOrder
+  requiredBodySides?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.WorkspaceCountOrderByAggregateInput
@@ -284,6 +291,7 @@ export type WorkspaceScalarWhereWithAggregatesInput = {
   displayName?: Prisma.StringWithAggregatesFilter<"Workspace"> | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeWithAggregatesFilter<"Workspace"> | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntWithAggregatesFilter<"Workspace"> | number
+  requiredBodySides?: Prisma.EnumBodySideNullableListFilter<"Workspace">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Workspace"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Workspace"> | Date | string
 }
@@ -294,6 +302,7 @@ export type WorkspaceCreateInput = {
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: number
+  requiredBodySides?: Prisma.WorkspaceCreaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
@@ -305,6 +314,7 @@ export type WorkspaceUncheckedCreateInput = {
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: number
+  requiredBodySides?: Prisma.WorkspaceCreaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
@@ -316,6 +326,7 @@ export type WorkspaceUpdateInput = {
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredBodySides?: Prisma.WorkspaceUpdaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
@@ -327,6 +338,7 @@ export type WorkspaceUncheckedUpdateInput = {
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredBodySides?: Prisma.WorkspaceUpdaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
@@ -338,6 +350,7 @@ export type WorkspaceCreateManyInput = {
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: number
+  requiredBodySides?: Prisma.WorkspaceCreaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -348,6 +361,7 @@ export type WorkspaceUpdateManyMutationInput = {
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredBodySides?: Prisma.WorkspaceUpdaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -358,8 +372,17 @@ export type WorkspaceUncheckedUpdateManyInput = {
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredBodySides?: Prisma.WorkspaceUpdaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type EnumBodySideNullableListFilter<$PrismaModel = never> = {
+  equals?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel> | null
+  has?: $Enums.BodySide | Prisma.EnumBodySideFieldRefInput<$PrismaModel> | null
+  hasEvery?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel>
+  hasSome?: $Enums.BodySide[] | Prisma.ListEnumBodySideFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
 }
 
 export type WorkspaceCountOrderByAggregateInput = {
@@ -368,6 +391,7 @@ export type WorkspaceCountOrderByAggregateInput = {
   displayName?: Prisma.SortOrder
   bodyInspectionMode?: Prisma.SortOrder
   additionalBodyPhotoCount?: Prisma.SortOrder
+  requiredBodySides?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -405,8 +429,17 @@ export type WorkspaceScalarRelationFilter = {
   isNot?: Prisma.WorkspaceWhereInput
 }
 
+export type WorkspaceCreaterequiredBodySidesInput = {
+  set: $Enums.BodySide[]
+}
+
 export type EnumBodyInspectionModeFieldUpdateOperationsInput = {
   set?: $Enums.BodyInspectionMode
+}
+
+export type WorkspaceUpdaterequiredBodySidesInput = {
+  set?: $Enums.BodySide[]
+  push?: $Enums.BodySide | $Enums.BodySide[]
 }
 
 export type WorkspaceCreateNestedOneWithoutProjectsInput = {
@@ -429,6 +462,7 @@ export type WorkspaceCreateWithoutProjectsInput = {
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: number
+  requiredBodySides?: Prisma.WorkspaceCreaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -439,6 +473,7 @@ export type WorkspaceUncheckedCreateWithoutProjectsInput = {
   displayName: string
   bodyInspectionMode?: $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: number
+  requiredBodySides?: Prisma.WorkspaceCreaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -465,6 +500,7 @@ export type WorkspaceUpdateWithoutProjectsInput = {
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredBodySides?: Prisma.WorkspaceUpdaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -475,6 +511,7 @@ export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   bodyInspectionMode?: Prisma.EnumBodyInspectionModeFieldUpdateOperationsInput | $Enums.BodyInspectionMode
   additionalBodyPhotoCount?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredBodySides?: Prisma.WorkspaceUpdaterequiredBodySidesInput | $Enums.BodySide[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -516,6 +553,7 @@ export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   displayName?: boolean
   bodyInspectionMode?: boolean
   additionalBodyPhotoCount?: boolean
+  requiredBodySides?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
@@ -528,6 +566,7 @@ export type WorkspaceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   displayName?: boolean
   bodyInspectionMode?: boolean
   additionalBodyPhotoCount?: boolean
+  requiredBodySides?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["workspace"]>
@@ -538,6 +577,7 @@ export type WorkspaceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   displayName?: boolean
   bodyInspectionMode?: boolean
   additionalBodyPhotoCount?: boolean
+  requiredBodySides?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["workspace"]>
@@ -548,11 +588,12 @@ export type WorkspaceSelectScalar = {
   displayName?: boolean
   bodyInspectionMode?: boolean
   additionalBodyPhotoCount?: boolean
+  requiredBodySides?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WorkspaceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "displayName" | "bodyInspectionMode" | "additionalBodyPhotoCount" | "createdAt" | "updatedAt", ExtArgs["result"]["workspace"]>
+export type WorkspaceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "displayName" | "bodyInspectionMode" | "additionalBodyPhotoCount" | "requiredBodySides" | "createdAt" | "updatedAt", ExtArgs["result"]["workspace"]>
 export type WorkspaceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
@@ -571,6 +612,13 @@ export type $WorkspacePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     displayName: string
     bodyInspectionMode: $Enums.BodyInspectionMode
     additionalBodyPhotoCount: number
+    /**
+     * Which of the 8 body sides a driver MUST capture in PHOTOS_8SIDE mode.
+     * Sides not listed here still render a capture slot, but are optional and
+     * do not block submit. Defaults to all 8 so existing workspaces keep their
+     * current behavior. Ignored entirely when bodyInspectionMode is VIDEO.
+     */
+    requiredBodySides: $Enums.BodySide[]
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["workspace"]>
@@ -1002,6 +1050,7 @@ export interface WorkspaceFieldRefs {
   readonly displayName: Prisma.FieldRef<"Workspace", 'String'>
   readonly bodyInspectionMode: Prisma.FieldRef<"Workspace", 'BodyInspectionMode'>
   readonly additionalBodyPhotoCount: Prisma.FieldRef<"Workspace", 'Int'>
+  readonly requiredBodySides: Prisma.FieldRef<"Workspace", 'BodySide[]'>
   readonly createdAt: Prisma.FieldRef<"Workspace", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Workspace", 'DateTime'>
 }

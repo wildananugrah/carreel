@@ -22,6 +22,12 @@ const SIDES: { key: string; label: string; guide: string }[] = [
   { key: "FRONT_LEFT", label: "Depan-Kiri", guide: "/guides/depan-kiri.png" },
 ];
 
+/**
+ * Every body side, in capture order. The fallback for a workspace (or an older
+ * API payload) that does not specify which sides are mandatory.
+ */
+export const ALL_BODY_SIDES: string[] = SIDES.map((s) => s.key);
+
 // Cache-buster for the guide images. They keep the same filenames, so bump
 // this whenever their content changes to force browsers/CDN to refetch.
 const GUIDE_VERSION = "2";
@@ -34,8 +40,14 @@ interface Props {
   capturedAtMeta?: { latitude?: number; longitude?: number };
   /** Re-fetch the inspection detail after each upload/delete. */
   onChanged: () => void;
-  /** Fires once all 8 sides are present — triggers AI analysis. */
+  /** Fires once every mandatory side is present — triggers AI analysis. */
   onAllCaptured: () => void;
+  /**
+   * Workspace setting — which sides are mandatory. Sides outside this list
+   * still get a capture slot (drivers may want them) but are labeled
+   * "(Opsional)" and never gate submit. Defaults to all 8.
+   */
+  requiredSides?: string[];
   /** Workspace setting — number of optional "Foto Tambahan" slots (0 = none). */
   additionalCount?: number;
   /** Existing additional photos (bodySide null), in createdAt order. */
@@ -51,6 +63,7 @@ export function EightSidePhotoCapture({
   onAllCaptured,
   additionalCount,
   additionalPhotos,
+  requiredSides,
 }: Props) {
   const { allowCamera, allowFile } = useUploadSources();
   const [busySide, setBusySide] = useState<string | null>(null);
@@ -60,6 +73,12 @@ export function EightSidePhotoCapture({
   const [tab, setTab] = useState<PhotoTab>("wajib");
   // Which side is currently capturing via the full-screen camera overlay.
   const [cameraSide, setCameraSide] = useState<string | null>(null);
+
+  // Only mandatory sides count toward the progress readout and the AI gate.
+  // Every side still renders a slot; the rest are labeled "(Opsional)".
+  const requiredList =
+    requiredSides === undefined ? SIDES : SIDES.filter((s) => requiredSides.includes(s.key));
+  const isRequired = (key: string) => requiredList.some((s) => s.key === key);
 
   async function uploadSide(side: string, file: File) {
     setBusySide(side);
@@ -77,9 +96,12 @@ export function EightSidePhotoCapture({
         formData.append("longitude", String(capturedAtMeta.longitude));
       await api.upload(`/api/inspections/${inspectionId}/steps/${stepId}/media`, formData);
       onChanged();
-      // Count present sides after this upload lands (existing + the new one).
-      const filledAfter = SIDES.filter((s) => s.key === side || capturedSides[s.key]).length;
-      if (filledAfter === SIDES.length) onAllCaptured();
+      // Fire only on the transition from incomplete to complete. Without the
+      // `wasComplete` guard, adding an optional side after the mandatory set is
+      // already done would re-trigger AI analysis.
+      const wasComplete = requiredList.every((s) => capturedSides[s.key]);
+      const nowComplete = requiredList.every((s) => s.key === side || capturedSides[s.key]);
+      if (!wasComplete && nowComplete) onAllCaptured();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload gagal");
     } finally {
@@ -101,18 +123,28 @@ export function EightSidePhotoCapture({
     }
   }
 
-  const doneCount = SIDES.filter((s) => capturedSides[s.key]).length;
+  const doneCount = requiredList.filter((s) => capturedSides[s.key]).length;
+  const totalRequired = requiredList.length;
   const extraCount = additionalCount ?? 0;
   const extras = additionalPhotos ?? [];
 
   return (
     <div>
       {extraCount > 0 ? (
-        <PhotoTabSwitcher tab={tab} onTabChange={setTab} doneCount={doneCount} totalCount={8} />
+        <PhotoTabSwitcher
+          tab={tab}
+          onTabChange={setTab}
+          doneCount={doneCount}
+          totalCount={totalRequired}
+        />
       ) : (
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-semibold text-white">Foto Body &middot; 8 Sisi</p>
-          <span className="text-xs font-bold text-yellow-400">{doneCount}/8</span>
+          <p className="text-sm font-semibold text-white">
+            Foto Body &middot; {totalRequired} Sisi Wajib
+          </p>
+          <span className="text-xs font-bold text-yellow-400">
+            {doneCount}/{totalRequired}
+          </span>
         </div>
       )}
 
@@ -124,11 +156,16 @@ export function EightSidePhotoCapture({
             const busy = busySide === s.key;
             const deleting = deletingSide === s.key;
             const mediaId = capturedSides[s.key];
+            const optional = !isRequired(s.key);
             return (
               <div
                 key={s.key}
                 className={`relative border-2 border-dashed rounded-xl p-3 transition-all ${
-                  done ? "border-[#2a2a2a] bg-[#1a1a1a]" : "border-[#3a2800] bg-[#141414]"
+                  done
+                    ? "border-[#2a2a2a] bg-[#1a1a1a]"
+                    : optional
+                      ? "border-[#2a2a2a] bg-[#141414]"
+                      : "border-[#3a2800] bg-[#141414]"
                 }`}
               >
                 {/* Hidden file input — only when file upload is allowed */}
@@ -194,7 +231,13 @@ export function EightSidePhotoCapture({
                       />
                     </div>
                     <p className="text-xs font-medium text-white mb-0.5">{s.label}</p>
-                    <p className="text-[10px] text-yellow-400 mb-2">Photo</p>
+                    <p
+                      className={`text-[10px] mb-2 ${
+                        optional ? "text-neutral-500" : "text-yellow-400"
+                      }`}
+                    >
+                      {optional ? "(Opsional)" : "Photo"}
+                    </p>
 
                     {busy ? (
                       <div className="w-full">
@@ -261,8 +304,13 @@ export function EightSidePhotoCapture({
                   </div>
                 )}
 
-                {/* Order indicator */}
-                <div className="absolute -top-2 -left-2 w-5 h-5 bg-yellow-400 text-black text-xs font-bold rounded-full flex items-center justify-center">
+                {/* Walk-around order indicator — muted for optional sides so
+                    the mandatory ones read as the actual checklist. */}
+                <div
+                  className={`absolute -top-2 -left-2 w-5 h-5 text-xs font-bold rounded-full flex items-center justify-center ${
+                    optional ? "bg-[#2a2a2a] text-neutral-400" : "bg-yellow-400 text-black"
+                  }`}
+                >
                   {index + 1}
                 </div>
               </div>

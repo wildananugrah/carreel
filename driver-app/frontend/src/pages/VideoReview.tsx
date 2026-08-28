@@ -3,7 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AddDamageFlow } from "../components/inspection/AddDamageFlow";
 import { AdditionalPhotosCapture } from "../components/inspection/AdditionalPhotosCapture";
 import { EditDamageModal } from "../components/inspection/EditDamageModal";
-import { EightSidePhotoCapture } from "../components/inspection/EightSidePhotoCapture";
+import {
+  ALL_BODY_SIDES,
+  EightSidePhotoCapture,
+} from "../components/inspection/EightSidePhotoCapture";
 import { type PhotoTab, PhotoTabSwitcher } from "../components/inspection/PhotoTabSwitcher";
 import { SignatureOverlay } from "../components/inspection/SignatureOverlay";
 import { VideoRecorderOverlay } from "../components/inspection/VideoRecorderOverlay";
@@ -423,7 +426,11 @@ export function VideoReview() {
   for (const m of bodyStep?.mediaFiles ?? []) {
     if (m.bodySide) capturedSides[m.bodySide] = m.id;
   }
-  const allEightCaptured = Object.keys(capturedSides).length === 8;
+  // Which sides this workspace makes mandatory. Sides outside the list still
+  // get a capture slot, but never gate analysis or submit. An older payload
+  // without the field means "all 8 required".
+  const requiredSides = inspection?.requiredBodySides ?? ALL_BODY_SIDES;
+  const allRequiredCaptured = requiredSides.every((side) => Boolean(capturedSides[side]));
   // Optional additional photos: BODY_INSPECTION IMAGE media with null bodySide,
   // ordered by capture/creation time. Not AI-validated; never block submit.
   const additionalCount = inspection?.additionalBodyPhotoCount ?? 0;
@@ -437,7 +444,7 @@ export function VideoReview() {
   // "Body capture done" — video has a media file; photos require all 8 sides.
   const hasMedia =
     bodyMode === "PHOTOS_8SIDE"
-      ? allEightCaptured
+      ? allRequiredCaptured
       : Boolean(bodyStep && bodyStep.mediaFiles.length > 0);
 
   // Backstop: ensure photo-mode analysis is triggered once all 8 sides exist,
@@ -451,14 +458,14 @@ export function VideoReview() {
   // otherwise leaves status at UPLOADED forever — without repolling this
   // effect, the retry would never actually fire again.
   useEffect(() => {
-    if (bodyMode !== "PHOTOS_8SIDE" || !allEightCaptured) return;
+    if (bodyMode !== "PHOTOS_8SIDE" || !allRequiredCaptured) return;
     const status = bodyStep?.status;
     if (status === "PROCESSING" || status === "COMPLETED" || status === "FAILED") {
       photoAnalysisTriggeredRef.current = true;
       return;
     }
     triggerPhotoAnalysis();
-  }, [bodyMode, allEightCaptured, bodyStep?.status, triggerPhotoAnalysis, inspection]);
+  }, [bodyMode, allRequiredCaptured, bodyStep?.status, triggerPhotoAnalysis, inspection]);
   const aiInfo = inspection ? extractUnitInfo(inspection, unitData) : null;
   const hasAIData = !!inspection?.steps.some(
     (s) =>
@@ -765,7 +772,7 @@ export function VideoReview() {
 
   // Body capture is "ready" when all 8 photos exist (PHOTOS_8SIDE) or a body
   // video has been uploaded (VIDEO). hasMedia already encodes this per mode.
-  const bodyReady = bodyMode === "PHOTOS_8SIDE" ? allEightCaptured : hasMedia;
+  const bodyReady = bodyMode === "PHOTOS_8SIDE" ? allRequiredCaptured : hasMedia;
   // Pre-trip reference photos: prefer the directly-fetched linked inspection,
   // fall back to the pre-trip-data payload if present.
   const referencePhotos = preTripPhotos.length > 0 ? preTripPhotos : (unitData?.bodyPhotos ?? []);
@@ -984,7 +991,10 @@ export function VideoReview() {
                   <p className="text-sm text-white leading-snug">
                     {bodyMode === "PHOTOS_8SIDE" ? (
                       <>
-                        Ambil <span className="font-bold text-[#F5C842]">8 foto sisi</span>{" "}
+                        Ambil{" "}
+                        <span className="font-bold text-[#F5C842]">
+                          {requiredSides.length} foto sisi
+                        </span>{" "}
                         kendaraan sesuai urutan. Pastikan setiap sudut terlihat jelas agar AI bisa
                         mendeteksi kerusakan dengan maksimal.
                       </>
@@ -1217,6 +1227,7 @@ export function VideoReview() {
               onAllCaptured={triggerPhotoAnalysis}
               additionalCount={additionalCount}
               additionalPhotos={additionalPhotos}
+              requiredSides={requiredSides}
             />
           </div>
         )}
@@ -1345,8 +1356,8 @@ export function VideoReview() {
                       <PhotoTabSwitcher
                         tab={bodyReviewTab}
                         onTabChange={setBodyReviewTab}
-                        doneCount={Object.values(capturedSides).filter(Boolean).length}
-                        totalCount={8}
+                        doneCount={requiredSides.filter((s) => capturedSides[s]).length}
+                        totalCount={requiredSides.length}
                       />
                     )}
                     {(additionalCount === 0 || bodyReviewTab === "wajib") && (

@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
+import type { BodySide } from "../../generated/prisma";
 import type { IWorkspaceService } from "../../interfaces/services/workspace.service.interface";
 import type { AppEnv } from "../../types/dto";
 
@@ -28,6 +29,7 @@ export function createWorkspaceRoutes(
       displayName: string;
       bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
       additionalBodyPhotoCount?: number;
+      requiredBodySides?: BodySide[];
     }>();
     if (body.additionalBodyPhotoCount !== undefined) {
       body.additionalBodyPhotoCount = Math.max(
@@ -55,6 +57,7 @@ export function createWorkspaceRoutes(
       displayName?: string;
       bodyInspectionMode?: "VIDEO" | "PHOTOS_8SIDE";
       additionalBodyPhotoCount?: number;
+      requiredBodySides?: BodySide[];
     }>();
     if (body.additionalBodyPhotoCount !== undefined) {
       body.additionalBodyPhotoCount = Math.max(

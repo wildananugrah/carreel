@@ -110,6 +110,12 @@ export interface InspectionDetail extends Inspection {
    * These are stored and displayed but NOT AI-validated and never block
    * submit. 0 (or absent) = no additional photos. */
   additionalBodyPhotoCount?: number;
+  /**
+   * Workspace setting — which body sides are mandatory in PHOTOS_8SIDE mode.
+   * Sides outside this list still render a capture slot but never gate submit.
+   * Absent on older payloads; treat that as "all 8 required".
+   */
+  requiredBodySides?: string[];
 }
 
 export interface MediaFileResponse {

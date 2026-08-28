@@ -1,16 +1,22 @@
-import type { BodyInspectionMode, Workspace } from "../../generated/prisma";
+import type {
+  BodyInspectionMode,
+  BodySide,
+  Workspace,
+} from "../../generated/prisma";
 
 export interface CreateWorkspaceDTO {
   name: string;
   displayName: string;
   bodyInspectionMode?: BodyInspectionMode;
   additionalBodyPhotoCount?: number;
+  requiredBodySides?: BodySide[];
 }
 
 export interface UpdateWorkspaceDTO {
   displayName?: string;
   bodyInspectionMode?: BodyInspectionMode;
   additionalBodyPhotoCount?: number;
+  requiredBodySides?: BodySide[];
 }
 
 export interface WorkspaceListItem {

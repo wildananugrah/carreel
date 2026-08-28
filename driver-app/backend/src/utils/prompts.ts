@@ -239,6 +239,45 @@ DO NOT REQUIRE any of these to flag as recapture:
  * advisory (it raises a planner alert, it does not fail the driver), so
  * converging evidence beats a hair trigger.
  */
+/**
+ * Canonical walk-around order, and the fallback when a caller does not say
+ * which sides it actually has. A workspace can require fewer than all eight
+ * (Workspace.requiredBodySides), so the photo prompts below must describe the
+ * set they were really given — telling the model "EIGHT photos" while handing
+ * it four is a live accuracy risk, not a cosmetic mismatch.
+ */
+const ALL_BODY_SIDES = [
+  "FRONT",
+  "FRONT_RIGHT",
+  "RIGHT",
+  "BACK_RIGHT",
+  "BACK",
+  "BACK_LEFT",
+  "LEFT",
+  "FRONT_LEFT",
+];
+
+const COUNT_WORDS = [
+  "ZERO",
+  "ONE",
+  "TWO",
+  "THREE",
+  "FOUR",
+  "FIVE",
+  "SIX",
+  "SEVEN",
+  "EIGHT",
+];
+
+/** Spelled-out count, matching the emphatic register of the prompt text. */
+function countWord(n: number): string {
+  return COUNT_WORDS[n] ?? String(n);
+}
+
+function photoNoun(n: number): string {
+  return n === 1 ? "photo" : "photos";
+}
+
 const SCREEN_CAPTURE_EXTERIOR = `
 [SCREEN-CAPTURE DETECTION PROTOCOL — EXTERIOR VEHICLE PHOTOS]
 
@@ -267,10 +306,10 @@ S1. The whole scene is on one flat focal plane with no perspective change
     between the near and far ends of the car across the set.
 S2. Specular hotspot or brightness falloff shaped like a rectangular panel,
     inconsistent with the scene's own light sources.
-S3. Every photo in the set shares an identical border geometry, as if all eight
-    were cropped from the same frame.
+S3. Every photo in the set shares an identical border geometry, as if they were
+    all cropped from the same frame.
 S4. Visible banding/posterization typical of a re-encoded display capture,
-    present uniformly across all eight photos.
+    present uniformly across every photo in the set.
 
 EXPLICITLY NOT EVIDENCE — never flag on these alone:
 - Dark or black regions at the top or bottom of the frame. Workshop ceilings,
@@ -1312,13 +1351,15 @@ Tipe (Model): ${model}`;
  */
 export function buildBodyVerificationPhotoPrompt(
   vehicle?: VehicleContext | null,
+  sides: string[] = ALL_BODY_SIDES,
 ): PromptPair {
   const make = vehicle?.make ?? "UNKNOWN";
   const model = vehicle?.model ?? "UNKNOWN";
+  const count = sides.length;
 
   const systemInstruction = `You are a strict Automotive Verification AI.
-You are given EIGHT photos of a single vehicle, each labeled with the side it shows
-(FRONT, FRONT_RIGHT, RIGHT, BACK_RIGHT, BACK, BACK_LEFT, LEFT, FRONT_LEFT).
+You are given ${countWord(count)} ${photoNoun(count)} of a single vehicle, each labeled with the side it shows
+(${sides.join(", ")}).
 
 Perform TWO gating checks over the set of photos:
   (1) IDENTITY MATCH — do the photos show the claimed TARGET VEHICLE?
@@ -1351,8 +1392,7 @@ Respond ONLY with raw JSON (no markdown fences), exactly:
   "recaptureIndicators": []
 }`;
 
-  const userPrompt =
-    "Verify these 8 labeled photos against the target vehicle, and check for screen recapture.";
+  const userPrompt = `Verify these ${count} labeled ${photoNoun(count)} against the target vehicle, and check for screen recapture.`;
 
   return { systemInstruction, userPrompt };
 }
@@ -1369,10 +1409,12 @@ Respond ONLY with raw JSON (no markdown fences), exactly:
  */
 export function buildBodyInspectionPhotoPrompt(
   _vehicle?: VehicleContext | null,
+  sides: string[] = ALL_BODY_SIDES,
 ): PromptPair {
+  const count = sides.length;
   const systemInstruction = `You are an Expert Automotive Exterior Damage Appraiser AI optimized for HIGH RECALL.
-You are given EIGHT photos of one vehicle, each labeled with the side it shows:
-FRONT, FRONT_RIGHT, RIGHT, BACK_RIGHT, BACK, BACK_LEFT, LEFT, FRONT_LEFT.
+You are given ${countWord(count)} ${photoNoun(count)} of one vehicle, each labeled with the side it shows:
+${sides.join(", ")}.
 
 Because each photo's side is KNOWN, you must NOT guess left/right orientation —
 use the provided label of the photo a damage appears on.
@@ -1383,8 +1425,8 @@ TASK:
 - Pay special attention to high-risk zones: bumper corners, lower body panels,
   rocker panels, wheel arches, mirror housings, fender edges, door handles,
   seams, and panel edges.
-- A damage visible in two overlapping photos (e.g. FRONT and FRONT_RIGHT) is ONE
-  damage — report it once, on the side where it is clearest, and do not duplicate.
+- A damage visible in two overlapping photos is ONE damage — report it once, on
+  the side where it is clearest, and do not duplicate.
 - All "description" values MUST be in Bahasa Indonesia.
 
 For each damage set "bodySide" to the label of the photo it is clearest on.
@@ -1422,7 +1464,7 @@ Respond ONLY with raw JSON (no markdown fences), exactly:
       "location": "<one allowed location>",
       "severity": "MINOR",
       "description": "Goresan halus pada bumper depan kanan",
-      "bodySide": "FRONT_RIGHT",
+      "bodySide": "${sides[0] ?? "FRONT"}",
       "isNewDamage": true,
       "damageConfidence": 0.8,
       "boundingBox": { "x": 0, "y": 0, "width": 0, "height": 0 }

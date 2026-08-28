@@ -1,4 +1,4 @@
-import type { Workspace } from "../generated/prisma";
+import type { BodySide, Workspace } from "../generated/prisma";
 import type {
   CreateWorkspaceDTO,
   IWorkspaceRepository,
@@ -7,6 +7,19 @@ import type {
 } from "../interfaces/repositories/workspace.repository.interface";
 import type { IWorkspaceService } from "../interfaces/services/workspace.service.interface";
 import type { UserScope } from "../types/scope";
+import { badRequest } from "../utils/http-error";
+
+/// Canonical walk-around order. Also the allow-list for incoming side values.
+const BODY_SIDE_ORDER: BodySide[] = [
+  "FRONT",
+  "FRONT_RIGHT",
+  "RIGHT",
+  "BACK_RIGHT",
+  "BACK",
+  "BACK_LEFT",
+  "LEFT",
+  "FRONT_LEFT",
+];
 
 export class WorkspaceService implements IWorkspaceService {
   constructor(private workspaceRepository: IWorkspaceRepository) {}
@@ -15,6 +28,28 @@ export class WorkspaceService implements IWorkspaceService {
     if (scope.systemRole !== "SUPER_ADMIN") {
       throw new Error("Only SUPER_ADMIN can manage workspaces");
     }
+  }
+
+  /**
+   * Validates and canonicalizes the mandatory body sides for a workspace.
+   * Rejects unknown values and empty lists (an empty list would make the
+   * body-inspection step meaningless), then dedupes and sorts into
+   * walk-around order by filtering the canonical list.
+   */
+  private normalizeRequiredBodySides(sides: BodySide[]): BodySide[] {
+    if (!Array.isArray(sides)) {
+      throw badRequest("requiredBodySides must be an array");
+    }
+    for (const side of sides) {
+      if (!BODY_SIDE_ORDER.includes(side)) {
+        throw badRequest(`Invalid body side: ${side}`);
+      }
+    }
+    const normalized = BODY_SIDE_ORDER.filter((s) => sides.includes(s));
+    if (normalized.length === 0) {
+      throw badRequest("At least one body side must be required");
+    }
+    return normalized;
   }
 
   async list(scope: UserScope): Promise<WorkspaceListItem[]> {
@@ -31,7 +66,16 @@ export class WorkspaceService implements IWorkspaceService {
 
   async create(scope: UserScope, data: CreateWorkspaceDTO): Promise<Workspace> {
     this.requireSuperAdmin(scope);
-    return this.workspaceRepository.create(data);
+    return this.workspaceRepository.create(
+      data.requiredBodySides === undefined
+        ? data
+        : {
+            ...data,
+            requiredBodySides: this.normalizeRequiredBodySides(
+              data.requiredBodySides,
+            ),
+          },
+    );
   }
 
   async update(
@@ -40,7 +84,17 @@ export class WorkspaceService implements IWorkspaceService {
     data: UpdateWorkspaceDTO,
   ): Promise<Workspace> {
     this.requireSuperAdmin(scope);
-    return this.workspaceRepository.update(id, data);
+    return this.workspaceRepository.update(
+      id,
+      data.requiredBodySides === undefined
+        ? data
+        : {
+            ...data,
+            requiredBodySides: this.normalizeRequiredBodySides(
+              data.requiredBodySides,
+            ),
+          },
+    );
   }
 
   async delete(scope: UserScope, id: string): Promise<void> {

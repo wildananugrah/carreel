@@ -124,3 +124,39 @@ re-shooting eight photos that would have been rejected the same way.
   model had already recorded that the vehicle matched; the UI was the thing
   lying. Guessing from the screenshot would have led to "fix the identity
   prompt", which was never broken.
+
+### 2026-08-28 — A test double must honor its interface's contract, not just its happy path
+
+**What happened:** `InspectionService > list returns paginated results` had been
+red for a long time (`expected 2, received 0`) and was assumed to be a flaky or
+stale test. It was neither: the mock `IInspectionRepository` in
+`tests/services/inspection.service.test.ts` typed `findByDriverId`'s second
+parameter as `driverId: string` and filtered with `i.driverId === driverId`. The
+real interface declares `driverId: string | null`, where `null` means "no driver
+filter" — `InspectionService.list` passes `null` for platform-bypass scopes
+(`SUPER_ADMIN`, `CARREEL_DRIVER_SUPPORT`) so they see every driver's data. The
+test used `makeSuperAdminScope`, so the double compared each inspection's
+`driverId` against `null` and matched nothing.
+
+**Why:** TypeScript did not catch the narrower parameter type because method
+parameters are checked bivariantly, so `(driverId: string)` is assignable where
+`(driverId: string | null)` is expected. The double silently disagreed with the
+contract it claimed to implement, and the failure looked like a product bug.
+
+**Prevention:** When a repository parameter is nullable, the null branch is part
+of the contract — implement it in every double and cover it with a test. Read
+the interface, not just the one call path you have in mind. A long-red test is
+evidence of a real disagreement somewhere; triage it rather than normalizing it.
+
+### 2026-08-28 — Assert on the stable part of an error message
+
+**What happened:** `submit throws when steps are still PENDING` asserted the
+exact string `"All steps must have media uploaded"`. When VIN/SPEEDOMETER became
+individually optional, the message changed to `"All required steps must have
+media uploaded before submitting. Pending: ..."` and the test went red for a
+purely cosmetic reason while the behavior it guarded was still correct.
+
+**Prevention:** Assert on the invariant clause, or on the error type/status,
+rather than a full sentence that carries dynamic detail. Two permanently-red
+tests trained everyone to read "N failures" as normal, which is how the missing
+8-side submit check stayed invisible.
