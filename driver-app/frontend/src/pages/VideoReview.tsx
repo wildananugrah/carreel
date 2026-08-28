@@ -457,6 +457,7 @@ export function VideoReview() {
   // matters because a failed analyze-photos call resets the trigger ref but
   // otherwise leaves status at UPLOADED forever — without repolling this
   // effect, the retry would never actually fire again.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `inspection` is a deliberate poll-tick trigger, see above
   useEffect(() => {
     if (bodyMode !== "PHOTOS_8SIDE" || !allRequiredCaptured) return;
     const status = bodyStep?.status;
@@ -518,6 +519,7 @@ export function VideoReview() {
     .filter((s) => s.stepType === "BODY_INSPECTION" || s.stepType === "UNIT_IDENTIFICATION")
     .map((s) => `${s.stepType}:${s.status}`)
     .join("|");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `damageStepStatusKey` is a change-detection key, not a value the body reads
   useEffect(() => {
     refreshDamages();
   }, [refreshDamages, damageStepStatusKey]);
@@ -1100,6 +1102,7 @@ export function VideoReview() {
                       !isManual && !canSeek && bodyMode !== "PHOTOS_8SIDE";
                     return (
                       <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: PreTripDamage has no id and two damages can share area+location; this list is fetched once and never reordered
                         key={`pre-${d.area}-${d.location}-${idx}`}
                         className="flex items-start gap-3 px-4 py-3"
                       >

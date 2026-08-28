@@ -57,7 +57,9 @@ export class WorkspaceRepository implements IWorkspaceRepository {
       where: { workspaceId: id },
     });
     if (projectCount > 0) {
-      throw badRequest("Cannot delete workspace with existing projects. Delete all projects first.");
+      throw badRequest(
+        "Cannot delete workspace with existing projects. Delete all projects first.",
+      );
     }
     await this.prisma.workspace.delete({ where: { id } });
   }

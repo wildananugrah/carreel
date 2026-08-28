@@ -1,7 +1,4 @@
-import type {
-  DamageAuditLog,
-  DamageMarker,
-} from "../../generated/prisma";
+import type { DamageAuditLog, DamageMarker } from "../../generated/prisma";
 import type { UserScope } from "../../types/scope";
 
 export interface DamageAuditView {

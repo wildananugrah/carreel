@@ -127,7 +127,10 @@ export class DashboardService implements IDashboardService {
       alertsByType,
       unreadAlertCount,
     };
-    this.kpiCache.set(cacheKey, { value: result, expiresAt: Date.now() + KPI_TTL_MS });
+    this.kpiCache.set(cacheKey, {
+      value: result,
+      expiresAt: Date.now() + KPI_TTL_MS,
+    });
     return result;
   }
 

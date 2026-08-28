@@ -43,9 +43,7 @@ export function ProjectAssignments() {
     try {
       const [membersData, assignmentsData] = await Promise.all([
         api.get<ProjectMemberView[]>(`/api/admin/projects/${projectId}/members`),
-        api.get<DriverAssignmentView[]>(
-          `/api/admin/projects/${projectId}/assignments`,
-        ),
+        api.get<DriverAssignmentView[]>(`/api/admin/projects/${projectId}/assignments`),
       ]);
       setMembers(membersData);
       setAssignments(assignmentsData);
@@ -60,15 +58,9 @@ export function ProjectAssignments() {
     load();
   }, [load]);
 
-  const drivers = useMemo(
-    () => members.filter((m) => m.role === "DRIVER"),
-    [members],
-  );
+  const drivers = useMemo(() => members.filter((m) => m.role === "DRIVER"), [members]);
   const planners = useMemo(
-    () =>
-      members.filter(
-        (m) => m.role === "PLANNER" || m.role === "PROJECT_ADMIN",
-      ),
+    () => members.filter((m) => m.role === "PLANNER" || m.role === "PROJECT_ADMIN"),
     [members],
   );
 
@@ -111,9 +103,7 @@ export function ProjectAssignments() {
   const handleRemoveAssignment = async (assignmentId: string) => {
     if (!projectId) return;
     try {
-      await api.delete(
-        `/api/admin/projects/${projectId}/assignments/${assignmentId}`,
-      );
+      await api.delete(`/api/admin/projects/${projectId}/assignments/${assignmentId}`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove assignment");
@@ -123,10 +113,7 @@ export function ProjectAssignments() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <Link
-          to="/"
-          className="text-sm text-[#F5C518] hover:text-[#F5D848] mb-4 inline-block"
-        >
+        <Link to="/" className="text-sm text-[#F5C518] hover:text-[#F5D848] mb-4 inline-block">
           {"\u2190"} Back to dashboard
         </Link>
 
@@ -139,7 +126,8 @@ export function ProjectAssignments() {
               {projectId?.slice(0, 8) ?? "Project"}
             </h1>
             <p className="text-xs text-[#666] mt-1">
-              {drivers.length} drivers {"\u00B7"} {planners.length} planners {"\u00B7"} {assignments.length} assignments
+              {drivers.length} drivers {"\u00B7"} {planners.length} planners {"\u00B7"}{" "}
+              {assignments.length} assignments
             </p>
           </div>
           {projectId && (
@@ -177,17 +165,12 @@ export function ProjectAssignments() {
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
               <div className="px-4 py-3 border-b border-[#2a2a2a]">
-                <h2 className="text-sm font-bold text-white">
-                  Drivers ({drivers.length})
-                </h2>
+                <h2 className="text-sm font-bold text-white">Drivers ({drivers.length})</h2>
               </div>
               <div className="divide-y divide-[#2a2a2a]">
                 {drivers.map((driver) => {
-                  const driverAssignments =
-                    assignmentsByDriver.get(driver.userId) ?? [];
-                  const assignedPlannerIds = new Set(
-                    driverAssignments.map((a) => a.plannerId),
-                  );
+                  const driverAssignments = assignmentsByDriver.get(driver.userId) ?? [];
+                  const assignedPlannerIds = new Set(driverAssignments.map((a) => a.plannerId));
                   const availablePlanners = planners.filter(
                     (p) => !assignedPlannerIds.has(p.userId),
                   );
@@ -197,18 +180,17 @@ export function ProjectAssignments() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 mb-2">
-                            <p className="text-sm font-bold text-white">
-                              {driver.fullName}
-                            </p>
-                            <p className="text-xs text-[#888]">
-                              {driver.email}
-                            </p>
+                            <p className="text-sm font-bold text-white">{driver.fullName}</p>
+                            <p className="text-xs text-[#888]">{driver.email}</p>
                           </div>
 
                           {driverAssignments.length === 0 ? (
                             <div className="flex items-center gap-2 text-xs text-[#D4A800]">
                               <span>{"\u26A0"}</span>
-                              <span>No planner assigned — only project admins will see this driver's inspections</span>
+                              <span>
+                                No planner assigned — only project admins will see this driver's
+                                inspections
+                              </span>
                             </div>
                           ) : (
                             <div className="flex flex-wrap gap-1.5">
@@ -283,9 +265,7 @@ export function ProjectAssignments() {
 
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden h-fit">
               <div className="px-4 py-3 border-b border-[#2a2a2a]">
-                <h2 className="text-sm font-bold text-white">
-                  Planners ({planners.length})
-                </h2>
+                <h2 className="text-sm font-bold text-white">Planners ({planners.length})</h2>
               </div>
               {planners.length === 0 ? (
                 <div className="p-6 text-center text-xs text-[#666] italic">
@@ -304,9 +284,7 @@ export function ProjectAssignments() {
                           <p className="text-sm font-bold text-white truncate">
                             {planner.fullName}
                           </p>
-                          <p className="text-[11px] text-[#666] truncate">
-                            {planner.email}
-                          </p>
+                          <p className="text-[11px] text-[#666] truncate">{planner.email}</p>
                         </div>
                         <span className="text-[11px] text-[#F5C518] font-bold ml-3 shrink-0">
                           {count} {count === 1 ? "driver" : "drivers"}

@@ -5,13 +5,13 @@ import { RequireProjectAdmin } from "./components/route-guards/RequireProjectAdm
 import { RequireSuperAdmin } from "./components/route-guards/RequireSuperAdmin";
 import { ScopeProvider } from "./contexts/ScopeContext";
 import { AuthProvider } from "./lib/auth";
+import { AlertList } from "./pages/AlertList";
 import { ProjectAssignments } from "./pages/admin/ProjectAssignments";
 import { ProjectMembers } from "./pages/admin/ProjectMembers";
 import { UserDetail } from "./pages/admin/UserDetail";
 import { UserList } from "./pages/admin/UserList";
 import { WorkspaceDetail } from "./pages/admin/WorkspaceDetail";
 import { WorkspaceList } from "./pages/admin/WorkspaceList";
-import { AlertList } from "./pages/AlertList";
 import { Dashboard } from "./pages/Dashboard";
 import { DriverList } from "./pages/DriverList";
 import { InspectionDetail } from "./pages/InspectionDetail";
@@ -38,19 +38,13 @@ export default function App() {
 
                 <Route element={<RequireSuperAdmin />}>
                   <Route path="/admin/workspaces" element={<WorkspaceList />} />
-                  <Route
-                    path="/admin/workspaces/:id"
-                    element={<WorkspaceDetail />}
-                  />
+                  <Route path="/admin/workspaces/:id" element={<WorkspaceDetail />} />
                   <Route path="/admin/users" element={<UserList />} />
                   <Route path="/admin/users/:id" element={<UserDetail />} />
                 </Route>
 
                 <Route element={<RequireProjectAdmin />}>
-                  <Route
-                    path="/admin/projects/:projectId/members"
-                    element={<ProjectMembers />}
-                  />
+                  <Route path="/admin/projects/:projectId/members" element={<ProjectMembers />} />
                   <Route
                     path="/admin/projects/:projectId/assignments"
                     element={<ProjectAssignments />}

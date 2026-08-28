@@ -63,9 +63,7 @@ export function ProjectMembers() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.get<ProjectMemberView[]>(
-        `/api/admin/projects/${projectId}/members`,
-      );
+      const data = await api.get<ProjectMemberView[]>(`/api/admin/projects/${projectId}/members`);
       setMembers(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load members");
@@ -109,10 +107,7 @@ export function ProjectMembers() {
   useEffect(() => {
     if (!showSuggestions) return;
     const onDown = (e: MouseEvent) => {
-      if (
-        comboboxRef.current &&
-        !comboboxRef.current.contains(e.target as Node)
-      ) {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -140,9 +135,7 @@ export function ProjectMembers() {
       setHighlightedIndex((i) => (i + 1) % candidates.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex(
-        (i) => (i - 1 + candidates.length) % candidates.length,
-      );
+      setHighlightedIndex((i) => (i - 1 + candidates.length) % candidates.length);
     } else if (e.key === "Enter") {
       if (highlightedIndex >= 0 && highlightedIndex < candidates.length) {
         e.preventDefault();
@@ -184,9 +177,7 @@ export function ProjectMembers() {
     if (!projectId) return;
     if (!window.confirm(`Remove ${fullName} from this project?`)) return;
     try {
-      await api.delete(
-        `/api/admin/projects/${projectId}/members/${userId}`,
-      );
+      await api.delete(`/api/admin/projects/${projectId}/members/${userId}`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member");
@@ -200,10 +191,7 @@ export function ProjectMembers() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <Link
-          to="/"
-          className="text-sm text-[#F5C518] hover:text-[#F5D848] mb-4 inline-block"
-        >
+        <Link to="/" className="text-sm text-[#F5C518] hover:text-[#F5D848] mb-4 inline-block">
           {"\u2190"} Back to dashboard
         </Link>
 
@@ -216,9 +204,8 @@ export function ProjectMembers() {
               {projectId?.slice(0, 8) ?? "Project"}
             </h1>
             <p className="text-xs text-[#666] mt-1">
-              {members.length} total {"\u00B7"} {drivers.length} drivers{" "}
-              {"\u00B7"} {planners.length} planners {"\u00B7"} {admins.length}{" "}
-              admins
+              {members.length} total {"\u00B7"} {drivers.length} drivers {"\u00B7"}{" "}
+              {planners.length} planners {"\u00B7"} {admins.length} admins
             </p>
           </div>
           <div className="flex gap-2">
@@ -293,8 +280,8 @@ export function ProjectMembers() {
           >
             <h2 className="text-lg font-bold text-white mb-1">Invite Member</h2>
             <p className="text-xs text-[#666] mb-4">
-              The user must already have an account. Email must match their
-              registered email exactly.
+              The user must already have an account. Email must match their registered email
+              exactly.
             </p>
 
             <div className="space-y-4">
@@ -330,13 +317,9 @@ export function ProjectMembers() {
                     className="absolute left-0 right-0 top-full mt-1 bg-[#111] border border-[#2a2a2a] rounded-lg shadow-xl max-h-64 overflow-y-auto z-10"
                   >
                     {candidatesLoading ? (
-                      <div className="px-3 py-2 text-xs text-[#666]">
-                        Searching...
-                      </div>
+                      <div className="px-3 py-2 text-xs text-[#666]">Searching...</div>
                     ) : candidates.length === 0 ? (
-                      <div className="px-3 py-2 text-xs text-[#666]">
-                        No matching users
-                      </div>
+                      <div className="px-3 py-2 text-xs text-[#666]">No matching users</div>
                     ) : (
                       candidates.map((c, idx) => (
                         <button
@@ -347,9 +330,7 @@ export function ProjectMembers() {
                           onMouseEnter={() => setHighlightedIndex(idx)}
                           onClick={() => selectCandidate(c)}
                           className={`w-full text-left px-3 py-2 border-b border-[#2a2a2a] last:border-b-0 transition-colors ${
-                            idx === highlightedIndex
-                              ? "bg-[#1f1f1f]"
-                              : "hover:bg-[#1a1a1a]"
+                            idx === highlightedIndex ? "bg-[#1f1f1f]" : "hover:bg-[#1a1a1a]"
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
@@ -357,15 +338,11 @@ export function ProjectMembers() {
                               <div className="text-sm font-bold text-white truncate">
                                 {c.fullName}
                               </div>
-                              <div className="text-[11px] text-[#888] truncate">
-                                {c.email}
-                              </div>
+                              <div className="text-[11px] text-[#888] truncate">{c.email}</div>
                             </div>
                             <span
                               className={`text-[9px] font-bold uppercase tracking-[0.5px] shrink-0 ${
-                                c.role === "DRIVER"
-                                  ? "text-[#8DC26F]"
-                                  : "text-[#4DA3FF]"
+                                c.role === "DRIVER" ? "text-[#8DC26F]" : "text-[#4DA3FF]"
                               }`}
                             >
                               {c.role}
@@ -395,8 +372,8 @@ export function ProjectMembers() {
                   <option value="PROJECT_ADMIN">Project Admin</option>
                 </select>
                 <p className="text-[10px] text-[#666] mt-1">
-                  Note: User&apos;s global role must match. DRIVER can only be
-                  added as Driver; PLANNER can be Planner or Admin.
+                  Note: User&apos;s global role must match. DRIVER can only be added as Driver;
+                  PLANNER can be Planner or Admin.
                 </p>
               </div>
             </div>
@@ -440,9 +417,7 @@ function MemberSection({
         <div className="px-4 py-3 border-b border-[#2a2a2a]">
           <h2 className="text-sm font-bold text-white">{title}</h2>
         </div>
-        <div className="p-8 text-center text-[#666] text-xs italic">
-          None yet
-        </div>
+        <div className="p-8 text-center text-[#666] text-xs italic">None yet</div>
       </div>
     );
   }
@@ -456,9 +431,7 @@ function MemberSection({
         <tbody className="divide-y divide-[#2a2a2a]">
           {members.map((m) => (
             <tr key={m.id} className="hover:bg-[#1f1f1f] transition-colors">
-              <td className="px-4 py-3 text-sm font-bold text-white">
-                {m.fullName}
-              </td>
+              <td className="px-4 py-3 text-sm font-bold text-white">{m.fullName}</td>
               <td className="px-4 py-3 text-xs text-[#888]">{m.email}</td>
               <td
                 className={`px-4 py-3 text-[10px] font-bold uppercase tracking-[1px] ${roleColor(m.role)}`}

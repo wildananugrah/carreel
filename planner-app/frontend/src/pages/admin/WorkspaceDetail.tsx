@@ -433,6 +433,7 @@ export function WorkspaceDetail() {
 
       {/* Create project modal */}
       {showCreate && (
+        // biome-ignore lint/a11y/useSemanticElements: backdrop acts as click-to-close, not a real button
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
           onClick={() => setShowCreate(false)}

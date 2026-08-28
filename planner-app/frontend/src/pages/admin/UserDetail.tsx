@@ -149,12 +149,8 @@ export function UserDetail() {
 
         <div className="flex items-start justify-between mt-2 mb-6">
           <div>
-            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">
-              User
-            </p>
-            <h1 className="text-2xl font-black text-white mt-1">
-              {user.fullName}
-            </h1>
+            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">User</p>
+            <h1 className="text-2xl font-black text-white mt-1">{user.fullName}</h1>
             <p className="text-xs text-[#666] mt-1">
               {user.email} {"\u00B7"} {user.role} {"\u00B7"} Joined {formatDate(user.createdAt)}
             </p>
@@ -202,16 +198,9 @@ export function UserDetail() {
               </thead>
               <tbody className="divide-y divide-[#2a2a2a]">
                 {user.projectMemberships.map((m) => (
-                  <tr
-                    key={m.projectId}
-                    className="hover:bg-[#1f1f1f] transition-colors"
-                  >
-                    <td className="px-4 py-3 text-sm text-white">
-                      {m.workspaceDisplayName}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-[#C0C0C0]">
-                      {m.projectDisplayName}
-                    </td>
+                  <tr key={m.projectId} className="hover:bg-[#1f1f1f] transition-colors">
+                    <td className="px-4 py-3 text-sm text-white">{m.workspaceDisplayName}</td>
+                    <td className="px-4 py-3 text-sm text-[#C0C0C0]">{m.projectDisplayName}</td>
                     <td
                       className={`px-4 py-3 text-[10px] font-bold uppercase tracking-[1px] ${roleColor(m.role)}`}
                     >
@@ -245,9 +234,9 @@ export function UserDetail() {
         <div className="bg-red-500/5 border border-red-500/30 rounded-xl p-4">
           <h3 className="text-sm font-bold text-red-400 mb-2">Danger zone</h3>
           <p className="text-xs text-[#888] mb-3">
-            Archive this user. They will be unable to log in, but all their
-            data (inspections, reviews, etc.) is preserved. Email is prefixed
-            with "archived-{"{"}timestamp{"}"}-" to free up the original email.
+            Archive this user. They will be unable to log in, but all their data (inspections,
+            reviews, etc.) is preserved. Email is prefixed with "archived-{"{"}timestamp{"}"}-" to
+            free up the original email.
           </p>
           <button
             type="button"
