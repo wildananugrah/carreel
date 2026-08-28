@@ -116,3 +116,50 @@ describe("photo body prompts", () => {
     expect(systemInstruction.toLowerCase()).toContain("match");
   });
 });
+
+describe("photo body prompts adapt to the workspace's side list", () => {
+  const FOUR = ["FRONT", "RIGHT", "BACK", "LEFT"];
+
+  it("damage prompt states the real photo count instead of EIGHT", () => {
+    const { systemInstruction } = buildBodyInspectionPhotoPrompt(null, FOUR);
+    expect(systemInstruction).toContain("FOUR photos");
+    expect(systemInstruction).not.toContain("EIGHT");
+  });
+
+  it("damage prompt lists only the sides actually supplied", () => {
+    const { systemInstruction } = buildBodyInspectionPhotoPrompt(null, FOUR);
+    expect(systemInstruction).toContain("FRONT, RIGHT, BACK, LEFT");
+    expect(systemInstruction).not.toContain("FRONT_RIGHT");
+    expect(systemInstruction).not.toContain("BACK_LEFT");
+  });
+
+  it("verification prompt states the real photo count", () => {
+    const { systemInstruction, userPrompt } = buildBodyVerificationPhotoPrompt(
+      { make: "Wuling", model: "Air EV" },
+      FOUR,
+    );
+    expect(systemInstruction).toContain("FOUR photos");
+    expect(systemInstruction).not.toContain("EIGHT");
+    expect(userPrompt).toContain("4 labeled photos");
+  });
+
+  it("uses singular phrasing for a one-side workspace", () => {
+    const { systemInstruction } = buildBodyInspectionPhotoPrompt(null, [
+      "FRONT",
+    ]);
+    expect(systemInstruction).toContain("ONE photo");
+    expect(systemInstruction).not.toContain("photos of one vehicle");
+  });
+
+  it("defaults to all 8 sides when no list is supplied", () => {
+    const { systemInstruction } = buildBodyInspectionPhotoPrompt(null);
+    expect(systemInstruction).toContain("EIGHT photos");
+    expect(systemInstruction).toContain("FRONT_LEFT");
+  });
+
+  it("drops the 'all eight photos' recapture heuristics wording", () => {
+    const { systemInstruction } = buildBodyVerificationPhotoPrompt(null, FOUR);
+    expect(systemInstruction).not.toContain("all eight");
+    expect(systemInstruction).not.toContain("as if all eight");
+  });
+});

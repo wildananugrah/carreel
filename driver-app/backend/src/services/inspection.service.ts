@@ -275,6 +275,30 @@ export class InspectionService implements IInspectionService {
       }
     }
 
+    // In PHOTOS_8SIDE mode every side the workspace marks mandatory must have
+    // a photo. Sides outside requiredBodySides still get a capture slot in the
+    // driver UI, but are optional and never block submit. The frontend greys
+    // out the button first; this is the backstop for a stale tab or a direct
+    // API call, which could otherwise submit a body inspection with one photo.
+    if (inspection.bodyInspectionMode === "PHOTOS_8SIDE") {
+      const bodyStep = inspection.steps.find(
+        (s) => s.stepType === "BODY_INSPECTION",
+      );
+      const capturedSides = new Set(
+        (bodyStep?.mediaFiles ?? [])
+          .map((m) => m.bodySide)
+          .filter((side): side is string => side !== null),
+      );
+      const missingSides = (inspection.requiredBodySides ?? []).filter(
+        (side) => !capturedSides.has(side),
+      );
+      if (missingSides.length > 0) {
+        throw badRequest(
+          `Foto sisi wajib belum lengkap. Missing: ${missingSides.join(", ")}`,
+        );
+      }
+    }
+
     if (!inspection.signatureKey) {
       throw badRequest("Signature is required before submitting");
     }

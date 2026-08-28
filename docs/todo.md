@@ -162,4 +162,15 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
       driver UI reports the real failure reason; planner override endpoint +
       button to clear a wrongly-failed body step. Same fix applied to the VIDEO
       path (`SCREEN_CAPTURE_VIDEO` rewritten around the parallax test)
+- [x] Per-workspace mandatory body sides: `Workspace.requiredBodySides`
+      (`BodySide[]`, defaults to all 8 so existing workspaces are unchanged).
+      SUPER_ADMIN picks them via checkboxes in WorkspaceDetail (PHOTOS_8SIDE
+      only, last side cannot be unchecked); non-required sides still render a
+      capture slot in the driver app marked "(Opsional)" and never gate submit.
+      Submit now enforces the set backend-side (previously frontend-only — the
+      backend accepted a body step with one photo). Photo prompts take the real
+      side list instead of hardcoding "EIGHT photos" / all 8 side names.
+      Migration applied; all 3 existing workspaces backfilled to all 8 sides.
+      Validation: driver 264 pass / 0 fail, planner 96 pass / 0 fail (the
+      long-standing red tests were fixed too — see docs/lessons.md 2026-08-28)
 - [ ]

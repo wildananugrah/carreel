@@ -1,5 +1,6 @@
 import type {
   BodyInspectionMode,
+  BodySide,
   Inspection,
   InspectionStatus,
   InspectionStep,
@@ -30,6 +31,10 @@ export interface InspectionWithRelations extends Inspection {
   // Number of optional "Foto Tambahan" photos allowed in PHOTOS_8SIDE mode.
   // These are stored/displayed but never sent to AI analysis.
   additionalBodyPhotoCount: number;
+  // Which body sides the workspace makes mandatory in PHOTOS_8SIDE mode.
+  // Sides outside this list still get a capture slot in the driver UI, but
+  // are optional and never block submit. Unused when mode is VIDEO.
+  requiredBodySides: BodySide[];
   unit?: {
     id: string;
     licensePlate: string;

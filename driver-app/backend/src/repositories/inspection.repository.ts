@@ -131,6 +131,7 @@ export class InspectionRepository implements IInspectionRepository {
               select: {
                 bodyInspectionMode: true,
                 additionalBodyPhotoCount: true,
+                requiredBodySides: true,
               },
             },
           },
@@ -184,6 +185,7 @@ export class InspectionRepository implements IInspectionRepository {
       ...rest,
       bodyInspectionMode: project.workspace.bodyInspectionMode,
       additionalBodyPhotoCount: project.workspace.additionalBodyPhotoCount,
+      requiredBodySides: project.workspace.requiredBodySides,
     } as unknown as InspectionWithRelations;
   }
 

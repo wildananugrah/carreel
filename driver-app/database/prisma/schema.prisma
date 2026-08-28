@@ -574,6 +574,11 @@ model Workspace {
   displayName              String
   bodyInspectionMode       BodyInspectionMode @default(VIDEO)
   additionalBodyPhotoCount Int                @default(0)
+  /// Which of the 8 body sides a driver MUST capture in PHOTOS_8SIDE mode.
+  /// Sides not listed here still render a capture slot, but are optional and
+  /// do not block submit. Defaults to all 8 so existing workspaces keep their
+  /// current behavior. Ignored entirely when bodyInspectionMode is VIDEO.
+  requiredBodySides        BodySide[]         @default([FRONT, FRONT_RIGHT, RIGHT, BACK_RIGHT, BACK, BACK_LEFT, LEFT, FRONT_LEFT])
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
 

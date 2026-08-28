@@ -72,6 +72,16 @@ function createMockInspectionWithRelations(
     ...createMockInspection(overrides),
     bodyInspectionMode: "VIDEO",
     additionalBodyPhotoCount: 0,
+    requiredBodySides: [
+      "FRONT",
+      "FRONT_RIGHT",
+      "RIGHT",
+      "BACK_RIGHT",
+      "BACK",
+      "BACK_LEFT",
+      "LEFT",
+      "FRONT_LEFT",
+    ],
     unit: null,
     linkedInspection: null,
     linkedFrom: null,
@@ -130,9 +140,17 @@ describe("InspectionService", () => {
       },
       findById: async (_scope: UserScope, id: string) =>
         inspections.get(id) ?? null,
-      findByDriverId: async (_scope: UserScope, driverId: string, query) => {
+      findByDriverId: async (
+        _scope: UserScope,
+        driverId: string | null,
+        query,
+      ) => {
+        // A null driverId means "no driver filter" — InspectionService.list
+        // passes null for platform-bypass scopes (SUPER_ADMIN,
+        // CARREEL_DRIVER_SUPPORT) so they see every driver's inspections.
+        // The real repository honors that; this double must too.
         const all = [...inspections.values()].filter(
-          (i) => i.driverId === driverId,
+          (i) => driverId === null || i.driverId === driverId,
         );
         return {
           data: all,
@@ -375,7 +393,9 @@ describe("InspectionService", () => {
         "insp-1",
         "driver-1",
       ),
-    ).rejects.toThrow("All steps must have media uploaded");
+    ).rejects.toThrow(
+      "All required steps must have media uploaded before submitting",
+    );
   });
 
   test("submit throws for already submitted inspection", async () => {
@@ -848,5 +868,110 @@ describe("InspectionService", () => {
         "driver-2",
       ),
     ).rejects.toThrow("not found");
+  });
+
+  describe("submit required body sides", () => {
+    /**
+     * Seeds a submit-ready PRE_TRIP inspection whose BODY_INSPECTION step
+     * holds one photo per side in `capturedSides`.
+     */
+    async function seedPhotoInspection(
+      requiredBodySides: string[],
+      capturedSides: string[],
+      bodyInspectionMode = "PHOTOS_8SIDE",
+    ) {
+      await service.create(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "driver-1",
+        { tripType: "PRE_TRIP" },
+      );
+      const insp = inspections.get("insp-1")!;
+      insp.signatureKey = "sig-key";
+      (insp as any).bodyInspectionMode = bodyInspectionMode;
+      (insp as any).requiredBodySides = requiredBodySides;
+      for (const step of insp.steps) {
+        (step as any).status = "UPLOADED";
+      }
+      const bodyStep = insp.steps.find(
+        (s) => s.stepType === "BODY_INSPECTION",
+      )!;
+      (bodyStep as any).mediaFiles = capturedSides.map((side, i) => ({
+        id: `media-${i}`,
+        fileName: `${side}.jpg`,
+        mimeType: "image/jpeg",
+        mediaType: "IMAGE",
+        bodySide: side,
+        latitude: null,
+        longitude: null,
+        capturedAt: new Date(),
+        createdAt: new Date(),
+      }));
+      return insp;
+    }
+
+    test("blocks submit when a required side has no photo", async () => {
+      await seedPhotoInspection(
+        ["FRONT", "RIGHT", "BACK", "LEFT"],
+        ["FRONT", "RIGHT", "BACK"],
+      );
+      expect(
+        service.submit(
+          makeSuperAdminScope({ userId: "driver-1" }),
+          "insp-1",
+          "driver-1",
+        ),
+      ).rejects.toThrow("LEFT");
+    });
+
+    test("names every missing required side in the error", async () => {
+      await seedPhotoInspection(["FRONT", "RIGHT", "BACK", "LEFT"], ["FRONT"]);
+      expect(
+        service.submit(
+          makeSuperAdminScope({ userId: "driver-1" }),
+          "insp-1",
+          "driver-1",
+        ),
+      ).rejects.toThrow("RIGHT, BACK, LEFT");
+    });
+
+    test("allows submit when required sides are captured but optional ones are not", async () => {
+      await seedPhotoInspection(
+        ["FRONT", "RIGHT", "BACK", "LEFT"],
+        ["FRONT", "RIGHT", "BACK", "LEFT"],
+      );
+      const result = await service.submit(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      );
+      expect(result.status).toBe("PENDING_AI");
+    });
+
+    test("ignores extra captured sides that are not required", async () => {
+      await seedPhotoInspection(
+        ["FRONT", "BACK"],
+        ["FRONT", "FRONT_RIGHT", "BACK", "LEFT"],
+      );
+      const result = await service.submit(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      );
+      expect(result.status).toBe("PENDING_AI");
+    });
+
+    test("skips the side check entirely in VIDEO mode", async () => {
+      await seedPhotoInspection(
+        ["FRONT", "FRONT_RIGHT", "RIGHT", "BACK_RIGHT"],
+        [],
+        "VIDEO",
+      );
+      const result = await service.submit(
+        makeSuperAdminScope({ userId: "driver-1" }),
+        "insp-1",
+        "driver-1",
+      );
+      expect(result.status).toBe("PENDING_AI");
+    });
   });
 });

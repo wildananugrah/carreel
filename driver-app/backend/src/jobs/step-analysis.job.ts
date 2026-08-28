@@ -838,8 +838,15 @@ export class StepAnalysisJob {
       label,
     }));
 
+    // The workspace may require fewer than all 8 sides, so both prompts are
+    // told exactly which labels they were handed rather than assuming eight.
+    const capturedSides = parts.map((p) => p.label);
+
     // Pass 1: vehicle verification (lighter thinking config, like video).
-    const verifyPair = buildBodyVerificationPhotoPrompt(vehicleContext);
+    const verifyPair = buildBodyVerificationPhotoPrompt(
+      vehicleContext,
+      capturedSides,
+    );
     const verifyRaw = await this.aiProvider.analyzeImages(
       parts,
       verifyPair.userPrompt,
@@ -929,7 +936,10 @@ export class StepAnalysisJob {
     }
 
     // Pass 2: damage detection.
-    const damagePair = buildBodyInspectionPhotoPrompt(vehicleContext);
+    const damagePair = buildBodyInspectionPhotoPrompt(
+      vehicleContext,
+      capturedSides,
+    );
     const damageRaw = await this.aiProvider.analyzeImages(
       parts,
       damagePair.userPrompt,
