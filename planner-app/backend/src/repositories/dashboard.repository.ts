@@ -7,6 +7,11 @@ import type {
   DashboardVehicleCard,
 } from "../types/dto";
 import type { UserScope } from "../types/scope";
+import {
+  countCardFindings,
+  emptyTally,
+  type MarkerTally,
+} from "../utils/finding-count";
 import { buildScopeFilter } from "../utils/scope-filter";
 
 export class DashboardRepository implements IDashboardRepository {
@@ -54,6 +59,35 @@ export class DashboardRepository implements IDashboardRepository {
       };
     };
 
+    // The "AI Alert" KPI counts FINDINGS, using the same definition and the
+    // same carry-over dedup as the vehicle-card badge, so the KPI equals the
+    // sum of the badges below it instead of telling a different story.
+    const findingWhere: Record<string, unknown> = {
+      deletedAt: null,
+      verificationStatus: { in: ["PASSED", "NOT_REQUIRED"] },
+      // Drop AI re-detections on a post-trip whose pre-trip already reported
+      // them. Hand-added markers are never re-detections, so they stay.
+      NOT: {
+        source: "AI",
+        isNewDamage: false,
+        mediaFile: {
+          step: {
+            inspection: {
+              tripType: "POST_TRIP",
+              linkedInspectionId: { not: null },
+            },
+          },
+        },
+      },
+      ...(allowedAlertInspectionIds === null
+        ? {}
+        : {
+            mediaFile: {
+              step: { inspectionId: { in: allowedAlertInspectionIds } },
+            },
+          }),
+    };
+
     const [
       activeUnits,
       preCheckComplete,
@@ -88,14 +122,7 @@ export class DashboardRepository implements IDashboardRepository {
           ],
         } as never,
       }),
-      this.prisma.alert.count({
-        where: buildAlertWhere({
-          isRead: false,
-          alertType: {
-            in: ["NEW_DAMAGE_DETECTED", "HIGH_SEVERITY_DAMAGE", "AI_FAILURE"],
-          },
-        }) as never,
-      }),
+      this.prisma.damageMarker.count({ where: findingWhere as never }),
       this.prisma.alert.count({
         where: buildAlertWhere({
           isRead: false,
@@ -245,40 +272,72 @@ export class DashboardRepository implements IDashboardRepository {
 
     // Downstream queries are keyed by the already-scoped inspection IDs, so
     // they inherit the scope restriction naturally.
-    const [alertCounts, damageAlertCounts, telemetryData] = await Promise.all([
-      allInspectionIds.length > 0
-        ? this.prisma.alert.groupBy({
-            by: ["inspectionId"],
-            where: { inspectionId: { in: allInspectionIds }, isRead: false },
-            _count: { id: true },
-          })
-        : Promise.resolve([]),
-      allInspectionIds.length > 0
-        ? this.prisma.alert.groupBy({
-            by: ["inspectionId"],
-            where: {
-              inspectionId: { in: allInspectionIds },
-              isRead: false,
-              alertType: {
-                in: ["NEW_DAMAGE_DETECTED", "HIGH_SEVERITY_DAMAGE"],
+    const [findingMarkers, operationalAlertCounts, telemetryData] =
+      await Promise.all([
+        // The card badge counts FINDINGS (damage_markers), not alert rows.
+        // Both sources count; a marker the driver deleted, or one that failed
+        // anti-fraud verification, does not. Same filters as the detail
+        // panel's "AI Alert (N)" tab so the two agree.
+        allInspectionIds.length > 0
+          ? this.prisma.damageMarker.findMany({
+              where: {
+                mediaFile: {
+                  step: { inspectionId: { in: allInspectionIds } },
+                },
+                deletedAt: null,
+                verificationStatus: { in: ["PASSED", "NOT_REQUIRED"] },
               },
-            },
-            _count: { id: true },
-          })
-        : Promise.resolve([]),
-      allInspectionIds.length > 0
-        ? this.prisma.telemetryData.findMany({
-            where: { inspectionId: { in: allInspectionIds } },
-            orderBy: { createdAt: "desc" as const },
-          })
-        : Promise.resolve([]),
-    ]);
+              select: {
+                source: true,
+                isNewDamage: true,
+                mediaFile: {
+                  select: { step: { select: { inspectionId: true } } },
+                },
+              },
+            })
+          : Promise.resolve([]),
+        // Operational alerts (LOW_FUEL, KM_ANOMALY, AI_FAILURE, ...) are not
+        // findings, but AI_FAILURE in particular means analysis never ran —
+        // a card showing 0 findings could be hiding an unanalyzed inspection.
+        // These keep driving the card's "AI Alert" status pill via hasAlerts.
+        allInspectionIds.length > 0
+          ? this.prisma.alert.groupBy({
+              by: ["inspectionId"],
+              where: {
+                inspectionId: { in: allInspectionIds },
+                isRead: false,
+                alertType: {
+                  notIn: ["NEW_DAMAGE_DETECTED", "HIGH_SEVERITY_DAMAGE"],
+                },
+              },
+              _count: { id: true },
+            })
+          : Promise.resolve([]),
+        allInspectionIds.length > 0
+          ? this.prisma.telemetryData.findMany({
+              where: { inspectionId: { in: allInspectionIds } },
+              orderBy: { createdAt: "desc" as const },
+            })
+          : Promise.resolve([]),
+      ]);
 
-    const alertCountMap = new Map(
-      alertCounts.map((a) => [a.inspectionId, a._count.id]),
-    );
-    const damageAlertCountMap = new Map(
-      damageAlertCounts.map((a) => [a.inspectionId, a._count.id]),
+    // Tally findings per inspection, split by source so the pair arithmetic
+    // can drop AI re-detections without dropping hand-added markers.
+    const tallyByInspectionId = new Map<string, MarkerTally>();
+    for (const marker of findingMarkers) {
+      const inspectionId = marker.mediaFile.step.inspectionId;
+      let tally = tallyByInspectionId.get(inspectionId);
+      if (!tally) {
+        tally = emptyTally();
+        tallyByInspectionId.set(inspectionId, tally);
+      }
+      if (marker.source === "DRIVER_ADDED") tally.driverAdded += 1;
+      else if (marker.isNewDamage) tally.aiNew += 1;
+      else tally.aiCarriedOver += 1;
+    }
+
+    const operationalAlertCountMap = new Map(
+      operationalAlertCounts.map((a) => [a.inspectionId, a._count.id]),
     );
     const telemetryMap = new Map(
       telemetryData.map((t) => [t.inspectionId, t.fuelLevelPct]),
@@ -322,12 +381,14 @@ export class DashboardRepository implements IDashboardRepository {
       const pairIds = [insp.id];
       if (postTrip) pairIds.push(postTrip.id);
 
-      const pairAlertCount = pairIds.reduce(
-        (sum, id) => sum + (alertCountMap.get(id) ?? 0),
-        0,
+      // The post-trip re-records the pre-trip's damage, so the pair is NOT a
+      // plain sum — see countCardFindings.
+      const pairFindingCount = countCardFindings(
+        tallyByInspectionId.get(insp.id) ?? null,
+        postTrip ? (tallyByInspectionId.get(postTrip.id) ?? null) : null,
       );
-      const pairDamageAlertCount = pairIds.reduce(
-        (sum, id) => sum + (damageAlertCountMap.get(id) ?? 0),
+      const pairOperationalAlertCount = pairIds.reduce(
+        (sum, id) => sum + (operationalAlertCountMap.get(id) ?? 0),
         0,
       );
       const fuelPct = telemetryMap.get(postTrip?.id ?? insp.id) ?? null;
@@ -350,10 +411,10 @@ export class DashboardRepository implements IDashboardRepository {
         preTrip: mapTrip(insp),
         postTrip: mapTrip(postTrip),
         latestFuelLevelPct: fuelPct,
-        hasAlerts: pairAlertCount > 0,
-        alertCount: pairAlertCount,
-        hasDamageAlerts: pairDamageAlertCount > 0,
-        damageAlertCount: pairDamageAlertCount,
+        hasAlerts: pairOperationalAlertCount > 0,
+        alertCount: pairFindingCount,
+        hasDamageAlerts: pairFindingCount > 0,
+        damageAlertCount: pairFindingCount,
         thumbnailMediaId: thumbnailByInspectionId.get(insp.id) ?? null,
       });
     }
@@ -370,6 +431,13 @@ export class DashboardRepository implements IDashboardRepository {
           unit.licensePlate
         : (insp.driver?.fullName ?? insp.id);
 
+      // No pre-trip exists to have already reported these, so nothing is
+      // deduped — every marker on this inspection counts.
+      const standaloneFindingCount = countCardFindings(
+        null,
+        tallyByInspectionId.get(insp.id) ?? null,
+      );
+
       cards.push({
         unitId: unit?.id ?? `driver:${insp.driverId}`,
         unitName,
@@ -382,22 +450,25 @@ export class DashboardRepository implements IDashboardRepository {
         preTrip: null,
         postTrip: mapTrip(insp),
         latestFuelLevelPct: telemetryMap.get(insp.id) ?? null,
-        hasAlerts: (alertCountMap.get(insp.id) ?? 0) > 0,
-        alertCount: alertCountMap.get(insp.id) ?? 0,
-        hasDamageAlerts: (damageAlertCountMap.get(insp.id) ?? 0) > 0,
-        damageAlertCount: damageAlertCountMap.get(insp.id) ?? 0,
+        hasAlerts: (operationalAlertCountMap.get(insp.id) ?? 0) > 0,
+        alertCount: standaloneFindingCount,
+        hasDamageAlerts: standaloneFindingCount > 0,
+        damageAlertCount: standaloneFindingCount,
         thumbnailMediaId: thumbnailByInspectionId.get(insp.id) ?? null,
       });
     }
 
     // Tab filters (trip-group level):
-    // alert     — cards with damage alerts
+    // alert     — cards showing a finding badge OR an operational alert pill.
+    //             Operational alerts are included so an AI_FAILURE card, which
+    //             has no findings precisely because analysis never ran, still
+    //             surfaces here.
     // ongoing   — pre-trip submitted, post-trip not yet past PENDING_AI
     // completed — both pre and post submitted, post past PENDING_AI
     // all       — everything
     switch (query.tab) {
       case "alert":
-        return cards.filter((c) => c.hasDamageAlerts);
+        return cards.filter((c) => c.hasDamageAlerts || c.hasAlerts);
       case "ongoing": {
         return cards.filter((c) => {
           if (!c.preTrip || c.preTrip.status === "DRAFT") return false;
