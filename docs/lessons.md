@@ -160,3 +160,36 @@ purely cosmetic reason while the behavior it guarded was still correct.
 rather than a full sentence that carries dynamic detail. Two permanently-red
 tests trained everyone to read "N failures" as normal, which is how the missing
 8-side submit check stayed invisible.
+
+### 2026-08-28 — One number, one source: alert rows were never a finding count
+
+**What happened:** The PIC dashboard vehicle card's "N Alert" badge counted
+unread rows in `alerts`; the "AI Alert (N)" tab inside the very same panel
+counted rows in `damage_markers`. Four numbers on one dashboard disagreed. The
+badge was wrong in three independent ways: an alert is emitted at most once per
+step per category (a step with four damages produced one `NEW_DAMAGE_DETECTED`
+row), the query carried no `alertType` filter so `LOW_FUEL` / `AI_FAILURE` /
+`KM_ANOMALY` counted as "alerts", and `isRead: false` meant marking an alert
+read silently decremented the badge. Manually added damages
+(`source = DRIVER_ADDED`) create a `DamageMarker` and no `Alert` at all, so
+hand-added findings moved the badge by zero.
+
+**Why:** `Alert` is a notification record — one per event worth telling someone
+about. `DamageMarker` is the finding itself. The badge asked a
+notification table a question only the finding table can answer, and nothing
+in the schema links the two (`Alert` has no FK to `DamageMarker`; they join
+only transitively through `inspectionId`).
+
+**Prevention:** When two screens show "the same" number, they must read the
+same table through the same predicate — extract it rather than re-deriving it
+per screen. If a count is user-facing, ask what a row of the counted table
+actually represents: `alerts` rows are per-step-per-category, so no filter
+would ever have made that count correct. Beware mutable state in a count:
+anything filtered on `isRead` changes when someone reads it.
+
+**Bonus trap found while fixing it:** a post-trip re-records the pre-trip's
+damage with `isNewDamage = false`, so summing markers across a trip pair
+double-counts. The dedup must drop AI carry-overs only — `POST /damages`
+derives `isNewDamage` from the request body and defaults it to false, so a
+hand-added post-trip marker would otherwise be silently discarded. See
+`planner-app/backend/src/utils/finding-count.ts`.

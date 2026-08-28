@@ -52,8 +52,7 @@ async function fetchWithRetry(
     }
     try {
       const res = await fetch(input, init);
-      const isTransient5xx =
-        res.status === 502 || res.status === 503 || res.status === 504;
+      const isTransient5xx = res.status === 502 || res.status === 503 || res.status === 504;
       if (!isTransient5xx || attempt === retries) return res;
     } catch (err) {
       if (init?.signal?.aborted) throw err;

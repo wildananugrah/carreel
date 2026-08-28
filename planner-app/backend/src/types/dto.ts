@@ -178,9 +178,22 @@ export interface DashboardVehicleCard {
   preTrip: DashboardVehicleTripInfo | null;
   postTrip: DashboardVehicleTripInfo | null;
   latestFuelLevelPct: number | null;
+  /**
+   * An unread NON-finding alert exists (AI_FAILURE, LOW_FUEL, KM_ANOMALY,
+   * SCREEN_RECAPTURE, VEHICLE_MISMATCH). Drives the card's "AI Alert" status
+   * pill. AI_FAILURE matters most: it means analysis never ran, so a card with
+   * zero findings may simply be uninspected.
+   */
   hasAlerts: boolean;
+  /**
+   * Findings on this card — rows in `damage_markers`, both AI-detected and
+   * driver-added, excluding deleted and verification-failed markers. NOT a
+   * count of `alerts` rows: one alert covers every damage in a step, so alert
+   * rows never were a finding count.
+   */
   alertCount: number;
   hasDamageAlerts: boolean;
+  /** Same value as `alertCount`; kept so the alert tab filter reads clearly. */
   damageAlertCount: number;
   thumbnailMediaId: string | null;
 }

@@ -541,7 +541,10 @@ export function PhotoCapture() {
               unknown
             > | null;
             const postKm = speedoData?.odometerKm as number | undefined;
-            const preKm = preTripRef.odometerKm!;
+            // The `preTripRef?.odometerKm != null` guard above already
+            // establishes this, but narrowing doesn't reach inside the IIFE.
+            const preKm = preTripRef.odometerKm;
+            if (preKm == null) return null;
             const delta = postKm != null ? postKm - preKm : null;
             const isProcessing =
               speedoStep?.status === "UPLOADED" || speedoStep?.status === "PROCESSING";

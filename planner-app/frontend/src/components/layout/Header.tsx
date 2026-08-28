@@ -89,27 +89,25 @@ export function Header() {
 
                   {/* System section — SUPER_ADMIN only */}
                   {isSuperAdmin && (
-                    <>
-                      <div className="border-t border-[#2a2a2a] mt-1 pt-1">
-                        <p className="px-4 py-1 text-[9px] font-bold text-[#666] tracking-[1px] uppercase">
-                          System
-                        </p>
-                        <NavLink
-                          to="/admin/workspaces"
-                          onClick={() => setShowDropdown(false)}
-                          className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#222222]"
-                        >
-                          Workspaces
-                        </NavLink>
-                        <NavLink
-                          to="/admin/users"
-                          onClick={() => setShowDropdown(false)}
-                          className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#222222]"
-                        >
-                          All Users
-                        </NavLink>
-                      </div>
-                    </>
+                    <div className="border-t border-[#2a2a2a] mt-1 pt-1">
+                      <p className="px-4 py-1 text-[9px] font-bold text-[#666] tracking-[1px] uppercase">
+                        System
+                      </p>
+                      <NavLink
+                        to="/admin/workspaces"
+                        onClick={() => setShowDropdown(false)}
+                        className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#222222]"
+                      >
+                        Workspaces
+                      </NavLink>
+                      <NavLink
+                        to="/admin/users"
+                        onClick={() => setShowDropdown(false)}
+                        className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#222222]"
+                      >
+                        All Users
+                      </NavLink>
+                    </div>
                   )}
 
                   <div className="border-t border-[#2a2a2a] mt-1 pt-1">

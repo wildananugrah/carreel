@@ -71,9 +71,7 @@ export function WorkspaceList() {
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">
-              System
-            </p>
+            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">System</p>
             <h1 className="text-2xl font-black text-white mt-1">Workspaces</h1>
           </div>
           <button
@@ -125,21 +123,13 @@ export function WorkspaceList() {
               <tbody className="divide-y divide-[#2a2a2a]">
                 {workspaces.map((w) => (
                   <tr key={w.id} className="hover:bg-[#1f1f1f] transition-colors">
-                    <td className="px-4 py-3 text-sm font-bold text-white">
-                      {w.displayName}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#888] font-mono">
-                      {w.name}
-                    </td>
+                    <td className="px-4 py-3 text-sm font-bold text-white">{w.displayName}</td>
+                    <td className="px-4 py-3 text-xs text-[#888] font-mono">{w.name}</td>
                     <td className="px-4 py-3 text-sm text-[#C0C0C0] text-right">
                       {w.projectCount}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#C0C0C0] text-right">
-                      {w.memberCount}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#888]">
-                      {formatDate(w.createdAt)}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-[#C0C0C0] text-right">{w.memberCount}</td>
+                    <td className="px-4 py-3 text-xs text-[#888]">{formatDate(w.createdAt)}</td>
                     <td className="px-4 py-3 text-right">
                       <Link
                         to={`/admin/workspaces/${w.id}`}
@@ -158,6 +148,7 @@ export function WorkspaceList() {
 
       {/* Create modal */}
       {showCreate && (
+        // biome-ignore lint/a11y/useSemanticElements: backdrop acts as click-to-close, not a real button
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
           onClick={() => setShowCreate(false)}

@@ -14,9 +14,7 @@ export function RequireProjectAdmin() {
   if (loading) return null;
 
   const isSuperAdmin = scope?.systemRole === "SUPER_ADMIN";
-  const isProjectAdmin = scope?.projects.some(
-    (p) => p.projectRole === "PROJECT_ADMIN",
-  );
+  const isProjectAdmin = scope?.projects.some((p) => p.projectRole === "PROJECT_ADMIN");
 
   if (!isSuperAdmin && !isProjectAdmin) {
     return <Navigate to="/" replace />;

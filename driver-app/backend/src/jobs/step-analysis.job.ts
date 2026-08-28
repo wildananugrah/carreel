@@ -410,10 +410,18 @@ export class StepAnalysisJob {
       // results + the consensus, NOT the consensus itself — re-parsing it
       // would lose the top-level `damages` field. Use the consensus parsed
       // object the ensemble helper already produced.
+      //
+      // The non-body branch is deliberately `any`: the parsed shape is
+      // step-dependent (UNIT_IDENTIFICATION returns plate/make/model,
+      // SPEEDOMETER returns odometerKm/fuelLevelPct, ...) and is narrowed by
+      // the `stepType` branches below. Typing it Record<string, unknown> makes
+      // every downstream field `unknown` and forces ~12 assertions through the
+      // analysis pipeline — strictly worse than one `any` at the boundary.
       const parsed =
         stepType === "BODY_INSPECTION" && bodyInspectionParsed
           ? bodyInspectionParsed
-          : parseGeminiJson<any>(rawResponse, log, { stepId, stepType });
+          : // biome-ignore lint/suspicious/noExplicitAny: see comment above
+            parseGeminiJson<any>(rawResponse, log, { stepId, stepType });
       const processingTimeMs = Date.now() - startTime;
 
       // 4a. Side guard for BODY_INSPECTION damages is now applied per run

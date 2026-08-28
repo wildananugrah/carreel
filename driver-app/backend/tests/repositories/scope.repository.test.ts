@@ -16,7 +16,6 @@ function makeMockPrisma(userData: unknown) {
 
 describe("ScopeRepository.loadScope", () => {
   test("returns null for unknown user", async () => {
-    // biome-ignore lint/suspicious/noExplicitAny: mock
     const repo = new ScopeRepository(makeMockPrisma(null) as any);
     const scope = await repo.loadScope("ghost");
     expect(scope).toBeNull();
@@ -36,7 +35,6 @@ describe("ScopeRepository.loadScope", () => {
           },
         ],
         driverAssignmentsAsPlanner: [],
-        // biome-ignore lint/suspicious/noExplicitAny: mock
       }) as any,
     );
 
@@ -79,7 +77,6 @@ describe("ScopeRepository.loadScope", () => {
           { projectId: "p1", driverId: "d2" },
           { projectId: "p2", driverId: "d3" },
         ],
-        // biome-ignore lint/suspicious/noExplicitAny: mock
       }) as any,
     );
 
@@ -101,7 +98,6 @@ describe("ScopeRepository.loadScope", () => {
         systemRole: "SUPER_ADMIN",
         projectMemberships: [],
         driverAssignmentsAsPlanner: [],
-        // biome-ignore lint/suspicious/noExplicitAny: mock
       }) as any,
     );
     const scope = await repo.loadScope("u3");
@@ -123,7 +119,6 @@ describe("ScopeRepository.loadScope", () => {
           },
         ],
         driverAssignmentsAsPlanner: [],
-        // biome-ignore lint/suspicious/noExplicitAny: mock
       }) as any,
     );
     const scope = await repo.loadScope("u4");

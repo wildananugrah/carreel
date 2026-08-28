@@ -185,7 +185,10 @@ export function VehicleCard({ vehicle, selected, onSelect }: VehicleCardProps) {
                 {"\u270D\uFE0F"} TTD Pending
               </span>
             )}
-            {vehicle.hasAlerts && vehicle.alertCount > 0 && (
+            {/* alertCount is a finding count; hasAlerts now means "has an
+                operational alert" and drives the status pill instead, so this
+                must not be gated on it. */}
+            {vehicle.alertCount > 0 && (
               <span className="text-[10px] text-[#D4A800] font-bold animate-pulse">
                 {"\u26A0\uFE0F"} {vehicle.alertCount} Alert
               </span>

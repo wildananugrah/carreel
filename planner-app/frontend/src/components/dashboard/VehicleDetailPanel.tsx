@@ -1099,8 +1099,11 @@ function AIFlagSection({
             const evidencePhotoId =
               flag.evidenceMediaId ??
               (isPhotoBody && flag.bodySide ? sidePhotoMap?.[flag.bodySide] : undefined);
-            const hasTimestamp = typeof flag.videoTimestamp === "number";
-            const showSeek = !isPhotoBody && canSeek && hasTimestamp;
+            // Hold the narrowed value rather than a boolean: a `hasTimestamp`
+            // flag does not carry the narrowing to the JSX below, which is why
+            // both reads there previously needed a non-null assertion.
+            const seekTime = typeof flag.videoTimestamp === "number" ? flag.videoTimestamp : null;
+            const showSeek = !isPhotoBody && canSeek && seekTime !== null;
 
             return (
               <div
@@ -1124,18 +1127,18 @@ function AIFlagSection({
                     >
                       {"\uD83D\uDCF7"} Foto
                     </button>
-                  ) : showSeek ? (
+                  ) : showSeek && seekTime !== null ? (
                     <button
                       type="button"
                       className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1a1600] text-[#F5C518] hover:bg-[#2a2200] transition-colors"
                       onClick={() =>
                         setSeekLightbox({
                           src: `/api/media/${videoMediaId}/stream`,
-                          startTime: flag.videoTimestamp!,
+                          startTime: seekTime,
                         })
                       }
                     >
-                      {"\u25B6"} {formatVideoTimestamp(flag.videoTimestamp!)}
+                      {"\u25B6"} {formatVideoTimestamp(seekTime)}
                     </button>
                   ) : (
                     flag.confidence != null && (

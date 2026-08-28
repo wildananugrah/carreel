@@ -1,11 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
 import type { ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api, getToken } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import type { User, UserScope } from "../lib/types";
@@ -63,9 +57,7 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
   }, [updateUser]);
 
   return (
-    <ScopeContext.Provider
-      value={{ scope, loading: authLoading, refreshScope }}
-    >
+    <ScopeContext.Provider value={{ scope, loading: authLoading, refreshScope }}>
       {children}
     </ScopeContext.Provider>
   );

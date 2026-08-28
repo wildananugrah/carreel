@@ -35,9 +35,7 @@ function formatDate(iso: string): string {
  * Returns a deduplicated list of workspace display names from a user's
  * project memberships (a single workspace may contain multiple projects).
  */
-function uniqueWorkspaces(
-  memberships: AdminUserProjectMembership[],
-): string[] {
+function uniqueWorkspaces(memberships: AdminUserProjectMembership[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
   for (const m of memberships) {
@@ -49,17 +47,13 @@ function uniqueWorkspaces(
   return result;
 }
 
-function projectRoleColor(
-  role: "PROJECT_ADMIN" | "PLANNER" | "DRIVER",
-): string {
+function projectRoleColor(role: "PROJECT_ADMIN" | "PLANNER" | "DRIVER"): string {
   if (role === "PROJECT_ADMIN") return "text-[#F5C518]";
   if (role === "PLANNER") return "text-[#4DA3FF]";
   return "text-[#8DC26F]";
 }
 
-function projectRoleShort(
-  role: "PROJECT_ADMIN" | "PLANNER" | "DRIVER",
-): string {
+function projectRoleShort(role: "PROJECT_ADMIN" | "PLANNER" | "DRIVER"): string {
   if (role === "PROJECT_ADMIN") return "Admin";
   if (role === "PLANNER") return "Planner";
   return "Driver";
@@ -80,9 +74,7 @@ export function UserList() {
   >("USER");
   const [submitting, setSubmitting] = useState(false);
 
-  const [editingUser, setEditingUser] = useState<AdminUserListItem | null>(
-    null,
-  );
+  const [editingUser, setEditingUser] = useState<AdminUserListItem | null>(null);
   const [editFullName, setEditFullName] = useState("");
   const [editSystemRole, setEditSystemRole] = useState<
     "USER" | "SUPER_ADMIN" | "CARREEL_DRIVER_SUPPORT"
@@ -144,15 +136,12 @@ export function UserList() {
 
     const escalating =
       editingUser.systemRole !== editSystemRole &&
-      (editSystemRole === "SUPER_ADMIN" ||
-        editSystemRole === "CARREEL_DRIVER_SUPPORT");
+      (editSystemRole === "SUPER_ADMIN" || editSystemRole === "CARREEL_DRIVER_SUPPORT");
     if (
       escalating &&
       !window.confirm(
         `Grant ${
-          editSystemRole === "SUPER_ADMIN"
-            ? "SUPER_ADMIN"
-            : "CARREEL_DRIVER_SUPPORT"
+          editSystemRole === "SUPER_ADMIN" ? "SUPER_ADMIN" : "CARREEL_DRIVER_SUPPORT"
         } to ${editingUser.fullName}? They will bypass all project filters.`,
       )
     ) {
@@ -196,11 +185,7 @@ export function UserList() {
   };
 
   const handleCreate = async () => {
-    if (
-      !createEmail.trim() ||
-      !createFullName.trim() ||
-      createPassword.length < 8
-    ) {
+    if (!createEmail.trim() || !createFullName.trim() || createPassword.length < 8) {
       return;
     }
     setSubmitting(true);
@@ -232,9 +217,7 @@ export function UserList() {
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">
-              System
-            </p>
+            <p className="text-[11px] font-bold text-[#666] tracking-[1px] uppercase">System</p>
             <h1 className="text-2xl font-black text-white mt-1">All Users</h1>
           </div>
           <button
@@ -306,16 +289,11 @@ export function UserList() {
                 {users.map((u) => {
                   const workspaces = uniqueWorkspaces(u.projectMemberships);
                   return (
-                    <tr
-                      key={u.id}
-                      className="hover:bg-[#1f1f1f] transition-colors align-top"
-                    >
+                    <tr key={u.id} className="hover:bg-[#1f1f1f] transition-colors align-top">
                       <td className="px-4 py-3 text-sm font-bold text-white whitespace-nowrap">
                         {u.fullName}
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#888] whitespace-nowrap">
-                        {u.email}
-                      </td>
+                      <td className="px-4 py-3 text-xs text-[#888] whitespace-nowrap">{u.email}</td>
                       <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-[1px] text-[#C0C0C0] whitespace-nowrap">
                         {u.role}
                       </td>
@@ -406,6 +384,7 @@ export function UserList() {
 
       {/* Create modal */}
       {showCreate && (
+        // biome-ignore lint/a11y/useSemanticElements: backdrop acts as click-to-close, not a real button
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
           onClick={() => setShowCreate(false)}
@@ -465,9 +444,7 @@ export function UserList() {
                 <select
                   id="user-role"
                   value={createRole}
-                  onChange={(e) =>
-                    setCreateRole(e.target.value as "DRIVER" | "PLANNER")
-                  }
+                  onChange={(e) => setCreateRole(e.target.value as "DRIVER" | "PLANNER")}
                   disabled={createSystemRole === "CARREEL_DRIVER_SUPPORT"}
                   className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -490,23 +467,18 @@ export function UserList() {
                   value={createSystemRole}
                   onChange={(e) =>
                     setCreateSystemRole(
-                      e.target.value as
-                        | "USER"
-                        | "SUPER_ADMIN"
-                        | "CARREEL_DRIVER_SUPPORT",
+                      e.target.value as "USER" | "SUPER_ADMIN" | "CARREEL_DRIVER_SUPPORT",
                     )
                   }
                   className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518]"
                 >
                   <option value="USER">User</option>
                   <option value="SUPER_ADMIN">Super Admin</option>
-                  <option value="CARREEL_DRIVER_SUPPORT">
-                    Carreel Driver Support
-                  </option>
+                  <option value="CARREEL_DRIVER_SUPPORT">Carreel Driver Support</option>
                 </select>
                 <p className="text-[10px] text-[#666] mt-1">
-                  Carreel Driver Support users log into the driver-app with
-                  full cross-project access.
+                  Carreel Driver Support users log into the driver-app with full cross-project
+                  access.
                 </p>
               </div>
               <div>
@@ -604,10 +576,7 @@ export function UserList() {
                   value={editSystemRole}
                   onChange={(e) =>
                     setEditSystemRole(
-                      e.target.value as
-                        | "USER"
-                        | "SUPER_ADMIN"
-                        | "CARREEL_DRIVER_SUPPORT",
+                      e.target.value as "USER" | "SUPER_ADMIN" | "CARREEL_DRIVER_SUPPORT",
                     )
                   }
                   className="w-full px-3 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-[#F5C518]"
@@ -615,14 +584,12 @@ export function UserList() {
                   <option value="USER">User</option>
                   <option value="SUPER_ADMIN">Super Admin</option>
                   {editingUser.role === "DRIVER" && (
-                    <option value="CARREEL_DRIVER_SUPPORT">
-                      Carreel Driver Support
-                    </option>
+                    <option value="CARREEL_DRIVER_SUPPORT">Carreel Driver Support</option>
                   )}
                 </select>
                 <p className="text-[10px] text-[#666] mt-1">
-                  Grants elevated platform access. Driver Support is available
-                  only for driver-app users.
+                  Grants elevated platform access. Driver Support is available only for driver-app
+                  users.
                 </p>
               </div>
             </div>

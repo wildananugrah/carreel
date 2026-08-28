@@ -229,7 +229,13 @@ export interface DashboardVehicleCard {
   preTrip: DashboardVehicleTripInfo | null;
   postTrip: DashboardVehicleTripInfo | null;
   latestFuelLevelPct: number | null;
+  /** An unread non-finding alert exists — drives the "AI Alert" status pill. */
   hasAlerts: boolean;
+  /**
+   * Findings on this card (damage_markers, AI + driver-added). Render the
+   * badge on this alone — do NOT gate it on `hasAlerts`, which now means
+   * something different.
+   */
   alertCount: number;
   hasDamageAlerts: boolean;
   damageAlertCount: number;
