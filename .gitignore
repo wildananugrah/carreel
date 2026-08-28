@@ -2,3 +2,5 @@ references
 tests/temps
 server
 .DS_Store
+node_modules
+bun.lock

@@ -15,7 +15,14 @@ jobs:
       - name: Pull latest code
         run: |
           cd /home/wildandev/repo/carreel
-          git pull origin main
+          # The deploy target is also a live dev checkout, so it may be dirty or
+          # sitting on a feature branch. Park any local work in a recoverable
+          # stash (`git stash list`), then force the tree to exactly origin/main
+          # so the deploy is deterministic and never ships unreviewed code.
+          git stash push -u -m "deploy-autostash $(date -Is)" || true
+          git fetch origin main
+          git checkout -B main origin/main
+          git reset --hard origin/main
 
       - name: Run deploy script
         run: bash /home/wildandev/repo/carreel/deploy-all.sh
