@@ -41,6 +41,7 @@ interface SetupOptions {
   inspection?: InspectionWithRelations | null;
   step?: Partial<InspectionStep> | null;
   outcome?: DashboardPrecheckOutcome;
+  enabled?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -81,6 +82,7 @@ function setup(options: SetupOptions = {}) {
     inspectionRepo as IInspectionRepository,
     provider,
     mockLogger,
+    options.enabled ?? true,
   );
 
   return { service, calls };
@@ -210,6 +212,25 @@ describe("PrecheckService.checkDashboard", () => {
 
     await expect(run(service)).rejects.toMatchObject({ status: 404 });
     expect(calls).toHaveLength(0);
+  });
+
+  test("reports DISABLED without touching the DB or AI when turned off", async () => {
+    // DASHBOARD_PRECHECK_ENABLED=false. A disabled feature must cost
+    // nothing beyond the request itself.
+    const { service, calls } = setup({ enabled: false });
+
+    expect(await run(service)).toEqual({ status: "DISABLED" });
+    expect(calls).toHaveLength(0);
+  });
+
+  test("DISABLED short-circuits ahead of validation, not after it", async () => {
+    // A stale app sending anything at all should get the same cheap answer
+    // rather than a 400 that implies the feature is running.
+    const { service } = setup({ enabled: false });
+
+    expect(await run(service, Buffer.alloc(0), "video/mp4")).toEqual({
+      status: "DISABLED",
+    });
   });
 
   test("400s for a non-SPEEDOMETER step", async () => {

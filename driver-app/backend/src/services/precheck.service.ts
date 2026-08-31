@@ -1,10 +1,10 @@
-import type {
-  DashboardPrecheckOutcome,
-  IDashboardPrecheckProvider,
-} from "../interfaces/providers/dashboard-precheck.provider.interface";
+import type { IDashboardPrecheckProvider } from "../interfaces/providers/dashboard-precheck.provider.interface";
 import type { ILogger } from "../interfaces/providers/logger.provider.interface";
 import type { IInspectionRepository } from "../interfaces/repositories/inspection.repository.interface";
-import type { IPrecheckService } from "../interfaces/services/precheck.service.interface";
+import type {
+  DashboardPrecheckServiceOutcome,
+  IPrecheckService,
+} from "../interfaces/services/precheck.service.interface";
 import type { UserScope } from "../types/scope";
 import { badRequest, notFound } from "../utils/http-error";
 import { hasPlatformBypass } from "../utils/scope-filter";
@@ -22,6 +22,13 @@ export class PrecheckService implements IPrecheckService {
     private inspectionRepository: IInspectionRepository,
     private precheckProvider: IDashboardPrecheckProvider,
     private logger: ILogger,
+    /**
+     * DASHBOARD_PRECHECK_ENABLED. The driver-app reads the same flag from
+     * /api/config and skips the review step entirely, so this guard should
+     * never fire in normal operation — it exists so turning the feature off
+     * cannot be bypassed by a stale app that hasn't re-read the config.
+     */
+    private enabled: boolean = true,
   ) {}
 
   async checkDashboard(
@@ -31,7 +38,13 @@ export class PrecheckService implements IPrecheckService {
     driverId: string,
     photo: Buffer,
     mimeType: string,
-  ): Promise<DashboardPrecheckOutcome> {
+  ): Promise<DashboardPrecheckServiceOutcome> {
+    // Answered before any validation, DB read, or AI spend: a disabled
+    // feature should cost nothing beyond the request itself.
+    if (!this.enabled) {
+      return { status: "DISABLED" };
+    }
+
     if (!mimeType.startsWith("image/")) {
       throw badRequest("Dashboard pre-check only accepts images");
     }

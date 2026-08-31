@@ -39,6 +39,7 @@ import { WorkspaceRepository } from "./repositories/workspace.repository";
 // Routes
 import { createAuthRoutes } from "./routes/auth.route";
 import { createChunkedUploadRoutes } from "./routes/chunked-upload.route";
+import { createConfigRoutes } from "./routes/config.route";
 import { createDamageRoutes } from "./routes/damage.route";
 import { createHealthRoutes } from "./routes/health.route";
 import { createInspectionRoutes } from "./routes/inspection.route";
@@ -184,10 +185,18 @@ const damageEditingService = new DamageEditingService(
   logger,
 );
 
+// Off-switch for the in-camera dashboard pre-check. Default ON, matching
+// AI_ENABLED's convention. The driver-app reads the same value from
+// /api/config so it can skip the review step without uploading a photo to
+// find out it is disabled.
+const dashboardPrecheckEnabled =
+  process.env.DASHBOARD_PRECHECK_ENABLED !== "false";
+
 const precheckService = new PrecheckService(
   inspectionRepository,
   dashboardPrecheckProvider,
   logger,
+  dashboardPrecheckEnabled,
 );
 
 const workspaceService = new WorkspaceService(workspaceRepository);
@@ -258,6 +267,8 @@ app.onError((err, c) => {
 // Routes
 app.route("/health", createHealthRoutes(prisma, storage));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
+// Public, unauthenticated: flags the app needs before it can act.
+app.route("/api/config", createConfigRoutes({ dashboardPrecheckEnabled }));
 app.route(
   "/api/inspections",
   createInspectionRoutes(

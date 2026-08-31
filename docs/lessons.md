@@ -244,3 +244,25 @@ the wording.
 workflow. The provider returns `UNAVAILABLE` rather than a verdict, the route
 answers 200, and "Pakai Foto Ini" stays enabled — including for genuine
 `NO_GAUGE_ON_VEHICLE` cases like EVs, where a retake could never help.
+
+### 2026-08-31 — `tsc --noEmit` checks nothing in the Vite frontends
+
+**What happened:** While adding the pre-check off-switch, `bunx tsc --noEmit`
+in `driver-app/frontend` reported success on a file with a genuine type error
+(destructuring `.result` off a union that had just gained a `DISABLED` member
+without it). `bunx tsc -b` caught it immediately.
+
+**Why:** `driver-app/frontend/tsconfig.json` is a solution-style config —
+`"files": []` plus `references` to `tsconfig.app.json` and
+`tsconfig.node.json`. With no files of its own and no `-b`, `tsc` has nothing
+to check and exits 0. The references are only followed in build mode.
+
+**Prevention:** Typecheck the frontends with **`bunx tsc -b`**, or just
+`bun run build` (which is `tsc -b && vite build`). `tsc --noEmit` is correct
+for the backends, which use a plain non-referenced tsconfig — the two halves
+of this repo need different commands, and the frontend one fails open.
+
+**Wider point:** a validation command that passes without doing anything is
+worse than one that fails, because it is indistinguishable from success.
+When adopting a check on an unfamiliar project, confirm it actually sees the
+files — introduce a deliberate error once and watch it fail.

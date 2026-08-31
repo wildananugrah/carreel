@@ -1785,6 +1785,18 @@ the planner-app is untouched.
 - **Keep it on a Flash model.** `GEMINI_MODEL_DASHBOARD_PRECHECK` — this fires
   once per shutter press and once per retake, making it the
   highest-frequency AI call in the driver flow.
+- **`DASHBOARD_PRECHECK_ENABLED=false` turns it off** (default on, matching
+  `AI_ENABLED`'s convention). The flag is served to the driver-app by the
+  public `GET /api/config` route, because the app must decide **before**
+  uploading: answering "is this on?" from the pre-check endpoint itself would
+  cost the driver 1-3 MB of mobile data per shutter press to be told no. The
+  service also returns `{ status: "DISABLED" }` ahead of all validation and
+  DB work, so a stale app can't bypass the flag, and `CameraOverlay`
+  auto-accepts that response instead of showing a review step that checked
+  nothing.
+- **`/api/config` is public and must stay non-tenant.** It exposes only
+  booleans about how the deployment is configured. Nothing that varies per
+  user or project belongs there — it has no auth and no scope.
 
 
 #### Video Duration Configuration

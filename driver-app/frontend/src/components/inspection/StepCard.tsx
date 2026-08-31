@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useTorch } from "../../hooks/useTorch";
 import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
+import { useAppConfig } from "../../lib/app-config";
 import {
   type DashboardPrecheckOutcome,
   runDashboardPrecheck,
@@ -189,7 +190,17 @@ export function CameraOverlay({
         setChecking(true);
         precheck(file)
           .then((next) => {
-            if (checkTokenRef.current === token) setOutcome(next);
+            if (checkTokenRef.current !== token) return;
+            // Stale config: this app still thinks the pre-check is on but
+            // the deployment turned it off. Fall straight through to the
+            // upload rather than showing a review step that checked nothing.
+            if (next.status === "DISABLED") {
+              setPending(null);
+              stopStream();
+              onCapture(file);
+              return;
+            }
+            setOutcome(next);
           })
           .catch(() => {
             if (checkTokenRef.current === token) {
@@ -350,6 +361,7 @@ export function StepCard({
 }: StepCardProps) {
   const uid = useId();
   const fileInputId = `${uid}-file`;
+  const { dashboardPrecheckEnabled } = useAppConfig();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -455,7 +467,7 @@ export function StepCard({
           }}
           onClose={() => setShowCamera(false)}
           precheck={
-            step.stepType === "SPEEDOMETER"
+            step.stepType === "SPEEDOMETER" && dashboardPrecheckEnabled
               ? (file) => runDashboardPrecheck(step.inspectionId, step.id, file)
               : undefined
           }

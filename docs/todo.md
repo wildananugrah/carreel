@@ -192,4 +192,14 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
       Validation: driver backend 298 pass / 0 fail, tsc + biome clean both
       packages, frontend build clean, SPEEDOMETER prompt verified byte-identical
       to pre-refactor output
+- [x] Dashboard pre-check off-switch: `DASHBOARD_PRECHECK_ENABLED` in the
+      driver backend .env (default on, mirroring `AI_ENABLED`). Served to the
+      driver-app by a new public `GET /api/config`, because the app has to
+      decide before uploading — asking the pre-check endpoint itself would
+      burn 1-3 MB of mobile data per shutter press just to learn the feature
+      is off. Backend also short-circuits `{ status: "DISABLED" }` ahead of
+      validation and DB work so a stale app can't bypass it, and the camera
+      auto-accepts that rather than showing a review step that checked
+      nothing. Verified live in both positions against the running backend.
+      Validation: driver backend 300 pass / 0 fail, `tsc -b` + biome clean
 - [ ]

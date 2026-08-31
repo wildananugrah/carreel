@@ -100,6 +100,11 @@ export function DashboardPrecheckPanel({
 
   if (!outcome) return null;
 
+  // CameraOverlay auto-accepts a DISABLED response without rendering the
+  // review step, so this is unreachable in practice — it is here so the
+  // panel stays total over the union rather than relying on that.
+  if (outcome.status === "DISABLED") return null;
+
   if (outcome.status === "UNAVAILABLE") {
     return (
       <div className="rounded-xl border border-white/15 bg-black/75 backdrop-blur-sm p-3">

@@ -46,7 +46,13 @@ export interface DashboardPrecheckResult {
 
 export type DashboardPrecheckOutcome =
   | { status: "CHECKED"; result: DashboardPrecheckResult }
-  | { status: "UNAVAILABLE"; reason: string };
+  | { status: "UNAVAILABLE"; reason: string }
+  /**
+   * The deployment has DASHBOARD_PRECHECK_ENABLED=false. The app normally
+   * learns this from /api/config and never calls at all; this covers the
+   * window where a running app has stale config.
+   */
+  | { status: "DISABLED" };
 
 const ODOMETER_HINTS: Record<OdometerPrecheckReason, string> = {
   OK: "",
