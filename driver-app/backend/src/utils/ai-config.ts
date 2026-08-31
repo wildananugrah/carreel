@@ -88,3 +88,24 @@ export const BODY_VERIFICATION_AI_CONFIG: AIAnalysisOptions = {
   topK: 40,
   model: process.env.GEMINI_MODEL_BODY_INSPECTION,
 };
+
+/**
+ * In-camera dashboard pre-check — runs inline while the driver is still
+ * standing at the vehicle, so latency is the binding constraint, not depth.
+ *
+ * LOW thinking and a 2k output cap because the task is narrow: is the
+ * odometer legible, is a fuel gauge in frame and readable. There is no
+ * damage enumeration or identity reasoning to think through. temperature 0.0
+ * keeps the same photo producing the same verdict, so a driver who retakes
+ * an identical shot is not told something different the second time.
+ *
+ * Point GEMINI_MODEL_DASHBOARD_PRECHECK at a Flash model — this fires once
+ * per shutter press (and once per retake), so it is the highest-frequency
+ * AI call in the driver flow and the one most worth keeping cheap.
+ */
+export const DASHBOARD_PRECHECK_AI_CONFIG: AIAnalysisOptions = {
+  thinkingLevel: "LOW",
+  maxOutputTokens: 2000,
+  temperature: 0.0,
+  model: process.env.GEMINI_MODEL_DASHBOARD_PRECHECK,
+};

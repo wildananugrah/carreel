@@ -173,4 +173,23 @@ Persistent task tracker. Update this file as tasks progress — it is the checkp
       Migration applied; all 3 existing workspaces backfilled to all 8 sides.
       Validation: driver 264 pass / 0 fail, planner 96 pass / 0 fail (the
       long-standing red tests were fixed too — see docs/lessons.md 2026-08-28)
+- [x] In-camera dashboard pre-check (SPEEDOMETER): the shutter now freezes the
+      frame and runs a cheap Flash-tier legibility check before upload, so the
+      driver sees what the AI could read — odometer KM and fuel % — with a
+      per-field reason code, while still standing at the vehicle. Existing
+      `null` fuel readings were being discarded silently; the model already
+      knew it could not lock onto a gauge, nobody was told. Never blocks:
+      "Pakai Foto Ini" stays enabled (some vehicles genuinely have no fuel
+      gauge — `NO_GAUGE_ON_VEHICLE` renders neutral, not red) and an AI outage
+      returns `UNAVAILABLE`, not an error. Stores nothing; the authoritative
+      values still come from `StepAnalysisJob` on upload, so no migration.
+      Odometer / fuel-gauge / digital-display rules extracted into shared
+      constants used by BOTH the SPEEDOMETER prompt and the pre-check, with a
+      regression test pinning them together — a pre-check that says "readable"
+      while the real pass returns null is the exact failure this prevents.
+      Tune with `GEMINI_MODEL_DASHBOARD_PRECHECK` (this is the
+      highest-frequency AI call in the driver flow: once per shutter press).
+      Validation: driver backend 298 pass / 0 fail, tsc + biome clean both
+      packages, frontend build clean, SPEEDOMETER prompt verified byte-identical
+      to pre-refactor output
 - [ ]

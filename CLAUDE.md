@@ -1724,6 +1724,69 @@ Both overlays:
 - Handle camera permission errors gracefully
 - Clean up streams on close/unmount
 
+#### In-Camera Dashboard Pre-Check (SPEEDOMETER)
+
+Fuel-gauge readings fail often enough that a silent `null` is not acceptable.
+The SPEEDOMETER prompt is deliberately fail-closed ("set fuelLevelPct to null.
+Do not guess"), so the model already knows when it cannot lock onto a gauge —
+the problem was that nobody was told. By the time the async `StepAnalysisJob`
+produced its result, the driver had left the vehicle.
+
+The pre-check moves that signal to the shutter press. `CameraOverlay` freezes
+the frame, runs a cheap Flash-tier legibility check, and shows the verdict
+over the frozen photo with **Foto Ulang** / **Pakai Foto Ini** — while the
+driver is still standing at the vehicle and a retake costs seconds.
+
+**It stores nothing.** The photo is discarded once the check resolves, and the
+authoritative `odometerKm` / `fuelLevelPct` still come from the full
+SPEEDOMETER analysis that runs on upload. No migration, no new columns, and
+the planner-app is untouched.
+
+| Piece | File |
+|---|---|
+| Contract + outcome type | `interfaces/providers/dashboard-precheck.provider.interface.ts` |
+| Gemini impl + response normalization | `providers/gemini-dashboard-precheck.provider.ts` |
+| Stub (no `GEMINI_API_KEY`) | `providers/dashboard-precheck.stub.provider.ts` |
+| Ownership gate | `services/precheck.service.ts` |
+| Route | `POST /api/inspections/:id/steps/:stepId/precheck` (multipart `photo`) |
+| Tuning | `DASHBOARD_PRECHECK_AI_CONFIG` in `utils/ai-config.ts` |
+| Driver copy + API call | `frontend/src/lib/dashboard-precheck.ts` |
+| Verdict UI | `frontend/src/components/inspection/DashboardPrecheckPanel.tsx` |
+
+**Rules:**
+
+- **The reading rules are shared constants, not copies.** `ODOMETER_READ_RULES`,
+  `DIGITAL_DISPLAY_DISAMBIGUATION`, and `FUEL_GAUGE_LOCK_RULES` in `prompts.ts`
+  are interpolated by BOTH `buildSpeedometerPrompt` and
+  `buildDashboardPrecheckPrompt`. A pre-check that reports "readable" while
+  the real pass returns `null` is worse than no pre-check — it teaches drivers
+  the indicator lies. `tests/utils/prompt-shared-rules.test.ts` pins them
+  together; keep it passing.
+- **The pre-check stays narrow.** Legibility only. Screen-recapture detection,
+  vehicle identity, and warning lights belong to the authoritative pass — the
+  driver waits on this call, so nothing goes in it that does not change what
+  they should do in the next five seconds.
+- **Never block the driver.** `Pakai Foto Ini` is always enabled. Some vehicles
+  genuinely have no fuel gauge on the cluster (`NO_GAUGE_ON_VEHICLE`, e.g. an
+  EV showing battery %) and render neutral rather than red, and an AI outage
+  returns `UNAVAILABLE` — a neutral "could not check", never an error.
+  Infrastructure trouble must not trap someone in a camera overlay.
+- **`readable: true` requires a value.** `normalizePrecheckResult` demotes any
+  field claiming readability without a usable number: a green tick beside a
+  blank value reads as "confirmed". It also rejects a fuel % outside 0–100 and
+  drops string odometers (`"45.230"` is 45230 in id-ID, 45.23 in en-US).
+- **Reason codes are a closed enum; the frontend owns the wording.** The model
+  returns `GAUGE_NOT_IN_FRAME`, `GLARE`, `LEVEL_AMBIGUOUS`, … and
+  `dashboard-precheck.ts` maps them to Indonesian copy. Unknown codes fall
+  back to a safe value rather than reaching the driver.
+- **`precheck` on `CameraOverlay` is optional and SPEEDOMETER-only.**
+  `CameraOverlay` is shared with `EightSidePhotoCapture` and
+  `AdditionalPhotosCapture`; omitting the prop keeps their behavior identical.
+- **Keep it on a Flash model.** `GEMINI_MODEL_DASHBOARD_PRECHECK` — this fires
+  once per shutter press and once per retake, making it the
+  highest-frequency AI call in the driver flow.
+
+
 #### Video Duration Configuration
 
 | Variable | Default | Purpose |

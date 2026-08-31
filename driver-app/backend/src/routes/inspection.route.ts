@@ -2,12 +2,15 @@ import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { BodySide, type InspectionStatus } from "../generated/prisma";
 import type { IInspectionService } from "../interfaces/services/inspection.service.interface";
+import type { IPrecheckService } from "../interfaces/services/precheck.service.interface";
 import type { IUploadService } from "../interfaces/services/upload.service.interface";
 import type { AppEnv, TripTab } from "../types/dto";
+import { badRequest } from "../utils/http-error";
 
 export function createInspectionRoutes(
   inspectionService: IInspectionService,
   uploadService: IUploadService,
+  precheckService: IPrecheckService,
   authMiddleware: MiddlewareHandler<AppEnv>,
 ) {
   const app = new Hono<AppEnv>();
@@ -217,6 +220,39 @@ export function createInspectionRoutes(
       userId,
     );
     return c.json(result);
+  });
+
+  // POST /api/inspections/:id/steps/:stepId/precheck
+  // Multipart form: photo (File).
+  //
+  // In-camera legibility check for the dashboard frame the driver just shot,
+  // answered while they are still standing at the vehicle. Stores nothing —
+  // the photo is discarded once the check resolves, and the authoritative
+  // odometer/fuel values still come from the analysis that runs on upload.
+  //
+  // Always 200 when the caller owns the step: a photo the AI cannot read is a
+  // verdict, not an error, and an AI outage returns status UNAVAILABLE so the
+  // driver is never trapped in the camera by infrastructure trouble.
+  app.post("/:id/steps/:stepId/precheck", async (c) => {
+    const userId = c.get("userId") as string;
+    const scope = c.get("scope");
+    if (!scope) return c.json({ error: "Unauthenticated" }, 401);
+
+    const form = await c.req.parseBody({ all: false });
+    const photo = form.photo;
+    if (!(photo instanceof File)) {
+      throw badRequest("photo (File) required in multipart body");
+    }
+
+    const outcome = await precheckService.checkDashboard(
+      scope,
+      c.req.param("id"),
+      c.req.param("stepId"),
+      userId,
+      Buffer.from(await photo.arrayBuffer()),
+      photo.type || "image/jpeg",
+    );
+    return c.json(outcome);
   });
 
   // POST /api/inspections/:id/steps/:stepId/media

@@ -13,11 +13,13 @@ import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { createErrorHandlerMiddleware } from "./middlewares/error-handler.middleware";
 import { createRequestLoggerMiddleware } from "./middlewares/request-logger.middleware";
 import { DamagePhotoVerificationStubProvider } from "./providers/damage-photo-verification.stub.provider";
+import { DashboardPrecheckStubProvider } from "./providers/dashboard-precheck.stub.provider";
 import {
   GeminiProvider,
   GeminiStubProvider,
 } from "./providers/gemini.provider";
 import { GeminiDamagePhotoVerificationProvider } from "./providers/gemini-damage-photo-verification.provider";
+import { GeminiDashboardPrecheckProvider } from "./providers/gemini-dashboard-precheck.provider";
 import { PgBossQueueProvider } from "./providers/pgboss-queue.provider";
 import { buildStorageRegistry } from "./providers/storage-registry";
 import { WebSocketNotificationProvider } from "./providers/websocket-notification.provider";
@@ -49,6 +51,7 @@ import { ChunkedUploadService } from "./services/chunked-upload.service";
 import { DamageEditingService } from "./services/damage-editing.service";
 import { InspectionService } from "./services/inspection.service";
 import { MediaStreamService } from "./services/media-stream.service";
+import { PrecheckService } from "./services/precheck.service";
 import { UploadService } from "./services/upload.service";
 import { WorkspaceService } from "./services/workspace.service";
 import type { AppEnv } from "./types/dto";
@@ -103,6 +106,14 @@ const aiProvider = geminiKey
 const damagePhotoVerificationProvider = process.env.GEMINI_API_KEY
   ? new GeminiDamagePhotoVerificationProvider(aiProvider, logger)
   : new DamagePhotoVerificationStubProvider();
+
+// In-camera dashboard pre-check. Without a Gemini key the stub reports
+// UNAVAILABLE, which the driver-app renders as a neutral "could not check"
+// and still lets the driver proceed — so the capture flow works end-to-end
+// with AI disabled.
+const dashboardPrecheckProvider = process.env.GEMINI_API_KEY
+  ? new GeminiDashboardPrecheckProvider(aiProvider, logger)
+  : new DashboardPrecheckStubProvider();
 
 const notificationProvider = new WebSocketNotificationProvider(
   process.env.WEBSOCKET_URL ?? "http://localhost:3003",
@@ -170,6 +181,12 @@ const damageEditingService = new DamageEditingService(
   damageAuditLogRepository,
   storage,
   damagePhotoVerificationProvider,
+  logger,
+);
+
+const precheckService = new PrecheckService(
+  inspectionRepository,
+  dashboardPrecheckProvider,
   logger,
 );
 
@@ -243,7 +260,12 @@ app.route("/health", createHealthRoutes(prisma, storage));
 app.route("/api/auth", createAuthRoutes(authService, authMiddleware));
 app.route(
   "/api/inspections",
-  createInspectionRoutes(inspectionService, uploadService, authMiddleware),
+  createInspectionRoutes(
+    inspectionService,
+    uploadService,
+    precheckService,
+    authMiddleware,
+  ),
 );
 // Damage editing endpoints are namespaced under /api/inspections — Hono
 // supports stacking multiple routers under the same prefix; routes inside

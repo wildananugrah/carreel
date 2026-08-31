@@ -1,12 +1,18 @@
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTorch } from "../../hooks/useTorch";
 import { useUploadSources } from "../../hooks/useUploadSources";
 import { api } from "../../lib/api";
+import {
+  type DashboardPrecheckOutcome,
+  runDashboardPrecheck,
+  shouldSuggestRetake,
+} from "../../lib/dashboard-precheck";
 import type { InspectionStep } from "../../lib/types";
 import { MediaImage } from "../ui/MediaImage";
 import { MediaLightbox } from "../ui/MediaLightbox";
 import { StatusBadge } from "../ui/StatusBadge";
+import { DashboardPrecheckPanel } from "./DashboardPrecheckPanel";
 
 const IMAGE_ONLY_STEPS = ["UNIT_IDENTIFICATION", "SPEEDOMETER", "VIN_NUMBER"];
 
@@ -73,9 +79,17 @@ function StepIcon({ stepType }: { stepType: string }) {
 export function CameraOverlay({
   onCapture,
   onClose,
+  precheck,
 }: {
   onCapture: (file: File) => void;
   onClose: () => void;
+  /**
+   * Optional review step. When provided, the shutter freezes the frame and
+   * runs this check instead of returning immediately, so the driver sees
+   * what the AI could read while they can still retake. Omitted by every
+   * other capture flow, which keeps their behavior unchanged.
+   */
+  precheck?: (file: File) => Promise<DashboardPrecheckOutcome>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -84,7 +98,27 @@ export function CameraOverlay({
   const [err, setErr] = useState("");
   const [activeStream, setActiveStream] = useState<MediaStream | null>(null);
 
+  // Review state — only ever populated when `precheck` is supplied. The
+  // camera stream is deliberately left running behind the frozen frame so
+  // "Foto Ulang" resumes instantly instead of re-acquiring the device.
+  const [pending, setPending] = useState<{ file: File; url: string } | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [outcome, setOutcome] = useState<DashboardPrecheckOutcome | null>(null);
+
   const torch = useTorch(activeStream);
+
+  // Identifies the in-flight pre-check. A driver who retakes before the
+  // previous check resolves would otherwise see the stale verdict land on
+  // top of their new photo.
+  const checkTokenRef = useRef(0);
+
+  // One owner for the frozen-frame object URL: it is revoked whenever
+  // `pending` is cleared or the overlay unmounts, so retake, accept, and
+  // close are all covered without each having to remember.
+  useEffect(() => {
+    if (!pending) return;
+    return () => URL.revokeObjectURL(pending.url);
+  }, [pending]);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) {
@@ -140,15 +174,59 @@ export function CameraOverlay({
       (blob) => {
         if (!blob) return;
         const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
-        stopStream();
-        onCapture(file);
+
+        if (!precheck) {
+          stopStream();
+          onCapture(file);
+          return;
+        }
+
+        // Freeze the frame and ask what the AI could read from it. The
+        // stream stays live underneath so a retake is instant.
+        const token = ++checkTokenRef.current;
+        setPending({ file, url: URL.createObjectURL(file) });
+        setOutcome(null);
+        setChecking(true);
+        precheck(file)
+          .then((next) => {
+            if (checkTokenRef.current === token) setOutcome(next);
+          })
+          .catch(() => {
+            if (checkTokenRef.current === token) {
+              setOutcome({
+                status: "UNAVAILABLE",
+                reason: "Pemeriksaan foto gagal",
+              });
+            }
+          })
+          .finally(() => {
+            if (checkTokenRef.current === token) setChecking(false);
+          });
       },
       "image/jpeg",
       0.9,
     );
-  }, [stopStream, onCapture]);
+  }, [stopStream, onCapture, precheck]);
+
+  const handleRetake = useCallback(() => {
+    checkTokenRef.current++;
+    setPending(null);
+    setOutcome(null);
+    setChecking(false);
+  }, []);
+
+  const handleAccept = useCallback(() => {
+    if (!pending) return;
+    const { file } = pending;
+    checkTokenRef.current++;
+    setPending(null);
+    setOutcome(null);
+    stopStream();
+    onCapture(file);
+  }, [pending, stopStream, onCapture]);
 
   const handleClose = useCallback(() => {
+    checkTokenRef.current++;
     stopStream();
     onClose();
   }, [stopStream, onClose]);
@@ -184,6 +262,22 @@ export function CameraOverlay({
           </button>
         )}
 
+        {/* Frozen frame under review — covers the still-running preview */}
+        {pending && (
+          <img
+            src={pending.url}
+            alt="Hasil foto"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+
+        {/* Verdict, anchored above the controls so it never covers the dashboard */}
+        {pending && (
+          <div className="absolute inset-x-0 bottom-0 p-3">
+            <DashboardPrecheckPanel outcome={outcome} checking={checking} />
+          </div>
+        )}
+
         {!ready && !err && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-spin w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full" />
@@ -197,19 +291,47 @@ export function CameraOverlay({
       </div>
 
       {/* Controls */}
-      <div className="bg-black px-6 py-5 flex items-center justify-between">
-        <button type="button" onClick={handleClose} className="text-white text-sm px-4 py-2">
-          Batal
-        </button>
-        <button
-          type="button"
-          disabled={!ready}
-          onClick={handleCapture}
-          className="w-16 h-16 rounded-full border-4 border-white bg-white/20 disabled:opacity-30 active:bg-white/40 transition-colors"
-          aria-label="Ambil foto"
-        />
-        <div className="w-16" />
-      </div>
+      {pending ? (
+        <div className="bg-black px-4 py-5 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRetake}
+            className="flex-1 min-h-[48px] rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] text-neutral-300 text-sm font-medium active:bg-[#222222] transition-colors"
+          >
+            Foto Ulang
+          </button>
+          {/* Always enabled: some vehicles genuinely have no fuel gauge, and
+              an AI outage must never trap the driver in the camera. Styled
+              secondary while a retake would help, so the recommended action
+              is the visually obvious one. */}
+          <button
+            type="button"
+            disabled={checking}
+            onClick={handleAccept}
+            className={`flex-1 min-h-[48px] rounded-xl text-sm font-bold transition-colors disabled:opacity-40 ${
+              outcome?.status === "CHECKED" && shouldSuggestRetake(outcome.result)
+                ? "border border-yellow-400/40 bg-yellow-400/10 text-yellow-400 active:bg-yellow-400/20"
+                : "bg-yellow-400 text-black active:bg-yellow-300"
+            }`}
+          >
+            Pakai Foto Ini
+          </button>
+        </div>
+      ) : (
+        <div className="bg-black px-6 py-5 flex items-center justify-between">
+          <button type="button" onClick={handleClose} className="text-white text-sm px-4 py-2">
+            Batal
+          </button>
+          <button
+            type="button"
+            disabled={!ready}
+            onClick={handleCapture}
+            className="w-16 h-16 rounded-full border-4 border-white bg-white/20 disabled:opacity-30 active:bg-white/40 transition-colors"
+            aria-label="Ambil foto"
+          />
+          <div className="w-16" />
+        </div>
+      )}
 
       {/* Hidden canvas for capture */}
       <canvas ref={canvasRef} className="hidden" />
@@ -332,6 +454,11 @@ export function StepCard({
             handleFile(file);
           }}
           onClose={() => setShowCamera(false)}
+          precheck={
+            step.stepType === "SPEEDOMETER"
+              ? (file) => runDashboardPrecheck(step.inspectionId, step.id, file)
+              : undefined
+          }
         />
       )}
 

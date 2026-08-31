@@ -193,3 +193,54 @@ double-counts. The dedup must drop AI carry-overs only — `POST /damages`
 derives `isNewDamage` from the request body and defaults it to false, so a
 hand-added post-trip marker would otherwise be silently discarded. See
 `planner-app/backend/src/utils/finding-count.ts`.
+
+### 2026-08-31 — A model that knows it failed is useless if nobody is told
+
+**What happened:** Drivers reported the fuel gauge "cannot be captured
+perfectly". The SPEEDOMETER prompt was not actually the problem — it already
+carried a strict CRITICAL FUEL-GAUGE LOCK protocol ending in "set
+fuelLevelPct to null. Do not guess", and it was obeying it. The failure was
+that the `null` went straight into `TelemetryData` and nothing surfaced it.
+`PhotoCapture.tsx` rendered banners only for vehicle mismatch, screen
+recapture, KM anomaly, and hard AI failure — an unreadable gauge was none of
+those, so the driver saw a green "Analisa AI selesai" and walked away. By the
+time anyone noticed the blank fuel level, the vehicle was gone.
+
+**Why:** Uncertainty was modelled as an absent value. `null` is
+indistinguishable from "not applicable" and carries no reason, so no UI could
+have told the driver what to fix even if one had tried. Compounding it, the
+analysis runs as a background pgboss job — the one actor who could fix the
+photo, standing at the vehicle holding a phone, had already left the screen
+before the result existed.
+
+**Prevention:** When a model is instructed to refuse rather than guess, treat
+the refusal as a first-class result with a reason code, not as a missing
+field, and deliver it while the human can still act on it. The fix runs the
+legibility check inline at the shutter press and reports a closed enum
+(`GAUGE_NOT_IN_FRAME`, `GLARE`, `LEVEL_AMBIGUOUS`, `NO_GAUGE_ON_VEHICLE`, …)
+that the frontend maps to Indonesian copy — the model reports a code, we own
+the wording.
+
+**Two traps worth carrying forward:**
+
+1. **Two prompts reading the same thing will drift, and the drift is
+   invisible.** A pre-check that says "readable" while the authoritative pass
+   returns `null` is worse than no pre-check — it actively teaches drivers
+   the indicator lies. The reading rules now live in shared constants
+   (`ODOMETER_READ_RULES`, `DIGITAL_DISPLAY_DISAMBIGUATION`,
+   `FUEL_GAUGE_LOCK_RULES`) that both prompts interpolate, with
+   `tests/utils/prompt-shared-rules.test.ts` asserting anchors appear in
+   both. When refactoring tuned prompt text, prove equivalence rather than
+   eyeballing it: render every `buildStepPrompt` variant before and after and
+   diff the output.
+
+2. **`readable: true` with no value must be forced to unreadable.** A green
+   tick beside a blank number reads to a driver as "confirmed" — the precise
+   false reassurance the feature exists to remove. `normalizePrecheckResult`
+   enforces the invariant, and also drops a string odometer ("45.230" is
+   45230 in id-ID and 45.23 in en-US — unresolvable, so never guessed).
+
+**Also:** never let an AI or network failure gate a driver's physical
+workflow. The provider returns `UNAVAILABLE` rather than a verdict, the route
+answers 200, and "Pakai Foto Ini" stays enabled — including for genuine
+`NO_GAUGE_ON_VEHICLE` cases like EVs, where a retake could never help.

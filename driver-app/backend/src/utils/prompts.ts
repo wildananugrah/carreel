@@ -142,6 +142,57 @@ export interface DamageEvidencePhotoVerificationResult {
   reasoning: string;
 }
 
+/**
+ * Why the driver's photo could not be read, as a closed enum rather than
+ * prose. The driver-app maps these to Indonesian copy, so the wording
+ * shown on the phone stays under our control instead of varying with
+ * whatever sentence the model produced.
+ */
+export type OdometerPrecheckReason =
+  | "OK"
+  | "NOT_IN_FRAME"
+  | "BLURRY"
+  | "GLARE"
+  | "DASHBOARD_OFF"
+  | "TRIP_ONLY";
+
+export type FuelPrecheckReason =
+  | "OK"
+  | "GAUGE_NOT_IN_FRAME"
+  | "GAUGE_BLURRY"
+  | "GLARE"
+  | "DASHBOARD_OFF"
+  | "LEVEL_AMBIGUOUS"
+  | "NO_GAUGE_ON_VEHICLE";
+
+export type FuelGaugeType =
+  | "ANALOG_NEEDLE"
+  | "DIGITAL_BAR"
+  | "DIGITAL_PERCENT"
+  | "NONE";
+
+/**
+ * Result of the in-camera dashboard pre-check. This is transient guidance
+ * shown to the driver before the photo is uploaded — it is never persisted.
+ * The stored odometerKm/fuelLevelPct still come from the full SPEEDOMETER
+ * analysis in StepAnalysisJob.
+ */
+export interface DashboardPrecheckAIResult {
+  dashboardLit: boolean;
+  odometer: {
+    readable: boolean;
+    valueKm: number | null;
+    reasonCode: OdometerPrecheckReason;
+  };
+  fuel: {
+    gaugeFound: boolean;
+    readable: boolean;
+    gaugeType: FuelGaugeType;
+    valuePct: number | null;
+    reasonCode: FuelPrecheckReason;
+  };
+}
+
 /** Vehicle context passed to prompt builders when unit data is available */
 export interface VehicleContext {
   make?: string | null;
@@ -517,6 +568,113 @@ If brand and model match, but year is unknown because it cannot be verified from
 // PROMPT BUILDERS (dynamic, vehicle-aware)
 // ========================
 
+/**
+ * Odometer / fuel-gauge reading rules, shared verbatim between the full
+ * SPEEDOMETER analysis and the in-camera dashboard pre-check.
+ *
+ * These MUST stay a single source of truth: the pre-check tells the driver
+ * "the fuel gauge is readable" while still at the vehicle, and the real
+ * analysis then produces the stored fuelLevelPct. If the two prompts were
+ * allowed to drift, the driver would be told a photo was fine and the
+ * analysis would still come back null — the exact failure this feature
+ * exists to prevent.
+ *
+ * Wording is field-name-specific ("set fuelLevelPct to null") because that
+ * is the phrasing the SPEEDOMETER prompt was tuned against. The pre-check
+ * prompt bridges the naming difference explicitly rather than
+ * parameterising these strings, so the tuned text stays untouched.
+ */
+const ODOMETER_READ_RULES = `- Locate the TOTAL mileage display only.
+- Accept only the main odometer, usually labeled "ODO" or shown as the largest mileage number.
+- Ignore TRIP A, TRIP B, average fuel economy, outside temperature, clock, gear position, range, and any other secondary display.
+- Do NOT confuse odometer with "Range" / estimated distance, speed, RPM, temperature, or fuel percentage.
+- Read only digits that are fully visible and unambiguous.
+- If the full odometer value cannot be read with certainty, set "odometerKm": null.
+- Return the number exactly as displayed, with no rounding.`;
+
+const DIGITAL_DISPLAY_DISAMBIGUATION = `### DIGITAL DISPLAY DISAMBIGUATION — CRITICAL
+Digital displays may show many numbers. You MUST classify each visible number before using it.
+
+Examples:
+- A number followed by "km" near "ODO" = odometer.
+- A number followed by "C", "°C", "F", or "°F" = temperature, NOT fuel.
+- A number near "Sekitar", "Outside", "Temp", "Temperature", or "Ambient" = temperature, NOT fuel.
+- A number near "km/h" = speed, NOT fuel.
+- A number near "TRIP" = trip meter, NOT odometer.
+- A number near "RANGE" or distance-to-empty = range, NOT fuel.
+- A gear indicator such as P/R/N/D is NOT fuel.
+- A digital number is NOT fuel unless it is explicitly attached to a fuel bar, gas pump icon, or fuel percentage display.
+
+Never use a digital temperature number as fuelLevelPct.`;
+
+const FUEL_GAUGE_LOCK_RULES = `CRITICAL FUEL-GAUGE LOCK:
+Before reading fuel level, you MUST first locate a confirmed fuel gauge.
+A confirmed fuel gauge must have at least one of these fuel-specific anchors visibly attached to it:
+- "E" and/or "F" fuel markers
+- a gas pump icon
+- a vertical or horizontal fuel bar directly next to E/F markers
+- a small analog fuel needle directly connected to E/F markers
+
+DO NOT read fuel level from:
+- the speedometer needle
+- the tachometer/RPM needle
+- km/h scale
+- x1000 r/min scale
+- temperature gauge
+- warning lamps
+- gear position display
+- trip/ODO/range/clock/temperature text
+
+Important:
+- Speedometer usually has km/h numbers such as 0, 20, 40, 60, 100, 140, 180, 200, 220. These are NOT fuel.
+- Tachometer usually has x1000 r/min or RPM numbers such as 0–8. These are NOT fuel.
+- Fuel gauge is usually marked with E/F, a gas pump icon, or a fuel bar beside E/F.
+- Some dashboards place the fuel gauge inside the same circular dial as the speedometer. In that case, separate the main speedometer needle from the small fuel needle.
+- The speedometer needle is attached to the main center hub and points to km/h numbers.
+- The fuel needle/bar is attached to the E/F fuel scale or gas pump icon.
+- Only the needle/bar attached to E/F or gas pump icon may be used for fuelLevelPct.
+
+Detection workflow:
+1. First scan the entire dashboard specifically for "E", "F", and gas pump icon.
+2. If not found on the first scan, scan again more carefully around:
+   - inside the speedometer cluster,
+   - beside the digital display,
+   - lower-left or lower-right small gauges,
+   - vertical LCD bar areas.
+3. Only after a confirmed fuel gauge is found, determine whether it is:
+   - ANALOG NEEDLE fuel gauge, or
+   - DIGITAL BAR fuel gauge.
+
+For ANALOG NEEDLE fuel gauge:
+- Read only the needle that belongs to the confirmed E/F fuel scale.
+- Treat E as 0% and F as 100%.
+- Estimate the needle position continuously along the visible E-to-F scale.
+- Do NOT force the result into fixed levels such as only 0%, 25%, 50%, 75%, or 100%.
+- Use intermediate values when visually appropriate, such as 10%, 15%, 20%, 30%, 35%, 45%, 55%, 60%, 70%, 85%, etc.
+- Round to the nearest 5%.
+- If the needle is slightly above E, output a low percentage such as 5–15%, not automatically 25%.
+- If the needle is between E and half, estimate the proportional position visually.
+- If the needle is between half and F, estimate the proportional position visually.
+- If the E/F scale or fuel needle is not clearly visible, set fuelLevelPct to null.
+
+For DIGITAL BAR fuel gauge:
+- Read only the fuel bar directly associated with E/F markers or gas pump icon.
+- Estimate fuel level from the filled portion of the bar relative to the full E-to-F range.
+- If individual bars are visible, count filled bars versus total bars and convert proportionally to percentage.
+- Do NOT force the result into fixed levels such as only 0%, 25%, 50%, 75%, or 100%.
+- Use intermediate values when visually appropriate.
+- Round to the nearest 5%.
+- If filled bars cannot be distinguished from empty bars, set fuelLevelPct to null.
+
+Low fuel warning lamp rule:
+- Do NOT use the low fuel warning lamp to calculate fuelLevelPct.
+- A warning lamp only indicates a warning, not the exact fuel percentage.
+- Ignore warning lamps when estimating fuel level.
+
+If no confirmed fuel gauge is found after the second scan, set fuelLevelPct to null.
+If a fuel gauge is found but the level is unclear, set fuelLevelPct to null.
+Do not guess.`;
+
 export function buildStepPrompt(
   stepType: StepType,
   vehicle?: VehicleContext | null,
@@ -642,98 +800,13 @@ Determine if the vehicle's ignition is ON:
 - A completely dark/off dashboard means the vehicle is NOT on.
 
 ### 2. Odometer
-- Locate the TOTAL mileage display only.
-- Accept only the main odometer, usually labeled "ODO" or shown as the largest mileage number.
-- Ignore TRIP A, TRIP B, average fuel economy, outside temperature, clock, gear position, range, and any other secondary display.
-- Do NOT confuse odometer with "Range" / estimated distance, speed, RPM, temperature, or fuel percentage.
-- Read only digits that are fully visible and unambiguous.
-- If the full odometer value cannot be read with certainty, set "odometerKm": null.
-- Return the number exactly as displayed, with no rounding.
+${ODOMETER_READ_RULES}
 
-### DIGITAL DISPLAY DISAMBIGUATION — CRITICAL
-Digital displays may show many numbers. You MUST classify each visible number before using it.
-
-Examples:
-- A number followed by "km" near "ODO" = odometer.
-- A number followed by "C", "°C", "F", or "°F" = temperature, NOT fuel.
-- A number near "Sekitar", "Outside", "Temp", "Temperature", or "Ambient" = temperature, NOT fuel.
-- A number near "km/h" = speed, NOT fuel.
-- A number near "TRIP" = trip meter, NOT odometer.
-- A number near "RANGE" or distance-to-empty = range, NOT fuel.
-- A gear indicator such as P/R/N/D is NOT fuel.
-- A digital number is NOT fuel unless it is explicitly attached to a fuel bar, gas pump icon, or fuel percentage display.
-
-Never use a digital temperature number as fuelLevelPct.
+${DIGITAL_DISPLAY_DISAMBIGUATION}
 
 ### 3. Fuel Level
 
-CRITICAL FUEL-GAUGE LOCK:
-Before reading fuel level, you MUST first locate a confirmed fuel gauge.
-A confirmed fuel gauge must have at least one of these fuel-specific anchors visibly attached to it:
-- "E" and/or "F" fuel markers
-- a gas pump icon
-- a vertical or horizontal fuel bar directly next to E/F markers
-- a small analog fuel needle directly connected to E/F markers
-
-DO NOT read fuel level from:
-- the speedometer needle
-- the tachometer/RPM needle
-- km/h scale
-- x1000 r/min scale
-- temperature gauge
-- warning lamps
-- gear position display
-- trip/ODO/range/clock/temperature text
-
-Important:
-- Speedometer usually has km/h numbers such as 0, 20, 40, 60, 100, 140, 180, 200, 220. These are NOT fuel.
-- Tachometer usually has x1000 r/min or RPM numbers such as 0–8. These are NOT fuel.
-- Fuel gauge is usually marked with E/F, a gas pump icon, or a fuel bar beside E/F.
-- Some dashboards place the fuel gauge inside the same circular dial as the speedometer. In that case, separate the main speedometer needle from the small fuel needle.
-- The speedometer needle is attached to the main center hub and points to km/h numbers.
-- The fuel needle/bar is attached to the E/F fuel scale or gas pump icon.
-- Only the needle/bar attached to E/F or gas pump icon may be used for fuelLevelPct.
-
-Detection workflow:
-1. First scan the entire dashboard specifically for "E", "F", and gas pump icon.
-2. If not found on the first scan, scan again more carefully around:
-   - inside the speedometer cluster,
-   - beside the digital display,
-   - lower-left or lower-right small gauges,
-   - vertical LCD bar areas.
-3. Only after a confirmed fuel gauge is found, determine whether it is:
-   - ANALOG NEEDLE fuel gauge, or
-   - DIGITAL BAR fuel gauge.
-
-For ANALOG NEEDLE fuel gauge:
-- Read only the needle that belongs to the confirmed E/F fuel scale.
-- Treat E as 0% and F as 100%.
-- Estimate the needle position continuously along the visible E-to-F scale.
-- Do NOT force the result into fixed levels such as only 0%, 25%, 50%, 75%, or 100%.
-- Use intermediate values when visually appropriate, such as 10%, 15%, 20%, 30%, 35%, 45%, 55%, 60%, 70%, 85%, etc.
-- Round to the nearest 5%.
-- If the needle is slightly above E, output a low percentage such as 5–15%, not automatically 25%.
-- If the needle is between E and half, estimate the proportional position visually.
-- If the needle is between half and F, estimate the proportional position visually.
-- If the E/F scale or fuel needle is not clearly visible, set fuelLevelPct to null.
-
-For DIGITAL BAR fuel gauge:
-- Read only the fuel bar directly associated with E/F markers or gas pump icon.
-- Estimate fuel level from the filled portion of the bar relative to the full E-to-F range.
-- If individual bars are visible, count filled bars versus total bars and convert proportionally to percentage.
-- Do NOT force the result into fixed levels such as only 0%, 25%, 50%, 75%, or 100%.
-- Use intermediate values when visually appropriate.
-- Round to the nearest 5%.
-- If filled bars cannot be distinguished from empty bars, set fuelLevelPct to null.
-
-Low fuel warning lamp rule:
-- Do NOT use the low fuel warning lamp to calculate fuelLevelPct.
-- A warning lamp only indicates a warning, not the exact fuel percentage.
-- Ignore warning lamps when estimating fuel level.
-
-If no confirmed fuel gauge is found after the second scan, set fuelLevelPct to null.
-If a fuel gauge is found but the level is unclear, set fuelLevelPct to null.
-Do not guess.
+${FUEL_GAUGE_LOCK_RULES}
 
 ### 4. Warning Lights
 - Identify only warning lights that are clearly illuminated.
@@ -1551,6 +1624,115 @@ TARGET VEHICLE:
 Merk (Make): ${make}
 Tipe (Model): ${model}
 Warna (Color): ${color}`;
+
+  return { systemInstruction, userPrompt };
+}
+
+/**
+ * In-camera dashboard pre-check.
+ *
+ * Runs on the frozen frame the moment the driver presses the shutter, while
+ * they are still standing at the vehicle — the only point where a bad
+ * dashboard photo can still be fixed. Deliberately narrow: legibility of the
+ * odometer and the fuel gauge, nothing else. Anti-fraud concerns (screen
+ * recapture, vehicle identity, warning lights) stay with the full
+ * SPEEDOMETER analysis, which is the authoritative pass and still runs on
+ * upload.
+ *
+ * The reading rules are the SAME shared constants the SPEEDOMETER prompt
+ * uses, so a photo this pre-check calls readable is one the real analysis
+ * can actually read.
+ */
+export function buildDashboardPrecheckPrompt(): PromptPair {
+  const systemInstruction = `Act as a fast, conservative vehicle dashboard legibility checker for a fleet inspection app.
+
+A driver has just photographed a vehicle dashboard and is still standing at the vehicle.
+Your ONLY job is to decide whether this photo is good enough to read the odometer and the fuel level,
+and to report what you can read. You are NOT performing fraud analysis.
+
+Be honest about failure. Reporting "unreadable" costs the driver one retake.
+Reporting a guessed value poisons the fleet's records permanently. When in doubt, report unreadable.
+
+## READING RULES
+
+Apply these rules exactly. They are the same rules used by the full analysis pass that runs later,
+so your verdict must agree with what that pass would be able to extract.
+
+### Odometer
+${ODOMETER_READ_RULES}
+
+${DIGITAL_DISPLAY_DISAMBIGUATION}
+
+### Fuel Level
+
+${FUEL_GAUGE_LOCK_RULES}
+
+## FIELD MAPPING
+
+The rules above are written in terms of the full analysis pass's output fields.
+Map them onto this pre-check's output as follows:
+
+- Where a rule says to set "odometerKm" to null → set "odometer.readable": false and "odometer.valueKm": null.
+- Where a rule says to set "fuelLevelPct" to null → set "fuel.readable": false and "fuel.valuePct": null.
+- When you CAN read a value, set readable to true and report the value as well.
+
+## REASON CODES
+
+When something is not readable, report WHY using exactly one of these codes.
+Pick the single most actionable cause — the one the driver can fix by moving the phone.
+
+"odometer.reasonCode":
+- "OK" — the odometer was read successfully.
+- "NOT_IN_FRAME" — the total odometer display is outside the photo, cut off at an edge, or hidden behind the steering wheel.
+- "BLURRY" — the odometer is in frame but out of focus or motion-blurred.
+- "GLARE" — reflection or bright light washes out the odometer digits.
+- "DASHBOARD_OFF" — the dashboard is not illuminated, so nothing can be read.
+- "TRIP_ONLY" — only a TRIP meter is visible; the total odometer is not shown on screen.
+
+"fuel.reasonCode":
+- "OK" — the fuel level was read successfully.
+- "GAUGE_NOT_IN_FRAME" — no confirmed fuel gauge (E/F markers, gas pump icon, or fuel bar) is inside the photo.
+- "GAUGE_BLURRY" — a fuel gauge is visible but too out of focus to judge the needle or bar position.
+- "GLARE" — reflection or bright light washes out the fuel gauge.
+- "DASHBOARD_OFF" — the dashboard is not illuminated, so the gauge cannot be read.
+- "LEVEL_AMBIGUOUS" — the gauge is clearly visible but the needle or filled-bar position cannot be judged with confidence.
+- "NO_GAUGE_ON_VEHICLE" — the dashboard is lit and fully visible, but this vehicle genuinely has no fuel gauge on the cluster (e.g. a battery-electric vehicle showing a battery percentage instead, or a cluster where fuel lives in a menu that is not currently displayed).
+
+Use "NO_GAUGE_ON_VEHICLE" ONLY when you can see the whole lit cluster and are confident no fuel gauge exists on it.
+If any part of the cluster is outside the frame, use "GAUGE_NOT_IN_FRAME" instead — the driver can fix that by stepping back.
+
+## GAUGE TYPE
+
+Set "fuel.gaugeType" to the kind of fuel gauge you confirmed:
+- "ANALOG_NEEDLE" — a physical needle against an E-to-F scale.
+- "DIGITAL_BAR" — a segmented or continuous bar tied to E/F markers or a gas pump icon.
+- "DIGITAL_PERCENT" — an explicit numeric fuel percentage attached to a fuel indicator.
+- "NONE" — no confirmed fuel gauge was found.
+
+## Response Format
+Respond ONLY with a valid, raw JSON object.
+Do NOT wrap the response in markdown code blocks.
+Do not add any conversational text.
+Use the following valid JSON structure as your exact output format template, replacing the values with your actual findings:
+
+{
+  "dashboardLit": true,
+  "odometer": {
+    "readable": true,
+    "valueKm": 0,
+    "reasonCode": "OK"
+  },
+  "fuel": {
+    "gaugeFound": true,
+    "readable": true,
+    "gaugeType": "ANALOG_NEEDLE",
+    "valuePct": 0,
+    "reasonCode": "OK"
+  }
+}`;
+
+  const userPrompt =
+    "Check this dashboard photo. Report whether the odometer and the fuel gauge can be read, and what they show.";
 
   return { systemInstruction, userPrompt };
 }
